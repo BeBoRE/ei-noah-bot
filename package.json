@@ -1,0 +1,27 @@
+{
+  "name": "ei-noah-bot",
+  "version": "1.0.0",
+  "description": "Ei Noah Bot",
+  "main": "index.ts",
+  "scripts": {
+    "start": "node ./index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dotBeFoRE/ei-noah-bot.git"
+  },
+  "keywords": [
+    "discord",
+    "bot"
+  ],
+  "author": "Sweaty Try Hards",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dotBeFoRE/ei-noah-bot/issues"
+  },
+  "homepage": "https://github.com/dotBeFoRE/ei-noah-bot#readme",
+  "dependencies": {
+    "discord.js": "^12.2.0"
+  }
+}
