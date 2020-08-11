@@ -1,6 +1,6 @@
-import {Client} from "discord.js"
-import { Console } from "console"
+import { Client } from 'discord.js';
+import { Console } from 'console';
 
-console.log('a')
+console.log('a');
 
-setInterval(() => console.log('a'), 1000)
+setInterval(() => console.log('a'), 1000);
