@@ -1,23 +1,10 @@
-import { Client, Message } from 'discord.js';
-
-interface RouteInfo {
-  msg: Message,
-  params: string[]
-  flags: string[]
-}
-
-interface Route {
-  (msg : Message) : void
-}
-
-interface Router {
-  [name: string]: Route | Router
-}
+import { Client } from 'discord.js';
+import Router, { RouteInfo } from './Router';
 
 class EiNoah {
   private client : Client;
 
-  constructor(token : string) {
+  constructor(token : string, initialRouter : Router) {
     this.client = new Client();
 
     this.client.on('ready', () => {
@@ -31,7 +18,16 @@ class EiNoah {
         const botMention = `<@!${this.client.user.id}>`;
 
         if (splitted[0] === botMention || splitted[0] === 'ei') {
-          console.log(msg.content);
+          splitted.shift();
+
+          const initialRouteInfo : RouteInfo = {
+            absoluteParams: splitted,
+            params: splitted,
+            msg,
+            flags: [],
+          };
+
+          initialRouter.handle(initialRouteInfo);
         }
       }
     });
