@@ -25,7 +25,9 @@
   "homepage": "https://github.com/dotBeFoRE/ei-noah-bot#readme",
   "dependencies": {
     "discord.js": "^12.2.0",
-    "dotenv": "^8.2.0"
+    "dotenv": "^8.2.0",
+    "sqlite3": "^5.0.0",
+    "typeorm": "^0.2.25"
   },
   "devDependencies": {
     "@types/node": "^14.0.27",
