@@ -1,6 +1,18 @@
+import dotenv from 'dotenv';
 import { Client } from 'discord.js';
-import { Console } from 'console';
 
-console.log('a');
+dotenv.config();
 
-setInterval(() => console.log('a'), 1000);
+const client = new Client();
+
+client.on('ready', () => {
+  console.log(`Logged in as ${client.user.tag}!`);
+});
+
+client.on('message', (msg) => {
+  if (msg.content === 'ping') {
+    msg.reply('Pong!');
+  }
+});
+
+client.login(process.env.CLIENT_TOKEN);
