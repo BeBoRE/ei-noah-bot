@@ -1,10 +1,20 @@
 import { Client } from 'discord.js';
-import Router, { RouteInfo } from './Router';
+import Router, { RouteInfo, Handler } from './Router';
 
 class EiNoah {
   private client : Client;
 
-  constructor(token : string, initialRouter : Router) {
+  private router = new Router();
+
+  private token : string;
+
+  constructor(token : string) {
+    this.token = token;
+  }
+
+  public use = (route : string, using: Router | Handler) => this.router.use(route, using);
+
+  public start() {
     this.client = new Client();
 
     this.client.on('ready', () => {
@@ -27,12 +37,12 @@ class EiNoah {
             flags: [],
           };
 
-          initialRouter.handle(initialRouteInfo);
+          this.router.handle(initialRouteInfo);
         }
       }
     });
 
-    this.client.login(token);
+    this.client.login(this.token);
   }
 }
 

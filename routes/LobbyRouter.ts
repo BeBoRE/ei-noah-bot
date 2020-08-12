@@ -7,7 +7,7 @@ router.use('create', (info) => {
 });
 
 router.use('remove', (info) => {
-  info.msg.channel.send('Creating channel');
+  info.msg.channel.send('Removing channel');
 });
 
 export default router;
