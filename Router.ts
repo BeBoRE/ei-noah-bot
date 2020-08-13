@@ -83,7 +83,7 @@ export default class Router {
     } else if (isString(route)) {
       if (this.routes[route]) throw new Error('This Route Already Exists');
 
-      this.routes[route] = using;
+      this.routes[route.toUpperCase()] = using;
     }
   }
 
@@ -96,7 +96,7 @@ export default class Router {
         else this.typeOfUserRoute(info);
       }
     } else {
-      const handler = this.routes[currentRoute];
+      const handler = this.routes[currentRoute.toUpperCase()];
 
       if (!handler) {
         info.msg.channel.send(`Route \`${info.absoluteParams.join(' ')}\` does not exist`);
