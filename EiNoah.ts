@@ -28,7 +28,7 @@ class EiNoah {
         const botMention = `<@${this.client.user.id}>`;
         const botNickMention = `<@!${this.client.user.id}>`;
 
-        if (splitted[0] === botMention || splitted[0] === 'ei' || splitted[0] === botNickMention) {
+        if (splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention) {
           const initialRouteInfo = messageParser(msg);
 
           try {

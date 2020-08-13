@@ -69,8 +69,6 @@ export async function messageParser(msg : Message) {
 }
 
 export default class Router {
-  private client : Client;
-
   private routes : RouteList = {};
 
   private typeOfUserRoute : Router | Handler;
