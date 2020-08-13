@@ -73,7 +73,9 @@ export default class Router {
 
   private typeOfUserRoute : Router | Handler;
 
-  public use(route : string | typeof User, using: Router | Handler) {
+  public use(route : typeof User, using: Handler) : void
+  public use(route : string, using: Router | Handler) : void
+  public use(route : any, using: any) : any {
     if (route === User) {
       if (this.typeOfUserRoute) throw new Error('User route already exists');
 

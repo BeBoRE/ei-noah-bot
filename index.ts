@@ -23,6 +23,7 @@ eiNoah.use('mention', (routeInfo) => {
 eiNoah.use(User, (routeInfo) => {
   if (routeInfo.params[0] instanceof User) routeInfo.msg.channel.send(`What about ${routeInfo.params[0]}`);
 });
+
 eiNoah.use('noah', (info) => info.msg.channel.send('Dat ben ik :D'));
 
 eiNoah.start();

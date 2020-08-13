@@ -12,9 +12,11 @@ class EiNoah {
     this.token = token;
   }
 
-  public use = (route : string | typeof User, using: Router | Handler) => {
+  public use(route: typeof User, using: Handler) : void
+  public use(route : string, using: Router | Handler) : void
+  public use(route : any, using: any) : any {
     this.router.use(route, using);
-  };
+  }
 
   public start() {
     this.client.on('ready', () => {
