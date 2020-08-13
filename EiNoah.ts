@@ -19,7 +19,7 @@ class EiNoah {
       console.log('client online');
     });
 
-    this.client.on('message', (msg) => {
+    this.client.on('message', async (msg) => {
       if (msg.author !== this.client.user) {
         const splitted = msg.content.split(' ').filter((param) => param);
 
@@ -29,7 +29,17 @@ class EiNoah {
         if (splitted[0] === botMention || splitted[0] === 'ei' || splitted[0] === botNickMention) {
           const initialRouteInfo = messageParser(msg);
 
-          this.router.handle(initialRouteInfo);
+          try {
+            this.router.handle(await initialRouteInfo);
+          } catch (err) {
+            if (process.env.NODE_ENV !== 'production') {
+              msg.channel.send(`Uncaught \`${err?.message}\``);
+            } else {
+              msg.channel.send('We have ran into an issue');
+            }
+
+            console.error(err);
+          }
         }
       }
     });

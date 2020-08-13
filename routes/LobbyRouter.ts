@@ -1,4 +1,3 @@
-import { Client } from 'discord.js';
 import Router from '../Router';
 
 const router = new Router();

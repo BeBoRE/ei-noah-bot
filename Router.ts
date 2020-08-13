@@ -1,12 +1,12 @@
 import {
-  Message, User, Role, Channel, Client,
+  Message, User, Role, Channel, Client, DiscordAPIError,
 } from 'discord.js';
 import { isString } from 'util';
 
 export interface RouteInfo {
   msg: Message
-  absoluteParams: Array<string | Promise<User> | Promise<Role> | Promise<Channel>>
-  params: Array<string | Promise<User> | Promise<Role> | Promise<Channel>>
+  absoluteParams: Array<string | User | Role | Channel>
+  params: Array<string | User | Role | Channel>
   flags: string[]
 }
 
@@ -35,21 +35,32 @@ function getUserFromMention(_mention : string, client : Client) {
   return null;
 }
 
-export function messageParser(msg : Message) {
+export async function messageParser(msg : Message) {
   const splitted = msg.content.split(' ').filter((param) => param);
 
   splitted.shift();
 
-  const parsed = splitted.map((param) => {
-    const user = getUserFromMention(param, msg.client);
+  const parsed = splitted.map(async (param) => {
+    const user = await getUserFromMention(param, msg.client);
 
     if (user) return user;
     return param;
   });
 
+  let resolved : Array<User | string>;
+
+  try {
+    resolved = await Promise.all(parsed);
+  } catch (err) {
+    if (err instanceof DiscordAPIError) {
+      if (err.httpStatus === 404) throw new Error('Invalid Mention of User, Role or Channel');
+      else throw new Error('Unknown Discord Error');
+    } else throw new Error('Unknown Parsing error');
+  }
+
   const routeInfo : RouteInfo = {
-    absoluteParams: parsed,
-    params: parsed,
+    absoluteParams: resolved,
+    params: resolved,
     msg,
     flags: [],
   };
