@@ -1,4 +1,4 @@
-import { Client } from 'discord.js';
+import { Client, User } from 'discord.js';
 import Router, { Handler, messageParser } from './Router';
 
 class EiNoah {
@@ -12,7 +12,9 @@ class EiNoah {
     this.token = token;
   }
 
-  public use = (route : string, using: Router | Handler) => this.router.use(route, using);
+  public use = (route : string | typeof User, using: Router | Handler) => {
+    this.router.use(route, using);
+  };
 
   public start() {
     this.client.on('ready', () => {

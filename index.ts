@@ -13,5 +13,8 @@ eiNoah.use('mention', (routeInfo) => {
     routeInfo.msg.channel.send(`I must mention you <@${(routeInfo.params[0]).id}>`);
   }
 });
+eiNoah.use(User, (routeInfo) => {
+  if (routeInfo.params[0] instanceof User) routeInfo.msg.channel.send(`What about <@${routeInfo.msg.author.id}>`);
+});
 
 eiNoah.start();
