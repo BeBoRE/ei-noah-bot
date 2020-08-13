@@ -10,11 +10,11 @@ const eiNoah = new EiNoah(process.env.CLIENT_TOKEN);
 eiNoah.use('lobby', LobbyRouter);
 eiNoah.use('mention', (routeInfo) => {
   if (routeInfo.params[0] instanceof User) {
-    routeInfo.msg.channel.send(`I must mention you <@${(routeInfo.params[0]).id}>`);
+    routeInfo.msg.channel.send(`I must mention you <@!${(routeInfo.params[0]).id}>`);
   }
 });
 eiNoah.use(User, (routeInfo) => {
-  if (routeInfo.params[0] instanceof User) routeInfo.msg.channel.send(`What about <@${routeInfo.params[0]}>`);
+  if (routeInfo.params[0] instanceof User) routeInfo.msg.channel.send(`What about ${routeInfo.params[0]}`);
 });
 
 eiNoah.start();
