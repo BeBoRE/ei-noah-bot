@@ -1,12 +1,12 @@
 import { Client } from 'discord.js';
-import Router, { RouteInfo, Handler } from './Router';
+import Router, { Handler, messageParser } from './Router';
 
 class EiNoah {
-  private client : Client;
+  public readonly client = new Client();
 
-  private router = new Router();
+  private readonly router = new Router();
 
-  private token : string;
+  private readonly token : string;
 
   constructor(token : string) {
     this.token = token;
@@ -15,8 +15,6 @@ class EiNoah {
   public use = (route : string, using: Router | Handler) => this.router.use(route, using);
 
   public start() {
-    this.client = new Client();
-
     this.client.on('ready', () => {
       console.log('client online');
     });
@@ -25,17 +23,11 @@ class EiNoah {
       if (msg.author !== this.client.user) {
         const splitted = msg.content.split(' ').filter((param) => param);
 
-        const botMention = `<@!${this.client.user.id}>`;
+        const botMention = `<@${this.client.user.id}>`;
+        const botNickMention = `<@!${this.client.user.id}>`;
 
-        if (splitted[0] === botMention || splitted[0] === 'ei') {
-          splitted.shift();
-
-          const initialRouteInfo : RouteInfo = {
-            absoluteParams: splitted,
-            params: splitted,
-            msg,
-            flags: [],
-          };
+        if (splitted[0] === botMention || splitted[0] === 'ei' || splitted[0] === botNickMention) {
+          const initialRouteInfo = messageParser(msg);
 
           this.router.handle(initialRouteInfo);
         }
