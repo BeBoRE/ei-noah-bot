@@ -77,6 +77,8 @@ export default class Router {
     if (route === User) {
       if (this.typeOfUserRoute) throw new Error('User route already exists');
 
+      if (using instanceof Router) throw new Error('Can\'t use Router on mention routing');
+
       this.typeOfUserRoute = using;
     } else if (isString(route)) {
       if (this.routes[route]) throw new Error('This Route Already Exists');
