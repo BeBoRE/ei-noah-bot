@@ -6,9 +6,6 @@ export class User {
   @PrimaryColumn()
   id: string;
 
-  @PrimaryColumn()
-  guildId: string;
-
   @Column()
   count: number;
 }
