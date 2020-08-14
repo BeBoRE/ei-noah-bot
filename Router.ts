@@ -1,7 +1,6 @@
 import {
   Message, User, Role, Channel, Client, DiscordAPIError,
 } from 'discord.js';
-import { isString } from 'util';
 
 export interface RouteInfo {
   msg: Message
@@ -82,7 +81,7 @@ export default class Router {
       if (using instanceof Router) throw new Error('Can\'t use Router on mention routing');
 
       this.typeOfUserRoute = using;
-    } else if (isString(route)) {
+    } else if (typeof route === 'string') {
       if (this.routes[route]) throw new Error('This Route Already Exists');
 
       this.routes[route.toUpperCase()] = using;
@@ -92,7 +91,7 @@ export default class Router {
   public handle(info: RouteInfo) {
     const currentRoute = info.params[0];
 
-    if (!isString(currentRoute)) {
+    if (typeof currentRoute !== 'string') {
       if (currentRoute instanceof User) {
         if (this.typeOfUserRoute instanceof Router) this.typeOfUserRoute.handle(info);
         else this.typeOfUserRoute(info);
