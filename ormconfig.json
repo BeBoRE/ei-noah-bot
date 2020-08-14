@@ -1,21 +1,21 @@
 {
   "name": "default",
   "type": "sqlite",
-  "database": "eiNoah.sql",
+  "database": "eiNoah.sqlite",
   "synchronize": true,
   "logging": true,
   "entities": [
-    "src/entity/*.js"
+    "dist/entity/*.js"
   ],
   "subscribers": [
-    "src/subscriber/*.js"
+    "dist/subscriber/*.js"
   ],
   "migrations": [
-    "src/migration/*.js"
+    "dist/migration/*.js"
   ],
   "cli": {
     "entitiesDir": "src/entity",
-    "migrationsDir": "src/migration",
-    "subscribersDir": "src/subscriber"
+    "migrationsDir": "dist/migration",
+    "subscribersDir": "dist/subscriber"
   }
 }
