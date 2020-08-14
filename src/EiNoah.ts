@@ -1,5 +1,7 @@
 import { Client, User } from 'discord.js';
+import { createConnection } from 'typeorm';
 import Router, { Handler, messageParser } from './Router';
+import { User as UserEntity } from './entity/User';
 
 class EiNoah {
   public readonly client = new Client();
@@ -18,7 +20,15 @@ class EiNoah {
     this.router.use(route, using);
   }
 
-  public start() {
+  public async start() {
+    await createConnection({
+      type: 'sqlite',
+      database: 'eiNoah.sqlite',
+      logging: true,
+      synchronize: true,
+      entities: [UserEntity],
+    });
+
     this.client.on('ready', () => {
       console.log('client online');
     });

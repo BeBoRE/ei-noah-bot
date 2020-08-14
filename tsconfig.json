@@ -3,20 +3,15 @@
       "module": "commonjs",
       "esModuleInterop": true,
       "allowSyntheticDefaultImports": true,
+      "lib": ["ES6"],
       "target": "es6",
       "noImplicitAny": true,
       "moduleResolution": "node",
       "sourceMap": true,
       "outDir": "dist",
-      "baseUrl": ".",
+      "baseUrl": "src",
       "emitDecoratorMetadata": true,
       "experimentalDecorators": true,
-      "paths": {
-          "*": [
-              "node_modules/*",
-              "/types/*"
-          ]
-      },
       "declaration": true
   }
 }
