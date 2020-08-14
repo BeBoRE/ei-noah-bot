@@ -10,4 +10,6 @@ router.use('remove', (info) => {
   info.msg.channel.send('Removing channel');
 });
 
+router.name = 'lobby';
+
 export default router;
