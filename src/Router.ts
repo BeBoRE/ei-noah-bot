@@ -10,7 +10,7 @@ export interface RouteInfo {
 }
 
 export interface Handler {
-  (info: RouteInfo) : void
+  (info: RouteInfo) : void | Promise<any>
 }
 
 export interface RouteList {
@@ -72,6 +72,7 @@ export default class Router {
 
   private typeOfUserRoute : Router | Handler;
 
+  // Met use geef je aan welk commando waarheen gaat
   public use(route : typeof User, using: Handler) : void
   public use(route : string, using: Router | Handler) : void
   public use(route : any, using: any) : any {
@@ -88,28 +89,39 @@ export default class Router {
     }
   }
 
+  // INTERNAL
+  // Zorgt dat de commando's op de goede plek terecht komen
   public handle(info: RouteInfo) {
-    const currentRoute = info.params[0];
+    return new Promise((resolve, reject) => {
+      const currentRoute = info.params[0];
 
-    if (typeof currentRoute !== 'string') {
-      if (currentRoute instanceof User) {
-        if (this.typeOfUserRoute instanceof Router) this.typeOfUserRoute.handle(info);
-        else this.typeOfUserRoute(info);
-      }
-    } else {
-      const handler = this.routes[currentRoute.toUpperCase()];
-
-      if (!handler) {
-        info.msg.channel.send(`Route \`${info.absoluteParams.join(' ')}\` does not exist`);
+      if (typeof currentRoute !== 'string') {
+        if (currentRoute instanceof User) {
+          if (this.typeOfUserRoute instanceof Router) this.typeOfUserRoute.handle(info);
+          else this.typeOfUserRoute(info);
+        }
       } else {
-        const newParams = [...info.params];
-        newParams.shift();
+        const handler = this.routes[currentRoute.toUpperCase()];
 
-        const newInfo : RouteInfo = { ...info, params: newParams };
+        if (!handler) {
+          info.msg.channel.send(`Route \`${info.absoluteParams.join(' ')}\` does not exist`);
+        } else {
+          const newParams = [...info.params];
+          newParams.shift();
 
-        if (handler instanceof Router) handler.handle(newInfo);
-        else handler(newInfo);
+          const newInfo : RouteInfo = { ...info, params: newParams };
+
+          if (handler instanceof Router) handler.handle(newInfo).then(resolve).catch(reject);
+          else {
+            try {
+              const handling = handler(newInfo);
+              if (handling instanceof Promise) handling.then(resolve).catch(reject);
+            } catch (err) {
+              reject(err);
+            }
+          }
+        }
       }
-    }
+    });
   }
 }

@@ -1,5 +1,5 @@
 import {
-  Entity, ManyToOne, PrimaryColumn, Column,
+  Entity, ManyToOne, PrimaryColumn,
 } from 'typeorm';
 import { User } from './User';
 

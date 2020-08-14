@@ -1,4 +1,6 @@
-import { Client, User } from 'discord.js';
+import {
+  Client, User, TextChannel, NewsChannel,
+} from 'discord.js';
 import { createConnection } from 'typeorm';
 import Router, { Handler, messageParser } from './Router';
 
@@ -13,6 +15,7 @@ class EiNoah {
     this.token = token;
   }
 
+  // this.use wordt doorgepaast aan de echte router
   public use(route: typeof User, using: Handler) : void
   public use(route : string, using: Router | Handler) : void
   public use(route : any, using: any) : any {
@@ -20,6 +23,7 @@ class EiNoah {
   }
 
   public async start() {
+    // Creëerd de database connectie
     await createConnection();
 
     this.client.on('ready', () => {
@@ -30,21 +34,32 @@ class EiNoah {
       if (msg.author !== this.client.user) {
         const splitted = msg.content.split(' ').filter((param) => param);
 
+        // Raw mention ziet er anders uit wanneer user een nickname heeft
         const botMention = `<@${this.client.user.id}>`;
         const botNickMention = `<@!${this.client.user.id}>`;
 
         if (splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention) {
           messageParser(msg).then((info) => {
-            try {
-              this.router.handle(info);
-            } catch (err) {
+            this.router.handle(info).catch(async (err : Error) => {
               if (process.env.NODE_ENV !== 'production') {
-                msg.channel.send(`Uncaught \`${err?.message}\``);
+                // Error message in development
+                msg.channel.send(`**${err?.name}**\n\`\`\`${err?.stack}\`\`\``);
               } else {
-                msg.channel.send('We have ran into an issue');
+                // Error message in productie
+                msg.channel.send('Je sloopt de hele boel hier!\nGeen idee wat ik hiermee moet doen D:');
+
+                // Stuurt de stacktrace naar de developer's textkanaal
+                const errorChannelId = process.env.ERROR_CHANNEL;
+                if (errorChannelId) {
+                  const errorChannel = await this.client.channels.fetch(errorChannelId);
+                  if (errorChannel instanceof TextChannel || errorChannel instanceof NewsChannel) {
+                    errorChannel.send(`**${err?.name}**\n\`\`\`${err?.stack}\`\`\``);
+                  }
+                }
               }
-            }
+            });
           }).catch((err) => {
+            // Dit wordt gecallt wanneer de parsing faalt
             msg.channel.send(err.message);
           });
         }
