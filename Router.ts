@@ -72,8 +72,6 @@ export default class Router {
 
   private typeOfUserRoute : Router | Handler;
 
-  public name : string;
-
   public use(route : typeof User, using: Handler) : void
   public use(route : string, using: Router | Handler) : void
   public use(route : any, using: any) : any {
