@@ -26,6 +26,7 @@ eiNoah.use(User, (routeInfo) => {
   if (routeInfo.params[0] instanceof User) routeInfo.msg.channel.send(`What about ${routeInfo.params[0]}`);
 });
 
+// Voorbeeld hoe je met user data omgaat
 eiNoah.use('counter', Counter);
 
 eiNoah.use('noah', (info) => info.msg.channel.send('Dat ben ik :D'));
