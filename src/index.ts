@@ -30,7 +30,7 @@ eiNoah.use('counter', Counter);
 
 eiNoah.use('noah', (info) => info.msg.channel.send('Dat ben ik :D'));
 
-eiNoah.use('error', () => {
+eiNoah.use('error', async () => {
   throw new Error('Hihi een error wie had dat gedacht :D');
 });
 

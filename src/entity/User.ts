@@ -7,5 +7,5 @@ export class User {
   id: string;
 
   @Column()
-  count: number;
+  count: number = 0;
 }

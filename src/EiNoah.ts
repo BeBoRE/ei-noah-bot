@@ -1,8 +1,11 @@
 import {
-  Client, User, TextChannel, NewsChannel,
+  Client, User as DiscordUser, TextChannel, NewsChannel,
 } from 'discord.js';
-import { createConnection } from 'typeorm';
+import { createConnection, getRepository } from 'typeorm';
+import { GuildUser } from './entity/GuildUser';
 import Router, { Handler, messageParser } from './Router';
+import { User } from './entity/User';
+import { Guild } from './entity/Guild';
 
 class EiNoah {
   public readonly client = new Client();
@@ -16,7 +19,7 @@ class EiNoah {
   }
 
   // this.use wordt doorgepaast aan de echte router
-  public use(route: typeof User, using: Handler) : void
+  public use(route: typeof DiscordUser, using: Handler) : void
   public use(route : string, using: Router | Handler) : void
   public use(route : any, using: any) : any {
     this.router.use(route, using);
@@ -40,24 +43,38 @@ class EiNoah {
 
         if (splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention) {
           messageParser(msg).then((info) => {
-            this.router.handle(info).catch(async (err : Error) => {
-              if (process.env.NODE_ENV !== 'production') {
-                // Error message in development
-                msg.channel.send(`**${err?.name}**\n\`\`\`${err?.stack}\`\`\``);
-              } else {
-                // Error message in productie
-                msg.channel.send('Je sloopt de hele boel hier!\nGeen idee wat ik hiermee moet doen D:');
+            this.router.handle(info)
+              .then(async (newData) => {
+                if (newData instanceof GuildUser) {
+                  const guRepo = getRepository(GuildUser);
+                  const userRepo = getRepository(User);
+                  const guildRepo = getRepository(Guild);
 
-                // Stuurt de stacktrace naar de developer's textkanaal
-                const errorChannelId = process.env.ERROR_CHANNEL;
-                if (errorChannelId) {
-                  const errorChannel = await this.client.channels.fetch(errorChannelId);
-                  if (errorChannel instanceof TextChannel || errorChannel instanceof NewsChannel) {
-                    errorChannel.send(`**${err?.name}**\n\`\`\`${err?.stack}\`\`\``);
+                  await guildRepo.save(newData.guild);
+                  await userRepo.save(newData.user);
+                  await guRepo.save(newData);
+                }
+              })
+              .catch(async (err : Error) => {
+                if (process.env.NODE_ENV !== 'production') {
+                // Error message in development
+                  msg.channel.send(`**${err?.name}**\n\`\`\`${err?.stack}\`\`\``);
+                } else {
+                // Error message in productie
+                  msg.channel.send('Je sloopt de hele boel hier!\nGeen idee wat ik hiermee moet doen D:');
+
+                  // Stuurt de stacktrace naar de developer's textkanaal
+                  const errorChannelId = process.env.ERROR_CHANNEL;
+                  if (errorChannelId) {
+                    const errorChannel = await this.client.channels.fetch(errorChannelId);
+                    if (errorChannel instanceof TextChannel
+                     || errorChannel instanceof NewsChannel
+                    ) {
+                      errorChannel.send(`**${err?.name}**\n\`\`\`${err?.stack}\`\`\``);
+                    }
                   }
                 }
-              }
-            });
+              });
           }).catch((err) => {
             // Dit wordt gecallt wanneer de parsing faalt
             msg.channel.send(err.message);

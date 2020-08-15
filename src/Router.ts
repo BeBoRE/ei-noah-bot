@@ -1,16 +1,19 @@
 import {
   Message, User, Role, Channel, Client, DiscordAPIError,
 } from 'discord.js';
+import { GuildUser } from './entity/GuildUser';
+import { getUserGuildData } from './helper/data';
 
 export interface RouteInfo {
   msg: Message
   absoluteParams: Array<string | User | Role | Channel>
   params: Array<string | User | Role | Channel>
-  flags: string[]
+  flags: string[],
+  guildUser: GuildUser
 }
 
 export interface Handler {
-  (info: RouteInfo) : void | Promise<any>
+  (info: RouteInfo) : void | GuildUser | Promise<GuildUser | unknown>
 }
 
 export interface RouteList {
@@ -57,11 +60,14 @@ export async function messageParser(msg : Message) {
     } else throw new Error('Unknown Parsing error');
   }
 
+  const guildUser = await getUserGuildData(msg.author, msg.guild);
+
   const routeInfo : RouteInfo = {
     absoluteParams: resolved,
     params: resolved,
     msg,
     flags: [],
+    guildUser,
   };
 
   return routeInfo;
@@ -91,7 +97,7 @@ export default class Router {
 
   // INTERNAL
   // Zorgt dat de commando's op de goede plek terecht komen
-  public handle(info: RouteInfo) {
+  public handle(info: RouteInfo) : Promise<void | GuildUser> {
     return new Promise((resolve, reject) => {
       const currentRoute = info.params[0];
 

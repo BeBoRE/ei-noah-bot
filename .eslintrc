@@ -3,7 +3,6 @@
   "plugins": ["@typescript-eslint"],
   "parserOptions": {
     "ecmaVersion": 2017,
-    "sourceType": "module",
     "project": "./tsconfig.json"
   },
   "env": {
