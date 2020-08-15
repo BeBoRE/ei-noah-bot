@@ -34,7 +34,7 @@ class EiNoah {
     });
 
     this.client.on('message', async (msg) => {
-      if (msg.author !== this.client.user) {
+      if (msg.author !== this.client.user && msg.content) {
         const splitted = msg.content.split(' ').filter((param) => param);
 
         // Raw mention ziet er anders uit wanneer user een nickname heeft
