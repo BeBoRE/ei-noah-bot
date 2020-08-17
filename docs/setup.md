@@ -41,7 +41,7 @@ Open CMD en clone de repo `git clone https://github.com/Sweaty-Tryhards/ei-noah-
 
 ### 2.4 Environment
 De settings van de applicatie staan in een `.env` file, omdat hier gevoelige info instaat zoals de **Discord Bot Token**, je zult deze zelf moeten aanmaken in de root van bot (waar package.json staat). 
-```s
+```s 
 CLIENT_TOKEN="<Jou Discord Bot Token>"
 ERROR_CHANNEL=743906228052164720
 NODE_ENV="development"

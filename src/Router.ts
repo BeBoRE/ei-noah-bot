@@ -37,12 +37,19 @@ function getUserFromMention(_mention : string, client : Client) {
   return null;
 }
 
+function isFlag(argument: string) {
+  return argument[0] === '-' && argument.length > 1;
+}
+
 export async function messageParser(msg : Message) {
   const splitted = msg.content.split(' ').filter((param) => param);
 
-  splitted.shift();
+  const flags = splitted.filter(isFlag).map((rawFlag) => rawFlag.substr(1, rawFlag.length - 1));
+  const nonFlags = splitted.filter((argument) => !isFlag(argument));
 
-  const parsed = splitted.map(async (param) => {
+  nonFlags.shift();
+
+  const parsed = nonFlags.map(async (param) => {
     const user = await getUserFromMention(param, msg.client);
 
     if (user) return user;
@@ -66,7 +73,7 @@ export async function messageParser(msg : Message) {
     absoluteParams: resolved,
     params: resolved,
     msg,
-    flags: [],
+    flags,
     guildUser,
   };
 
@@ -76,7 +83,7 @@ export async function messageParser(msg : Message) {
 export default class Router {
   private routes : RouteList = {};
 
-  private typeOfUserRoute : Router | Handler;
+  private typeOfUserRoute : Handler;
 
   // Met use geef je aan welk commando waarheen gaat
   public use(route : typeof User, using: Handler) : void
@@ -103,8 +110,7 @@ export default class Router {
 
       if (typeof currentRoute !== 'string') {
         if (currentRoute instanceof User) {
-          if (this.typeOfUserRoute instanceof Router) this.typeOfUserRoute.handle(info);
-          else this.typeOfUserRoute(info);
+          this.typeOfUserRoute(info);
         }
       } else {
         const handler = this.routes[currentRoute.toUpperCase()];
