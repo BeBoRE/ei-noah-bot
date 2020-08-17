@@ -5,7 +5,7 @@ const router = new Router();
 router.use('add', async ({ msg, guildUser }) => {
   // NOOIT parameters direct aanpassen
   // kan undefined behaviour veroorzaken
-  const data = { ...guildUser };
+  const data = guildUser;
 
   if (!data.user.count) data.user.count = 1;
   else data.user.count += 1;
