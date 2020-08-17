@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/dotBeFoRE/ei-noah-bot#readme",
   "dependencies": {
+    "cron": "^1.8.2",
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
     "reflect-metadata": "^0.1.13",
