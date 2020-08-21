@@ -1,5 +1,5 @@
 import {
-  Entity, ManyToOne, PrimaryColumn,
+  Entity, ManyToOne, PrimaryColumn, Column,
 } from 'typeorm';
 import { User } from './User';
 import { Guild } from './Guild';
@@ -8,14 +8,17 @@ import { Guild } from './Guild';
 // eslint-disable-next-line import/prefer-default-export
 export class GuildUser {
   @PrimaryColumn()
-  guildId: string;
+  private guildId: string;
 
   @ManyToOne(() => Guild, { eager: true })
   guild: Guild;
 
   @PrimaryColumn()
-  userId: string;
+  private userId: string;
 
   @ManyToOne(() => User, { eager: true })
   user: User;
+
+  @Column({ nullable: true })
+  tempChannel?: string;
 }
