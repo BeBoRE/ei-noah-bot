@@ -13,7 +13,7 @@ export interface RouteInfo {
 }
 
 export interface Handler {
-  (info: RouteInfo) : void | GuildUser | Promise<GuildUser | unknown>
+  (info: RouteInfo) : void | GuildUser | Promise<GuildUser | void>
 }
 
 export interface RouteList {
@@ -108,29 +108,36 @@ export default class Router {
     return new Promise((resolve, reject) => {
       const currentRoute = info.params[0];
 
+      let handler : Router | Handler;
+      let newInfo : RouteInfo = info;
+
       if (typeof currentRoute !== 'string') {
         if (currentRoute instanceof User) {
-          this.typeOfUserRoute(info);
+          handler = this.typeOfUserRoute;
         }
       } else {
-        const handler = this.routes[currentRoute.toUpperCase()];
+        const nameHandler = this.routes[currentRoute.toUpperCase()];
 
-        if (!handler) {
+        if (!nameHandler) {
           info.msg.channel.send(`Route \`${info.absoluteParams.join(' ')}\` does not exist`);
         } else {
           const newParams = [...info.params];
           newParams.shift();
 
-          const newInfo : RouteInfo = { ...info, params: newParams };
+          newInfo = { ...info, params: newParams };
+          handler = nameHandler;
+        }
+      }
 
-          if (handler instanceof Router) handler.handle(newInfo).then(resolve).catch(reject);
-          else {
-            try {
-              const handling = handler(newInfo);
-              if (handling instanceof Promise) handling.then(resolve).catch(reject);
-            } catch (err) {
-              reject(err);
-            }
+      if (handler) {
+        if (handler instanceof Router) {
+          handler.handle(newInfo).then(resolve).catch(reject);
+        } else {
+          try {
+            const handling = handler(newInfo);
+            if (handling instanceof Promise) handling.then(resolve).catch(reject);
+          } catch (err) {
+            reject(err);
           }
         }
       }
