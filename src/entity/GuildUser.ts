@@ -1,8 +1,10 @@
 import {
-  Entity, ManyToOne, PrimaryColumn, Column,
+  Entity, ManyToOne, PrimaryColumn, OneToOne,
 } from 'typeorm';
 import { User } from './User';
 import { Guild } from './Guild';
+// eslint-disable-next-line import/no-cycle
+import { TempChannel } from './TempChannel';
 
 @Entity()
 // eslint-disable-next-line import/prefer-default-export
@@ -19,6 +21,6 @@ export class GuildUser {
   @ManyToOne(() => User, { eager: true })
   user: User;
 
-  @Column({ nullable: true })
-  tempChannel?: string;
+  @OneToOne(() => TempChannel, (temp) => temp.guildUser, { eager: true })
+  tempChannel?: TempChannel;
 }

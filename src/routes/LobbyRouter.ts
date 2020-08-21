@@ -9,7 +9,9 @@ import {
   VoiceChannel,
   DiscordAPIError,
 } from 'discord.js';
-import { GuildUser } from 'entity/GuildUser';
+import { getRepository } from 'typeorm';
+import { GuildUser } from '../entity/GuildUser';
+import { TempChannel } from '../entity/TempChannel';
 import Router from '../Router';
 
 const router = new Router();
@@ -22,6 +24,7 @@ interface TempChannelOptions {
 async function createTempChannel(
   guild: DiscordGuild, parent: string,
   users: DiscordUser[], owner: DiscordUser,
+  bot: DiscordUser,
   { muted }: TempChannelOptions,
 ) {
   const userSnowflakes = [...new Set([...users.map((user) => user.id), owner.id])];
@@ -30,6 +33,13 @@ async function createTempChannel(
     id,
     allow: [Permissions.FLAGS.CONNECT, Permissions.FLAGS.SPEAK],
   }));
+
+  permissionOverwrites.push({
+    id: bot.id,
+    allow: [
+      Permissions.ALL,
+    ],
+  });
 
   permissionOverwrites.push({
     id: owner.id,
@@ -55,7 +65,7 @@ async function activeTempChannel(guildUser : GuildUser, client : Client) : Promi
   if (!guildUser.tempChannel) return undefined;
 
   try {
-    const activeChannel = await client.channels.fetch(guildUser.tempChannel, false);
+    const activeChannel = await client.channels.fetch(guildUser.tempChannel.id, false);
     if (activeChannel instanceof VoiceChannel) {
       return activeChannel;
     }
@@ -87,12 +97,20 @@ createRouter.use(DiscordUser, async ({
     if (activeChannel) {
       msg.channel.send('You already have a lobby');
     } else {
-      const createdChannel = await createTempChannel(msg.guild, msg.channel.parentID, users, msg.author, { muted: flags.some((a) => a === 'nospeak') });
-      const user = guildUser;
+      const createdChannel = await createTempChannel(msg.guild, msg.channel.parentID, users, msg.author, msg.client.user, { muted: flags.some((a) => a === 'nospeak') });
 
-      user.tempChannel = createdChannel.id;
+      const tempRep = getRepository(TempChannel);
 
-      return user;
+      await tempRep.delete({ guildUser });
+
+      const tempChannel = tempRep.create({ guildUser, id: createdChannel.id });
+
+      try {
+        await tempRep.save(tempChannel);
+      } catch (err) {
+        createdChannel.delete();
+        throw err;
+      }
     }
   }
 
