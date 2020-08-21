@@ -33,6 +33,8 @@ class EiNoah {
       console.log('client online');
     });
 
+    this.router.initialize();
+
     this.client.on('message', async (msg) => {
       if (msg.author !== this.client.user && msg.content) {
         const splitted = msg.content.split(' ').filter((param) => param);

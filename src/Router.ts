@@ -143,4 +143,18 @@ export default class Router {
       }
     });
   }
+
+  public initialize() {
+    Object.entries(this.routes).forEach(([, route]) => {
+      if (route instanceof Router) {
+        route.initialize();
+      }
+
+      if (this.typeOfUserRoute instanceof Router) this.typeOfUserRoute.initialize();
+    });
+
+    if (this.onInit) this.onInit();
+  }
+
+  public onInit ?: (() => void | Promise<void>) | void;
 }
