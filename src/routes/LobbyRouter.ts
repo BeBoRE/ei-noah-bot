@@ -7,6 +7,7 @@ import {
   Guild as DiscordGuild,
   Client,
   VoiceChannel,
+  DiscordAPIError,
 } from 'discord.js';
 import { GuildUser } from 'entity/GuildUser';
 import Router from '../Router';
@@ -53,9 +54,18 @@ async function createTempChannel(
 async function activeTempChannel(guildUser : GuildUser, client : Client) : Promise<VoiceChannel> {
   if (!guildUser.tempChannel) return undefined;
 
-  const activeChannel = await client.channels.fetch(guildUser.tempChannel, false);
-  if (activeChannel instanceof VoiceChannel) {
-    return activeChannel;
+  try {
+    const activeChannel = await client.channels.fetch(guildUser.tempChannel, false);
+    if (activeChannel instanceof VoiceChannel) {
+      return activeChannel;
+    }
+  } catch (err) {
+    if (err instanceof DiscordAPIError) {
+      if (err.httpStatus === 404) {
+        return undefined;
+      }
+      throw Error('Unknown Discord API Error');
+    }
   }
 
   return undefined;
