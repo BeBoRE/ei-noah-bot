@@ -39,6 +39,7 @@ class EiNoah {
         const botNickMention = `<@!${this.client.user.id}>`;
 
         if (splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention) {
+          msg.channel.startTyping();
           messageParser(msg).then((info) => {
             this.router.handle(info)
               .catch(async (err : Error) => {
@@ -60,6 +61,9 @@ class EiNoah {
                     }
                   }
                 }
+              })
+              .finally(() => {
+                msg.channel.stopTyping(true);
               });
           }).catch((err) => {
             // Dit wordt gecallt wanneer de parsing faalt

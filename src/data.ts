@@ -1,5 +1,6 @@
-import { User as DiscordUser, Guild as DiscordGuild } from 'discord.js';
+import { User as DiscordUser, Guild as DiscordGuild, CategoryChannel } from 'discord.js';
 import { getRepository } from 'typeorm';
+import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
 import { User } from './entity/User';
 import { Guild } from './entity/Guild';
@@ -58,6 +59,15 @@ const saveUserData = async (guildUser : GuildUser) => {
   await guRepo.save(guildUser);
 };
 
+const getCategoryData = async ({ id } : CategoryChannel) => {
+  const categoryRepo = getRepository(Category);
+  const dbCategory = await categoryRepo.findOne(id);
+
+  if (dbCategory) return dbCategory;
+
+  return categoryRepo.create({ id });
+};
+
 export {
-  getUserGuildData, getUserData, getGuildData, saveUserData,
+  getUserGuildData, getUserData, getGuildData, saveUserData, getCategoryData,
 };

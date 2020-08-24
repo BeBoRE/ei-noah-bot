@@ -1,15 +1,17 @@
 import {
-  Message, User, Role, Channel, Client, DiscordAPIError,
+  Message, User, Role, Channel, Client, DiscordAPIError, DMChannel,
 } from 'discord.js';
+import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
-import { getUserGuildData } from './data';
+import { getUserGuildData, getCategoryData } from './data';
 
 export interface RouteInfo {
   msg: Message
   absoluteParams: Array<string | User | Role | Channel>
   params: Array<string | User | Role | Channel>
   flags: string[],
-  guildUser: GuildUser
+  guildUser: GuildUser,
+  category: Category
 }
 
 export interface Handler {
@@ -46,6 +48,8 @@ function isFlag(argument: string) {
 }
 
 export async function messageParser(msg : Message) {
+  if (msg.channel instanceof DMChannel) throw new Error('Ja ik steek je neer');
+
   const splitted = msg.content.split(' ').filter((param) => param);
 
   const flags = splitted.filter(isFlag).map((rawFlag) => rawFlag.substr(1, rawFlag.length - 1));
@@ -72,6 +76,7 @@ export async function messageParser(msg : Message) {
   }
 
   const guildUser = await getUserGuildData(msg.author, msg.guild);
+  const category = await getCategoryData(msg.channel.parent);
 
   const routeInfo : RouteInfo = {
     absoluteParams: resolved,
@@ -79,6 +84,7 @@ export async function messageParser(msg : Message) {
     msg,
     flags,
     guildUser,
+    category,
   };
 
   return routeInfo;
@@ -108,7 +114,7 @@ export default class Router {
 
   // INTERNAL
   // Zorgt dat de commando's op de goede plek terecht komen
-  public handle(info: RouteInfo) : Promise<void | GuildUser> {
+  public handle(info: RouteInfo) : Promise<void> {
     return new Promise((resolve, reject) => {
       const currentRoute = info.params[0];
 
@@ -139,7 +145,8 @@ export default class Router {
         } else {
           try {
             const handling = handler(newInfo);
-            if (handling instanceof Promise) handling.catch(reject);
+            if (handling instanceof Promise) handling.then(resolve).catch(reject);
+            else resolve();
           } catch (err) {
             reject(err);
           }

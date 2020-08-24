@@ -10,6 +10,7 @@ import {
   DiscordAPIError,
 } from 'discord.js';
 import { getRepository } from 'typeorm';
+import { Category } from '../entity/Category';
 import { saveUserData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
 import { TempChannel } from '../entity/TempChannel';
@@ -55,7 +56,7 @@ async function createTempChannel(
     deny: [Permissions.FLAGS.SPEAK, !muted ? Permissions.FLAGS.CONNECT : undefined],
   });
 
-  return guild.channels.create('Ranked', {
+  return guild.channels.create(`${owner.username}'s Lobby`, {
     type: 'voice',
     permissionOverwrites,
     parent,
@@ -83,13 +84,17 @@ async function activeTempChannel(guildUser : GuildUser, client : Client) : Promi
 }
 
 createRouter.use(DiscordUser, async ({
-  msg, params, flags, guildUser,
+  msg, params, flags, guildUser, category,
 }) => {
   const nonUsers = params.filter((param) => !(param instanceof DiscordUser));
-  const users = params.filter((param): param is DiscordUser => param instanceof DiscordUser);
+  const users = params
+    .filter((param): param is DiscordUser => param instanceof DiscordUser)
+    .filter((user) => user.id !== msg.author.id && user.id !== msg.client.user.id);
 
   if (msg.channel instanceof DMChannel || msg.channel instanceof NewsChannel) {
     msg.channel.send('Je kan alleen lobbies aanmaken op een server');
+  } else if (!category.isLobbyCategory) {
+    msg.channel.send('Je mag geen lobbies aanmaken in deze category');
   } else if (nonUsers.length) {
     msg.channel.send('Alleen user mentions mogelijk als argument(en)');
   } else {
@@ -240,7 +245,7 @@ router.onInit = async (client) => {
 
     tempChannels.forEach(async (tempChannel) => {
       const difference = now.getMinutes() - tempChannel.createdAt.getMinutes();
-      if (difference > 1) {
+      if (difference > 2) {
         const { guildUser } = tempChannel;
         const activeChannel = await activeTempChannel(guildUser, client);
 
@@ -254,5 +259,39 @@ router.onInit = async (client) => {
     });
   }, 1000 * 60);
 };
+
+router.use('category', async ({ category, params, msg }) => {
+  if (params.length === 0) {
+    if (category.isLobbyCategory) msg.channel.send('Je mag een lobbies aanmaken in deze category');
+    else msg.channel.send('Je mag geen lobbies aanmaken in deze category');
+    return;
+  }
+
+  if (params.length > 1) {
+    msg.channel.send('Ik verwachte maar één argument');
+    return;
+  }
+
+  if (typeof params[0] !== 'string') {
+    msg.channel.send('Ik verwachte een string als argument');
+    return;
+  }
+
+  if (!msg.member.hasPermission('ADMINISTRATOR')) {
+    msg.channel.send('Alleen een Edwin mag dit aanpassen');
+    return;
+  }
+
+  let isAllowed : boolean;
+
+  if (params[0].toLowerCase() === 'true' || params[0] === '1') isAllowed = true;
+  else if (params[0].toLowerCase() === 'false' || params[0] === '0') isAllowed = false;
+  else {
+    msg.channel.send(`\`${params[0]}\` is niet een argument, verwacht \`true\` of \`false\``);
+  }
+
+  const categoryRepo = getRepository(Category);
+  await categoryRepo.save({ ...category, isLobbyCategory: isAllowed });
+});
 
 export default router;
