@@ -231,4 +231,28 @@ router.use('remove', async ({ params, msg, guildUser }) => {
   }
 });
 
+router.onInit = async (client) => {
+  const tempRepo = getRepository(TempChannel);
+
+  setInterval(async () => {
+    const tempChannels = await tempRepo.find();
+    const now = new Date();
+
+    tempChannels.forEach(async (tempChannel) => {
+      const difference = now.getMinutes() - tempChannel.createdAt.getMinutes();
+      if (difference > 1) {
+        const { guildUser } = tempChannel;
+        const activeChannel = await activeTempChannel(guildUser, client);
+
+        if (!activeChannel) tempRepo.remove(tempChannel);
+        else if (!activeChannel.members.size) {
+          activeChannel.delete().then(() => {
+            tempRepo.remove(tempChannel);
+          }).catch(console.error);
+        }
+      }
+    });
+  }, 1000 * 60);
+};
+
 export default router;
