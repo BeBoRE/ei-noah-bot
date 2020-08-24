@@ -21,6 +21,6 @@ export class GuildUser {
   @ManyToOne(() => User, { eager: true })
   user: User;
 
-  @OneToOne(() => TempChannel, (temp) => temp.guildUser, { eager: true })
-  tempChannel?: TempChannel;
+  @OneToOne(() => TempChannel, (temp) => temp.guildUser)
+  tempChannel: Promise<TempChannel>;
 }

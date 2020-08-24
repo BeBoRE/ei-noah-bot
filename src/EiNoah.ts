@@ -1,11 +1,8 @@
 import {
   Client, User as DiscordUser, TextChannel, NewsChannel,
 } from 'discord.js';
-import { createConnection, getRepository } from 'typeorm';
-import { GuildUser } from './entity/GuildUser';
+import { createConnection } from 'typeorm';
 import Router, { Handler, messageParser } from './Router';
-import { User } from './entity/User';
-import { Guild } from './entity/Guild';
 
 class EiNoah {
   public readonly client = new Client();
@@ -33,8 +30,6 @@ class EiNoah {
       console.log('client online');
     });
 
-    this.router.initialize();
-
     this.client.on('message', async (msg) => {
       if (msg.author !== this.client.user && msg.content) {
         const splitted = msg.content.split(' ').filter((param) => param);
@@ -46,19 +41,6 @@ class EiNoah {
         if (splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention) {
           messageParser(msg).then((info) => {
             this.router.handle(info)
-              .then(async (newData) => {
-                if (newData instanceof GuildUser) {
-                  const guRepo = getRepository(GuildUser);
-                  const userRepo = getRepository(User);
-                  const guildRepo = getRepository(Guild);
-
-                  console.log(typeof newData);
-
-                  await guildRepo.save(newData.guild);
-                  await userRepo.save(newData.user);
-                  await guRepo.save(newData);
-                }
-              })
               .catch(async (err : Error) => {
                 if (process.env.NODE_ENV !== 'production') {
                 // Error message in development
@@ -89,7 +71,9 @@ class EiNoah {
       }
     });
 
-    this.client.login(this.token);
+    await this.client.login(this.token);
+
+    this.router.initialize(this.client);
   }
 }
 

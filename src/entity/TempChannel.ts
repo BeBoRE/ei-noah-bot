@@ -11,7 +11,7 @@ export class TempChannel {
   id: string;
 
   @JoinColumn()
-  @OneToOne(() => GuildUser, (gu) => gu.tempChannel)
+  @OneToOne(() => GuildUser, (gu) => gu.tempChannel, { eager: true })
   guildUser: GuildUser;
 
   @CreateDateColumn()

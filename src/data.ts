@@ -1,8 +1,8 @@
 import { User as DiscordUser, Guild as DiscordGuild } from 'discord.js';
 import { getRepository } from 'typeorm';
-import { GuildUser } from '../entity/GuildUser';
-import { User } from '../entity/User';
-import { Guild } from '../entity/Guild';
+import { GuildUser } from './entity/GuildUser';
+import { User } from './entity/User';
+import { Guild } from './entity/Guild';
 
 const getGuildData = async (guild : DiscordGuild) : Promise<Guild> => {
   const guildRepo = getRepository(Guild);
@@ -48,4 +48,16 @@ const getUserGuildData = async (user : DiscordUser, guild : DiscordGuild) : Prom
   return dbGuildUser;
 };
 
-export { getUserGuildData, getUserData, getGuildData };
+const saveUserData = async (guildUser : GuildUser) => {
+  const guRepo = getRepository(GuildUser);
+  const userRepo = getRepository(User);
+  const guildRepo = getRepository(Guild);
+
+  await guildRepo.save(guildUser.guild);
+  await userRepo.save(guildUser.user);
+  await guRepo.save(guildUser);
+};
+
+export {
+  getUserGuildData, getUserData, getGuildData, saveUserData,
+};

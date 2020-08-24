@@ -2,7 +2,7 @@ import {
   Message, User, Role, Channel, Client, DiscordAPIError,
 } from 'discord.js';
 import { GuildUser } from './entity/GuildUser';
-import { getUserGuildData } from './helper/data';
+import { getUserGuildData } from './data';
 
 export interface RouteInfo {
   msg: Message
@@ -13,7 +13,7 @@ export interface RouteInfo {
 }
 
 export interface Handler {
-  (info: RouteInfo) : void | GuildUser | Promise<GuildUser | void>
+  (info: RouteInfo) : void | Promise<void>
 }
 
 export interface RouteList {
@@ -30,6 +30,10 @@ function getUserFromMention(_mention : string, client : Client) {
 
     if (mention.startsWith('!')) {
       mention = mention.slice(1);
+    }
+
+    if (mention.startsWith('&')) {
+      return null;
     }
 
     return client.users.fetch(mention, true);
@@ -135,7 +139,7 @@ export default class Router {
         } else {
           try {
             const handling = handler(newInfo);
-            if (handling instanceof Promise) handling.then(resolve).catch(reject);
+            if (handling instanceof Promise) handling.catch(reject);
           } catch (err) {
             reject(err);
           }
@@ -144,17 +148,17 @@ export default class Router {
     });
   }
 
-  public initialize() {
+  public initialize(client : Client) {
     Object.entries(this.routes).forEach(([, route]) => {
       if (route instanceof Router) {
-        route.initialize();
+        route.initialize(client);
       }
 
-      if (this.typeOfUserRoute instanceof Router) this.typeOfUserRoute.initialize();
+      if (this.typeOfUserRoute instanceof Router) this.typeOfUserRoute.initialize(client);
     });
 
-    if (this.onInit) this.onInit();
+    if (this.onInit) this.onInit(client);
   }
 
-  public onInit ?: (() => void | Promise<void>) | void;
+  public onInit ?: ((client : Client) => void | Promise<void>) | void;
 }
