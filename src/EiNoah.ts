@@ -27,7 +27,7 @@ class EiNoah {
 
   public async start() {
     // Creëerd de database connectie
-    await createConnection();
+    await createConnection().catch((err) => { console.error(err); process.exit(-1); });
 
     this.client.on('ready', () => {
       console.log('client online');
@@ -51,6 +51,8 @@ class EiNoah {
                   const guRepo = getRepository(GuildUser);
                   const userRepo = getRepository(User);
                   const guildRepo = getRepository(Guild);
+
+                  console.log(typeof newData);
 
                   await guildRepo.save(newData.guild);
                   await userRepo.save(newData.user);
@@ -80,6 +82,8 @@ class EiNoah {
           }).catch((err) => {
             // Dit wordt gecallt wanneer de parsing faalt
             msg.channel.send(err.message);
+
+            console.error(err);
           });
         }
       }
