@@ -12,8 +12,6 @@ RUN npm ci --prod
 FROM node:lts-alpine
 WORKDIR /usr/src/app
 
-RUN npm ci --prod
-
 COPY --from=build /usr/src/app/package*.json ./
 COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/node_modules ./node_modules
