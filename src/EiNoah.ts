@@ -1,11 +1,8 @@
 import {
   Client, User as DiscordUser, TextChannel, NewsChannel,
 } from 'discord.js';
-import { createConnection, getRepository } from 'typeorm';
-import { GuildUser } from './entity/GuildUser';
+import { createConnection } from 'typeorm';
 import Router, { Handler, messageParser } from './Router';
-import { User } from './entity/User';
-import { Guild } from './entity/Guild';
 
 class EiNoah {
   public readonly client = new Client();
@@ -27,7 +24,7 @@ class EiNoah {
 
   public async start() {
     // Creëerd de database connectie
-    await createConnection();
+    await createConnection().catch((err) => { console.error(err); process.exit(-1); });
 
     this.client.on('ready', () => {
       console.log('client online');
@@ -42,19 +39,9 @@ class EiNoah {
         const botNickMention = `<@!${this.client.user.id}>`;
 
         if (splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention) {
+          msg.channel.startTyping();
           messageParser(msg).then((info) => {
             this.router.handle(info)
-              .then(async (newData) => {
-                if (newData instanceof GuildUser) {
-                  const guRepo = getRepository(GuildUser);
-                  const userRepo = getRepository(User);
-                  const guildRepo = getRepository(Guild);
-
-                  await guildRepo.save(newData.guild);
-                  await userRepo.save(newData.user);
-                  await guRepo.save(newData);
-                }
-              })
               .catch(async (err : Error) => {
                 if (process.env.NODE_ENV !== 'production') {
                 // Error message in development
@@ -74,16 +61,23 @@ class EiNoah {
                     }
                   }
                 }
+              })
+              .finally(() => {
+                msg.channel.stopTyping(true);
               });
           }).catch((err) => {
             // Dit wordt gecallt wanneer de parsing faalt
             msg.channel.send(err.message);
+
+            console.error(err);
           });
         }
       }
     });
 
-    this.client.login(this.token);
+    await this.client.login(this.token);
+
+    this.router.initialize(this.client);
   }
 }
 

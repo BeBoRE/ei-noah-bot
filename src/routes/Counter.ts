@@ -1,3 +1,4 @@
+import { saveUserData } from '../data';
 import Router from '../Router';
 
 const router = new Router();
@@ -12,15 +13,15 @@ router.use('add', async ({ msg, guildUser }) => {
 
   msg.channel.send(`${msg.author.tag} has counted to ${data.user.count}`);
 
-  // Return de aangepaste data
-  return data;
+  // Sla de nieuwe userdata op
+  await saveUserData(guildUser);
 });
 
 router.use('get', async ({ msg, guildUser }) => {
   msg.channel.send(`${msg.author.tag} is now on ${guildUser.user.count}`);
 
   // Geen data aangepast
-  // Niks teruggeven
+  // Niks opslaan
 });
 
 export default router;

@@ -1,19 +1,21 @@
 import {
-  Message, User, Role, Channel, Client, DiscordAPIError,
+  Message, User, Role, Channel, Client, DiscordAPIError, DMChannel,
 } from 'discord.js';
+import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
-import { getUserGuildData } from './helper/data';
+import { getUserGuildData, getCategoryData } from './data';
 
 export interface RouteInfo {
   msg: Message
   absoluteParams: Array<string | User | Role | Channel>
   params: Array<string | User | Role | Channel>
   flags: string[],
-  guildUser: GuildUser
+  guildUser: GuildUser,
+  category: Category
 }
 
 export interface Handler {
-  (info: RouteInfo) : void | GuildUser | Promise<GuildUser | unknown>
+  (info: RouteInfo) : void | Promise<void>
 }
 
 export interface RouteList {
@@ -32,6 +34,10 @@ function getUserFromMention(_mention : string, client : Client) {
       mention = mention.slice(1);
     }
 
+    if (mention.startsWith('&')) {
+      return null;
+    }
+
     return client.users.fetch(mention, true);
   }
   return null;
@@ -42,6 +48,8 @@ function isFlag(argument: string) {
 }
 
 export async function messageParser(msg : Message) {
+  if (msg.channel instanceof DMChannel) throw new Error('Ja ik steek je neer');
+
   const splitted = msg.content.split(' ').filter((param) => param);
 
   const flags = splitted.filter(isFlag).map((rawFlag) => rawFlag.substr(1, rawFlag.length - 1));
@@ -68,6 +76,7 @@ export async function messageParser(msg : Message) {
   }
 
   const guildUser = await getUserGuildData(msg.author, msg.guild);
+  const category = await getCategoryData(msg.channel.parent);
 
   const routeInfo : RouteInfo = {
     absoluteParams: resolved,
@@ -75,6 +84,7 @@ export async function messageParser(msg : Message) {
     msg,
     flags,
     guildUser,
+    category,
   };
 
   return routeInfo;
@@ -85,10 +95,13 @@ export default class Router {
 
   private typeOfUserRoute : Handler;
 
+  private nullRoute : Handler;
+
   // Met use geef je aan welk commando waarheen gaat
   public use(route : typeof User, using: Handler) : void
   public use(route : string, using: Router | Handler) : void
-  public use(route : any, using: any) : any {
+  public use(route : null, using : Handler) : void
+  public use(route : any, using: any) : void {
     if (route === User) {
       if (this.typeOfUserRoute) throw new Error('User route already exists');
 
@@ -99,41 +112,67 @@ export default class Router {
       if (this.routes[route]) throw new Error('This Route Already Exists');
 
       this.routes[route.toUpperCase()] = using;
+    } else if (route === null) {
+      this.nullRoute = using;
     }
   }
 
   // INTERNAL
   // Zorgt dat de commando's op de goede plek terecht komen
-  public handle(info: RouteInfo) : Promise<void | GuildUser> {
+  public handle(info: RouteInfo) : Promise<void> {
     return new Promise((resolve, reject) => {
       const currentRoute = info.params[0];
 
+      let handler : Router | Handler;
+      let newInfo : RouteInfo = info;
+
       if (typeof currentRoute !== 'string') {
         if (currentRoute instanceof User) {
-          this.typeOfUserRoute(info);
+          handler = this.typeOfUserRoute;
+        } if (typeof currentRoute === 'undefined') {
+          handler = this.nullRoute;
         }
       } else {
-        const handler = this.routes[currentRoute.toUpperCase()];
+        const nameHandler = this.routes[currentRoute.toUpperCase()];
 
-        if (!handler) {
+        if (!nameHandler) {
           info.msg.channel.send(`Route \`${info.absoluteParams.join(' ')}\` does not exist`);
         } else {
           const newParams = [...info.params];
           newParams.shift();
 
-          const newInfo : RouteInfo = { ...info, params: newParams };
+          newInfo = { ...info, params: newParams };
+          handler = nameHandler;
+        }
+      }
 
-          if (handler instanceof Router) handler.handle(newInfo).then(resolve).catch(reject);
-          else {
-            try {
-              const handling = handler(newInfo);
-              if (handling instanceof Promise) handling.then(resolve).catch(reject);
-            } catch (err) {
-              reject(err);
-            }
+      if (handler) {
+        if (handler instanceof Router) {
+          handler.handle(newInfo).then(resolve).catch(reject);
+        } else {
+          try {
+            const handling = handler(newInfo);
+            if (handling instanceof Promise) handling.then(resolve).catch(reject);
+            else resolve();
+          } catch (err) {
+            reject(err);
           }
         }
       }
     });
   }
+
+  public initialize(client : Client) {
+    Object.entries(this.routes).forEach(([, route]) => {
+      if (route instanceof Router) {
+        route.initialize(client);
+      }
+
+      if (this.typeOfUserRoute instanceof Router) this.typeOfUserRoute.initialize(client);
+    });
+
+    if (this.onInit) this.onInit(client);
+  }
+
+  public onInit ?: ((client : Client) => void | Promise<void>) | void;
 }

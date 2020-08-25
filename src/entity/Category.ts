@@ -1,5 +1,5 @@
 import {
-  Entity, PrimaryColumn,
+  Entity, PrimaryColumn, Column,
 } from 'typeorm';
 
 @Entity()
@@ -7,4 +7,7 @@ import {
 export class Category {
   @PrimaryColumn()
   id: string;
+
+  @Column()
+  isLobbyCategory: boolean = false;
 }
