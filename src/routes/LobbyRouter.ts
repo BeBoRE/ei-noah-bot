@@ -9,7 +9,7 @@ import {
   VoiceChannel,
   DiscordAPIError,
 } from 'discord.js';
-import { getRepository } from 'typeorm';
+import { getRepository, FindConditions } from 'typeorm';
 import { Category } from '../entity/Category';
 import { saveUserData, getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
@@ -315,7 +315,7 @@ router.onInit = async (client) => {
 
     tempChannels.forEach(async (tempChannel) => {
       const difference = now.getMinutes() - tempChannel.createdAt.getMinutes();
-      if (difference >= 2) {
+      if (difference >= 0) {
         const { guildUser } = tempChannel;
         const activeChannel = await activeTempChannel(guildUser, client);
 
@@ -325,32 +325,36 @@ router.onInit = async (client) => {
             tempRepo.remove(tempChannel);
           }).catch(console.error);
         } else if (!activeChannel.members.has(tempChannel.guildUser.user.id)) {
-          const userTempChannels = await tempRepo.find({
-            where: {
-              guildUser:
-              {
-                user:
-                { id: [activeChannel.members.map((member) => member.id)] },
-              },
-            },
-          });
+          const guildUsers = await Promise.all(activeChannel.members
+            .map((member) => getUserGuildData(member.user, activeChannel.guild)));
+
+          const tempsOfUsersNoUser = (await Promise.all(guildUsers.map((gu) => gu.tempChannel)))
+            .filter((temp) => temp);
+
+          const tempsOfUsers = await tempRepo.findByIds(tempsOfUsersNoUser.map((temp) => temp.id));
 
           const newOwner = activeChannel.members
             .sort((member1, member2) => member1.joinedTimestamp - member2.joinedTimestamp)
-            .filter((member) => !(userTempChannels
+            .filter((member) => !(tempsOfUsers
               .some((temp) => temp.guildUser.user.id === member.id)
             ))
             .first();
 
-          const updatedTempChannel = tempChannel;
-          updatedTempChannel.guildUser = await getUserGuildData(newOwner.user, activeChannel.guild);
+          if (newOwner) {
+            const updatedTemp = tempChannel;
+            const newOwnerGuildUser = await getUserGuildData(newOwner.user, activeChannel.guild);
+            updatedTemp.guildUser = newOwnerGuildUser;
 
-          const muted = activeChannel.permissionOverwrites.get(activeChannel.guild.id).allow.has('CONNECT');
+            saveUserData(newOwnerGuildUser)
+              .then(() => tempRepo.save(updatedTemp))
+              .then(() => {
+                const muted = activeChannel.permissionOverwrites.get(activeChannel.guild.id).allow.has('CONNECT');
+                activeChannel.setName(generateLobbyName(muted, newOwner.user));
 
-          activeChannel.setName(generateLobbyName(muted, newOwner.user));
-
-          await tempRepo.save(updatedTempChannel).catch(console.error);
-          newOwner.send('Jij bent nu owner van de lobby');
+                newOwner.send('Jij bent nu owner van de lobby');
+              })
+              .catch(console.error);
+          }
         }
       }
     });
