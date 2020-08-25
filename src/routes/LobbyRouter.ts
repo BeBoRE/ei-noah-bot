@@ -148,7 +148,7 @@ router.use('add', async ({ params, msg, guildUser }) => {
   const activeChannel = await activeTempChannel(guildUser, msg.client);
 
   if (!activeChannel) {
-    msg.channel.send('Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`');
+    msg.channel.send('Je hebt nog geen lobby aangemaakt\nMaak deze aan met `ei lobby create`');
     return;
   }
 
@@ -241,7 +241,7 @@ router.use('remove', async ({ params, msg, guildUser }) => {
 
     msg.channel.send(message);
   } else {
-    msg.channel.send('Alle gegeven personen zijn verwijderd');
+    msg.channel.send('Alle gegeven personen zijn uit de lobby verwijderd');
   }
 });
 
@@ -252,18 +252,18 @@ router.use('category', async ({ category, params, msg }) => {
   }
 
   if (params.length === 0) {
-    if (category && category.isLobbyCategory) msg.channel.send('Je mag een lobbies aanmaken in deze categorie');
+    if (category && category.isLobbyCategory) msg.channel.send('Je mag lobbies aanmaken in deze categorie');
     else msg.channel.send('Je mag geen lobbies aanmaken in deze categorie');
     return;
   }
 
   if (params.length > 1) {
-    msg.channel.send('Ik verwachte maar één argument');
+    msg.channel.send('Ik verwacht maar één argument');
     return;
   }
 
   if (typeof params[0] !== 'string') {
-    msg.channel.send('Ik verwachte een string als argument');
+    msg.channel.send('Ik verwacht een string als argument');
     return;
   }
 
@@ -294,11 +294,11 @@ router.use('category', async ({ category, params, msg }) => {
 router.use(null, ({ msg }) => {
   let message = '**Maak een tijdelijke voice kanaal aan**';
   message += '\nMogelijke Commandos:';
-  message += '\n`ei lobby create [@user ...]`: Maak een lobby aan voor de gementionde users';
+  message += '\n`ei lobby create [@user ...]`: Maak een lobby aan en laat de gementionde user(s) toe';
   message += '\n`ei lobby create [@user ...] -nospeak`: Iedereen mag joinen, maar alleen toegestaande mensen mogen spreken';
   message += '\n`ei lobby add @user ...`: Laat user(s) toe aan de lobby';
   message += '\n`ei lobby remove [@user ...]`: Verwijder user(s) uit de lobby';
-  message += '\n`*Admin* ei lobby category true/false`: Laat users toe om lobbies aan te maken in deze categorie';
+  message += '\n`*Admin* ei lobby category true/false`: Sta users toe lobbies aan te maken in deze categorie';
   msg.channel.send(message);
 });
 
