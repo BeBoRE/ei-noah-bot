@@ -95,10 +95,13 @@ export default class Router {
 
   private typeOfUserRoute : Handler;
 
+  private nullRoute : Handler;
+
   // Met use geef je aan welk commando waarheen gaat
   public use(route : typeof User, using: Handler) : void
   public use(route : string, using: Router | Handler) : void
-  public use(route : any, using: any) : any {
+  public use(route : null, using : Handler) : void
+  public use(route : any, using: any) : void {
     if (route === User) {
       if (this.typeOfUserRoute) throw new Error('User route already exists');
 
@@ -109,6 +112,8 @@ export default class Router {
       if (this.routes[route]) throw new Error('This Route Already Exists');
 
       this.routes[route.toUpperCase()] = using;
+    } else if (route === null) {
+      this.nullRoute = using;
     }
   }
 
@@ -124,6 +129,8 @@ export default class Router {
       if (typeof currentRoute !== 'string') {
         if (currentRoute instanceof User) {
           handler = this.typeOfUserRoute;
+        } if (typeof currentRoute === 'undefined') {
+          handler = this.nullRoute;
         }
       } else {
         const nameHandler = this.routes[currentRoute.toUpperCase()];

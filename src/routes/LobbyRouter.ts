@@ -10,14 +10,14 @@ import {
   DiscordAPIError,
 } from 'discord.js';
 import { getRepository } from 'typeorm';
+import EiNoah from 'EiNoah';
 import { Category } from '../entity/Category';
 import { saveUserData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
 import { TempChannel } from '../entity/TempChannel';
-import Router from '../Router';
+import Router, { Handler } from '../Router';
 
 const router = new Router();
-const createRouter = new Router();
 
 interface TempChannelOptions {
   muted?: boolean
@@ -83,7 +83,7 @@ async function activeTempChannel(guildUser : GuildUser, client : Client) : Promi
   return undefined;
 }
 
-createRouter.use(DiscordUser, async ({
+const createHandler : Handler = async ({
   msg, params, flags, guildUser, category,
 }) => {
   const nonUsers = params.filter((param) => !(param instanceof DiscordUser));
@@ -114,15 +114,23 @@ createRouter.use(DiscordUser, async ({
       try {
         await saveUserData(guildUser);
         await tempRep.save(tempChannel);
+
+        if (users.length > 0) msg.channel.send(`Lobby aangemaakt voor ${users.map((user) => user.username).join(', ')}`);
+        else msg.channel.send('Lobby aangemaakt');
       } catch (err) {
         createdChannel.delete();
         throw err;
       }
     }
   }
-});
+};
 
+// ei lobby create ...
+const createRouter = new Router();
 router.use('create', createRouter);
+
+createRouter.use(DiscordUser, createHandler);
+createRouter.use(null, createHandler);
 
 router.use('add', async ({ params, msg, guildUser }) => {
   if (msg.channel instanceof DMChannel) {
@@ -236,30 +244,6 @@ router.use('remove', async ({ params, msg, guildUser }) => {
   }
 });
 
-router.onInit = async (client) => {
-  const tempRepo = getRepository(TempChannel);
-
-  setInterval(async () => {
-    const tempChannels = await tempRepo.find();
-    const now = new Date();
-
-    tempChannels.forEach(async (tempChannel) => {
-      const difference = now.getMinutes() - tempChannel.createdAt.getMinutes();
-      if (difference > 2) {
-        const { guildUser } = tempChannel;
-        const activeChannel = await activeTempChannel(guildUser, client);
-
-        if (!activeChannel) tempRepo.remove(tempChannel);
-        else if (!activeChannel.members.size) {
-          activeChannel.delete().then(() => {
-            tempRepo.remove(tempChannel);
-          }).catch(console.error);
-        }
-      }
-    });
-  }, 1000 * 60);
-};
-
 router.use('category', async ({ category, params, msg }) => {
   if (params.length === 0) {
     if (category.isLobbyCategory) msg.channel.send('Je mag een lobbies aanmaken in deze category');
@@ -290,8 +274,45 @@ router.use('category', async ({ category, params, msg }) => {
     msg.channel.send(`\`${params[0]}\` is niet een argument, verwacht \`true\` of \`false\``);
   }
 
+  msg.channel.send(isAllowed ? 'Users kunnen nu lobbies aanmaken in deze category' : 'User kunnen nu geen lobbies meer aanmaken in deze category');
+
   const categoryRepo = getRepository(Category);
   await categoryRepo.save({ ...category, isLobbyCategory: isAllowed });
 });
+
+router.use(null, ({ msg }) => {
+  let message = '**Maak een tijdelijke voice kanaal aan**';
+  message += '\nMogelijke Commandos:';
+  message += '\n`ei lobby create [@user ...]`: Maak een lobby aan voor de gementionde users';
+  message += '\n`ei lobby create [@user ...] -nospeak`: Iedereen mag joinen, maar alleen toegestaande mensen mogen spreken';
+  message += '\n`ei lobby add @user ...`: Laat user(s) toe aan de lobby';
+  message += '\n`ei lobby remove [@user ...]`: Verwijder user(s) uit de lobby';
+  message += '\n`*Admin* ei lobby category true/false`: Laat users toe om lobbies aan te maken in deze categorie';
+  msg.channel.send(message);
+});
+
+router.onInit = async (client) => {
+  const tempRepo = getRepository(TempChannel);
+
+  setInterval(async () => {
+    const tempChannels = await tempRepo.find();
+    const now = new Date();
+
+    tempChannels.forEach(async (tempChannel) => {
+      const difference = now.getMinutes() - tempChannel.createdAt.getMinutes();
+      if (difference >= 2) {
+        const { guildUser } = tempChannel;
+        const activeChannel = await activeTempChannel(guildUser, client);
+
+        if (!activeChannel) tempRepo.remove(tempChannel);
+        else if (!activeChannel.members.size) {
+          activeChannel.delete().then(() => {
+            tempRepo.remove(tempChannel);
+          }).catch(console.error);
+        }
+      }
+    });
+  }, 1000 * 60);
+};
 
 export default router;

@@ -8,6 +8,6 @@ export class Category {
   @PrimaryColumn()
   id: string;
 
-  @Column({ default: true })
-  isLobbyCategory: boolean;
+  @Column()
+  isLobbyCategory: boolean = false;
 }
