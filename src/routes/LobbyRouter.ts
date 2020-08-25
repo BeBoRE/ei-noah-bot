@@ -10,7 +10,6 @@ import {
   DiscordAPIError,
 } from 'discord.js';
 import { getRepository } from 'typeorm';
-import EiNoah from 'EiNoah';
 import { Category } from '../entity/Category';
 import { saveUserData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
@@ -171,6 +170,8 @@ router.use('add', async ({ params, msg, guildUser }) => {
       });
 
       allowedUsers.push(user);
+
+      activeChannel.members.get(user.id)?.voice.setMute(false);
     }
   });
 
