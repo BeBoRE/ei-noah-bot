@@ -315,7 +315,7 @@ router.onInit = async (client) => {
 
     tempChannels.forEach(async (tempChannel) => {
       const difference = now.getMinutes() - tempChannel.createdAt.getMinutes();
-      if (difference >= 0) {
+      if (difference >= 2) {
         const { guildUser } = tempChannel;
         const activeChannel = await activeTempChannel(guildUser, client);
 
@@ -358,7 +358,7 @@ router.onInit = async (client) => {
         }
       }
     });
-  }, 1000 * 15);
+  }, 1000 * 30);
 };
 
 export default router;
