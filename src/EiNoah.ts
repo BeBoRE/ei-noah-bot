@@ -4,6 +4,15 @@ import {
 import { createConnection } from 'typeorm';
 import Router, { Handler, messageParser } from './Router';
 
+const errorToChannel = async (channelId : string, client : Client, err : Error) => {
+  const errorChannel = await client.channels.fetch(channelId);
+  if (errorChannel instanceof TextChannel
+     || errorChannel instanceof NewsChannel
+  ) {
+    errorChannel.send(`**${err?.name}**\n\`\`\`${err?.stack}\`\`\``);
+  }
+};
+
 class EiNoah {
   public readonly client = new Client();
 
@@ -45,31 +54,27 @@ class EiNoah {
               .catch(async (err : Error) => {
                 if (process.env.NODE_ENV !== 'production') {
                 // Error message in development
-                  msg.channel.send(`**${err?.name}**\n\`\`\`${err?.stack}\`\`\``);
+                  errorToChannel(msg.channel.id, msg.client, err);
                 } else {
                 // Error message in productie
                   msg.channel.send('Je sloopt de hele boel hier!\nGeen idee wat ik hiermee moet doen D:');
-
-                  // Stuurt de stacktrace naar de developer's textkanaal
-                  const errorChannelId = process.env.ERROR_CHANNEL;
-                  if (errorChannelId) {
-                    const errorChannel = await this.client.channels.fetch(errorChannelId);
-                    if (errorChannel instanceof TextChannel
-                     || errorChannel instanceof NewsChannel
-                    ) {
-                      errorChannel.send(`**${err?.name}**\n\`\`\`${err?.stack}\`\`\``);
-                    }
+                  if (process.env.ERROR_CHANNEL) {
+                    errorToChannel(process.env.ERROR_CHANNEL, msg.client, err);
                   }
                 }
-              })
-              .finally(() => {
-                msg.channel.stopTyping(true);
               });
           }).catch((err) => {
             // Dit wordt gecallt wanneer de parsing faalt
-            msg.channel.send(err.message);
+            if (process.env.NODE_ENV !== 'production') {
+              errorToChannel(msg.channel.id, msg.client, err);
+            } else if (process.env.ERROR_CHANNEL) {
+              msg.channel.send('Even normaal doen!');
+              errorToChannel(process.env.ERROR_CHANNEL, msg.client, err);
+            }
 
             console.error(err);
+          }).finally(() => {
+            msg.channel.stopTyping(true);
           });
         }
       }
