@@ -1,21 +1,26 @@
 import {
-  Entity, ManyToOne, PrimaryColumn,
+  Entity, ManyToOne, PrimaryColumn, OneToOne,
 } from 'typeorm';
 import { User } from './User';
 import { Guild } from './Guild';
+// eslint-disable-next-line import/no-cycle
+import { TempChannel } from './TempChannel';
 
 @Entity()
 // eslint-disable-next-line import/prefer-default-export
 export class GuildUser {
   @PrimaryColumn()
-  guildId: string;
+  private guildId: string;
 
   @ManyToOne(() => Guild, { eager: true })
   guild: Guild;
 
   @PrimaryColumn()
-  userId: string;
+  private userId: string;
 
   @ManyToOne(() => User, { eager: true })
   user: User;
+
+  @OneToOne(() => TempChannel, (temp) => temp.guildUser)
+  tempChannel: Promise<TempChannel>;
 }

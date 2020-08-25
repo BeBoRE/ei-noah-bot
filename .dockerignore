@@ -1,0 +1,10 @@
+.vscode/
+node_modules
+dist
+*.sqlite
+*.sql
+*.db
+*.sqlite-journal
+.gitattributes
+.gitignore
+LICENSE

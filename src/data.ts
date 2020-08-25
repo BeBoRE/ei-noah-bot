@@ -1,8 +1,9 @@
-import { User as DiscordUser, Guild as DiscordGuild } from 'discord.js';
+import { User as DiscordUser, Guild as DiscordGuild, CategoryChannel } from 'discord.js';
 import { getRepository } from 'typeorm';
-import { GuildUser } from '../entity/GuildUser';
-import { User } from '../entity/User';
-import { Guild } from '../entity/Guild';
+import { Category } from './entity/Category';
+import { GuildUser } from './entity/GuildUser';
+import { User } from './entity/User';
+import { Guild } from './entity/Guild';
 
 const getGuildData = async (guild : DiscordGuild) : Promise<Guild> => {
   const guildRepo = getRepository(Guild);
@@ -48,4 +49,26 @@ const getUserGuildData = async (user : DiscordUser, guild : DiscordGuild) : Prom
   return dbGuildUser;
 };
 
-export { getUserGuildData, getUserData, getGuildData };
+const saveUserData = async (guildUser : GuildUser) => {
+  const guRepo = getRepository(GuildUser);
+  const userRepo = getRepository(User);
+  const guildRepo = getRepository(Guild);
+
+  await guildRepo.save(guildUser.guild);
+  await userRepo.save(guildUser.user);
+  await guRepo.save(guildUser);
+};
+
+const getCategoryData = async (category : CategoryChannel) : Promise<Category> => {
+  if (!category) return null;
+
+  const categoryRepo = getRepository(Category);
+  const dbCategory = await categoryRepo.findOne(category.id);
+
+  if (dbCategory) return dbCategory;
+  return categoryRepo.create({ id: category.id });
+};
+
+export {
+  getUserGuildData, getUserData, getGuildData, saveUserData, getCategoryData,
+};
