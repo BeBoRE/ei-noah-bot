@@ -92,7 +92,7 @@ const createHandler : Handler = async ({
 
   if (msg.channel instanceof DMChannel || msg.channel instanceof NewsChannel) {
     msg.channel.send('Je kan alleen lobbies aanmaken op een server');
-  } else if (!category.isLobbyCategory) {
+  } else if (!category || !category.isLobbyCategory) {
     msg.channel.send('Je mag geen lobbies aanmaken in deze category');
   } else if (nonUsers.length) {
     msg.channel.send('Alleen user mentions mogelijk als argument(en)');
@@ -246,9 +246,14 @@ router.use('remove', async ({ params, msg, guildUser }) => {
 });
 
 router.use('category', async ({ category, params, msg }) => {
+  if (msg.channel instanceof DMChannel) {
+    msg.channel.send('Je kan dit commando alleen op servers gebruiken');
+    return;
+  }
+
   if (params.length === 0) {
-    if (category.isLobbyCategory) msg.channel.send('Je mag een lobbies aanmaken in deze category');
-    else msg.channel.send('Je mag geen lobbies aanmaken in deze category');
+    if (category && category.isLobbyCategory) msg.channel.send('Je mag een lobbies aanmaken in deze categorie');
+    else msg.channel.send('Je mag geen lobbies aanmaken in deze categorie');
     return;
   }
 
@@ -264,6 +269,11 @@ router.use('category', async ({ category, params, msg }) => {
 
   if (!msg.member.hasPermission('ADMINISTRATOR')) {
     msg.channel.send('Alleen een Edwin mag dit aanpassen');
+    return;
+  }
+
+  if (!category) {
+    msg.channel.send('Dit kanaal zit niet in een categorie');
     return;
   }
 

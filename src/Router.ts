@@ -11,7 +11,7 @@ export interface RouteInfo {
   params: Array<string | User | Role | Channel>
   flags: string[],
   guildUser: GuildUser,
-  category: Category
+  category?: Category
 }
 
 export interface Handler {

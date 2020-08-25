@@ -59,13 +59,14 @@ const saveUserData = async (guildUser : GuildUser) => {
   await guRepo.save(guildUser);
 };
 
-const getCategoryData = async ({ id } : CategoryChannel) => {
+const getCategoryData = async (category : CategoryChannel) : Promise<Category> => {
+  if (!category) return null;
+
   const categoryRepo = getRepository(Category);
-  const dbCategory = await categoryRepo.findOne(id);
+  const dbCategory = await categoryRepo.findOne(category.id);
 
   if (dbCategory) return dbCategory;
-
-  return categoryRepo.create({ id });
+  return categoryRepo.create({ id: category.id });
 };
 
 export {
