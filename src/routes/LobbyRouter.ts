@@ -9,9 +9,9 @@ import {
   VoiceChannel,
   DiscordAPIError,
 } from 'discord.js';
-import { getRepository } from 'typeorm';
+import { getRepository, FindConditions } from 'typeorm';
 import { Category } from '../entity/Category';
-import { saveUserData } from '../data';
+import { saveUserData, getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
 import { TempChannel } from '../entity/TempChannel';
 import Router, { Handler } from '../Router';
@@ -20,6 +20,10 @@ const router = new Router();
 
 interface TempChannelOptions {
   muted?: boolean
+}
+
+function generateLobbyName(muted : boolean, owner : DiscordUser) {
+  return `${muted ? '🔇' : '🔉'} ${owner.username}'s Lobby`;
 }
 
 async function createTempChannel(
@@ -55,7 +59,7 @@ async function createTempChannel(
     deny: [Permissions.FLAGS.SPEAK, !muted ? Permissions.FLAGS.CONNECT : undefined],
   });
 
-  return guild.channels.create(`${muted ? '🔇' : '🔉'} ${owner.username}'s Lobby`, {
+  return guild.channels.create(generateLobbyName(muted, owner), {
     type: 'voice',
     permissionOverwrites,
     parent,
@@ -320,10 +324,41 @@ router.onInit = async (client) => {
           activeChannel.delete().then(() => {
             tempRepo.remove(tempChannel);
           }).catch(console.error);
+        } else if (!activeChannel.members.has(tempChannel.guildUser.user.id)) {
+          const guildUsers = await Promise.all(activeChannel.members
+            .map((member) => getUserGuildData(member.user, activeChannel.guild)));
+
+          const tempsOfUsersNoUser = (await Promise.all(guildUsers.map((gu) => gu.tempChannel)))
+            .filter((temp) => temp);
+
+          const tempsOfUsers = await tempRepo.findByIds(tempsOfUsersNoUser.map((temp) => temp.id));
+
+          const newOwner = activeChannel.members
+            .sort((member1, member2) => member1.joinedTimestamp - member2.joinedTimestamp)
+            .filter((member) => !(tempsOfUsers
+              .some((temp) => temp.guildUser.user.id === member.id)
+            ))
+            .first();
+
+          if (newOwner) {
+            const updatedTemp = tempChannel;
+            const newOwnerGuildUser = await getUserGuildData(newOwner.user, activeChannel.guild);
+            updatedTemp.guildUser = newOwnerGuildUser;
+
+            saveUserData(newOwnerGuildUser)
+              .then(() => tempRepo.save(updatedTemp))
+              .then(() => {
+                const muted = activeChannel.permissionOverwrites.get(activeChannel.guild.id).allow.has('CONNECT');
+                activeChannel.setName(generateLobbyName(muted, newOwner.user));
+
+                newOwner.send('Jij bent nu owner van de lobby');
+              })
+              .catch(console.error);
+          }
         }
       }
     });
-  }, 1000 * 60);
+  }, 1000 * 30);
 };
 
 export default router;
