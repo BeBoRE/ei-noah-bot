@@ -55,7 +55,7 @@ async function createTempChannel(
     deny: [Permissions.FLAGS.SPEAK, !muted ? Permissions.FLAGS.CONNECT : undefined],
   });
 
-  return guild.channels.create(`${owner.username}'s Lobby`, {
+  return guild.channels.create(`${muted ? '🔇' : '🔉'} ${owner.username}'s Lobby`, {
     type: 'voice',
     permissionOverwrites,
     parent,
