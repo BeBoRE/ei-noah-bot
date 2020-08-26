@@ -10,15 +10,15 @@ jobs:
 
     steps:
       - name: TypeScript Compiler
-      run: |
-        npm i
-        npx tsc
+        run: |
+          npm i
+          npx tsc
   
   linting:
     runs-on: ubuntu-latest
 
     steps: 
       - name: Eslint
-      run: |
-        npm i
-        npx eslint .
+        run: |
+          npm i
+          npx eslint .
