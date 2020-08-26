@@ -1,4 +1,4 @@
-Name: Linting
+name: Linting
 
 on:
   # Run tests for any PRs.
