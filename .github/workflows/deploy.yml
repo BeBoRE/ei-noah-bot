@@ -21,8 +21,8 @@ jobs:
     name: Publish Changelog
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Get Body en Subject
-        uses: actions/checkout@v2
         run: |
           echo ::set-env name=SUBJECT::$(git log --format=%s -n 1)
           echo ::set-env name=BODY::$(git log --format=%b -n 1)
