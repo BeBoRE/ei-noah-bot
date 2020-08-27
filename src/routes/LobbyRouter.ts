@@ -466,7 +466,7 @@ const helpHanlder : Handler = ({ msg }) => {
   message += '\n`ei lobby create [@mention ...]`: Maak een lobby aan en laat alleen de toegestaande mensen joinen';
   message += '\n`ei lobby create [@mention ...] -nospeak`: Iedereen mag joinen, maar alleen toegestaande mensen mogen spreken';
   message += '\n`ei lobby add @mention ...`: Laat user(s) toe aan de lobby';
-  message += '\n`ei lobby remove [@user ...]`: Verwijder user(s) uit de lobby';
+  message += '\n`ei lobby remove [@mention ...]`: Verwijder user(s)/ role(s) uit de lobby';
   message += '\n`ei lobby type [nospeak/ nojoin]`: Verander het type van de lobby';
   message += '\n`*Admin* ei lobby category true/ false`: Sta users toe lobbies aan te maken in deze categorie';
   message += '\n`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt';
