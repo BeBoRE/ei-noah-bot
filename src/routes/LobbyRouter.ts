@@ -8,8 +8,9 @@ import {
   Client,
   VoiceChannel,
   DiscordAPIError,
+  Constants,
 } from 'discord.js';
-import { getRepository, FindConditions } from 'typeorm';
+import { getRepository } from 'typeorm';
 import { Category } from '../entity/Category';
 import { saveUserData, getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
@@ -30,6 +31,7 @@ async function createTempChannel(
   guild: DiscordGuild, parent: string,
   users: DiscordUser[], owner: DiscordUser,
   bot: DiscordUser,
+  bitrate: number,
   { muted }: TempChannelOptions,
 ) {
   const userSnowflakes = [...new Set([...users.map((user) => user.id), owner.id])];
@@ -63,6 +65,7 @@ async function createTempChannel(
     type: 'voice',
     permissionOverwrites,
     parent,
+    bitrate,
   });
 }
 
@@ -106,23 +109,33 @@ const createHandler : Handler = async ({
     if (activeChannel) {
       msg.channel.send('Je hebt al een lobby');
     } else {
-      const createdChannel = await createTempChannel(msg.guild, msg.channel.parentID, users, msg.author, msg.client.user, { muted: flags.some((a) => a === 'nospeak') });
-
-      const tempRep = getRepository(TempChannel);
-
-      await tempRep.delete({ guildUser });
-
-      const tempChannel = tempRep.create({ guildUser, id: createdChannel.id });
-
       try {
-        await saveUserData(guildUser);
-        await tempRep.save(tempChannel);
+        const createdChannel = await createTempChannel(msg.guild, msg.channel.parentID, users, msg.author, msg.client.user, guildUser.guild.bitrate, { muted: flags.some((a) => a === 'nospeak') });
 
-        if (users.length > 0) msg.channel.send(`Lobby aangemaakt voor ${users.map((user) => user.username).join(', ')}`);
-        else msg.channel.send('Lobby aangemaakt');
+        const tempRep = getRepository(TempChannel);
+
+        await tempRep.delete({ guildUser });
+
+        const tempChannel = tempRep.create({ guildUser, id: createdChannel.id });
+
+        try {
+          await saveUserData(guildUser);
+          await tempRep.save(tempChannel);
+
+          if (users.length > 0) msg.channel.send(`Lobby aangemaakt voor ${users.map((user) => user.username).join(', ')}`);
+          else msg.channel.send('Lobby aangemaakt');
+        } catch (err) {
+          createdChannel.delete();
+          throw err;
+        }
       } catch (err) {
-        createdChannel.delete();
-        throw err;
+        if (err instanceof DiscordAPIError) {
+          if (err.code === Constants.APIErrors.INVALID_FORM_BODY) {
+            msg.channel.send('Neem contact op met de server admins, waarschijnlijk staat de bitrate voor de bot te hoog');
+          }
+        } else {
+          msg.channel.send('Onverwachte error');
+        }
       }
     }
   }
@@ -249,6 +262,65 @@ router.use('remove', async ({ params, msg, guildUser }) => {
   }
 });
 
+router.use('type', async ({ params, msg, guildUser }) => {
+  if (msg.channel instanceof DMChannel) {
+    msg.channel.send('Dit commando kan alleen op servers worden gebruikt');
+    return;
+  }
+  const activeChannel = await activeTempChannel(guildUser, msg.client);
+
+  if (!activeChannel) {
+    msg.channel.send('Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`');
+    return;
+  }
+
+  if (activeChannel.parentID !== msg.channel.parentID) {
+    msg.channel.send('Je lobby is aanwezig in een andere categorie dan deze');
+    return;
+  }
+
+  if (params.length > 1) {
+    msg.channel.send('Ik verwachte niet meer dan **één** argument');
+    return;
+  }
+
+  const muted = !activeChannel.permissionOverwrites.get(msg.guild.id).deny.has('CONNECT');
+  if (params.length !== 1) {
+    msg.channel.send(muted ? 'Je kanaal is van type `nospeak`\nAndere type is `nojoin`' : 'Je kanaal is van type `nojoin`\nAndere type is `nospeak`');
+  } else if (params.length === 1) {
+    if (typeof params[0] !== 'string') {
+      msg.channel.send('Ik verwachte hier geen **mention**');
+      return;
+    }
+
+    if (params[0] === 'nospeak') {
+      if (muted) {
+        msg.channel.send('Je lobby was al een **nospeak** lobby');
+        return;
+      }
+
+      activeChannel.setName(generateLobbyName(!muted, msg.author));
+      activeChannel.updateOverwrite(msg.guild.id, { CONNECT: null });
+      msg.channel.send('Je kanaal is veranderd naar een **nospeak** lobby');
+      return;
+    }
+
+    if (params[0] === 'nojoin') {
+      if (!muted) {
+        msg.channel.send('Je lobby was al een **nojoin** lobby');
+        return;
+      }
+
+      activeChannel.members.filter((member) => !activeChannel.permissionOverwrites.has(member.id))
+        .forEach((member) => member.voice.setChannel(null));
+
+      activeChannel.setName(generateLobbyName(!muted, msg.author));
+      activeChannel.updateOverwrite(msg.guild.id, { CONNECT: false });
+      msg.channel.send('Je kanaal is veranderd naar een **nojoin** lobby');
+    }
+  }
+});
+
 router.use('category', async ({ category, params, msg }) => {
   if (msg.channel instanceof DMChannel) {
     msg.channel.send('Je kan dit commando alleen op servers gebruiken');
@@ -295,16 +367,69 @@ router.use('category', async ({ category, params, msg }) => {
   await categoryRepo.save({ ...category, isLobbyCategory: isAllowed });
 });
 
-router.use(null, ({ msg }) => {
+router.use('bitrate', async ({ msg, guildUser, params }) => {
+  if (msg.channel instanceof DMChannel) {
+    msg.channel.send('Je kan dit commando alleen op servers gebruiken');
+    return;
+  }
+
+  if (params.length === 0) {
+    msg.channel.send(`Lobby bitrate is ${guildUser.guild.bitrate}`);
+    return;
+  }
+
+  if (params.length > 1) {
+    msg.channel.send('Ik verwacht maar één argument');
+    return;
+  }
+
+  if (typeof params[0] !== 'string') {
+    msg.channel.send('Ik verwacht een string als argument');
+    return;
+  }
+
+  if (!msg.member.hasPermission('ADMINISTRATOR')) {
+    msg.channel.send('Alleen een Edwin mag dit aanpassen');
+    return;
+  }
+
+  const newBitrate = Number(params[0]);
+
+  if (Number.isNaN(newBitrate)) {
+    msg.channel.send(`${params[0]} is niet een nummer`);
+    return;
+  }
+
+  if (newBitrate > 128000) {
+    msg.channel.send('Bitrate gaat tot 128000');
+    return;
+  }
+
+  if (newBitrate < 8000) {
+    msg.channel.send('Bitrate gaat boven 8000');
+    return;
+  }
+
+  // eslint-disable-next-line no-param-reassign
+  guildUser.guild.bitrate = newBitrate;
+
+  await saveUserData(guildUser);
+});
+
+const helpHanlder : Handler = ({ msg }) => {
   let message = '**Maak een tijdelijke voice kanaal aan**';
   message += '\nMogelijke Commandos:';
-  message += '\n`ei lobby create [@user ...]`: Maak een lobby aan en laat de gementionde user(s) toe';
+  message += '\n`ei lobby create [@user ...]`: Maak een lobby aan en laat alleen de toegestaande mensen joinen';
   message += '\n`ei lobby create [@user ...] -nospeak`: Iedereen mag joinen, maar alleen toegestaande mensen mogen spreken';
   message += '\n`ei lobby add @user ...`: Laat user(s) toe aan de lobby';
   message += '\n`ei lobby remove [@user ...]`: Verwijder user(s) uit de lobby';
-  message += '\n`*Admin* ei lobby category true/false`: Sta users toe lobbies aan te maken in deze categorie';
+  message += '\n`ei lobby type [nospeak/ nojoin]`: Verander het type van de lobby';
+  message += '\n`*Admin* ei lobby category true/ false`: Sta users toe lobbies aan te maken in deze categorie';
   msg.channel.send(message);
-});
+};
+
+router.use(null, helpHanlder);
+router.use('help', helpHanlder);
 
 router.onInit = async (client) => {
   const tempRepo = getRepository(TempChannel);
@@ -338,6 +463,7 @@ router.onInit = async (client) => {
             .filter((member) => !(tempsOfUsers
               .some((temp) => temp.guildUser.user.id === member.id)
             ))
+            .filter((member) => activeChannel.permissionOverwrites.has(member.id))
             .first();
 
           if (newOwner) {
@@ -351,7 +477,9 @@ router.onInit = async (client) => {
                 const muted = activeChannel.permissionOverwrites.get(activeChannel.guild.id).allow.has('CONNECT');
                 activeChannel.setName(generateLobbyName(muted, newOwner.user));
 
-                newOwner.send('Jij bent nu owner van de lobby');
+                newOwner.voice.setMute(false);
+
+                newOwner.send('Jij bent nu de eigenaar van de lobby');
               })
               .catch(console.error);
           }

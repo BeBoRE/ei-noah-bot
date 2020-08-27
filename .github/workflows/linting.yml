@@ -1,0 +1,28 @@
+name: Linting
+
+on:
+  # Run tests for any PRs.
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: TypeScript Compiler
+        run: |
+          npm i
+          npx tsc
+  
+  linting:
+    runs-on: ubuntu-latest
+
+    steps: 
+      - uses: actions/checkout@v2
+
+      - name: Eslint
+        run: |
+          npm i
+          npx eslint .
