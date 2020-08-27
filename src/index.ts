@@ -30,7 +30,11 @@ eiNoah.use(User, (routeInfo) => {
 eiNoah.use('counter', Counter);
 
 eiNoah.use('noah', (info) => {
-  info.msg.channel.send('Dat ben ik :D');
+  const watZegtNoah = ['Ja wat jonge', '**Kabaal** ik zit op de fiets', 'Ik steek je neer', 'Hmm wat zegt noah nog meer', 'Ik laat het aan god over'];
+
+  const zeg = watZegtNoah[Math.floor(Math.random() * watZegtNoah.length)];
+
+  info.msg.channel.send(zeg);
 });
 
 eiNoah.start();
