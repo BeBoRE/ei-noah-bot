@@ -8,6 +8,7 @@ import {
   Client,
   VoiceChannel,
   DiscordAPIError,
+  Constants,
 } from 'discord.js';
 import { getRepository } from 'typeorm';
 import { Category } from '../entity/Category';
@@ -30,6 +31,7 @@ async function createTempChannel(
   guild: DiscordGuild, parent: string,
   users: DiscordUser[], owner: DiscordUser,
   bot: DiscordUser,
+  bitrate: number,
   { muted }: TempChannelOptions,
 ) {
   const userSnowflakes = [...new Set([...users.map((user) => user.id), owner.id])];
@@ -63,6 +65,7 @@ async function createTempChannel(
     type: 'voice',
     permissionOverwrites,
     parent,
+    bitrate,
   });
 }
 
@@ -106,23 +109,33 @@ const createHandler : Handler = async ({
     if (activeChannel) {
       msg.channel.send('Je hebt al een lobby');
     } else {
-      const createdChannel = await createTempChannel(msg.guild, msg.channel.parentID, users, msg.author, msg.client.user, { muted: flags.some((a) => a === 'nospeak') });
-
-      const tempRep = getRepository(TempChannel);
-
-      await tempRep.delete({ guildUser });
-
-      const tempChannel = tempRep.create({ guildUser, id: createdChannel.id });
-
       try {
-        await saveUserData(guildUser);
-        await tempRep.save(tempChannel);
+        const createdChannel = await createTempChannel(msg.guild, msg.channel.parentID, users, msg.author, msg.client.user, guildUser.guild.bitrate, { muted: flags.some((a) => a === 'nospeak') });
 
-        if (users.length > 0) msg.channel.send(`Lobby aangemaakt voor ${users.map((user) => user.username).join(', ')}`);
-        else msg.channel.send('Lobby aangemaakt');
+        const tempRep = getRepository(TempChannel);
+
+        await tempRep.delete({ guildUser });
+
+        const tempChannel = tempRep.create({ guildUser, id: createdChannel.id });
+
+        try {
+          await saveUserData(guildUser);
+          await tempRep.save(tempChannel);
+
+          if (users.length > 0) msg.channel.send(`Lobby aangemaakt voor ${users.map((user) => user.username).join(', ')}`);
+          else msg.channel.send('Lobby aangemaakt');
+        } catch (err) {
+          createdChannel.delete();
+          throw err;
+        }
       } catch (err) {
-        createdChannel.delete();
-        throw err;
+        if (err instanceof DiscordAPIError) {
+          if (err.code === Constants.APIErrors.INVALID_FORM_BODY) {
+            msg.channel.send('Neem contact op met de server admins, waarschijnlijk staat de bitrate voor de bot te hoog');
+          }
+        } else {
+          msg.channel.send('Onverwachte error');
+        }
       }
     }
   }
@@ -352,6 +365,55 @@ router.use('category', async ({ category, params, msg }) => {
 
   const categoryRepo = getRepository(Category);
   await categoryRepo.save({ ...category, isLobbyCategory: isAllowed });
+});
+
+router.use('bitrate', async ({ msg, guildUser, params }) => {
+  if (msg.channel instanceof DMChannel) {
+    msg.channel.send('Je kan dit commando alleen op servers gebruiken');
+    return;
+  }
+
+  if (params.length === 0) {
+    msg.channel.send(`Lobby bitrate is ${guildUser.guild.bitrate}`);
+    return;
+  }
+
+  if (params.length > 1) {
+    msg.channel.send('Ik verwacht maar één argument');
+    return;
+  }
+
+  if (typeof params[0] !== 'string') {
+    msg.channel.send('Ik verwacht een string als argument');
+    return;
+  }
+
+  if (!msg.member.hasPermission('ADMINISTRATOR')) {
+    msg.channel.send('Alleen een Edwin mag dit aanpassen');
+    return;
+  }
+
+  const newBitrate = Number(params[0]);
+
+  if (Number.isNaN(newBitrate)) {
+    msg.channel.send(`${params[0]} is niet een nummer`);
+    return;
+  }
+
+  if (newBitrate > 128000) {
+    msg.channel.send('Bitrate gaat tot 128000');
+    return;
+  }
+
+  if (newBitrate < 8000) {
+    msg.channel.send('Bitrate gaat boven 8000');
+    return;
+  }
+
+  // eslint-disable-next-line no-param-reassign
+  guildUser.guild.bitrate = newBitrate;
+
+  await saveUserData(guildUser);
 });
 
 const helpHanlder : Handler = ({ msg }) => {

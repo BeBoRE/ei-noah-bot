@@ -12,7 +12,7 @@ export class GuildUser {
   @PrimaryColumn()
   private guildId: string;
 
-  @ManyToOne(() => Guild, { eager: true })
+  @ManyToOne(() => Guild, (g) => g.guildUsers, { eager: true })
   guild: Guild;
 
   @PrimaryColumn()

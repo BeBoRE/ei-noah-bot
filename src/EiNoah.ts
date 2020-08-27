@@ -33,7 +33,7 @@ class EiNoah {
 
   public async start() {
     // Creëerd de database connectie
-    await createConnection().catch((err) => { console.error(err); process.exit(-1); });
+    await createConnection().catch((err) => { console.error(err); });
 
     this.client.on('ready', () => {
       console.log('client online');
