@@ -2,7 +2,7 @@ name: Publish Bot
 
 on:
   registry_package:
-    types: [published]
+    types: [published, updated]
 
 jobs:
   ssh:
