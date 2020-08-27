@@ -1,5 +1,5 @@
 import {
-  Message, User, Role, Channel, Client, DiscordAPIError, DMChannel,
+  Message, User, Role, Channel, Client, DiscordAPIError, DMChannel, Guild,
 } from 'discord.js';
 import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
@@ -22,7 +22,7 @@ export interface RouteList {
   [path : string]: Router | Handler
 }
 
-function getUserFromMention(_mention : string, client : Client) {
+function getUserFromMention(_mention : string, client : Client, guild : Guild) {
   let mention = _mention;
 
   if (!mention) return null;
@@ -35,9 +35,13 @@ function getUserFromMention(_mention : string, client : Client) {
     }
 
     if (mention.startsWith('&')) {
-      return null;
+      mention = mention.slice(1);
+
+      if (Number.isNaN(+mention)) { return null; }
+      return guild.roles.fetch(mention, true);
     }
 
+    if (Number.isNaN(+mention)) { return null; }
     return client.users.fetch(mention, true);
   }
   return null;
@@ -58,13 +62,13 @@ export async function messageParser(msg : Message) {
   nonFlags.shift();
 
   const parsed = nonFlags.map(async (param) => {
-    const user = await getUserFromMention(param, msg.client);
+    const user = await getUserFromMention(param, msg.client, msg.guild);
 
     if (user) return user;
     return param;
   });
 
-  let resolved : Array<User | string>;
+  let resolved : Array<User | string | Role>;
 
   try {
     resolved = await Promise.all(parsed);
@@ -93,21 +97,30 @@ export async function messageParser(msg : Message) {
 export default class Router {
   private routes : RouteList = {};
 
-  private typeOfUserRoute : Handler;
+  private userRoute : Handler;
 
   private nullRoute : Handler;
 
+  private roleRoute : Handler;
+
   // Met use geef je aan welk commando waarheen gaat
   public use(route : typeof User, using: Handler) : void
+  public use(route : typeof Role, using: Handler) : void
   public use(route : string, using: Router | Handler) : void
   public use(route : null, using : Handler) : void
   public use(route : any, using: any) : void {
     if (route === User) {
-      if (this.typeOfUserRoute) throw new Error('User route already exists');
+      if (this.userRoute) throw new Error('User route already exists');
 
       if (using instanceof Router) throw new Error('Can\'t use Router on mention routing');
 
-      this.typeOfUserRoute = using;
+      this.userRoute = using;
+    } else if (route === Role) {
+      if (this.roleRoute) throw new Error('Role route already exists');
+
+      if (using instanceof Router) throw new Error('Can\'t use Router on mention routing');
+
+      this.roleRoute = using;
     } else if (typeof route === 'string') {
       if (this.routes[route]) throw new Error('This Route Already Exists');
 
@@ -128,9 +141,11 @@ export default class Router {
 
       if (typeof currentRoute !== 'string') {
         if (currentRoute instanceof User) {
-          handler = this.typeOfUserRoute;
-        } if (typeof currentRoute === 'undefined') {
+          handler = this.userRoute;
+        } else if (typeof currentRoute === 'undefined') {
           handler = this.nullRoute;
+        } else if (currentRoute instanceof Role) {
+          handler = this.roleRoute;
         }
       } else {
         const nameHandler = this.routes[currentRoute.toUpperCase()];
@@ -168,7 +183,7 @@ export default class Router {
         route.initialize(client);
       }
 
-      if (this.typeOfUserRoute instanceof Router) this.typeOfUserRoute.initialize(client);
+      if (this.userRoute instanceof Router) this.userRoute.initialize(client);
     });
 
     if (this.onInit) this.onInit(client);

@@ -9,6 +9,7 @@ import {
   VoiceChannel,
   DiscordAPIError,
   Constants,
+  Role,
 } from 'discord.js';
 import { getRepository } from 'typeorm';
 import { Category } from '../entity/Category';
@@ -29,7 +30,7 @@ function generateLobbyName(muted : boolean, owner : DiscordUser) {
 
 async function createTempChannel(
   guild: DiscordGuild, parent: string,
-  users: DiscordUser[], owner: DiscordUser,
+  users: Array<DiscordUser | Role>, owner: DiscordUser,
   bot: DiscordUser,
   bitrate: number,
   { muted }: TempChannelOptions,
@@ -92,17 +93,19 @@ async function activeTempChannel(guildUser : GuildUser, client : Client) : Promi
 const createHandler : Handler = async ({
   msg, params, flags, guildUser, category,
 }) => {
-  const nonUsers = params.filter((param) => !(param instanceof DiscordUser));
-  const users = params
-    .filter((param): param is DiscordUser => param instanceof DiscordUser)
+  const nonUsersAndRoles = params
+    .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
+  const invited = params
+    // eslint-disable-next-line max-len
+    .filter((param): param is DiscordUser | Role => param instanceof DiscordUser || param instanceof Role)
     .filter((user) => user.id !== msg.author.id && user.id !== msg.client.user.id);
 
   if (msg.channel instanceof DMChannel || msg.channel instanceof NewsChannel) {
     msg.channel.send('Je kan alleen lobbies aanmaken op een server');
   } else if (!category || !category.isLobbyCategory) {
     msg.channel.send('Je mag geen lobbies aanmaken in deze category');
-  } else if (nonUsers.length) {
-    msg.channel.send('Alleen user mentions mogelijk als argument(en)');
+  } else if (nonUsersAndRoles.length) {
+    msg.channel.send('Alleen mentions mogelijk als argument(en)');
   } else {
     const activeChannel = await activeTempChannel(guildUser, msg.client);
 
@@ -110,7 +113,7 @@ const createHandler : Handler = async ({
       msg.channel.send('Je hebt al een lobby');
     } else {
       try {
-        const createdChannel = await createTempChannel(msg.guild, msg.channel.parentID, users, msg.author, msg.client.user, guildUser.guild.bitrate, { muted: flags.some((a) => a === 'nospeak') });
+        const createdChannel = await createTempChannel(msg.guild, msg.channel.parentID, invited, msg.author, msg.client.user, guildUser.guild.bitrate, { muted: flags.some((a) => a === 'nospeak') });
 
         const tempRep = getRepository(TempChannel);
 
@@ -122,8 +125,9 @@ const createHandler : Handler = async ({
           await saveUserData(guildUser);
           await tempRep.save(tempChannel);
 
-          if (users.length > 0) msg.channel.send(`Lobby aangemaakt voor ${users.map((user) => user.username).join(', ')}`);
-          else msg.channel.send('Lobby aangemaakt');
+          if (invited.length > 0) {
+            msg.channel.send(`Lobby aangemaakt voor ${invited.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} en jij`);
+          } else msg.channel.send('Lobby aangemaakt');
         } catch (err) {
           createdChannel.delete();
           throw err;
@@ -145,6 +149,7 @@ const createHandler : Handler = async ({
 const createRouter = new Router();
 router.use('create', createRouter);
 
+createRouter.use(Role, createHandler);
 createRouter.use(DiscordUser, createHandler);
 createRouter.use(null, createHandler);
 
@@ -154,10 +159,13 @@ router.use('add', async ({ params, msg, guildUser }) => {
     return;
   }
 
-  const nonUsers = params.filter((param) => !(param instanceof DiscordUser));
-  const users = params.filter((param): param is DiscordUser => param instanceof DiscordUser);
+  const nonUserOrRole = params
+    .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
+  const userOrRole = params
+    // eslint-disable-next-line max-len
+    .filter((param): param is DiscordUser | Role => param instanceof DiscordUser || param instanceof Role);
 
-  if (nonUsers.length > 0) {
+  if (nonUserOrRole.length > 0) {
     msg.channel.send('Alleen user mention(s) mogelijk als argument');
     return;
   }
@@ -174,10 +182,10 @@ router.use('add', async ({ params, msg, guildUser }) => {
     return;
   }
 
-  const allowedUsers : DiscordUser[] = [];
-  const alreadyAllowedUsers : DiscordUser[] = [];
+  const allowedUsers : Array<DiscordUser | Role> = [];
+  const alreadyAllowedUsers : Array<DiscordUser | Role> = [];
 
-  users.forEach((user) => {
+  userOrRole.forEach((user) => {
     if (activeChannel.permissionOverwrites.some((o) => user.id === o.id)) {
       alreadyAllowedUsers.push(user);
     } else {
@@ -194,11 +202,11 @@ router.use('add', async ({ params, msg, guildUser }) => {
 
   let allowedUsersMessage : string;
   if (!allowedUsers.length) allowedUsersMessage = 'Geen user(s) toegevoegd';
-  else allowedUsersMessage = `${allowedUsers.map((user) => user.username).join(', ')} ${allowedUsers.length > 1 ? 'mogen' : 'mag'} nu naar binnen`;
+  else allowedUsersMessage = `${allowedUsers.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} ${allowedUsers.length > 1 ? 'mogen' : 'mag'} nu naar binnen`;
 
   let alreadyInMessage : string;
   if (!alreadyAllowedUsers.length) alreadyInMessage = '';
-  else alreadyInMessage = `${alreadyAllowedUsers.map((user) => user.username).join(', ')} ${alreadyAllowedUsers.length > 1 ? 'konden' : 'kon'} al naar binnen`;
+  else alreadyInMessage = `${alreadyAllowedUsers.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} ${alreadyAllowedUsers.length > 1 ? 'konden' : 'kon'} al naar binnen`;
 
   msg.channel.send(`${allowedUsersMessage}\n${alreadyInMessage}`);
 });
@@ -419,12 +427,13 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
 const helpHanlder : Handler = ({ msg }) => {
   let message = '**Maak een tijdelijke voice kanaal aan**';
   message += '\nMogelijke Commandos:';
-  message += '\n`ei lobby create [@user ...]`: Maak een lobby aan en laat alleen de toegestaande mensen joinen';
-  message += '\n`ei lobby create [@user ...] -nospeak`: Iedereen mag joinen, maar alleen toegestaande mensen mogen spreken';
-  message += '\n`ei lobby add @user ...`: Laat user(s) toe aan de lobby';
+  message += '\n`ei lobby create [@mention ...]`: Maak een lobby aan en laat alleen de toegestaande mensen joinen';
+  message += '\n`ei lobby create [@mention ...] -nospeak`: Iedereen mag joinen, maar alleen toegestaande mensen mogen spreken';
+  message += '\n`ei lobby add @mention ...`: Laat user(s) toe aan de lobby';
   message += '\n`ei lobby remove [@user ...]`: Verwijder user(s) uit de lobby';
   message += '\n`ei lobby type [nospeak/ nojoin]`: Verander het type van de lobby';
   message += '\n`*Admin* ei lobby category true/ false`: Sta users toe lobbies aan te maken in deze categorie';
+  message += '\n`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt';
   msg.channel.send(message);
 };
 
