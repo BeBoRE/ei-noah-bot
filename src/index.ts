@@ -14,9 +14,11 @@ eiNoah.use('lobby', LobbyRouter);
 
 // Hier is een 'Handler' als argument in principe is dit een eindpunt van de routing.
 // Dit is waar berichten worden afgehandeld
-eiNoah.use('mention', (routeInfo) => {
+eiNoah.use('steek', (routeInfo) => {
   if (routeInfo.params[0] instanceof User) {
-    routeInfo.msg.channel.send(`I must mention you <@!${(routeInfo.params[0]).id}>`);
+    routeInfo.msg.channel.send(`Met plezier, kom hier <@!${(routeInfo.params[0]).id}>!`);
+  } else {
+    routeInfo.msg.channel.send('Lekker');
   }
 });
 
