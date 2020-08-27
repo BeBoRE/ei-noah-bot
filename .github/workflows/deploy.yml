@@ -1,8 +1,11 @@
 name: Publish Bot
 
-on:
+on: 
   registry_package:
-    types: [published, updated]
+    action:
+      - updated
+      - publish
+
 
 jobs:
   ssh:
