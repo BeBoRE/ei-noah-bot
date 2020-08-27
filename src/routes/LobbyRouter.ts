@@ -186,22 +186,22 @@ router.use('add', async ({ params, msg, guildUser }) => {
   const allowedUsers : Array<DiscordUser | Role> = [];
   const alreadyAllowedUsers : Array<DiscordUser | Role> = [];
 
-  userOrRole.forEach((user) => {
-    if (activeChannel.permissionOverwrites.some((o) => user.id === o.id)) {
-      alreadyAllowedUsers.push(user);
+  userOrRole.forEach((uOrR) => {
+    if (activeChannel.permissionOverwrites.some((o) => uOrR.id === o.id)) {
+      alreadyAllowedUsers.push(uOrR);
     } else {
-      activeChannel.updateOverwrite(user, {
+      activeChannel.updateOverwrite(uOrR, {
         CONNECT: true,
         SPEAK: true,
       });
 
-      allowedUsers.push(user);
+      allowedUsers.push(uOrR);
 
-      if (user instanceof DiscordUser) {
-        activeChannel.members.get(user.id)?.voice.setMute(false);
+      if (uOrR instanceof DiscordUser) {
+        activeChannel.members.get(uOrR.id)?.voice.setMute(false);
       } else {
         activeChannel.members
-          .each((member) => { if (user.members.has(member.id)) member.voice.setMute(false); });
+          .each((member) => { if (uOrR.members.has(member.id)) member.voice.setMute(false); });
       }
     }
   });
