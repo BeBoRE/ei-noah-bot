@@ -26,7 +26,7 @@ interface TempChannelOptions {
 }
 
 function generateLobbyName(muted : boolean, owner : DiscordUser) {
-  return `${muted ? '🔇' : '🔉'} ${owner.username}'s Lobby`;
+  return `${muted ? '🔇' : '🔐'} ${owner.username}'s Lobby`;
 }
 
 async function createTempChannel(
