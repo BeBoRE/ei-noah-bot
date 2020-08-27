@@ -10,6 +10,7 @@ import {
   DiscordAPIError,
   Constants,
   Role,
+  GuildMember,
 } from 'discord.js';
 import { getRepository } from 'typeorm';
 import { Category } from '../entity/Category';
@@ -135,7 +136,7 @@ const createHandler : Handler = async ({
       } catch (err) {
         if (err instanceof DiscordAPIError) {
           if (err.code === Constants.APIErrors.INVALID_FORM_BODY) {
-            msg.channel.send('Neem contact op met de server admins, waarschijnlijk staat de bitrate voor de bot te hoog');
+            msg.channel.send('Neem contact op met de server admins, waarschijnlijk staat de bitrate voor de lobbies te hoog');
           }
         } else {
           msg.channel.send('Onverwachte error');
@@ -196,17 +197,22 @@ router.use('add', async ({ params, msg, guildUser }) => {
 
       allowedUsers.push(user);
 
-      activeChannel.members.get(user.id)?.voice.setMute(false);
+      if (user instanceof DiscordUser) {
+        activeChannel.members.get(user.id)?.voice.setMute(false);
+      } else {
+        activeChannel.members
+          .each((member) => { if (user.members.has(member.id)) member.voice.setMute(false); });
+      }
     }
   });
 
   let allowedUsersMessage : string;
   if (!allowedUsers.length) allowedUsersMessage = 'Geen user(s) toegevoegd';
-  else allowedUsersMessage = `${allowedUsers.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} ${allowedUsers.length > 1 ? 'mogen' : 'mag'} nu naar binnen`;
+  else allowedUsersMessage = `${allowedUsers.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} ${allowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? 'mogen' : 'mag'} nu naar binnen`;
 
   let alreadyInMessage : string;
   if (!alreadyAllowedUsers.length) alreadyInMessage = '';
-  else alreadyInMessage = `${alreadyAllowedUsers.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} ${alreadyAllowedUsers.length > 1 ? 'konden' : 'kon'} al naar binnen`;
+  else alreadyInMessage = `${alreadyAllowedUsers.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} ${alreadyAllowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? 'konden' : 'kon'} al naar binnen`;
 
   msg.channel.send(`${allowedUsersMessage}\n${alreadyInMessage}`);
 });
@@ -217,11 +223,13 @@ router.use('remove', async ({ params, msg, guildUser }) => {
     return;
   }
 
-  const nonUsers = params.filter((param) => !(param instanceof DiscordUser));
+  const nonUsersOrRoles = params
+    .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
   const users = params.filter((param): param is DiscordUser => param instanceof DiscordUser);
+  const roles = params.filter((param): param is Role => param instanceof Role);
 
-  if (nonUsers.length > 0) {
-    msg.channel.send('Alleen user mention(s) mogelijk als argument');
+  if (nonUsersOrRoles.length > 0) {
+    msg.channel.send('Alleen mention(s) mogelijk als argument');
     return;
   }
 
@@ -237,8 +245,27 @@ router.use('remove', async ({ params, msg, guildUser }) => {
     return;
   }
 
+  const usersGivenPermissions : GuildMember[] = [];
+
+  roles.forEach((role) => {
+    if (activeChannel.permissionOverwrites.has(role.id)) {
+      role.members.forEach((member) => {
+        // eslint-disable-next-line max-len
+        if (!activeChannel.permissionOverwrites.has(member.id)
+        && activeChannel.members.has(member.id)
+        && !users.some((user) => user.id === member.id)) {
+          activeChannel.updateOverwrite(member.id, { CONNECT: true, SPEAK: true });
+          usersGivenPermissions.push(member);
+        }
+      });
+    }
+
+    activeChannel.permissionOverwrites.get(role.id)?.delete();
+  });
+
   let triedRemoveSelf = false;
   let triedRemoveEi = false;
+  const removedList : DiscordUser[] = [];
   const notRemoved = users.filter((user) => {
     let removed = false;
     if (user.id === msg.author.id) triedRemoveSelf = true;
@@ -254,20 +281,29 @@ router.use('remove', async ({ params, msg, guildUser }) => {
         activeChannel.permissionOverwrites.get(user.id).delete();
         removed = true;
       }
+
+      if (removed) removedList.push(user);
     }
 
     return !removed;
   });
 
+  let message = '';
+
+  if (usersGivenPermissions.length > 0) {
+    message += `Omdat ${usersGivenPermissions.map((user) => user.displayName).join(', ')} ${roles.length > 1 ? 'één of meer van de rollen' : 'de rol'} ${usersGivenPermissions.length > 1 ? 'hadden zijn ze' : 'had is hij'} niet verwijderd.`;
+    message += `\nVerwijder ${usersGivenPermissions.length > 1 ? 'hen' : 'hem'} met \`ei lobby remove ${usersGivenPermissions.map((member) => `@${member.user.tag}`).join(' ')}\``;
+  }
+
   if (notRemoved.length > 0) {
-    let message = `${notRemoved.map((user) => user.username).join(', ')} ${notRemoved.length > 1 ? 'zijn' : 'is'} niet verwijderd`;
     if (triedRemoveSelf) message += '\nJe kan jezelf niet verwijderen';
     if (triedRemoveEi) message += '\nEi Noah is omnipresent';
-
-    msg.channel.send(message);
-  } else {
-    msg.channel.send('Alle gegeven personen zijn uit de lobby verwijderd');
+    else message += `\n${notRemoved.map((user) => user.username).join(', ')} ${notRemoved.length > 1 ? 'konden' : 'kon'} niet verwijderd worden`;
+  } else if (removedList.length) {
+    message += `\n${removedList.map((user) => user.username).join(', ')} ${removedList.length > 1 ? 'zijn' : 'is'} verwijderd uit de lobby`;
   }
+
+  msg.channel.send(message);
 });
 
 router.use('type', async ({ params, msg, guildUser }) => {
