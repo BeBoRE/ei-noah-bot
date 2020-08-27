@@ -3,7 +3,7 @@ import {
 } from 'discord.js';
 import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
-import { getUserGuildData, getCategoryData, getGuildData } from './data';
+import { getUserGuildData, getCategoryData } from './data';
 
 export interface RouteInfo {
   msg: Message
