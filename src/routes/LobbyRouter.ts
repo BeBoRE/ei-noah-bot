@@ -354,7 +354,7 @@ router.use('category', async ({ category, params, msg }) => {
   await categoryRepo.save({ ...category, isLobbyCategory: isAllowed });
 });
 
-router.use(null, ({ msg }) => {
+const helpHanlder : Handler = ({ msg }) => {
   let message = '**Maak een tijdelijke voice kanaal aan**';
   message += '\nMogelijke Commandos:';
   message += '\n`ei lobby create [@user ...]`: Maak een lobby aan en laat alleen de toegestaande mensen joinen';
@@ -364,7 +364,10 @@ router.use(null, ({ msg }) => {
   message += '\n`ei lobby type [nospeak/ nojoin]`: Verander het type van de lobby';
   message += '\n`*Admin* ei lobby category true/ false`: Sta users toe lobbies aan te maken in deze categorie';
   msg.channel.send(message);
-});
+};
+
+router.use(null, helpHanlder);
+router.use('help', helpHanlder);
 
 router.onInit = async (client) => {
   const tempRepo = getRepository(TempChannel);
