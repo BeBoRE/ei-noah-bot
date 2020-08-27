@@ -1,4 +1,4 @@
-name: Docker
+name: Docker Build en Deploy
 
 on:
   push:
@@ -74,3 +74,33 @@ jobs:
 
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
+  deploy:
+    name: Deploy on Server
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+    - name: Connect and Redeploy on SSH Server
+      uses: appleboy/ssh-action@master
+      with: 
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.PRIVATE_KEY }}
+        script: ./redeploy.sh
+  discord:
+    needs: ssh
+    name: Publish Changelog
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get Body en Subject
+        run: |
+          echo ::set-env name=SUBJECT::$(git log --format=%s -n 1)
+          echo ::set-env name=BODY::$(git log --format=%b -n 1)
+      - name: Send Discord Message
+        uses: tsickert/discord-webhook@v1.0.1
+        with:
+          webhook-url: ${{ secrets.WEBHOOK_URL }}
+          username: ei Noah
+          avatar-url: https://cdn.discordapp.com/avatars/730913870805336195/693419adb85f1416a0ec91d09864f1e4.png?size=256
+          content: \**${{ SUBJECT }}**\n${{ BODY }}
