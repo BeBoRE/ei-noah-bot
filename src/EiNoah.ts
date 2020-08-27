@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role,
 } from 'discord.js';
 import { createConnection } from 'typeorm';
 import Router, { Handler, messageParser } from './Router';
@@ -26,6 +26,7 @@ class EiNoah {
 
   // this.use wordt doorgepaast aan de echte router
   public use(route: typeof DiscordUser, using: Handler) : void
+  public use(route: typeof Role, using: Handler) : void
   public use(route : string, using: Router | Handler) : void
   public use(route : any, using: any) : any {
     this.router.use(route, using);

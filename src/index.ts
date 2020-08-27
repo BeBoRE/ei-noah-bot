@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import 'reflect-metadata';
-import { User } from 'discord.js';
+import { User, Role } from 'discord.js';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
@@ -20,6 +20,10 @@ eiNoah.use('steek', (routeInfo) => {
   } else {
     routeInfo.msg.channel.send('Lekker');
   }
+});
+
+eiNoah.use(Role, ({ msg, params }) => {
+  msg.channel.send(`${params[0]}s zijn gamers`);
 });
 
 // Als een mention als parameter is gebruikt wordt deze functie aangeroepen,
