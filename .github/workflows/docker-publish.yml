@@ -105,4 +105,4 @@ jobs:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           username: ei Noah
           avatar-url: https://cdn.discordapp.com/avatars/730913870805336195/693419adb85f1416a0ec91d09864f1e4.png?size=256
-          content: "**${{ env.SUBJECT }}**\n${{ env.BODY }}"
+          content: "**${{ env.SUBJECT }}**\\n${{ env.BODY }}"
