@@ -424,6 +424,7 @@ const changeTypeHandler : Handler = async ({ params, msg, guildUser }) => {
 
 router.use('type', changeTypeHandler);
 router.use('change', changeTypeHandler);
+router.use('set', changeTypeHandler);
 
 router.use('category', async ({ category, params, msg }) => {
   if (msg.channel instanceof DMChannel) {
@@ -528,7 +529,7 @@ const helpHanlder : Handler = ({ msg }) => {
   message += '\n`ei lobby create [@mention ...] -public`: Iedereen mag joinen';
   message += '\n`ei lobby add @mention ...`: Laat user(s) toe aan de lobby';
   message += '\n`ei lobby remove [@mention ...]`: Verwijder user(s)/ role(s) uit de lobby';
-  message += '\n`ei lobby type [mute / private / public]`: Verander het type van de lobby';
+  message += '\n`ei lobby set [mute / private / public]`: Verander het type van de lobby';
   message += '\n`*Admin* ei lobby category true/ false`: Sta users toe lobbies aan te maken in deze categorie';
   message += '\n`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt';
   msg.channel.send(message);
