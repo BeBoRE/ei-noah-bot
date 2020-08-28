@@ -61,7 +61,7 @@ export async function messageParser(msg : Message) {
 
   nonFlags.shift();
 
-  if (nonFlags[0].toLowerCase() === 'noah') nonFlags.shift();
+  if (nonFlags[0] && nonFlags[0].toLowerCase() === 'noah') nonFlags.shift();
 
   const parsed = nonFlags.map(async (param) => {
     const user = await getUserFromMention(param, msg.client, msg.guild);
