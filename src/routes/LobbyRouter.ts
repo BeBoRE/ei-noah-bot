@@ -11,6 +11,7 @@ import {
   Constants,
   Role,
   GuildMember,
+  OverwriteResolvable,
 } from 'discord.js';
 import { getRepository } from 'typeorm';
 import { Category } from '../entity/Category';
@@ -25,8 +26,33 @@ interface TempChannelOptions {
   muted?: boolean
 }
 
-function generateLobbyName(muted : boolean, owner : DiscordUser) {
-  return `${muted ? '🔇' : '🔐'} ${owner.username}'s Lobby`;
+enum ChannelType {
+  Mute = 'mute',
+  Public = 'public',
+  Nojoin = 'private'
+}
+
+function generateLobbyName(type : ChannelType, owner : DiscordUser) {
+  let icon : string;
+  if (type === ChannelType.Nojoin) icon = '🔐';
+  if (type === ChannelType.Mute) icon = '🔇';
+  if (type === ChannelType.Public) icon = '🔊';
+  return `${icon} ${owner.username}'s Lobby`;
+}
+
+function toDeny(type : ChannelType) {
+  if (type === ChannelType.Mute) return [Permissions.FLAGS.SPEAK];
+  if (type === ChannelType.Nojoin) return [Permissions.FLAGS.CONNECT, Permissions.FLAGS.SPEAK];
+  if (type === ChannelType.Public) return [];
+
+  return [];
+}
+
+function getChannelType(channel : VoiceChannel) {
+  if (!channel.permissionOverwrites.get(channel.guild.id).deny.has('CONNECT')) {
+    if (!channel.permissionOverwrites.get(channel.guild.id).deny.has('SPEAK')) return ChannelType.Public;
+    return ChannelType.Mute;
+  } return ChannelType.Nojoin;
 }
 
 async function createTempChannel(
@@ -34,7 +60,7 @@ async function createTempChannel(
   users: Array<DiscordUser | Role>, owner: DiscordUser,
   bot: DiscordUser,
   bitrate: number,
-  { muted }: TempChannelOptions,
+  type: ChannelType,
 ) {
   const userSnowflakes = [...new Set([...users.map((user) => user.id), owner.id])];
 
@@ -58,12 +84,14 @@ async function createTempChannel(
     ],
   });
 
+  const deny = toDeny(type);
+
   permissionOverwrites.push({
     id: guild.id,
-    deny: [Permissions.FLAGS.SPEAK, !muted ? Permissions.FLAGS.CONNECT : undefined],
+    deny,
   });
 
-  return guild.channels.create(generateLobbyName(muted, owner), {
+  return guild.channels.create(generateLobbyName(type, owner), {
     type: 'voice',
     permissionOverwrites,
     parent,
@@ -110,11 +138,23 @@ const createHandler : Handler = async ({
   } else {
     const activeChannel = await activeTempChannel(guildUser, msg.client);
 
+    let type = ChannelType.Nojoin;
+    if (flags.some((flag) => flag.toLowerCase() === ChannelType.Mute)) type = ChannelType.Mute;
+    if (flags.some((flag) => flag.toLowerCase() === ChannelType.Public)) type = ChannelType.Public;
+
     if (activeChannel) {
       msg.channel.send('Je hebt al een lobby');
     } else {
       try {
-        const createdChannel = await createTempChannel(msg.guild, msg.channel.parentID, invited, msg.author, msg.client.user, guildUser.guild.bitrate, { muted: flags.some((a) => a === 'nospeak') });
+        const createdChannel = await createTempChannel(
+          msg.guild,
+          msg.channel.parentID,
+          invited,
+          msg.author,
+          msg.client.user,
+          guildUser.guild.bitrate,
+          type,
+        );
 
         const tempRep = getRepository(TempChannel);
 
@@ -306,7 +346,7 @@ router.use('remove', async ({ params, msg, guildUser }) => {
   msg.channel.send(message);
 });
 
-router.use('type', async ({ params, msg, guildUser }) => {
+const changeTypeHandler : Handler = async ({ params, msg, guildUser }) => {
   if (msg.channel instanceof DMChannel) {
     msg.channel.send('Dit commando kan alleen op servers worden gebruikt');
     return;
@@ -328,42 +368,59 @@ router.use('type', async ({ params, msg, guildUser }) => {
     return;
   }
 
-  const muted = !activeChannel.permissionOverwrites.get(msg.guild.id).deny.has('CONNECT');
+  const type = getChannelType(activeChannel);
+
   if (params.length !== 1) {
-    msg.channel.send(muted ? 'Je kanaal is van type `nospeak`\nAndere type is `nojoin`' : 'Je kanaal is van type `nojoin`\nAndere type is `nospeak`');
+    if (type === ChannelType.Mute) msg.channel.send(`Type van lobby is \`${ChannelType.Mute}\` andere types zijn \`${ChannelType.Public}\` en \`${ChannelType.Nojoin}\``);
+    else if (type === ChannelType.Nojoin) msg.channel.send(`Type van lobby is \`${ChannelType.Nojoin}\` andere types zijn \`${ChannelType.Public}\` en \`${ChannelType.Mute}\``);
+    else msg.channel.send(`Type van lobby is \`${ChannelType.Public}\` andere types zijn \`${ChannelType.Mute}\` en \`${ChannelType.Nojoin}\``);
   } else if (params.length === 1) {
     if (typeof params[0] !== 'string') {
       msg.channel.send('Ik verwachte hier geen **mention**');
       return;
     }
 
-    if (params[0] === 'nospeak') {
-      if (muted) {
-        msg.channel.send('Je lobby was al een **nospeak** lobby');
-        return;
-      }
+    const [changeTo] = <ChannelType[]>params;
 
-      activeChannel.setName(generateLobbyName(!muted, msg.author));
-      activeChannel.updateOverwrite(msg.guild.id, { CONNECT: null });
-      msg.channel.send('Je kanaal is veranderd naar een **nospeak** lobby');
+    if (!Object.values(ChannelType).includes(changeTo)) {
+      msg.channel.send(`*${params[0]}* is niet een lobby type`);
       return;
     }
 
-    if (params[0] === 'nojoin') {
-      if (!muted) {
-        msg.channel.send('Je lobby was al een **nojoin** lobby');
-        return;
-      }
-
-      activeChannel.members.filter((member) => !activeChannel.permissionOverwrites.has(member.id))
-        .forEach((member) => member.voice.setChannel(null));
-
-      activeChannel.setName(generateLobbyName(!muted, msg.author));
-      activeChannel.updateOverwrite(msg.guild.id, { CONNECT: false });
-      msg.channel.send('Je kanaal is veranderd naar een **nojoin** lobby');
+    if (changeTo === type) {
+      msg.channel.send(`Je lobby was al een **${type}** lobby`);
+      return;
     }
+
+    const deny = toDeny(changeTo);
+
+    const newOverwrites = type === ChannelType.Public ? activeChannel.members
+      .filter((member) => !activeChannel.permissionOverwrites.has(member.id))
+      .map((member) : OverwriteResolvable => ({ id: member.id, allow: ['SPEAK', 'CONNECT'] })) : [];
+
+    if (type === ChannelType.Mute && changeTo === ChannelType.Public) {
+      activeChannel.members
+        .filter((member) => !activeChannel.permissionOverwrites.has(member.id))
+        .forEach((member) => member.voice.setMute(false));
+    } else if (type === ChannelType.Mute && changeTo === ChannelType.Nojoin) {
+      activeChannel.members
+        .filter((member) => !activeChannel.permissionOverwrites.has(member.id))
+        .forEach((member) => member.voice.setChannel(null));
+    }
+
+    activeChannel.overwritePermissions([
+      ...activeChannel.permissionOverwrites.array(),
+      { id: msg.guild.id, deny },
+      ...newOverwrites,
+    ]).then((channel) => {
+      channel.setName(generateLobbyName(changeTo, msg.author)).catch((err) => console.error('Change name error', err));
+      msg.channel.send(`Lobby type is veranderd naar *${changeTo}*`).catch((err) => console.error('Send message error', err));
+    }).catch((err) => console.error('Overwrite error', err));
   }
-});
+};
+
+router.use('type', changeTypeHandler);
+router.use('change', changeTypeHandler);
 
 router.use('category', async ({ category, params, msg }) => {
   if (msg.channel instanceof DMChannel) {
@@ -519,8 +576,8 @@ router.onInit = async (client) => {
             saveUserData(newOwnerGuildUser)
               .then(() => tempRepo.save(updatedTemp))
               .then(() => {
-                const muted = activeChannel.permissionOverwrites.get(activeChannel.guild.id).allow.has('CONNECT');
-                activeChannel.setName(generateLobbyName(muted, newOwner.user));
+                const type = getChannelType(activeChannel);
+                activeChannel.setName(generateLobbyName(type, newOwner.user));
 
                 newOwner.voice.setMute(false);
 
