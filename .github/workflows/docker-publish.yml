@@ -98,7 +98,7 @@ jobs:
       - name: Get Body en Subject
         run: |
           echo ::set-env name=SUBJECT::$(git log --format=%s -n 1)
-          echo ::set-env name=BODY::$(git log --format=%b -n 1)
+          echo ::set-env name=BODY::$(git log --format=%b -n 1 | sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g')
       - name: Send Discord Message
         uses: tsickert/discord-webhook@v1.0.1
         with:

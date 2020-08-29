@@ -285,6 +285,11 @@ router.use('remove', async ({ params, msg, guildUser }) => {
     return;
   }
 
+  if (getChannelType(activeChannel) === ChannelType.Public) {
+    msg.channel.send('Wat snap jij niet aan een **public** lobby smeerjoch');
+    return;
+  }
+
   const usersGivenPermissions : GuildMember[] = [];
 
   roles.forEach((role) => {
@@ -570,13 +575,16 @@ router.onInit = async (client) => {
             .filter((member) => !(tempsOfUsers
               .some((temp) => temp.guildUser.user.id === member.id)
             ))
-            .filter((member) => activeChannel.permissionOverwrites.has(member.id))
+            // eslint-disable-next-line max-len
+            .filter((member) => getChannelType(activeChannel) === ChannelType.Public || activeChannel.permissionOverwrites.has(member.id))
             .first();
 
           if (newOwner) {
             const updatedTemp = tempChannel;
             const newOwnerGuildUser = await getUserGuildData(newOwner.user, activeChannel.guild);
             updatedTemp.guildUser = newOwnerGuildUser;
+
+            activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true });
 
             saveUserData(newOwnerGuildUser)
               .then(() => tempRepo.save(updatedTemp))
