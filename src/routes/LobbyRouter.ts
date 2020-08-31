@@ -548,81 +548,82 @@ router.onInit = async (client) => {
 
   let tempChannels : TempChannel[];
 
+  const checkTempChannel = async (tempChannel : TempChannel) => {
+    const now = new Date();
+    const difference = Math.abs(now.getMinutes() - tempChannel.createdAt.getMinutes());
+    if (difference >= 2) {
+      const { guildUser } = tempChannel;
+      const activeChannel = await activeTempChannel(guildUser, client);
+
+      if (!activeChannel) {
+        await tempRepo.remove(tempChannel);
+        console.log('Lobby bestond niet meer');
+      } else if (!activeChannel.members.size) {
+        await activeChannel.delete().then(() => {
+          console.log('Verwijderd: Niemand in lobby');
+          return tempRepo.remove(tempChannel);
+        }).catch(console.error);
+      } else if (!activeChannel.members.has(tempChannel.guildUser.user.id)) {
+        const guildUsers = await Promise.all(activeChannel.members
+          .map((member) => getUserGuildData(member.user, activeChannel.guild)));
+
+        const tempsOfUsersNoUser = (await Promise.all(guildUsers.map((gu) => gu.tempChannel)))
+          .filter((temp) => temp);
+
+        const tempsOfUsers = await tempRepo.findByIds(tempsOfUsersNoUser.map((temp) => temp.id));
+
+        const newOwner = activeChannel.members
+          .sort((member1, member2) => member1.joinedTimestamp - member2.joinedTimestamp)
+          .filter((member) => !(tempsOfUsers
+            .some((temp) => temp.guildUser.user.id === member.id)
+          ))
+          // eslint-disable-next-line max-len
+          .filter((member) => getChannelType(activeChannel) === ChannelType.Public || activeChannel.permissionOverwrites.has(member.id))
+          .first();
+
+        if (newOwner) {
+          const updatedTemp = tempChannel;
+          const newOwnerGuildUser = await getUserGuildData(newOwner.user, activeChannel.guild);
+          updatedTemp.guildUser = newOwnerGuildUser;
+
+          activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true });
+
+          await saveUserData(newOwnerGuildUser)
+            .then(() => tempRepo.save(updatedTemp))
+            .then(() => {
+              const type = getChannelType(activeChannel);
+              activeChannel.setName(generateLobbyName(type, newOwner.user));
+
+              newOwner.voice.setMute(false);
+
+              newOwner.send('Jij bent nu de eigenaar van de lobby');
+              console.log('Ownership is overgedragen');
+            })
+            .catch(console.error);
+        } else { console.log('Owner is weggegaan, maar niemand kwam in aanmerking om de nieuwe leider te worden'); }
+      }
+    }
+  };
+
   const checkTempLobbies = async () => {
     tempChannels = await tempRepo.find();
     const now = new Date();
 
     console.log(`Started lobby check ${now.toISOString()}`);
 
-    const checkTempChannel = async (tempChannel : TempChannel) => {
-      const difference = Math.abs(now.getMinutes() - tempChannel.createdAt.getMinutes());
-      if (difference >= 2) {
-        const { guildUser } = tempChannel;
-        const activeChannel = await activeTempChannel(guildUser, client);
-
-        if (!activeChannel) {
-          await tempRepo.remove(tempChannel);
-          console.log('Lobby bestond niet meer');
-        } else if (!activeChannel.members.size) {
-          await activeChannel.delete().then(() => {
-            console.log('Verwijderd: Niemand in lobby');
-            return tempRepo.remove(tempChannel);
-          }).catch(console.error);
-        } else if (!activeChannel.members.has(tempChannel.guildUser.user.id)) {
-          const guildUsers = await Promise.all(activeChannel.members
-            .map((member) => getUserGuildData(member.user, activeChannel.guild)));
-
-          const tempsOfUsersNoUser = (await Promise.all(guildUsers.map((gu) => gu.tempChannel)))
-            .filter((temp) => temp);
-
-          const tempsOfUsers = await tempRepo.findByIds(tempsOfUsersNoUser.map((temp) => temp.id));
-
-          const newOwner = activeChannel.members
-            .sort((member1, member2) => member1.joinedTimestamp - member2.joinedTimestamp)
-            .filter((member) => !(tempsOfUsers
-              .some((temp) => temp.guildUser.user.id === member.id)
-            ))
-            // eslint-disable-next-line max-len
-            .filter((member) => getChannelType(activeChannel) === ChannelType.Public || activeChannel.permissionOverwrites.has(member.id))
-            .first();
-
-          if (newOwner) {
-            const updatedTemp = tempChannel;
-            const newOwnerGuildUser = await getUserGuildData(newOwner.user, activeChannel.guild);
-            updatedTemp.guildUser = newOwnerGuildUser;
-
-            activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true });
-
-            await saveUserData(newOwnerGuildUser)
-              .then(() => tempRepo.save(updatedTemp))
-              .then(() => {
-                const type = getChannelType(activeChannel);
-                activeChannel.setName(generateLobbyName(type, newOwner.user));
-
-                newOwner.voice.setMute(false);
-
-                newOwner.send('Jij bent nu de eigenaar van de lobby');
-                console.log('Ownership is overgedragen');
-              })
-              .catch(console.error);
-          } else { console.log('Owner is weggegaan, maar niemand kwam in aanmerking om de nieuwe leider te worden'); }
-        }
-      }
-    };
-
     const tempChecks = tempChannels.map(checkTempChannel);
 
     await Promise.all(tempChecks);
 
     setTimeout(checkTempLobbies, 1000 * 60);
-
-    client.on('voiceStateUpdate', (oldState, newState) => {
-      if (oldState?.channel?.id !== newState?.channel?.id) {
-        const tempChannel = tempChannels.find((tc) => tc.id === oldState?.channel?.id);
-        if (tempChannel) checkTempChannel(tempChannel);
-      }
-    });
   };
+
+  client.on('voiceStateUpdate', (oldState, newState) => {
+    if (oldState?.channel?.id !== newState?.channel?.id) {
+      const tempChannel = tempChannels.find((tc) => tc.id === oldState?.channel?.id);
+      if (tempChannel) checkTempChannel(tempChannel);
+    }
+  });
 
   checkTempLobbies();
 };
