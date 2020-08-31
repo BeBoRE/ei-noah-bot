@@ -546,14 +546,16 @@ router.use('help', helpHanlder);
 router.onInit = async (client) => {
   const tempRepo = getRepository(TempChannel);
 
+  let tempChannels : TempChannel[];
+
   const checkTempLobbies = async () => {
-    const tempChannels = await tempRepo.find();
+    tempChannels = await tempRepo.find();
     const now = new Date();
 
     console.log(`Started lobby check ${now.toISOString()}`);
 
-    const tempChecks = tempChannels.map(async (tempChannel) => {
-      const difference = now.getMinutes() - tempChannel.createdAt.getMinutes();
+    const checkTempChannel = async (tempChannel : TempChannel) => {
+      const difference = Math.abs(now.getMinutes() - tempChannel.createdAt.getMinutes());
       if (difference >= 2) {
         const { guildUser } = tempChannel;
         const activeChannel = await activeTempChannel(guildUser, client);
@@ -606,11 +608,20 @@ router.onInit = async (client) => {
           } else { console.log('Owner is weggegaan, maar niemand kwam in aanmerking om de nieuwe leider te worden'); }
         }
       }
-    });
+    };
+
+    const tempChecks = tempChannels.map(checkTempChannel);
 
     await Promise.all(tempChecks);
 
-    setTimeout(checkTempLobbies, 1000);
+    setTimeout(checkTempLobbies, 1000 * 60);
+
+    client.on('voiceStateUpdate', (oldState, newState) => {
+      if (oldState?.channel?.id !== newState?.channel?.id) {
+        const tempChannel = tempChannels.find((tc) => tc.id === oldState?.channel?.id);
+        if (tempChannel) checkTempChannel(tempChannel);
+      }
+    });
   };
 
   checkTempLobbies();
