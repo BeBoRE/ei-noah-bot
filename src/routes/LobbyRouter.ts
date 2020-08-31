@@ -546,20 +546,25 @@ router.use('help', helpHanlder);
 router.onInit = async (client) => {
   const tempRepo = getRepository(TempChannel);
 
-  setInterval(async () => {
+  const checkTempLobbies = async () => {
     const tempChannels = await tempRepo.find();
     const now = new Date();
 
-    tempChannels.forEach(async (tempChannel) => {
+    console.log(`Started lobby check ${now.toISOString()}`);
+
+    const tempChecks = tempChannels.map(async (tempChannel) => {
       const difference = now.getMinutes() - tempChannel.createdAt.getMinutes();
       if (difference >= 2) {
         const { guildUser } = tempChannel;
         const activeChannel = await activeTempChannel(guildUser, client);
 
-        if (!activeChannel) tempRepo.remove(tempChannel);
-        else if (!activeChannel.members.size) {
-          activeChannel.delete().then(() => {
-            tempRepo.remove(tempChannel);
+        if (!activeChannel) {
+          await tempRepo.remove(tempChannel);
+          console.log('Lobby bestond niet meer');
+        } else if (!activeChannel.members.size) {
+          await activeChannel.delete().then(() => {
+            console.log('Verwijderd: Niemand in lobby');
+            return tempRepo.remove(tempChannel);
           }).catch(console.error);
         } else if (!activeChannel.members.has(tempChannel.guildUser.user.id)) {
           const guildUsers = await Promise.all(activeChannel.members
@@ -586,7 +591,7 @@ router.onInit = async (client) => {
 
             activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true });
 
-            saveUserData(newOwnerGuildUser)
+            await saveUserData(newOwnerGuildUser)
               .then(() => tempRepo.save(updatedTemp))
               .then(() => {
                 const type = getChannelType(activeChannel);
@@ -595,13 +600,20 @@ router.onInit = async (client) => {
                 newOwner.voice.setMute(false);
 
                 newOwner.send('Jij bent nu de eigenaar van de lobby');
+                console.log('Ownership is overgedragen');
               })
               .catch(console.error);
-          }
+          } else { console.log('Owner is weggegaan, maar niemand kwam in aanmerking om de nieuwe leider te worden'); }
         }
       }
     });
-  }, 1000 * 30);
+
+    await Promise.all(tempChecks);
+
+    setTimeout(checkTempLobbies, 1000);
+  };
+
+  checkTempLobbies();
 };
 
 export default router;
