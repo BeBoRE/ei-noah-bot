@@ -292,8 +292,13 @@ router.use('remove', async ({ params, msg, guildUser }) => {
 
   const usersGivenPermissions : GuildMember[] = [];
 
+  const rolesRemoved : Role[] = [];
+  const rolesNotRemoved : Role[] = [];
+
   roles.forEach((role) => {
-    if (activeChannel.permissionOverwrites.has(role.id)) {
+    const roleOverwrite = activeChannel.permissionOverwrites.get(role.id);
+
+    if (roleOverwrite) {
       role.members.forEach((member) => {
         // eslint-disable-next-line max-len
         if (!activeChannel.permissionOverwrites.has(member.id)
@@ -303,9 +308,12 @@ router.use('remove', async ({ params, msg, guildUser }) => {
           usersGivenPermissions.push(member);
         }
       });
-    }
 
-    activeChannel.permissionOverwrites.get(role.id)?.delete();
+      roleOverwrite.delete();
+      rolesRemoved.push(role);
+    } else {
+      rolesNotRemoved.push(role);
+    }
   });
 
   let triedRemoveSelf = false;
@@ -346,6 +354,16 @@ router.use('remove', async ({ params, msg, guildUser }) => {
     else message += `\n${notRemoved.map((user) => user.username).join(', ')} ${notRemoved.length > 1 ? 'konden' : 'kon'} niet verwijderd worden`;
   } else if (removedList.length) {
     message += `\n${removedList.map((user) => user.username).join(', ')} ${removedList.length > 1 ? 'zijn' : 'is'} verwijderd uit de lobby`;
+  }
+
+  if (rolesRemoved.length > 0) {
+    const roleNames = rolesRemoved.map((role) => role.name);
+    message += `${roleNames.join(', ')} rol${roleNames.length > 1 ? 'len zijn verwijderd' : ' is verwijderd'}`;
+  }
+
+  if (rolesNotRemoved.length > 0) {
+    const roleNames = rolesNotRemoved.map((role) => role.name);
+    message += `\nRol${rolesNotRemoved.length > 1 ? 'len' : ''} ${roleNames.join(', ')} ${rolesNotRemoved.length > 1 ? 'zijn niet verwijderd' : 'is niet verwijderd'}`;
   }
 
   msg.channel.send(message);
@@ -578,7 +596,15 @@ router.onInit = async (client) => {
             .some((temp) => temp.guildUser.user.id === member.id)
           ))
           // eslint-disable-next-line max-len
-          .filter((member) => getChannelType(activeChannel) === ChannelType.Public || activeChannel.permissionOverwrites.has(member.id))
+          .filter((member) => {
+            const isPublic = getChannelType(activeChannel) === ChannelType.Public;
+            const isAllowedUser = activeChannel.permissionOverwrites.has(member.id);
+            const hasAllowedRole = activeChannel.permissionOverwrites
+              .some((overwrite) => overwrite.id !== activeChannel.guild.id
+              && member.roles.cache.has(overwrite.id));
+
+            return isPublic || isAllowedUser || hasAllowedRole;
+          })
           .first();
 
         if (newOwner) {
