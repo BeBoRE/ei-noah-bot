@@ -619,7 +619,7 @@ router.onInit = async (client) => {
   };
 
   client.on('voiceStateUpdate', (oldState, newState) => {
-    if (oldState?.channel?.id !== newState?.channel?.id) {
+    if (oldState?.channel && oldState.channel.id !== newState?.channel?.id) {
       const tempChannel = tempChannels.find((tc) => tc.id === oldState?.channel?.id);
       if (tempChannel) checkTempChannel(tempChannel);
     }
