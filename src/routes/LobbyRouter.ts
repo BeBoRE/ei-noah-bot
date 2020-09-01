@@ -358,7 +358,7 @@ router.use('remove', async ({ params, msg, guildUser }) => {
 
   if (rolesRemoved.length > 0) {
     const roleNames = rolesRemoved.map((role) => role.name);
-    message += `${roleNames.join(', ')} rol${roleNames.length > 1 ? 'len zijn verwijderd' : ' is verwijderd'}`;
+    message += `\n${roleNames.join(', ')} rol${roleNames.length > 1 ? 'len zijn verwijderd' : ' is verwijderd'}`;
   }
 
   if (rolesNotRemoved.length > 0) {
