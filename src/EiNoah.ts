@@ -38,6 +38,7 @@ class EiNoah {
   public async start() {
     // Creëerd de database connectie
     const orm = await MikroORM.init();
+    await orm.getMigrator().up();
 
     this.client.on('ready', () => {
       console.log('client online');

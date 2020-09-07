@@ -615,9 +615,6 @@ router.onInit = async (client, orm) => {
 
     const usersWithTemp = await em.find(GuildUser, { tempChannel: { $ne: null } });
 
-    const now = new Date();
-
-    console.log(`Started lobby check ${now.toISOString()}`);
     const tempChecks = usersWithTemp.map((tcs) => checkTempChannel(tcs, em));
 
     await Promise.all(tempChecks);
