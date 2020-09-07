@@ -1,6 +1,9 @@
 import {
   Options,
 } from 'mikro-orm';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const options : Options = {
   entitiesDirs: ['./src/entity'], // path to your TS entities (source), relative to `baseDir`
