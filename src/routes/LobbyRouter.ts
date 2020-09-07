@@ -13,6 +13,7 @@ import {
   GuildMember,
   OverwriteResolvable,
 } from 'discord.js';
+import { EntityManager } from 'mikro-orm';
 import { getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
 import { TempChannel } from '../entity/TempChannel';
@@ -282,8 +283,13 @@ router.use('remove', async ({ params, msg, guildUser }) => {
 
   const usersGivenPermissions : GuildMember[] = [];
 
+  const rolesRemoved : Role[] = [];
+  const rolesNotRemoved : Role[] = [];
+
   roles.forEach((role) => {
-    if (activeChannel.permissionOverwrites.has(role.id)) {
+    const roleOverwrite = activeChannel.permissionOverwrites.get(role.id);
+
+    if (roleOverwrite) {
       role.members.forEach((member) => {
         // eslint-disable-next-line max-len
         if (!activeChannel.permissionOverwrites.has(member.id)
@@ -293,9 +299,12 @@ router.use('remove', async ({ params, msg, guildUser }) => {
           usersGivenPermissions.push(member);
         }
       });
-    }
 
-    activeChannel.permissionOverwrites.get(role.id)?.delete();
+      roleOverwrite.delete();
+      rolesRemoved.push(role);
+    } else {
+      rolesNotRemoved.push(role);
+    }
   });
 
   let triedRemoveSelf = false;
@@ -336,6 +345,16 @@ router.use('remove', async ({ params, msg, guildUser }) => {
     else message += `\n${notRemoved.map((user) => user.username).join(', ')} ${notRemoved.length > 1 ? 'konden' : 'kon'} niet verwijderd worden`;
   } else if (removedList.length) {
     message += `\n${removedList.map((user) => user.username).join(', ')} ${removedList.length > 1 ? 'zijn' : 'is'} verwijderd uit de lobby`;
+  }
+
+  if (rolesRemoved.length > 0) {
+    const roleNames = rolesRemoved.map((role) => role.name);
+    message += `\n${roleNames.join(', ')} rol${roleNames.length > 1 ? 'len zijn verwijderd' : ' is verwijderd'}`;
+  }
+
+  if (rolesNotRemoved.length > 0) {
+    const roleNames = rolesNotRemoved.map((role) => role.name);
+    message += `\nRol${rolesNotRemoved.length > 1 ? 'len' : ''} ${roleNames.join(', ')} ${rolesNotRemoved.length > 1 ? 'zijn niet verwijderd' : 'is niet verwijderd'}`;
   }
 
   msg.channel.send(message);
@@ -532,57 +551,89 @@ router.use(null, helpHanlder);
 router.use('help', helpHanlder);
 
 router.onInit = async (client, orm) => {
-  setInterval(async () => {
-    const em = orm.em.fork();
+  const checkTempChannel = async (tempChannel : TempChannel, em : EntityManager) => {
     const now = new Date();
+    const difference = Math.abs(now.getMinutes() - tempChannel.createdAt.getMinutes());
+    if (difference >= 2) {
+      const { guildUser } = tempChannel;
+      const activeChannel = await activeTempChannel(guildUser, client);
+
+      if (!activeChannel) {
+        em.removeEntity(tempChannel);
+        console.log('Lobby bestond niet meer');
+      } else if (!activeChannel.members.size) {
+        await activeChannel.delete().then(() => {
+          console.log('Verwijderd: Niemand in lobby');
+          return em.removeEntity(tempChannel);
+        }).catch(console.error);
+      } else if (!activeChannel.members.has(tempChannel.guildUser.user.id)) {
+        const guildUsers = await Promise.all(activeChannel.members
+          .map((member) => getUserGuildData(em, member.user, activeChannel.guild)));
+
+        const newOwner = activeChannel.members
+          .sort((member1, member2) => member1.joinedTimestamp - member2.joinedTimestamp)
+          .filter((member) => !(guildUsers
+            .some((gu) => gu.tempChannel.guildUser.user.id === member.id)
+          ))
+          // eslint-disable-next-line max-len
+          .filter((member) => {
+            const isPublic = getChannelType(activeChannel) === ChannelType.Public;
+            const isAllowedUser = activeChannel.permissionOverwrites.has(member.id);
+            const hasAllowedRole = activeChannel.permissionOverwrites
+              .some((overwrite) => overwrite.id !== activeChannel.guild.id
+              && member.roles.cache.has(overwrite.id));
+
+            return isPublic || isAllowedUser || hasAllowedRole;
+          })
+          .first();
+
+        if (newOwner) {
+          const updatedTemp = tempChannel;
+          const newOwnerGuildUser = await getUserGuildData(em, newOwner.user, activeChannel.guild);
+          updatedTemp.guildUser = newOwnerGuildUser;
+
+          const type = getChannelType(activeChannel);
+
+          await Promise.all([
+            activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true }),
+            activeChannel.setName(generateLobbyName(type, newOwner.user)),
+            newOwner.voice.setMute(false),
+            newOwner.send('Jij bent nu de eigenaar van de lobby'),
+          ]);
+
+          console.log('Ownership is overgedragen');
+        } else { console.log('Owner is weggegaan, maar niemand kwam in aanmerking om de nieuwe leider te worden'); }
+      }
+    }
+  };
+
+  const checkTempLobbies = async () => {
+    const em = orm.em.fork();
 
     const tempChannels = await em.getRepository(TempChannel).findAll();
 
-    await Promise.all(tempChannels.map(async (tempChannel) => {
-      const difference = now.getMinutes() - tempChannel.createdAt.getMinutes();
-      if (difference >= 2) {
-        const { guildUser } = tempChannel;
-        const activeChannel = await activeTempChannel(guildUser, client);
+    const now = new Date();
 
-        if (!activeChannel) em.removeEntity(tempChannel);
-        else if (!activeChannel.members.size) {
-          activeChannel.delete().then(() => {
-            em.removeEntity(tempChannel);
-          }).catch(console.error);
-        } else if (!activeChannel.members.has(tempChannel.guildUser.user.id)) {
-          const guildUsers = await Promise.all(activeChannel.members
-            .map((member) => getUserGuildData(em, member.user, activeChannel.guild)));
+    console.log(`Started lobby check ${now.toISOString()}`);
+    const tempChecks = tempChannels.map((tcs) => checkTempChannel(tcs, em));
 
-          const newOwner = activeChannel.members
-            .sort((member1, member2) => member1.joinedTimestamp - member2.joinedTimestamp)
-            .filter((member) => !(guildUsers
-              .some((gu) => gu.tempChannel.guildUser.user.id === member.id)
-            ))
-            // eslint-disable-next-line max-len
-            .filter((member) => getChannelType(activeChannel) === ChannelType.Public || activeChannel.permissionOverwrites.has(member.id))
-            .first();
-
-          if (newOwner) {
-            const updatedTemp = tempChannel;
-            const newOwnerGuildUser = await getUserGuildData(em,
-              newOwner.user, activeChannel.guild);
-            updatedTemp.guildUser = newOwnerGuildUser;
-
-            activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true });
-
-            const type = getChannelType(activeChannel);
-            activeChannel.setName(generateLobbyName(type, newOwner.user));
-
-            newOwner.voice.setMute(false);
-
-            newOwner.send('Jij bent nu de eigenaar van de lobby');
-          }
-        }
-      }
-    }));
-
+    await Promise.all(tempChecks);
     em.flush();
-  }, 1000 * 30);
+
+    setTimeout(checkTempLobbies, 1000 * 60);
+  };
+
+  client.on('voiceStateUpdate', async (oldState, newState) => {
+    if (oldState?.channel && oldState.channel.id !== newState?.channel?.id) {
+      const em = orm.em.fork();
+      const tempChannel = await em.findOne(TempChannel, oldState.channelID);
+      if (tempChannel) await checkTempChannel(tempChannel, em);
+
+      em.flush();
+    }
+  });
+
+  checkTempLobbies();
 };
 
 export default router;

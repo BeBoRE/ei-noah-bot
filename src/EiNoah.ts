@@ -87,6 +87,10 @@ class EiNoah {
       }
     });
 
+    this.client.on('rateLimit', (data) => {
+      console.log('We are getting rate limited');
+    });
+
     await this.client.login(this.token);
 
     this.router.initialize(this.client, orm);
