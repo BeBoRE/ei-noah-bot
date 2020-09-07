@@ -13,9 +13,7 @@ import {
   GuildMember,
   OverwriteResolvable,
 } from 'discord.js';
-import { getRepository } from 'typeorm';
-import { Category } from '../entity/Category';
-import { saveUserData, getUserGuildData } from '../data';
+import { getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
 import { TempChannel } from '../entity/TempChannel';
 import Router, { Handler } from '../Router';
@@ -103,7 +101,7 @@ async function activeTempChannel(guildUser : GuildUser, client : Client) : Promi
   if (!guildUser.tempChannel) return undefined;
 
   try {
-    const activeChannel = await client.channels.fetch((await guildUser.tempChannel).id, false);
+    const activeChannel = await client.channels.fetch(guildUser.tempChannel.id, false);
     if (activeChannel instanceof VoiceChannel) {
       return activeChannel;
     }
@@ -120,8 +118,9 @@ async function activeTempChannel(guildUser : GuildUser, client : Client) : Promi
 }
 
 const createHandler : Handler = async ({
-  msg, params, flags, guildUser, category,
+  msg, params, flags, guildUser, category, em,
 }) => {
+  const gu = guildUser;
   const nonUsersAndRoles = params
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
   const invited = params
@@ -156,29 +155,20 @@ const createHandler : Handler = async ({
           type,
         );
 
-        const tempRep = getRepository(TempChannel);
+        gu.tempChannel = new TempChannel();
+        gu.tempChannel = em.create(TempChannel,
+          { id: createdChannel.id, guildUser, createdAt: new Date() });
 
-        await tempRep.delete({ guildUser });
-
-        const tempChannel = tempRep.create({ guildUser, id: createdChannel.id });
-
-        try {
-          await saveUserData(guildUser);
-          await tempRep.save(tempChannel);
-
-          if (invited.length > 0) {
-            msg.channel.send(`Lobby aangemaakt voor ${invited.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} en jij`);
-          } else msg.channel.send('Lobby aangemaakt');
-        } catch (err) {
-          createdChannel.delete();
-          throw err;
-        }
+        if (invited.length > 0) {
+          msg.channel.send(`Lobby aangemaakt voor ${invited.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} en jij`);
+        } else msg.channel.send('Lobby aangemaakt');
       } catch (err) {
         if (err instanceof DiscordAPIError) {
           if (err.code === Constants.APIErrors.INVALID_FORM_BODY) {
             msg.channel.send('Neem contact op met de server admins, waarschijnlijk staat de bitrate voor de lobbies te hoog');
           }
         } else {
+          console.error(err);
           msg.channel.send('Onverwachte error');
         }
       }
@@ -432,6 +422,7 @@ router.use('change', changeTypeHandler);
 router.use('set', changeTypeHandler);
 
 router.use('category', async ({ category, params, msg }) => {
+  const ca = category;
   if (msg.channel instanceof DMChannel) {
     msg.channel.send('Je kan dit commando alleen op servers gebruiken');
     return;
@@ -473,8 +464,7 @@ router.use('category', async ({ category, params, msg }) => {
 
   msg.channel.send(isAllowed ? 'Users kunnen nu lobbies aanmaken in deze category' : 'User kunnen nu geen lobbies meer aanmaken in deze category');
 
-  const categoryRepo = getRepository(Category);
-  await categoryRepo.save({ ...category, isLobbyCategory: isAllowed });
+  ca.isLobbyCategory = isAllowed;
 });
 
 router.use('bitrate', async ({ msg, guildUser, params }) => {
@@ -522,8 +512,6 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
 
   // eslint-disable-next-line no-param-reassign
   guildUser.guild.bitrate = newBitrate;
-
-  await saveUserData(guildUser);
 });
 
 const helpHanlder : Handler = ({ msg }) => {
@@ -543,37 +531,32 @@ const helpHanlder : Handler = ({ msg }) => {
 router.use(null, helpHanlder);
 router.use('help', helpHanlder);
 
-router.onInit = async (client) => {
-  const tempRepo = getRepository(TempChannel);
-
+router.onInit = async (client, orm) => {
   setInterval(async () => {
-    const tempChannels = await tempRepo.find();
+    const em = orm.em.fork();
     const now = new Date();
 
-    tempChannels.forEach(async (tempChannel) => {
+    const tempChannels = await em.getRepository(TempChannel).findAll();
+
+    await Promise.all(tempChannels.map(async (tempChannel) => {
       const difference = now.getMinutes() - tempChannel.createdAt.getMinutes();
       if (difference >= 2) {
         const { guildUser } = tempChannel;
         const activeChannel = await activeTempChannel(guildUser, client);
 
-        if (!activeChannel) tempRepo.remove(tempChannel);
+        if (!activeChannel) em.removeEntity(tempChannel);
         else if (!activeChannel.members.size) {
           activeChannel.delete().then(() => {
-            tempRepo.remove(tempChannel);
+            em.removeEntity(tempChannel);
           }).catch(console.error);
         } else if (!activeChannel.members.has(tempChannel.guildUser.user.id)) {
           const guildUsers = await Promise.all(activeChannel.members
-            .map((member) => getUserGuildData(member.user, activeChannel.guild)));
-
-          const tempsOfUsersNoUser = (await Promise.all(guildUsers.map((gu) => gu.tempChannel)))
-            .filter((temp) => temp);
-
-          const tempsOfUsers = await tempRepo.findByIds(tempsOfUsersNoUser.map((temp) => temp.id));
+            .map((member) => getUserGuildData(em, member.user, activeChannel.guild)));
 
           const newOwner = activeChannel.members
             .sort((member1, member2) => member1.joinedTimestamp - member2.joinedTimestamp)
-            .filter((member) => !(tempsOfUsers
-              .some((temp) => temp.guildUser.user.id === member.id)
+            .filter((member) => !(guildUsers
+              .some((gu) => gu.tempChannel.guildUser.user.id === member.id)
             ))
             // eslint-disable-next-line max-len
             .filter((member) => getChannelType(activeChannel) === ChannelType.Public || activeChannel.permissionOverwrites.has(member.id))
@@ -581,26 +564,24 @@ router.onInit = async (client) => {
 
           if (newOwner) {
             const updatedTemp = tempChannel;
-            const newOwnerGuildUser = await getUserGuildData(newOwner.user, activeChannel.guild);
+            const newOwnerGuildUser = await getUserGuildData(em,
+              newOwner.user, activeChannel.guild);
             updatedTemp.guildUser = newOwnerGuildUser;
 
             activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true });
 
-            saveUserData(newOwnerGuildUser)
-              .then(() => tempRepo.save(updatedTemp))
-              .then(() => {
-                const type = getChannelType(activeChannel);
-                activeChannel.setName(generateLobbyName(type, newOwner.user));
+            const type = getChannelType(activeChannel);
+            activeChannel.setName(generateLobbyName(type, newOwner.user));
 
-                newOwner.voice.setMute(false);
+            newOwner.voice.setMute(false);
 
-                newOwner.send('Jij bent nu de eigenaar van de lobby');
-              })
-              .catch(console.error);
+            newOwner.send('Jij bent nu de eigenaar van de lobby');
           }
         }
       }
-    });
+    }));
+
+    em.flush();
   }, 1000 * 30);
 };
 

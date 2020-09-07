@@ -1,8 +1,11 @@
 import {
   Client, User as DiscordUser, TextChannel, NewsChannel, Role,
 } from 'discord.js';
-import { createConnection } from 'typeorm';
+import { MikroORM } from 'mikro-orm';
+import sourceMapSupport from 'source-map-support';
 import Router, { Handler, messageParser } from './Router';
+
+sourceMapSupport.install();
 
 const errorToChannel = async (channelId : string, client : Client, err : Error) => {
   const errorChannel = await client.channels.fetch(channelId);
@@ -34,7 +37,7 @@ class EiNoah {
 
   public async start() {
     // Creëerd de database connectie
-    await createConnection().catch((err) => { console.error(err); });
+    const orm = await MikroORM.init();
 
     this.client.on('ready', () => {
       console.log('client online');
@@ -50,8 +53,11 @@ class EiNoah {
 
         if (splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention) {
           msg.channel.startTyping();
-          messageParser(msg).then((info) => {
+          const em = orm.em.fork();
+
+          messageParser(msg, em).then((info) => {
             this.router.handle(info)
+              .then(() => em.flush())
               .catch(async (err : Error) => {
                 if (process.env.NODE_ENV !== 'production') {
                 // Error message in development
@@ -83,7 +89,7 @@ class EiNoah {
 
     await this.client.login(this.token);
 
-    this.router.initialize(this.client);
+    this.router.initialize(this.client, orm);
   }
 }
 

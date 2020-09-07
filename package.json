@@ -25,11 +25,14 @@
   },
   "homepage": "https://github.com/dotBeFoRE/ei-noah-bot#readme",
   "dependencies": {
+    "@types/source-map-support": "^0.5.3",
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
+    "globby": "^11.0.1",
     "mikro-orm": "^3.6.15",
     "pg": "^8.3.3",
     "reflect-metadata": "^0.1.13",
+    "source-map-support": "^0.5.19",
     "typeorm": "^0.2.25"
   },
   "devDependencies": {
@@ -45,5 +48,11 @@
     "eslint-plugin-react-hooks": "^4.0.8",
     "sqlite3": "^5.0.0",
     "typescript": "^3.9.7"
+  },
+  "mikro-orm": {
+    "useTsNode": false,
+    "configPaths": [
+      "./dist/mikro-orm.config.js"
+    ]
   }
 }

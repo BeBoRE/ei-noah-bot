@@ -1,4 +1,3 @@
-import { saveUserData } from '../data';
 import Router from '../Router';
 
 const router = new Router();
@@ -12,9 +11,6 @@ router.use('add', async ({ msg, guildUser }) => {
   else data.user.count += 1;
 
   msg.channel.send(`${msg.author.tag} has counted to ${data.user.count}`);
-
-  // Sla de nieuwe userdata op
-  await saveUserData(guildUser);
 });
 
 router.use('get', async ({ msg, guildUser }) => {

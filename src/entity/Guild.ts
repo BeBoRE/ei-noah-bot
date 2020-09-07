@@ -1,18 +1,18 @@
 import {
-  Entity, PrimaryColumn, Column, OneToMany,
-} from 'typeorm';
+  Entity, PrimaryKey, Property, OneToMany, Collection,
+} from 'mikro-orm';
 // eslint-disable-next-line import/no-cycle
 import { GuildUser } from './GuildUser';
 
 @Entity()
 // eslint-disable-next-line import/prefer-default-export
 export class Guild {
-  @PrimaryColumn()
-  id: string;
+  @PrimaryKey()
+  id!: string;
 
-  @Column({ default: 96000 })
+  @Property({ default: 96000 })
   bitrate: number = 96000;
 
   @OneToMany(() => GuildUser, (gu) => gu.guild)
-  guildUsers: GuildUser[];
+  guildUsers = new Collection<GuildUser>(this);
 }

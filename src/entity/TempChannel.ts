@@ -1,19 +1,18 @@
 import {
-  Entity, PrimaryColumn, CreateDateColumn, OneToOne, JoinColumn,
-} from 'typeorm';
+  Entity, PrimaryKey, OneToOne, Property,
+} from 'mikro-orm';
 // eslint-disable-next-line import/no-cycle
 import { GuildUser } from './GuildUser';
 
 @Entity()
 // eslint-disable-next-line import/prefer-default-export
 export class TempChannel {
-  @PrimaryColumn()
-  id: string;
+  @PrimaryKey()
+  id!: string;
 
-  @JoinColumn()
-  @OneToOne(() => GuildUser, (gu) => gu.tempChannel, { eager: true })
-  guildUser: GuildUser;
+  @OneToOne()
+  guildUser!: GuildUser;
 
-  @CreateDateColumn()
-  createdAt: Date;
+  @Property()
+  createdAt!: Date;
 }
