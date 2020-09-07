@@ -87,7 +87,7 @@ class EiNoah {
       }
     });
 
-    this.client.on('rateLimit', (data) => {
+    this.client.on('rateLimit', () => {
       console.log('We are getting rate limited');
     });
 

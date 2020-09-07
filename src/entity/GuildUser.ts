@@ -1,12 +1,10 @@
 import {
-  Entity, ManyToOne, OneToOne, PrimaryKey, PrimaryKeyType,
+  Entity, ManyToOne, PrimaryKeyType, Property,
 } from 'mikro-orm';
 // eslint-disable-next-line import/no-cycle
 import { User } from './User';
 // eslint-disable-next-line import/no-cycle
 import { Guild } from './Guild';
-// eslint-disable-next-line import/no-cycle
-import { TempChannel } from './TempChannel';
 
 @Entity()
 // eslint-disable-next-line import/prefer-default-export
@@ -19,6 +17,9 @@ export class GuildUser {
 
   [PrimaryKeyType]: [string, string];
 
-  @OneToOne(() => TempChannel, (tc) => tc.guildUser, { eager: true })
-  tempChannel: TempChannel;
+  @Property({ nullable: true })
+  tempChannel?: string;
+
+  @Property()
+  tempCreatedAt?: Date;
 }

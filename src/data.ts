@@ -58,7 +58,7 @@ const getUserGuildData = async (em : EntityManager, user : DiscordUser, guild : 
 const getCategoryData = async (em : EntityManager, category : CategoryChannel) => {
   if (!category) return null;
 
-  const dbCategory = await em.findOne(Category, category.id);
+  const dbCategory = await em.findOne(Category, { id: category.id });
 
   if (dbCategory) return dbCategory;
 

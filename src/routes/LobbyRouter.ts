@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import {
   User as DiscordUser,
   DMChannel,
@@ -16,7 +17,6 @@ import {
 import { EntityManager } from 'mikro-orm';
 import { getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
-import { TempChannel } from '../entity/TempChannel';
 import Router, { Handler } from '../Router';
 
 const router = new Router();
@@ -102,7 +102,7 @@ async function activeTempChannel(guildUser : GuildUser, client : Client) : Promi
   if (!guildUser.tempChannel) return undefined;
 
   try {
-    const activeChannel = await client.channels.fetch(guildUser.tempChannel.id, false);
+    const activeChannel = await client.channels.fetch(guildUser.tempChannel, false);
     if (activeChannel instanceof VoiceChannel) {
       return activeChannel;
     }
@@ -119,7 +119,7 @@ async function activeTempChannel(guildUser : GuildUser, client : Client) : Promi
 }
 
 const createHandler : Handler = async ({
-  msg, params, flags, guildUser, category, em,
+  msg, params, flags, guildUser, category,
 }) => {
   const gu = guildUser;
   const nonUsersAndRoles = params
@@ -156,9 +156,8 @@ const createHandler : Handler = async ({
           type,
         );
 
-        gu.tempChannel = new TempChannel();
-        gu.tempChannel = em.create(TempChannel,
-          { id: createdChannel.id, guildUser, createdAt: new Date() });
+        gu.tempChannel = createdChannel.id;
+        gu.tempCreatedAt = new Date();
 
         if (invited.length > 0) {
           msg.channel.send(`Lobby aangemaakt voor ${invited.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} en jij`);
@@ -550,31 +549,33 @@ const helpHanlder : Handler = ({ msg }) => {
 router.use(null, helpHanlder);
 router.use('help', helpHanlder);
 
+const removeTempLobby = (gu : GuildUser) => {
+  gu.tempChannel = null;
+  gu.tempCreatedAt = null;
+};
+
 router.onInit = async (client, orm) => {
-  const checkTempChannel = async (tempChannel : TempChannel, em : EntityManager) => {
+  const checkTempChannel = async (userWithTemp : GuildUser, em : EntityManager) => {
     const now = new Date();
-    const difference = Math.abs(now.getMinutes() - tempChannel.createdAt.getMinutes());
+    const difference = Math.abs(now.getMinutes() - userWithTemp.tempCreatedAt.getMinutes());
     if (difference >= 2) {
-      const { guildUser } = tempChannel;
-      const activeChannel = await activeTempChannel(guildUser, client);
+      const activeChannel = await activeTempChannel(userWithTemp, client);
 
       if (!activeChannel) {
-        em.removeEntity(tempChannel);
+        removeTempLobby(userWithTemp);
         console.log('Lobby bestond niet meer');
       } else if (!activeChannel.members.size) {
         await activeChannel.delete().then(() => {
           console.log('Verwijderd: Niemand in lobby');
-          return em.removeEntity(tempChannel);
+          removeTempLobby(userWithTemp);
         }).catch(console.error);
-      } else if (!activeChannel.members.has(tempChannel.guildUser.user.id)) {
+      } else if (!activeChannel.members.has(userWithTemp.user.id)) {
         const guildUsers = await Promise.all(activeChannel.members
           .map((member) => getUserGuildData(em, member.user, activeChannel.guild)));
 
         const newOwner = activeChannel.members
           .sort((member1, member2) => member1.joinedTimestamp - member2.joinedTimestamp)
-          .filter((member) => !(guildUsers
-            .some((gu) => gu.tempChannel.guildUser.user.id === member.id)
-          ))
+          .filter((member) => !guildUsers.find((gu) => gu.user.id === member.id).tempChannel)
           // eslint-disable-next-line max-len
           .filter((member) => {
             const isPublic = getChannelType(activeChannel) === ChannelType.Public;
@@ -588,9 +589,11 @@ router.onInit = async (client, orm) => {
           .first();
 
         if (newOwner) {
-          const updatedTemp = tempChannel;
           const newOwnerGuildUser = await getUserGuildData(em, newOwner.user, activeChannel.guild);
-          updatedTemp.guildUser = newOwnerGuildUser;
+          newOwnerGuildUser.tempChannel = activeChannel.id;
+          newOwnerGuildUser.tempCreatedAt = userWithTemp.tempCreatedAt;
+
+          removeTempLobby(userWithTemp);
 
           const type = getChannelType(activeChannel);
 
@@ -610,12 +613,12 @@ router.onInit = async (client, orm) => {
   const checkTempLobbies = async () => {
     const em = orm.em.fork();
 
-    const tempChannels = await em.getRepository(TempChannel).findAll();
+    const usersWithTemp = await em.find(GuildUser, { tempChannel: { $ne: null } });
 
     const now = new Date();
 
     console.log(`Started lobby check ${now.toISOString()}`);
-    const tempChecks = tempChannels.map((tcs) => checkTempChannel(tcs, em));
+    const tempChecks = usersWithTemp.map((tcs) => checkTempChannel(tcs, em));
 
     await Promise.all(tempChecks);
     em.flush();
@@ -626,7 +629,7 @@ router.onInit = async (client, orm) => {
   client.on('voiceStateUpdate', async (oldState, newState) => {
     if (oldState?.channel && oldState.channel.id !== newState?.channel?.id) {
       const em = orm.em.fork();
-      const tempChannel = await em.findOne(TempChannel, oldState.channelID);
+      const tempChannel = await em.findOne(GuildUser, { tempChannel: oldState.channel.id });
       if (tempChannel) await checkTempChannel(tempChannel, em);
 
       em.flush();

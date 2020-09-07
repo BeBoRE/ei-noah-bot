@@ -1,5 +1,5 @@
 import {
-  Entity, PrimaryKey, Property, OneToMany, Collection,
+  Entity, PrimaryKey, Property, OneToMany, Collection, PrimaryKeyType,
 } from 'mikro-orm';
 // eslint-disable-next-line import/no-cycle
 import { GuildUser } from './GuildUser';
@@ -15,4 +15,6 @@ export class Guild {
 
   @OneToMany(() => GuildUser, (gu) => gu.guild)
   guildUsers = new Collection<GuildUser>(this);
+
+  [PrimaryKeyType]: [string];
 }
