@@ -1,6 +1,9 @@
 import {
   Message, User, Role, Channel, Client, DiscordAPIError, DMChannel, Guild,
 } from 'discord.js';
+import {
+  EntityManager, MikroORM, IDatabaseDriver, Connection,
+} from 'mikro-orm';
 import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
 import { getUserGuildData, getCategoryData } from './data';
@@ -11,7 +14,8 @@ export interface RouteInfo {
   params: Array<string | User | Role | Channel>
   flags: string[],
   guildUser: GuildUser,
-  category?: Category
+  category?: Category,
+  em: EntityManager
 }
 
 export interface Handler {
@@ -51,8 +55,8 @@ function isFlag(argument: string) {
   return argument[0] === '-' && argument.length > 1;
 }
 
-export async function messageParser(msg : Message) {
-  if (msg.channel instanceof DMChannel) throw new Error('Ja ik steek je neer');
+export async function messageParser(msg : Message, em: EntityManager) {
+  if (msg.channel instanceof DMChannel) throw new Error('Bot niet DMable');
 
   const splitted = msg.content.split(' ').filter((param) => param);
 
@@ -81,8 +85,8 @@ export async function messageParser(msg : Message) {
     } else throw new Error('Unknown Parsing error');
   }
 
-  const guildUser = await getUserGuildData(msg.author, msg.guild);
-  const category = await getCategoryData(msg.channel.parent);
+  const guildUser = await getUserGuildData(em, msg.author, msg.guild);
+  const category = await getCategoryData(em, msg.channel.parent);
 
   const routeInfo : RouteInfo = {
     absoluteParams: resolved,
@@ -91,6 +95,7 @@ export async function messageParser(msg : Message) {
     flags,
     guildUser,
     category,
+    em,
   };
 
   return routeInfo;
@@ -179,17 +184,18 @@ export default class Router {
     });
   }
 
-  public initialize(client : Client) {
+  public initialize(client : Client, orm : MikroORM<IDatabaseDriver<Connection>>) {
     Object.entries(this.routes).forEach(([, route]) => {
       if (route instanceof Router) {
-        route.initialize(client);
+        route.initialize(client, orm);
       }
 
-      if (this.userRoute instanceof Router) this.userRoute.initialize(client);
+      if (this.userRoute instanceof Router) this.userRoute.initialize(client, orm);
     });
 
-    if (this.onInit) this.onInit(client);
+    if (this.onInit) this.onInit(client, orm);
   }
 
-  public onInit ?: ((client : Client) => void | Promise<void>) | void;
+  public onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
+  => void | Promise<void>);
 }

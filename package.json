@@ -4,11 +4,9 @@
   "description": "Ei Noah Bot",
   "main": "./dist/index.js",
   "scripts": {
-    "start": "node ./dist/index.js",
-    "build": "npx tsc",
-    "dev": "npx tsc && npm start",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "watch": "npx tsc -w"
+    "start": "npx ts-node ./src/index.ts",
+    "dev": "npx ts-node-dev ./src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -25,11 +23,14 @@
   },
   "homepage": "https://github.com/dotBeFoRE/ei-noah-bot#readme",
   "dependencies": {
+    "@types/source-map-support": "^0.5.3",
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
+    "mikro-orm": "^3.6.15",
     "pg": "^8.3.3",
-    "reflect-metadata": "^0.1.13",
-    "typeorm": "^0.2.25"
+    "source-map-support": "^0.5.19",
+    "ts-node": "^9.0.0",
+    "typescript": "^3.9.7"
   },
   "devDependencies": {
     "@types/node": "^14.0.27",
@@ -42,7 +43,12 @@
     "eslint-plugin-jsx-a11y": "^6.3.1",
     "eslint-plugin-react": "^7.20.5",
     "eslint-plugin-react-hooks": "^4.0.8",
-    "sqlite3": "^5.0.0",
-    "typescript": "^3.9.7"
+    "ts-node-dev": "^1.0.0-pre.62"
+  },
+  "mikro-orm": {
+    "useTsNode": true,
+    "configPaths": [
+      "./src/mikro-orm.config.ts"
+    ]
   }
 }

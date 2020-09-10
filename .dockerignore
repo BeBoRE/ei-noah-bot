@@ -8,3 +8,4 @@ dist
 .gitattributes
 .gitignore
 LICENSE
+**/.DS_Store

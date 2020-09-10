@@ -1,18 +1,18 @@
 import {
-  Entity, PrimaryColumn, Column, OneToMany,
-} from 'typeorm';
+  Entity, PrimaryKey, OneToMany, Property, Collection,
+} from 'mikro-orm';
 // eslint-disable-next-line import/no-cycle
 import { GuildUser } from './GuildUser';
 
 @Entity()
 // eslint-disable-next-line import/prefer-default-export
 export class User {
-  @PrimaryColumn()
-  id: string;
+  @PrimaryKey()
+  id!: string;
 
   @OneToMany(() => GuildUser, (gu) => gu.user)
-  guildUsers: GuildUser[];
+  guildUsers = new Collection<GuildUser>(this);
 
-  @Column()
+  @Property()
   count: number = 0;
 }

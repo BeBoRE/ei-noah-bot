@@ -1,28 +1,25 @@
 import {
-  Entity, ManyToOne, PrimaryColumn, OneToOne,
-} from 'typeorm';
+  Entity, ManyToOne, PrimaryKeyType, Property,
+} from 'mikro-orm';
 // eslint-disable-next-line import/no-cycle
 import { User } from './User';
 // eslint-disable-next-line import/no-cycle
 import { Guild } from './Guild';
-// eslint-disable-next-line import/no-cycle
-import { TempChannel } from './TempChannel';
 
 @Entity()
 // eslint-disable-next-line import/prefer-default-export
 export class GuildUser {
-  @PrimaryColumn()
-  private guildId: string;
-
-  @ManyToOne(() => Guild, (g) => g.guildUsers, { eager: true })
+  @ManyToOne({ primary: true, eager: true })
   guild: Guild;
 
-  @PrimaryColumn()
-  private userId: string;
-
-  @ManyToOne(() => User, { eager: true })
+  @ManyToOne({ primary: true, eager: true })
   user: User;
 
-  @OneToOne(() => TempChannel, (temp) => temp.guildUser)
-  tempChannel: Promise<TempChannel>;
+  [PrimaryKeyType]: [string, string];
+
+  @Property({ nullable: true })
+  tempChannel?: string;
+
+  @Property()
+  tempCreatedAt?: Date;
 }

@@ -5,6 +5,9 @@
     "ecmaVersion": 2017,
     "project": "./tsconfig.json"
   },
+  "ecmaFeatures": {
+    "jsx": false
+  },
   "env": {
     "node": true
   },

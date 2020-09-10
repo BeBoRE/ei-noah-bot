@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import 'reflect-metadata';
 import { User, Role } from 'discord.js';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
