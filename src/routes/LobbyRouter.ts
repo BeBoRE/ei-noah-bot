@@ -565,10 +565,9 @@ router.onInit = async (client, orm) => {
         removeTempLobby(userWithTemp);
         console.log('Lobby bestond niet meer');
       } else if (!activeChannel.members.size) {
-        await activeChannel.delete().then(() => {
-          console.log('Verwijderd: Niemand in lobby');
-          removeTempLobby(userWithTemp);
-        }).catch(console.error);
+        await activeChannel.delete();
+        console.log('Verwijderd: Niemand in lobby');
+        removeTempLobby(userWithTemp);
       } else if (!activeChannel.members.has(userWithTemp.user.id)) {
         const guildUsers = await Promise.all(activeChannel.members
           .map((member) => getUserGuildData(em, member.user, activeChannel.guild)));
@@ -606,6 +605,13 @@ router.onInit = async (client, orm) => {
 
           console.log('Ownership is overgedragen');
         } else { console.log('Owner is weggegaan, maar niemand kwam in aanmerking om de nieuwe leider te worden'); }
+      } else {
+        const discordUser = await client.users.fetch(userWithTemp.user.id);
+        const lobbyType = getChannelType(activeChannel);
+
+        const correctName = generateLobbyName(lobbyType, discordUser);
+
+        if (activeChannel.name !== correctName) await activeChannel.setName(correctName);
       }
     }
   };
@@ -613,14 +619,19 @@ router.onInit = async (client, orm) => {
   const checkTempLobbies = async () => {
     const em = orm.em.fork();
 
+    const now = new Date();
+    console.log(`${now.toLocaleTimeString()}: checking lobbies`);
+
     const usersWithTemp = await em.find(GuildUser, { tempChannel: { $ne: null } });
 
     const tempChecks = usersWithTemp.map((tcs) => checkTempChannel(tcs, em));
 
-    await Promise.all(tempChecks);
-    em.flush();
-
-    setTimeout(checkTempLobbies, 1000 * 60);
+    try {
+      await Promise.all(tempChecks);
+      em.flush();
+    } catch (err) { console.error(err); } finally {
+      setTimeout(checkTempLobbies, 1000 * 60);
+    }
   };
 
   client.on('voiceStateUpdate', async (oldState, newState) => {
