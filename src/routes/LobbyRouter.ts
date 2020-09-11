@@ -588,7 +588,7 @@ router.onInit = async (client, orm) => {
           .first();
 
         if (newOwner) {
-          const newOwnerGuildUser = await getUserGuildData(em, newOwner.user, activeChannel.guild);
+          const newOwnerGuildUser = guildUsers.find((gu) => gu.user.id === newOwner.id);
           newOwnerGuildUser.tempChannel = activeChannel.id;
           newOwnerGuildUser.tempCreatedAt = userWithTemp.tempCreatedAt;
 
