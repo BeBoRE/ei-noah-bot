@@ -92,6 +92,15 @@ class EiNoah {
     await this.client.login(this.token);
 
     this.router.initialize(this.client, orm);
+    process.on('uncaughtException', (err) => {
+      if (process.env.ERROR_CHANNEL) errorToChannel(process.env.ERROR_CHANNEL, this.client, err);
+    });
+
+    process.on('unhandledRejection', (err) => {
+      if (err instanceof Error && process.env.ERROR_CHANNEL) {
+        errorToChannel(process.env.ERROR_CHANNEL, this.client, err);
+      }
+    });
   }
 }
 
