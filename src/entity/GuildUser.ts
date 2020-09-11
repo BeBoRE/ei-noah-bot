@@ -17,7 +17,7 @@ export class GuildUser {
 
   [PrimaryKeyType]: [string, string];
 
-  @Property({ nullable: true })
+  @Property({ nullable: true, unique: true })
   tempChannel?: string;
 
   @Property()

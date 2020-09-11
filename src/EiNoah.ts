@@ -2,10 +2,7 @@ import {
   Client, User as DiscordUser, TextChannel, NewsChannel, Role,
 } from 'discord.js';
 import { MikroORM } from 'mikro-orm';
-import sourceMapSupport from 'source-map-support';
 import Router, { Handler, messageParser } from './Router';
-
-sourceMapSupport.install();
 
 const errorToChannel = async (channelId : string, client : Client, err : Error) => {
   const errorChannel = await client.channels.fetch(channelId);
