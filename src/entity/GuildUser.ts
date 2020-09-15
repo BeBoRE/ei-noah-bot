@@ -1,10 +1,12 @@
 import {
-  Entity, ManyToOne, PrimaryKeyType, Property,
+  Entity, ManyToOne, OneToMany, PrimaryKeyType, Property, Collection,
 } from 'mikro-orm';
 // eslint-disable-next-line import/no-cycle
 import { User } from './User';
 // eslint-disable-next-line import/no-cycle
 import { Guild } from './Guild';
+// eslint-disable-next-line import/no-cycle
+import Quote from './Quote';
 
 @Entity()
 // eslint-disable-next-line import/prefer-default-export
@@ -22,4 +24,7 @@ export class GuildUser {
 
   @Property()
   tempCreatedAt?: Date;
+
+  @OneToMany({ entity: () => Quote, mappedBy: 'guildUser' })
+  quotes = new Collection<Quote>(this);
 }

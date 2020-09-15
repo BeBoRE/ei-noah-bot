@@ -3,6 +3,7 @@ import { User, Role } from 'discord.js';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
+import QuoteRouter from './routes/QuoteRouter';
 
 dotenv.config();
 
@@ -41,5 +42,7 @@ eiNoah.use(null, (info) => {
 
   info.msg.channel.send(zeg);
 });
+
+eiNoah.use('quote', QuoteRouter);
 
 eiNoah.start();
