@@ -628,7 +628,7 @@ router.onInit = async (client, orm) => {
 
     try {
       await Promise.all(tempChecks);
-      em.flush();
+      await em.flush();
     } catch (err) { console.error(err); } finally {
       setTimeout(checkTempLobbies, 1000 * 60);
     }
@@ -640,7 +640,7 @@ router.onInit = async (client, orm) => {
       const tempChannel = await em.findOne(GuildUser, { tempChannel: oldState.channel.id });
       if (tempChannel) await checkTempChannel(tempChannel, em);
 
-      em.flush();
+      em.flush().catch((err) => console.log(err));
     }
   });
 
