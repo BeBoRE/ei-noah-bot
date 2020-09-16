@@ -19,13 +19,18 @@ const handler : Handler = async ({ params, msg, em }) => {
   const user = params[0];
   params.shift();
 
+  const guildUser = await getUserGuildData(em, user, msg.guild);
+  await guildUser.quotes.init();
+
   if (params.length === 0) {
-    const guildUser = await getUserGuildData(em, user, msg.guild);
-    await guildUser.quotes.init();
+    if (guildUser.quotes.length === 0) {
+      msg.channel.send(`${user.username} is niet populair en heeft dus nog geen quotes`);
+      return;
+    }
 
     const quote = guildUser.quotes[Math.floor(Math.random() * guildUser.quotes.length)];
-
-    msg.channel.send(`"${quote.text}"\n- ${user.username}`);
+    msg.channel.send(`> ${quote.text}\n- ${user.username}`);
+    return;
   }
 
   if (!params.every((param) => typeof param === 'string')) {
@@ -35,15 +40,14 @@ const handler : Handler = async ({ params, msg, em }) => {
 
   const text = params.filter((param) : param is string => typeof param === 'string').join(' ');
 
-  const guildUser = await getUserGuildData(em, user, msg.guild);
-
-  const quote = em.create(Quote, { guildUser, text });
-  em.persist(quote);
+  guildUser.quotes.add(new Quote(text));
 
   msg.channel.send('Ait die ga ik onthouden');
 };
 
 router.use(DiscordUser, handler);
-router.use(null, ({ msg }) => { msg.channel.send('Wat moet ik nu doen dan, gewoon een random iemand quoten?'); });
+router.use('add', handler);
+router.use('remove', ({ msg }) => { msg.channel.send('Je kan op dit moment nog geen quotes verwijderen, vraag maar aan <@248143520005619713>'); });
+router.use(null, ({ msg }) => { msg.channel.send('Wat moet ik nu doen dan, gewoon een random persoon quoten?'); });
 
 export default router;

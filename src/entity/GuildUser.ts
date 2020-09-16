@@ -1,5 +1,5 @@
 import {
-  Entity, ManyToOne, OneToMany, PrimaryKeyType, Property, Collection,
+  Entity, ManyToOne, OneToMany, PrimaryKeyType, Property, Collection, PrimaryKey,
 } from 'mikro-orm';
 // eslint-disable-next-line import/no-cycle
 import { User } from './User';
@@ -11,10 +11,13 @@ import Quote from './Quote';
 @Entity()
 // eslint-disable-next-line import/prefer-default-export
 export class GuildUser {
-  @ManyToOne({ primary: true, eager: true })
+  @PrimaryKey()
+  id: number;
+
+  @ManyToOne({ eager: true })
   guild: Guild;
 
-  @ManyToOne({ primary: true, eager: true })
+  @ManyToOne({ eager: true })
   user: User;
 
   [PrimaryKeyType]: [string, string];
