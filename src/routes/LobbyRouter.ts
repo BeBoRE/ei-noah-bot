@@ -618,7 +618,7 @@ const helpHanlder : Handler = ({ msg }) => {
   message += '\n`ei lobby create [@mention ...]`: Maak een private lobby aan en laat alleen de toegestaande mensen joinen';
   message += '\n`ei lobby create [@mention ...] -mute`: Iedereen mag joinen, maar alleen toegestaande mensen mogen spreken';
   message += '\n`ei lobby create [@mention ...] -public`: Iedereen mag joinen';
-  message += '\n`ei lobby create [@mention ...] -<nummer>: Zet een user limit op de lobby';
+  message += '\n`ei lobby create [@mention ...] -<nummer>`: Zet een user limit op de lobby';
   message += '\n`ei lobby add @mention ...`: Laat user(s) toe aan de lobby';
   message += '\n`ei lobby remove [@mention ...]`: Verwijder user(s)/ role(s) uit de lobby';
   message += '\n`ei lobby set [mute / private / public]`: Verander het type van de lobby';
