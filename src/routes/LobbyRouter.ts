@@ -60,6 +60,7 @@ async function createTempChannel(
   bot: DiscordUser,
   bitrate: number,
   type: ChannelType,
+  userLimit = 0,
 ) {
   const userSnowflakes = [...new Set([...users.map((user) => user.id), owner.id])];
 
@@ -95,6 +96,7 @@ async function createTempChannel(
     permissionOverwrites,
     parent,
     bitrate,
+    userLimit,
   });
 }
 
@@ -142,6 +144,18 @@ const createHandler : Handler = async ({
     if (flags.some((flag) => flag.toLowerCase() === ChannelType.Mute)) type = ChannelType.Mute;
     if (flags.some((flag) => flag.toLowerCase() === ChannelType.Public)) type = ChannelType.Public;
 
+    let userLimit = flags
+      .map((flag) => Number.parseInt(flag, 10))
+      .find((flag) => Number.isSafeInteger(flag));
+
+    if (userLimit < 0) {
+      userLimit = 0;
+    }
+
+    if (userLimit > 99) {
+      userLimit = 99;
+    }
+
     if (activeChannel) {
       msg.channel.send('Je hebt al een lobby');
     } else {
@@ -154,6 +168,7 @@ const createHandler : Handler = async ({
           msg.client.user,
           guildUser.guild.bitrate,
           type,
+          userLimit,
         );
 
         gu.tempChannel = createdChannel.id;
