@@ -33,7 +33,8 @@ const handler : Handler = async ({ params, msg, em }) => {
     return;
   }
 
-  if (!params.every((param) => typeof param === 'string')) {
+  if (params.some((param) => typeof param !== 'string')
+      || params.some((param) => (<string>param).toLowerCase() === '@everyone' || (<string>param).toLowerCase() === '@here')) {
     msg.channel.send('Een quote kan geen mentions bevatten');
     return;
   }

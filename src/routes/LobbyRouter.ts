@@ -60,6 +60,7 @@ async function createTempChannel(
   bot: DiscordUser,
   bitrate: number,
   type: ChannelType,
+  userLimit = 0,
 ) {
   const userSnowflakes = [...new Set([...users.map((user) => user.id), owner.id])];
 
@@ -95,6 +96,7 @@ async function createTempChannel(
     permissionOverwrites,
     parent,
     bitrate,
+    userLimit,
   });
 }
 
@@ -142,6 +144,18 @@ const createHandler : Handler = async ({
     if (flags.some((flag) => flag.toLowerCase() === ChannelType.Mute)) type = ChannelType.Mute;
     if (flags.some((flag) => flag.toLowerCase() === ChannelType.Public)) type = ChannelType.Public;
 
+    let userLimit = flags
+      .map((flag) => Number.parseInt(flag, 10))
+      .find((flag) => Number.isSafeInteger(flag));
+
+    if (userLimit < 0) {
+      userLimit = 0;
+    }
+
+    if (userLimit > 99) {
+      userLimit = 99;
+    }
+
     if (activeChannel) {
       msg.channel.send('Je hebt al een lobby');
     } else {
@@ -154,6 +168,7 @@ const createHandler : Handler = async ({
           msg.client.user,
           guildUser.guild.bitrate,
           type,
+          userLimit,
         );
 
         gu.tempChannel = createdChannel.id;
@@ -439,6 +454,71 @@ router.use('type', changeTypeHandler);
 router.use('change', changeTypeHandler);
 router.use('set', changeTypeHandler);
 
+const sizeHandler : Handler = async ({
+  msg, category, guildUser, params,
+}) => {
+  if (msg.channel instanceof DMChannel) {
+    msg.channel.send('Je kan dit commando alleen op servers gebruiken');
+    return;
+  }
+
+  if (!category || !category.isLobbyCategory) {
+    msg.channel.send('Dit is geen lobby category');
+    return;
+  }
+
+  const activeChannel = await activeTempChannel(guildUser, msg.client);
+
+  if (!activeChannel) {
+    msg.channel.send('Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`');
+    return;
+  }
+
+  if (activeChannel.parentID !== msg.channel.parentID) {
+    msg.channel.send('Je lobby is aanwezig in een andere categorie dan deze');
+    return;
+  }
+
+  if (params.length === 0) {
+    msg.channel.send('Geen één (1) argument gegeven');
+    return;
+  }
+
+  if (params.length > 1) {
+    msg.channel.send('Ik verwachte maar één (1) argument');
+    return;
+  }
+
+  const sizeParam = params[0];
+
+  if (typeof sizeParam !== 'string') {
+    msg.channel.send('Lijkt dat op een nummer??');
+    return;
+  }
+
+  let size = Number.parseInt(sizeParam, 10);
+
+  if (sizeParam.toLowerCase() === 'none' || sizeParam.toLowerCase() === 'remove') {
+    size = 0;
+  }
+
+  if (!Number.isSafeInteger(size)) {
+    msg.channel.send('Even een normaal nummer alstublieft');
+    return;
+  }
+
+  if (size > 99) { size = 99; }
+  size = Math.abs(size);
+
+  await activeChannel.setUserLimit(size);
+
+  if (size === 0) { await msg.channel.send('Limiet is verwijderd'); } else msg.channel.send(`Limiet veranderd naar ${size}`);
+};
+
+router.use('size', sizeHandler);
+router.use('limit', sizeHandler);
+router.use('userlimit', sizeHandler);
+
 router.use('category', async ({ category, params, msg }) => {
   const ca = category;
   if (msg.channel instanceof DMChannel) {
@@ -538,9 +618,11 @@ const helpHanlder : Handler = ({ msg }) => {
   message += '\n`ei lobby create [@mention ...]`: Maak een private lobby aan en laat alleen de toegestaande mensen joinen';
   message += '\n`ei lobby create [@mention ...] -mute`: Iedereen mag joinen, maar alleen toegestaande mensen mogen spreken';
   message += '\n`ei lobby create [@mention ...] -public`: Iedereen mag joinen';
+  message += '\n`ei lobby create [@mention ...] -<nummer>`: Zet een user limit op de lobby';
   message += '\n`ei lobby add @mention ...`: Laat user(s) toe aan de lobby';
   message += '\n`ei lobby remove [@mention ...]`: Verwijder user(s)/ role(s) uit de lobby';
   message += '\n`ei lobby set [mute / private / public]`: Verander het type van de lobby';
+  message += '\n`ei lobby limit <nummer>`: Verander de lobby user limit';
   message += '\n`*Admin* ei lobby category true/ false`: Sta users toe lobbies aan te maken in deze categorie';
   message += '\n`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt';
   msg.channel.send(message);
