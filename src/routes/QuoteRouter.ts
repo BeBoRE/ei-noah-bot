@@ -1,11 +1,58 @@
-import { User as DiscordUser } from 'discord.js';
+import {
+  CollectorFilter,
+  DMChannel, MessageReaction, ReactionEmoji, TextBasedChannelFields, User as DiscordUser,
+} from 'discord.js';
+import { Collection, EntityManager } from 'mikro-orm';
 import Quote from '../entity/Quote';
 import { getUserGuildData } from '../data';
 import Router, { Handler } from '../Router';
 
 const router = new Router();
 
+const sendQuote = (channel : TextBasedChannelFields, quote : Quote, user : DiscordUser) => channel.send(`> ${quote.text}\n- ${user.username}`);
+
+const createQuoteMenu = async (
+  em : EntityManager,
+  quotes: Collection<Quote>,
+  owner: DiscordUser,
+  quotedUser: DiscordUser,
+  channel: TextBasedChannelFields,
+) => {
+  const emotes = [
+    '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣',
+    '🇦', '🇧', '🇨', '🇩', '🇪', '🇫', '🇬', '🇭', '🇮', '🇯', '🇰', '🇱', '🇲', '🇳', '🇴', '🇵', '🇶', '🇷', '🇸', '🇹', '🇺', '🇻', '🇼', 'x', 'y', '🇿',
+  ];
+  const title = '**Kiest U maar**\n';
+
+  const quoteList = quotes.getItems().map((q, index) => `${emotes[index]} \`${q.text}\``).join('\n');
+
+  const message = await channel.send(title + quoteList);
+  quotes.getItems().forEach((q, i) => message.react(emotes[i]));
+
+  // eslint-disable-next-line max-len
+  const filter : CollectorFilter = (reaction : MessageReaction, user : DiscordUser) => emotes.some((e) => e === reaction.emoji.name) && user.id === owner.id;
+  const collector = message.createReactionCollector(filter, { max: 1 });
+
+  const timeout = setTimeout(() => {
+    collector.stop();
+    message.delete().catch(console.error);
+  }, 60 * 1000);
+
+  collector.on('collect', (r) => {
+    const i = emotes.findIndex((e) => e === r.emoji.name);
+    sendQuote(channel, quotes[i], quotedUser);
+    message.delete();
+
+    clearTimeout(timeout);
+  });
+};
+
 const handler : Handler = async ({ params, msg, em }) => {
+  if (msg.channel instanceof DMChannel) {
+    msg.channel.send('DM mij niet smeervent');
+    return;
+  }
+
   if (params.length < 1) {
     msg.channel.send('Zet er dan ook wat neer lul');
     return;
@@ -28,14 +75,13 @@ const handler : Handler = async ({ params, msg, em }) => {
       return;
     }
 
-    const quote = guildUser.quotes[Math.floor(Math.random() * guildUser.quotes.length)];
-    msg.channel.send(`> ${quote.text}\n- ${user.username}`);
+    createQuoteMenu(em, guildUser.quotes, msg.author, user, msg.channel);
     return;
   }
 
   if (params.some((param) => typeof param !== 'string')
       || params.some((param) => (<string>param).toLowerCase() === '@everyone' || (<string>param).toLowerCase() === '@here')) {
-    msg.channel.send('Een quote kan geen mentions bevatten');
+    await msg.channel.send('Een quote kan geen mentions bevatten');
     return;
   }
 
