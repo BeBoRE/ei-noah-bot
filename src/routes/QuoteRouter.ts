@@ -40,7 +40,11 @@ const createQuoteMenu = async (
 
   collector.on('collect', (r) => {
     const i = emotes.findIndex((e) => e === r.emoji.name);
-    sendQuote(channel, quotes[i], quotedUser);
+    const quote = quotes[i];
+
+    if (quote) { sendQuote(channel, quotes[i], quotedUser); } else {
+      channel.send('?');
+    }
     message.delete();
 
     clearTimeout(timeout);
