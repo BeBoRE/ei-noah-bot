@@ -79,6 +79,10 @@ const handler : Handler = async ({ params, msg, em }) => {
       return;
     }
 
+    if (guildUser.quotes.length === 1) {
+      await sendQuote(msg.channel, guildUser.quotes[0], user);
+    }
+
     createQuoteMenu(em, guildUser.quotes, msg.author, user, msg.channel);
     return;
   }
