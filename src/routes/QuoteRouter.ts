@@ -1,6 +1,6 @@
 import {
   CollectorFilter,
-  DMChannel, MessageReaction, ReactionEmoji, TextBasedChannelFields, User as DiscordUser,
+  DMChannel, MessageReaction, TextBasedChannelFields, User as DiscordUser,
 } from 'discord.js';
 import { Collection, EntityManager } from 'mikro-orm';
 import Quote from '../entity/Quote';
