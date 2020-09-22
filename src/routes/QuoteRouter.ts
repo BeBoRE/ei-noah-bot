@@ -71,6 +71,8 @@ const createQuoteMenu = async (
     const i = emotes.findIndex((e) => e === r.emoji.name);
     const quote = quotes[i + page * emotes.length];
 
+    r.users.remove(u);
+
     if (quote && i !== -1) {
       sendQuote(channel, quote, quotedUser);
 
@@ -85,8 +87,6 @@ const createQuoteMenu = async (
       if (r.emoji.name === pageRight && page < Math.floor(quoteList.length / emotes.length)) {
         page += 1;
       }
-
-      r.users.remove(u);
 
       message.edit(generateText());
 
