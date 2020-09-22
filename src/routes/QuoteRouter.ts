@@ -19,35 +19,79 @@ const createQuoteMenu = async (
   channel: TextBasedChannelFields,
 ) => {
   const emotes = [
-    '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣',
-    '🇦', '🇧', '🇨', '🇩', '🇪', '🇫', '🇬', '🇭', '🇮', '🇯', '🇰', '🇱', '🇲', '🇳', '🇴', '🇵', '🇶', '🇷', '🇸', '🇹', '🇺', '🇻', '🇼', 'x', 'y', '🇿',
+    '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣',
   ];
-  const title = '**Kiest U maar**\n';
+  const pageLeft = '◀️';
+  const pageRight = '▶️';
 
-  const quoteList = quotes.getItems().map((q, index) => `${emotes[index]} \`${q.text}\``).join('\n');
+  const title = '**Kiest U maar**';
+  const quoteList = quotes.getItems();
+  let page = 0;
 
-  const message = await channel.send(title + quoteList);
-  quotes.getItems().forEach((q, i) => message.react(emotes[i]));
+  const generateText = () => {
+    let text = title;
+
+    for (let i = 0; i < emotes.length; i += 1) {
+      const quote = quoteList[i + page * emotes.length];
+      if (quote) text += `\n${emotes[i]} \`${quote.text}\``;
+    }
+
+    const pageText = `\n\n> \`${page + 1}/${Math.floor(quoteList.length / emotes.length) + 1}\``;
+
+    return text + pageText;
+  };
+
+  const message = await channel.send(generateText());
+  if (quoteList.length > emotes.length) {
+    message.react(pageLeft);
+    message.react(pageRight);
+  }
+  quoteList.forEach((q, i) => { if (i <= 4) message.react(emotes[i]); });
 
   // eslint-disable-next-line max-len
-  const filter : CollectorFilter = (reaction : MessageReaction, user : DiscordUser) => emotes.some((e) => e === reaction.emoji.name) && user.id === owner.id;
-  const collector = message.createReactionCollector(filter, { max: 1 });
+  const filter : CollectorFilter = (r : MessageReaction, u : DiscordUser) => (emotes.some((e) => e === r.emoji.name) || r.emoji.name === pageLeft || r.emoji.name === pageRight) && u.id === owner.id;
+  const collector = message.createReactionCollector(filter);
 
-  const timeout = setTimeout(() => {
-    collector.stop();
-    message.delete().catch(console.error);
-  }, 60 * 1000);
+  const resetOrStopTimeout = (() => {
+    let timeout : NodeJS.Timeout;
+    return (stop = false) => {
+      if (timeout) clearTimeout(timeout);
+      if (!stop) {
+        timeout = setTimeout(() => {
+          collector.stop();
+          message.delete().catch(console.error);
+        }, 1000 * 20);
+      }
+    };
+  })();
 
-  collector.on('collect', (r) => {
+  resetOrStopTimeout();
+
+  collector.on('collect', (r, u) => {
     const i = emotes.findIndex((e) => e === r.emoji.name);
-    const quote = quotes[i];
+    const quote = quotes[i + page * emotes.length];
 
-    if (quote) { sendQuote(channel, quotes[i], quotedUser); } else {
-      channel.send('?');
+    r.users.remove(u).catch();
+
+    if (quote && i !== -1) {
+      sendQuote(channel, quote, quotedUser);
+
+      message.delete();
+      collector.stop();
+
+      resetOrStopTimeout(true);
     }
-    message.delete();
 
-    clearTimeout(timeout);
+    if (r.emoji.name === pageLeft || r.emoji.name === pageRight) {
+      if (r.emoji.name === pageLeft && page > 0) page -= 1;
+      if (r.emoji.name === pageRight && page < Math.floor(quoteList.length / emotes.length)) {
+        page += 1;
+      }
+
+      message.edit(generateText());
+
+      resetOrStopTimeout();
+    }
   });
 };
 
