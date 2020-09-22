@@ -52,10 +52,20 @@ const createQuoteMenu = async (
   const filter : CollectorFilter = (r : MessageReaction, u : DiscordUser) => (emotes.some((e) => e === r.emoji.name) || r.emoji.name === pageLeft || r.emoji.name === pageRight) && u.id === owner.id;
   const collector = message.createReactionCollector(filter);
 
-  const timeout = setTimeout(() => {
-    collector.stop();
-    message.delete().catch(console.error);
-  }, 60 * 1000);
+  const resetOrStopTimeout = (() => {
+    let timeout : NodeJS.Timeout;
+    return (stop = false) => {
+      if (timeout) clearTimeout(timeout);
+      if (!stop) {
+        timeout = setTimeout(() => {
+          collector.stop();
+          message.delete().catch(console.error);
+        }, 1000 * 20);
+      }
+    };
+  })();
+
+  resetOrStopTimeout();
 
   collector.on('collect', (r, u) => {
     const i = emotes.findIndex((e) => e === r.emoji.name);
@@ -67,8 +77,9 @@ const createQuoteMenu = async (
       message.delete();
       collector.stop();
 
-      clearTimeout(timeout);
+      resetOrStopTimeout(true);
     }
+
     if (r.emoji.name === pageLeft || r.emoji.name === pageRight) {
       if (r.emoji.name === pageLeft && page > 0) page -= 1;
       if (r.emoji.name === pageRight && page < Math.floor(quoteList.length / emotes.length)) {
@@ -78,6 +89,8 @@ const createQuoteMenu = async (
       r.users.remove(u);
 
       message.edit(generateText());
+
+      resetOrStopTimeout();
     }
   });
 };
