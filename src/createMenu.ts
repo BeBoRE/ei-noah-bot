@@ -46,6 +46,11 @@ async function createMenu<T>(
     await Promise.all([message.react(pageLeft), message.react(pageRight)]);
   }
 
+  const awaitList : Promise<unknown>[] = [];
+
+  list.forEach((q, i) => { if (i < emotes.length) awaitList.push(message.react(emotes[i])); });
+  extraButtons.forEach((b) => awaitList.push(message.react(b[0])));
+
   Promise.all(message.reactions.cache.map((r) => {
     if (r.users.cache.has(owner.id)) return r.users.remove(owner);
     return null;
@@ -80,6 +85,7 @@ async function createMenu<T>(
       const destroyMessage = await selectCallback(item);
 
       if (destroyMessage || destroyMessage === undefined) {
+        await Promise.all(awaitList);
         message.delete();
         collector.stop();
         timeout('stop');
@@ -95,6 +101,7 @@ async function createMenu<T>(
       const destroyMessage = await extraButton[1]();
 
       if (destroyMessage || destroyMessage === undefined) {
+        await Promise.all(awaitList);
         message.delete();
         collector.stop();
         timeout('stop');
@@ -115,18 +122,6 @@ async function createMenu<T>(
       timeout('reset');
     }
   });
-
-  const awaitList : Promise<unknown>[] = [];
-
-  list.forEach((q, i) => { if (i < emotes.length) awaitList.push(message.react(emotes[i])); });
-  extraButtons.forEach((b) => awaitList.push(message.react(b[0])));
-
-  await Promise.all(awaitList);
-
-  Promise.all(message.reactions.cache.map((r) => {
-    if (r.users.cache.has(owner.id)) return r.users.remove(owner);
-    return null;
-  }));
 }
 
 export default createMenu;
