@@ -16,7 +16,7 @@ async function createMenu<T>(
   ...extraButtons : ExtraButton[]
 ) {
   const emotes = [
-    '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣',
+    '1️⃣', '2️⃣', '3️⃣',
   ];
   const pageLeft = '◀️';
   const pageRight = '▶️';
@@ -39,12 +39,22 @@ async function createMenu<T>(
   };
 
   const message = await channel.send(await generateText());
+
+  const awaitList : Promise<unknown>[] = [];
+
   if (list.length > emotes.length) {
-    message.react(pageLeft);
-    message.react(pageRight);
+    awaitList.push(message.react(pageLeft));
+    awaitList.push(message.react(pageRight));
   }
-  list.forEach((q, i) => { if (i <= 4) message.react(emotes[i]); });
-  extraButtons.forEach((b) => message.react(b[0]));
+  list.forEach((q, i) => { if (i < emotes.length) awaitList.push(message.react(emotes[i])); });
+  extraButtons.forEach((b) => awaitList.push(message.react(b[0])));
+
+  await Promise.all(awaitList);
+
+  Promise.all(message.reactions.cache.map((r) => {
+    if (r.users.cache.has(owner.id)) return r.users.remove(owner);
+    return null;
+  }));
 
   // eslint-disable-next-line max-len
   const filter : CollectorFilter = (r : MessageReaction, u : DiscordUser) => (emotes.some((e) => e === r.emoji.name) || extraButtons.some((b) => b[0] === r.emoji.name) || r.emoji.name === pageLeft || r.emoji.name === pageRight) && u.id === owner.id;
@@ -69,7 +79,7 @@ async function createMenu<T>(
     const i = emotes.findIndex((e) => e === r.emoji.name);
     const item = list[i + page * emotes.length];
 
-    r.users.remove(u).catch();
+    r.users.remove(u).catch(() => {});
 
     if (item && i !== -1) {
       const destroyMessage = await selectCallback(item);
@@ -78,7 +88,10 @@ async function createMenu<T>(
         message.delete();
         collector.stop();
         timeout('stop');
-      } else timeout('reset');
+      } else {
+        timeout('reset');
+        message.edit(await generateText());
+      }
     }
 
     const extraButton = extraButtons.find((eb) => eb[0] === r.emoji.name);
@@ -90,7 +103,10 @@ async function createMenu<T>(
         message.delete();
         collector.stop();
         timeout('stop');
-      } else timeout('reset');
+      } else {
+        timeout('reset');
+        message.edit(await generateText());
+      }
     }
 
     if (r.emoji.name === pageLeft || r.emoji.name === pageRight) {

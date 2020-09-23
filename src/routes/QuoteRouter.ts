@@ -74,7 +74,60 @@ const handler : Handler = async ({
 
 router.use(DiscordUser, handler);
 router.use('add', handler);
-router.use('remove', ({ msg }) => { msg.channel.send('Je kan op dit moment nog geen quotes verwijderen, vraag maar aan <@248143520005619713>'); });
+router.use('remove', async ({
+  msg, em, params, guildUser,
+}) => {
+  if (params.length < 1) {
+    msg.channel.send('Verwijder quotes van wie?');
+    return;
+  }
+
+  if (params.length > 1) {
+    msg.channel.send('Alleen de gebruiker graag');
+    return;
+  }
+
+  if (!(params[0] instanceof DiscordUser)) {
+    msg.channel.send('Hoe moeilijk is het om daar een mention neer te zetten?');
+    return;
+  }
+
+  const guToRemoveFrom = await getUserGuildData(em, params[0], msg.guild);
+
+  // Als iemand zijn eigen quotes ophaalt laat hij alles zien
+  if (guToRemoveFrom === guildUser) await guToRemoveFrom.quotes.init();
+  // Anders laad alleen de quotes waar hij de creator van is
+  else await guToRemoveFrom.quotes.init({ where: { creator: guildUser } });
+
+  const quotes = guToRemoveFrom.quotes.getItems();
+
+  if (quotes.length < 1) {
+    msg.channel.send('Jij hebt geen quotes aangemaakt voor deze user');
+    return;
+  }
+
+  const quotesToRemove : Set<Quote> = new Set<Quote>();
+
+  const menuEm = em.fork();
+
+  createMenu(quotes,
+    msg.author,
+    msg.channel,
+    '**Selecteer welke quote(s) je wil verwijderen**',
+    (q) => `${quotesToRemove.has(q) ? '✅ ' : ''}${q.text}`,
+    (q) => {
+      if (quotesToRemove.has(q)) quotesToRemove.delete(q);
+      else quotesToRemove.add(q);
+      return false;
+    },
+    ['❌', () => {
+      quotesToRemove.forEach((q) => { menuEm.remove(Quote, q); });
+      if (quotesToRemove.size > 0) msg.channel.send(`${quotesToRemove.size} quote${quotesToRemove.size !== 1 ? 's' : ''} verwijderd`);
+      else msg.channel.send('Geen quote(s) verwijderd');
+      menuEm.flush();
+      return true;
+    }]);
+});
 router.use(null, ({ msg }) => { msg.channel.send('Wat moet ik nu doen dan, gewoon een random persoon quoten?'); });
 
 export default router;
