@@ -22,6 +22,8 @@ async function createMenu<T>(
   const pageRight = '▶️';
 
   let page = 0;
+  let pages = Math.floor(list.length / emotes.length);
+  if (list.length % emotes.length) pages += 1;
 
   const generateText = async () => {
     let text = title;
@@ -33,23 +35,16 @@ async function createMenu<T>(
       if (item) text += `\n${emotes[i]} \`${item}\``;
     }
 
-    const pageText = `\n\n> \`${page + 1}/${Math.floor(list.length / emotes.length) + 1}\``;
+    const pageText = `\n\n> \`${page + 1}/${pages}\``;
 
     return text + pageText;
   };
 
   const message = await channel.send(await generateText());
 
-  const awaitList : Promise<unknown>[] = [];
-
   if (list.length > emotes.length) {
-    awaitList.push(message.react(pageLeft));
-    awaitList.push(message.react(pageRight));
+    await Promise.all([message.react(pageLeft), message.react(pageRight)]);
   }
-  list.forEach((q, i) => { if (i < emotes.length) awaitList.push(message.react(emotes[i])); });
-  extraButtons.forEach((b) => awaitList.push(message.react(b[0])));
-
-  await Promise.all(awaitList);
 
   Promise.all(message.reactions.cache.map((r) => {
     if (r.users.cache.has(owner.id)) return r.users.remove(owner);
@@ -111,7 +106,7 @@ async function createMenu<T>(
 
     if (r.emoji.name === pageLeft || r.emoji.name === pageRight) {
       if (r.emoji.name === pageLeft && page > 0) page -= 1;
-      if (r.emoji.name === pageRight && page < Math.floor(list.length / emotes.length)) {
+      if (r.emoji.name === pageRight && page < pages - 1) {
         page += 1;
       }
 
@@ -120,6 +115,18 @@ async function createMenu<T>(
       timeout('reset');
     }
   });
+
+  const awaitList : Promise<unknown>[] = [];
+
+  list.forEach((q, i) => { if (i < emotes.length) awaitList.push(message.react(emotes[i])); });
+  extraButtons.forEach((b) => awaitList.push(message.react(b[0])));
+
+  await Promise.all(awaitList);
+
+  Promise.all(message.reactions.cache.map((r) => {
+    if (r.users.cache.has(owner.id)) return r.users.remove(owner);
+    return null;
+  }));
 }
 
 export default createMenu;
