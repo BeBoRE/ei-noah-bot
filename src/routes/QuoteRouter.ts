@@ -1,4 +1,5 @@
 import {
+  Client,
   CollectorFilter,
   DMChannel, MessageReaction, TextBasedChannelFields, User as DiscordUser,
 } from 'discord.js';
@@ -9,7 +10,11 @@ import Router, { Handler } from '../Router';
 
 const router = new Router();
 
-const sendQuote = (channel : TextBasedChannelFields, quote : Quote, user : DiscordUser) => channel.send(`> ${quote.text}\n- ${user.username}`);
+const sendQuote = async (channel : TextBasedChannelFields, quote : Quote, client : Client) => {
+  const quoted = client.users.fetch(quote.guildUser.user.id, true);
+  const owner = client.users.fetch(quote.creator.user.id, true);
+  channel.send(`> ${quote.text}\n- ${(await quoted).username} (door ${(await owner).username})`);
+};
 
 const createQuoteMenu = async (
   em : EntityManager,
@@ -74,7 +79,7 @@ const createQuoteMenu = async (
     r.users.remove(u).catch();
 
     if (quote && i !== -1) {
-      sendQuote(channel, quote, quotedUser);
+      sendQuote(channel, quote, owner.client);
 
       message.delete();
       collector.stop();
@@ -126,7 +131,7 @@ const handler : Handler = async ({
     }
 
     if (quotedUser.quotes.length === 1) {
-      await sendQuote(msg.channel, quotedUser.quotes[0], user);
+      await sendQuote(msg.channel, quotedUser.quotes[0], msg.client);
       return;
     }
 
