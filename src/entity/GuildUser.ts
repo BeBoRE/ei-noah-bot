@@ -30,4 +30,7 @@ export class GuildUser {
 
   @OneToMany({ entity: () => Quote, mappedBy: 'guildUser' })
   quotes = new Collection<Quote>(this);
+
+  @OneToMany({ entity: () => Quote, mappedBy: 'creator' })
+  createdQuotes = new Collection<Quote>(this);
 }
