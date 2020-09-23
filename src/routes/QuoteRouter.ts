@@ -95,7 +95,9 @@ const createQuoteMenu = async (
   });
 };
 
-const handler : Handler = async ({ params, msg, em }) => {
+const handler : Handler = async ({
+  params, msg, em, guildUser,
+}) => {
   if (msg.channel instanceof DMChannel) {
     msg.channel.send('DM mij niet smeervent');
     return;
@@ -114,21 +116,21 @@ const handler : Handler = async ({ params, msg, em }) => {
   const user = params[0];
   params.shift();
 
-  const guildUser = await getUserGuildData(em, user, msg.guild);
-  await guildUser.quotes.init();
+  const quotedUser = await getUserGuildData(em, user, msg.guild);
+  await quotedUser.quotes.init();
 
   if (params.length === 0) {
-    if (guildUser.quotes.length === 0) {
+    if (quotedUser.quotes.length === 0) {
       msg.channel.send(`${user.username} is niet populair en heeft dus nog geen quotes`);
       return;
     }
 
-    if (guildUser.quotes.length === 1) {
-      await sendQuote(msg.channel, guildUser.quotes[0], user);
+    if (quotedUser.quotes.length === 1) {
+      await sendQuote(msg.channel, quotedUser.quotes[0], user);
       return;
     }
 
-    createQuoteMenu(em, guildUser.quotes, msg.author, user, msg.channel);
+    createQuoteMenu(em, quotedUser.quotes, msg.author, user, msg.channel);
     return;
   }
 
@@ -140,7 +142,7 @@ const handler : Handler = async ({ params, msg, em }) => {
 
   const text = params.filter((param) : param is string => typeof param === 'string').join(' ');
 
-  guildUser.quotes.add(new Quote(text));
+  quotedUser.quotes.add(new Quote(text, guildUser));
 
   msg.channel.send('Ait die ga ik onthouden');
 };

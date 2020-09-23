@@ -12,11 +12,15 @@ class Quote {
   @ManyToOne()
   guildUser!: GuildUser;
 
+  @ManyToOne()
+  creator!: GuildUser;
+
   @Property()
   text!: string;
 
-  constructor(text : string) {
+  constructor(text : string, creator: GuildUser) {
     this.text = text;
+    this.creator = creator;
   }
 }
 
