@@ -2,7 +2,6 @@ import {
   Client,
   DMChannel, TextBasedChannelFields, User as DiscordUser,
 } from 'discord.js';
-import { transpile } from 'typescript';
 import createMenu from '../createMenu';
 import Quote from '../entity/Quote';
 import { getUserGuildData } from '../data';
@@ -56,8 +55,7 @@ const handler : Handler = async ({
       msg.channel,
       '**Kiest U Maar**',
       (q) => q.text,
-      (q) => sendQuote(msg.channel, q, msg.client),
-      ['❌', () => true]);
+      (q) => sendQuote(msg.channel, q, msg.client));
     return;
   }
 
