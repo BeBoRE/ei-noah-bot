@@ -2,13 +2,18 @@ import {
   CollectorFilter, MessageReaction, TextBasedChannelFields, User as DiscordUser,
 } from 'discord.js';
 
+export type ButtonReturn = boolean | Promise<boolean> | void | Promise<void>;
+
+export type ExtraButton = [string, () => ButtonReturn];
+
 async function createMenu<T>(
   list : T[],
   owner : DiscordUser,
   channel : TextBasedChannelFields,
   title : string,
   mapper : (item : T) => string | Promise<string>,
-  selectCallback : (selected : T) => boolean | Promise<boolean> | void | Promise<void>,
+  selectCallback : (selected : T) => ButtonReturn,
+  ...extraButtons : ExtraButton[]
 ) {
   const emotes = [
     '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣',
@@ -39,9 +44,10 @@ async function createMenu<T>(
     message.react(pageRight);
   }
   list.forEach((q, i) => { if (i <= 4) message.react(emotes[i]); });
+  extraButtons.forEach((b) => message.react(b[0]));
 
   // eslint-disable-next-line max-len
-  const filter : CollectorFilter = (r : MessageReaction, u : DiscordUser) => (emotes.some((e) => e === r.emoji.name) || r.emoji.name === pageLeft || r.emoji.name === pageRight) && u.id === owner.id;
+  const filter : CollectorFilter = (r : MessageReaction, u : DiscordUser) => (emotes.some((e) => e === r.emoji.name) || extraButtons.some((b) => b[0] === r.emoji.name) || r.emoji.name === pageLeft || r.emoji.name === pageRight) && u.id === owner.id;
   const collector = message.createReactionCollector(filter);
 
   const timeout = (() => {
@@ -67,6 +73,18 @@ async function createMenu<T>(
 
     if (item && i !== -1) {
       const destroyMessage = await selectCallback(item);
+
+      if (destroyMessage || destroyMessage === undefined) {
+        message.delete();
+        collector.stop();
+        timeout('stop');
+      } else timeout('reset');
+    }
+
+    const extraButton = extraButtons.find((eb) => eb[0] === r.emoji.name);
+
+    if (extraButton) {
+      const destroyMessage = await extraButton[1]();
 
       if (destroyMessage || destroyMessage === undefined) {
         message.delete();
