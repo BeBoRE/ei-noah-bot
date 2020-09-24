@@ -1,6 +1,6 @@
 import {
   Client,
-  DMChannel, TextBasedChannelFields, User as DiscordUser,
+  DMChannel, Permissions, TextBasedChannelFields, User as DiscordUser,
 } from 'discord.js';
 import createMenu from '../createMenu';
 import Quote from '../entity/Quote';
@@ -94,10 +94,11 @@ router.use('remove', async ({
 
   const guToRemoveFrom = await getUserGuildData(em, params[0], msg.guild);
 
-  // Als iemand zijn eigen quotes ophaalt laat hij alles zien
-  if (guToRemoveFrom === guildUser) await guToRemoveFrom.quotes.init();
+  // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
-  else await guToRemoveFrom.quotes.init({ where: { creator: guildUser } });
+  if (guToRemoveFrom === guildUser || msg.member.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
+    await guToRemoveFrom.quotes.init();
+  } else await guToRemoveFrom.quotes.init({ where: { creator: guildUser } });
 
   const quotes = guToRemoveFrom.quotes.getItems();
 
