@@ -129,6 +129,14 @@ router.use('remove', async ({
       return true;
     }]);
 });
-router.use(null, ({ msg }) => { msg.channel.send('Wat moet ik nu doen dan, gewoon een random persoon quoten?'); });
+
+router.use(null, async ({ msg, em }) => {
+  const repo = em.getRepository(Quote);
+  const quotes = await repo.findAll();
+
+  const quote = quotes[Math.floor(Math.random() * quotes.length)];
+
+  await sendQuote(msg.channel, quote, msg.client);
+});
 
 export default router;
