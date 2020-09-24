@@ -74,7 +74,8 @@ const handler : Handler = async ({
 
 router.use(DiscordUser, handler);
 router.use('add', handler);
-router.use('remove', async ({
+
+const removeHandler : Handler = async ({
   msg, em, params, guildUser,
 }) => {
   if (params.length < 1) {
@@ -128,7 +129,12 @@ router.use('remove', async ({
       menuEm.flush();
       return true;
     }]);
-});
+};
+
+router.use('remove', removeHandler);
+router.use('delete', removeHandler);
+router.use('verwijder', removeHandler);
+router.use('manage', removeHandler);
 
 router.use(null, async ({ msg, em }) => {
   const repo = em.getRepository(Quote);
