@@ -136,7 +136,7 @@ router.use(null, async ({ msg, em }) => {
 
   const quote = quotes[Math.floor(Math.random() * quotes.length)];
 
-  await sendQuote(msg.channel, quote, msg.client);
+  if (quotes) { await sendQuote(msg.channel, quote, msg.client); } else msg.channel.send('Deze server heeft nog geen quotes');
 });
 
 router.use('help', ({ msg }) => {
