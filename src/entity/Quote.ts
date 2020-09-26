@@ -9,10 +9,10 @@ class Quote {
   @PrimaryKey({ serializedPrimaryKey: true })
   private id!: number;
 
-  @ManyToOne()
+  @ManyToOne({ eager: true })
   guildUser!: GuildUser;
 
-  @ManyToOne()
+  @ManyToOne({ eager: true })
   creator!: GuildUser;
 
   @Property()

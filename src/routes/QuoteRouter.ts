@@ -12,6 +12,11 @@ const router = new Router();
 const sendQuote = async (channel : TextBasedChannelFields, quote : Quote, client : Client) => {
   const quoted = client.users.fetch(quote.guildUser.user.id, true);
   const owner = client.users.fetch(quote.creator.user.id, true);
+
+  const { text } = quote;
+
+  text.replace('`', '\\`');
+
   channel.send(`> ${quote.text}\n- ${(await quoted).username} (door ${(await owner).username})`);
 };
 
@@ -60,7 +65,7 @@ const handler : Handler = async ({
   }
 
   if (params.some((param) => typeof param !== 'string')
-      || params.some((param) => (<string>param).toLowerCase() === '@everyone' || (<string>param).toLowerCase() === '@here')) {
+      || params.some((param) => (<string>param).toLowerCase().match('@everyone') || (<string>param).toLowerCase().match('@here'))) {
     await msg.channel.send('Een quote kan geen mentions bevatten');
     return;
   }
@@ -116,7 +121,7 @@ const removeHandler : Handler = async ({
     msg.author,
     msg.channel,
     '**Selecteer welke quote(s) je wil verwijderen**',
-    (q) => `${quotesToRemove.has(q) ? '✅ ' : ''}${q.text}`,
+    (q) => `${quotesToRemove.has(q) ? '✅' : ''}${q.text}`,
     (q) => {
       if (quotesToRemove.has(q)) quotesToRemove.delete(q);
       else quotesToRemove.add(q);
