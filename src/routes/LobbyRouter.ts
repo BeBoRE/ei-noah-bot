@@ -141,9 +141,13 @@ const createHandler : Handler = async ({
   } else {
     const activeChannel = await activeTempChannel(guildUser, msg.client);
 
-    let type = ChannelType.Nojoin;
+    let type = ChannelType.Mute;
     if (flags.some((flag) => flag.toLowerCase() === ChannelType.Mute)) type = ChannelType.Mute;
-    if (flags.some((flag) => flag.toLowerCase() === ChannelType.Public)) type = ChannelType.Public;
+    else if (flags.some((flag) => flag.toLowerCase() === ChannelType.Public)) {
+      type = ChannelType.Public;
+    } else if (flags.some((flag) => flag.toLowerCase() === ChannelType.Nojoin)) {
+      type = ChannelType.Nojoin;
+    }
 
     let userLimit = flags
       .map((flag) => Number.parseInt(flag, 10))
