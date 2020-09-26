@@ -12,13 +12,13 @@ import Quote from './Quote';
 // eslint-disable-next-line import/prefer-default-export
 export class GuildUser {
   @PrimaryKey()
-  id: number;
+  id!: number;
 
   @ManyToOne({ eager: true })
-  guild: Guild;
+  guild!: Guild;
 
   @ManyToOne({ eager: true })
-  user: User;
+  user!: User;
 
   [PrimaryKeyType]: [string, string];
 

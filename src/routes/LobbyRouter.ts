@@ -21,10 +21,6 @@ import Router, { Handler } from '../Router';
 
 const router = new Router();
 
-interface TempChannelOptions {
-  muted?: boolean
-}
-
 enum ChannelType {
   Mute = 'mute',
   Public = 'public',
@@ -35,7 +31,7 @@ function generateLobbyName(type : ChannelType, owner : DiscordUser) {
   let icon : string;
   if (type === ChannelType.Nojoin) icon = '🔐';
   if (type === ChannelType.Mute) icon = '🔇';
-  if (type === ChannelType.Public) icon = '🔊';
+  else icon = '🔊';
   return `${icon} ${owner.username}'s Lobby`;
 }
 
@@ -48,8 +44,8 @@ function toDeny(type : ChannelType) {
 }
 
 function getChannelType(channel : VoiceChannel) {
-  if (!channel.permissionOverwrites.get(channel.guild.id).deny.has('CONNECT')) {
-    if (!channel.permissionOverwrites.get(channel.guild.id).deny.has('SPEAK')) return ChannelType.Public;
+  if (!channel.permissionOverwrites.get(channel.guild.id)?.deny.has('CONNECT')) {
+    if (!channel.permissionOverwrites.get(channel.guild.id)?.deny.has('SPEAK')) return ChannelType.Public;
     return ChannelType.Mute;
   } return ChannelType.Nojoin;
 }
@@ -57,7 +53,6 @@ function getChannelType(channel : VoiceChannel) {
 async function createTempChannel(
   guild: DiscordGuild, parent: string,
   users: Array<DiscordUser | Role>, owner: DiscordUser,
-  bot: DiscordUser,
   bitrate: number,
   type: ChannelType,
   userLimit = 0,
@@ -69,12 +64,16 @@ async function createTempChannel(
     allow: [Permissions.FLAGS.CONNECT, Permissions.FLAGS.SPEAK],
   }));
 
-  permissionOverwrites.push({
-    id: bot.id,
-    allow: [
-      Permissions.ALL,
-    ],
-  });
+  const bot = guild.client.user;
+
+  if (bot !== null) {
+    permissionOverwrites.push({
+      id: bot.id,
+      allow: [
+        Permissions.ALL,
+      ],
+    });
+  }
 
   permissionOverwrites.push({
     id: owner.id,
@@ -100,7 +99,7 @@ async function createTempChannel(
   });
 }
 
-async function activeTempChannel(guildUser : GuildUser, client : Client) : Promise<VoiceChannel> {
+async function activeTempChannel(guildUser : GuildUser, client : Client) {
   if (!guildUser.tempChannel) return undefined;
 
   try {
@@ -123,17 +122,19 @@ async function activeTempChannel(guildUser : GuildUser, client : Client) : Promi
 const createHandler : Handler = async ({
   msg, params, flags, guildUser, category,
 }) => {
-  const gu = guildUser;
   const nonUsersAndRoles = params
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
   const invited = params
     // eslint-disable-next-line max-len
     .filter((param): param is DiscordUser | Role => param instanceof DiscordUser || param instanceof Role)
-    .filter((user) => user.id !== msg.author.id && user.id !== msg.client.user.id);
+    .filter((user) => user.id !== msg.author.id && user.id !== msg.client.user?.id);
 
-  if (msg.channel instanceof DMChannel || msg.channel instanceof NewsChannel) {
+  if (msg.channel instanceof DMChannel
+    || msg.channel instanceof NewsChannel
+    || msg.guild === null
+    || guildUser === null) {
     msg.channel.send('Je kan alleen lobbies aanmaken op een server');
-  } else if (!category || !category.isLobbyCategory) {
+  } else if (!category || !category.isLobbyCategory || msg.channel.parentID === null) {
     msg.channel.send('Je mag geen lobbies aanmaken in deze categorie');
   } else if (nonUsersAndRoles.length) {
     msg.channel.send('Alleen mentions mogelijk als argument(en)');
@@ -148,11 +149,11 @@ const createHandler : Handler = async ({
       .map((flag) => Number.parseInt(flag, 10))
       .find((flag) => Number.isSafeInteger(flag));
 
-    if (userLimit < 0) {
+    if (userLimit === undefined) {
       userLimit = 0;
-    }
-
-    if (userLimit > 99) {
+    } else if (userLimit < 0) {
+      userLimit = 0;
+    } else if (userLimit > 99) {
       userLimit = 99;
     }
 
@@ -165,11 +166,12 @@ const createHandler : Handler = async ({
           msg.channel.parentID,
           invited,
           msg.author,
-          msg.client.user,
           guildUser.guild.bitrate,
           type,
           userLimit,
         );
+
+        const gu = guildUser;
 
         gu.tempChannel = createdChannel.id;
         gu.tempCreatedAt = new Date();
@@ -201,7 +203,7 @@ createRouter.use(DiscordUser, createHandler);
 createRouter.use(null, createHandler);
 
 router.use('add', async ({ params, msg, guildUser }) => {
-  if (msg.channel instanceof DMChannel) {
+  if (msg.channel instanceof DMChannel || guildUser === null) {
     msg.channel.send('Dit commando kan alleen gebruikt worden op een server');
     return;
   }
@@ -264,7 +266,7 @@ router.use('add', async ({ params, msg, guildUser }) => {
 });
 
 router.use('remove', async ({ params, msg, guildUser }) => {
-  if (msg.channel instanceof DMChannel) {
+  if (msg.channel instanceof DMChannel || guildUser === null) {
     msg.channel.send('Dit commando kan alleen gebruikt worden op een server');
     return;
   }
@@ -328,7 +330,7 @@ router.use('remove', async ({ params, msg, guildUser }) => {
   const notRemoved = users.filter((user) => {
     let removed = false;
     if (user.id === msg.author.id) triedRemoveSelf = true;
-    else if (user.id === msg.client.user.id) triedRemoveEi = true;
+    else if (user.id === msg.client.user?.id) triedRemoveEi = true;
     else {
       const member = activeChannel.members.get(user.id);
       if (member && member.voice.channelID === activeChannel.id) {
@@ -337,7 +339,7 @@ router.use('remove', async ({ params, msg, guildUser }) => {
       }
 
       if (activeChannel.permissionOverwrites.has(user.id)) {
-        activeChannel.permissionOverwrites.get(user.id).delete();
+        activeChannel.permissionOverwrites.get(user.id)?.delete();
         removed = true;
       }
 
@@ -376,7 +378,7 @@ router.use('remove', async ({ params, msg, guildUser }) => {
 });
 
 const changeTypeHandler : Handler = async ({ params, msg, guildUser }) => {
-  if (msg.channel instanceof DMChannel) {
+  if (msg.channel instanceof DMChannel || msg.guild === null || guildUser === null) {
     msg.channel.send('Dit commando kan alleen op servers worden gebruikt');
     return;
   }
@@ -459,7 +461,7 @@ router.use('verander', changeTypeHandler);
 const sizeHandler : Handler = async ({
   msg, category, guildUser, params,
 }) => {
-  if (msg.channel instanceof DMChannel) {
+  if (msg.channel instanceof DMChannel || guildUser === null) {
     msg.channel.send('Je kan dit commando alleen op servers gebruiken');
     return;
   }
@@ -544,7 +546,7 @@ router.use('category', async ({ category, params, msg }) => {
     return;
   }
 
-  if (!msg.member.hasPermission('ADMINISTRATOR')) {
+  if (!msg.member?.hasPermission('ADMINISTRATOR')) {
     msg.channel.send('Alleen een Edwin mag dit aanpassen');
     return;
   }
@@ -560,15 +562,16 @@ router.use('category', async ({ category, params, msg }) => {
   else if (params[0].toLowerCase() === 'false' || params[0] === '0') isAllowed = false;
   else {
     msg.channel.send(`\`${params[0]}\` is niet een argument, verwacht \`true\` of \`false\``);
+    return;
   }
 
   msg.channel.send(isAllowed ? 'Users kunnen nu lobbies aanmaken in deze category' : 'User kunnen nu geen lobbies meer aanmaken in deze category');
 
-  ca.isLobbyCategory = isAllowed;
+  if (ca) { ca.isLobbyCategory = isAllowed; }
 });
 
 router.use('bitrate', async ({ msg, guildUser, params }) => {
-  if (msg.channel instanceof DMChannel) {
+  if (msg.channel instanceof DMChannel || guildUser === null) {
     msg.channel.send('Je kan dit commando alleen op servers gebruiken');
     return;
   }
@@ -588,7 +591,7 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
     return;
   }
 
-  if (!msg.member.hasPermission('ADMINISTRATOR')) {
+  if (!msg.member?.hasPermission('ADMINISTRATOR')) {
     msg.channel.send('Alleen een Edwin mag dit aanpassen');
     return;
   }
@@ -634,13 +637,16 @@ router.use(null, helpHanlder);
 router.use('help', helpHanlder);
 
 const removeTempLobby = (gu : GuildUser) => {
-  gu.tempChannel = null;
-  gu.tempCreatedAt = null;
+  gu.tempChannel = undefined;
+  gu.tempCreatedAt = undefined;
 };
 
 router.onInit = async (client, orm) => {
   const checkTempChannel = async (userWithTemp : GuildUser, em : EntityManager) => {
     const now = new Date();
+
+    if (!userWithTemp.tempChannel || !userWithTemp.tempCreatedAt) return;
+
     const difference = Math.abs(now.getMinutes() - userWithTemp.tempCreatedAt.getMinutes());
     if (difference >= 2) {
       const activeChannel = await activeTempChannel(userWithTemp, client);
@@ -657,8 +663,10 @@ router.onInit = async (client, orm) => {
           .map((member) => getUserGuildData(em, member.user, activeChannel.guild)));
 
         const newOwner = activeChannel.members
-          .sort((member1, member2) => member1.joinedTimestamp - member2.joinedTimestamp)
-          .filter((member) => !guildUsers.find((gu) => gu.user.id === member.id).tempChannel)
+          .sort(
+            (member1, member2) => (member1.joinedTimestamp || 0) - (member2.joinedTimestamp || 0),
+          )
+          .filter((member) => !guildUsers.find((gu) => gu.user.id === member.id)?.tempChannel)
           // eslint-disable-next-line max-len
           .filter((member) => {
             const isPublic = getChannelType(activeChannel) === ChannelType.Public;
@@ -673,6 +681,9 @@ router.onInit = async (client, orm) => {
 
         if (newOwner) {
           const newOwnerGuildUser = guildUsers.find((gu) => gu.user.id === newOwner.id);
+
+          if (!newOwnerGuildUser) throw new Error('Guild User Not Found In Array');
+
           newOwnerGuildUser.tempChannel = activeChannel.id;
           newOwnerGuildUser.tempCreatedAt = userWithTemp.tempCreatedAt;
 

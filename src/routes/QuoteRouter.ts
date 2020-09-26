@@ -23,7 +23,7 @@ const sendQuote = async (channel : TextBasedChannelFields, quote : Quote, client
 const handler : Handler = async ({
   params, msg, em, guildUser,
 }) => {
-  if (msg.channel instanceof DMChannel) {
+  if (msg.channel instanceof DMChannel || !msg.guild || !guildUser) {
     msg.channel.send('DM mij niet smeervent');
     return;
   }
@@ -84,6 +84,11 @@ router.use('toevoegen', handler);
 const removeHandler : Handler = async ({
   msg, em, params, guildUser,
 }) => {
+  if (!msg.guild) {
+    msg.channel.send('Kan alleen in een server');
+    return;
+  }
+
   if (params.length < 1) {
     msg.channel.send('Verwijder quotes van wie?');
     return;
@@ -103,7 +108,7 @@ const removeHandler : Handler = async ({
 
   // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
-  if (guToRemoveFrom === guildUser || msg.member.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
+  if (guToRemoveFrom === guildUser || msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
     await guToRemoveFrom.quotes.init();
   } else await guToRemoveFrom.quotes.init({ where: { creator: guildUser } });
 
@@ -144,8 +149,12 @@ router.use('verwijderen', removeHandler);
 router.use('manage', removeHandler);
 
 router.use(null, async ({ msg, em }) => {
-  const repo = em.getRepository(Quote);
-  const quotes = await repo.findAll();
+  if (!msg.guild) {
+    msg.channel.send('Dit commando alleen op een server gebruiken');
+    return;
+  }
+
+  const quotes = await em.find(Quote, { guildUser: { guild: { id: msg.guild.id } } });
 
   const quote = quotes[Math.floor(Math.random() * quotes.length)];
 
