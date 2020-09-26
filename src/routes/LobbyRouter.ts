@@ -134,7 +134,7 @@ const createHandler : Handler = async ({
   if (msg.channel instanceof DMChannel || msg.channel instanceof NewsChannel) {
     msg.channel.send('Je kan alleen lobbies aanmaken op een server');
   } else if (!category || !category.isLobbyCategory) {
-    msg.channel.send('Je mag geen lobbies aanmaken in deze category');
+    msg.channel.send('Je mag geen lobbies aanmaken in deze categorie');
   } else if (nonUsersAndRoles.length) {
     msg.channel.send('Alleen mentions mogelijk als argument(en)');
   } else {
@@ -194,6 +194,7 @@ const createHandler : Handler = async ({
 // ei lobby create ...
 const createRouter = new Router();
 router.use('create', createRouter);
+router.use('aanmaken', createRouter);
 
 createRouter.use(Role, createHandler);
 createRouter.use(DiscordUser, createHandler);
@@ -453,6 +454,7 @@ const changeTypeHandler : Handler = async ({ params, msg, guildUser }) => {
 router.use('type', changeTypeHandler);
 router.use('change', changeTypeHandler);
 router.use('set', changeTypeHandler);
+router.use('verander', changeTypeHandler);
 
 const sizeHandler : Handler = async ({
   msg, category, guildUser, params,

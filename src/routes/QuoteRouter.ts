@@ -79,6 +79,7 @@ const handler : Handler = async ({
 
 router.use(DiscordUser, handler);
 router.use('add', handler);
+router.use('toevoegen', handler);
 
 const removeHandler : Handler = async ({
   msg, em, params, guildUser,
@@ -139,6 +140,7 @@ const removeHandler : Handler = async ({
 router.use('remove', removeHandler);
 router.use('delete', removeHandler);
 router.use('verwijder', removeHandler);
+router.use('verwijderen', removeHandler);
 router.use('manage', removeHandler);
 
 router.use(null, async ({ msg, em }) => {
