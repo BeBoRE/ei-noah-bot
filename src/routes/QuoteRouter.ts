@@ -1,6 +1,6 @@
 import {
   Client,
-  DMChannel, TextBasedChannelFields, User as DiscordUser,
+  DMChannel, Permissions, TextBasedChannelFields, User as DiscordUser,
 } from 'discord.js';
 import createMenu from '../createMenu';
 import Quote from '../entity/Quote';
@@ -74,7 +74,8 @@ const handler : Handler = async ({
 
 router.use(DiscordUser, handler);
 router.use('add', handler);
-router.use('remove', async ({
+
+const removeHandler : Handler = async ({
   msg, em, params, guildUser,
 }) => {
   if (params.length < 1) {
@@ -94,10 +95,11 @@ router.use('remove', async ({
 
   const guToRemoveFrom = await getUserGuildData(em, params[0], msg.guild);
 
-  // Als iemand zijn eigen quotes ophaalt laat hij alles zien
-  if (guToRemoveFrom === guildUser) await guToRemoveFrom.quotes.init();
+  // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
-  else await guToRemoveFrom.quotes.init({ where: { creator: guildUser } });
+  if (guToRemoveFrom === guildUser || msg.member.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
+    await guToRemoveFrom.quotes.init();
+  } else await guToRemoveFrom.quotes.init({ where: { creator: guildUser } });
 
   const quotes = guToRemoveFrom.quotes.getItems();
 
@@ -127,7 +129,32 @@ router.use('remove', async ({
       menuEm.flush();
       return true;
     }]);
+};
+
+router.use('remove', removeHandler);
+router.use('delete', removeHandler);
+router.use('verwijder', removeHandler);
+router.use('manage', removeHandler);
+
+router.use(null, async ({ msg, em }) => {
+  const repo = em.getRepository(Quote);
+  const quotes = await repo.findAll();
+
+  const quote = quotes[Math.floor(Math.random() * quotes.length)];
+
+  if (quotes) { await sendQuote(msg.channel, quote, msg.client); } else msg.channel.send('Deze server heeft nog geen quotes');
 });
-router.use(null, ({ msg }) => { msg.channel.send('Wat moet ik nu doen dan, gewoon een random persoon quoten?'); });
+
+router.use('help', ({ msg }) => {
+  let message = '**Hou quotes van je makkermaten bij!**';
+  message += '\nMogelijke Commandos:';
+  message += '\n`ei quote`: Verstuur een random quote';
+  message += '\n`ei quote <@member>`: Verstuur een quote van dat persoon';
+  message += '\n`ei quote <@member> <quote>`: Sla een nieuwe quote op van dat persoon';
+  message += '\n`ei quote remove <@member>`: Verwijder een selectie aan quotes van dat persoon';
+  message += '\n> Je kan alleen de quotes verwijderen die je voor dat persoon geschreven hebt';
+  message += '\n> Alleen quotes van jezelf kan je volledig beheren';
+  msg.channel.send(message);
+});
 
 export default router;

@@ -33,7 +33,7 @@ eiNoah.use(User, (routeInfo) => {
 });
 
 // Voorbeeld hoe je met user data omgaat
-eiNoah.use('counter', Counter);
+if (process.env.NODE_ENV !== 'production') eiNoah.use('counter', Counter);
 
 eiNoah.use(null, (info) => {
   const watZegtNoah = ['Ja wat jonge', '**Kabaal** ik zit op de fiets', 'Ik steek je neer', 'Hmm wat zegt noah nog meer', 'Ik laat het aan god over'];
