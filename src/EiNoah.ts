@@ -27,6 +27,7 @@ class EiNoah {
   // this.use wordt doorgepaast aan de echte router
   public use(route: typeof DiscordUser, using: Handler) : void
   public use(route: typeof Role, using: Handler) : void
+  public use(route: null, using: Handler) : void
   public use(route : string, using: Router | Handler) : void
   public use(route : any, using: any) : any {
     this.router.use(route, using);
@@ -46,8 +47,8 @@ class EiNoah {
         const splitted = msg.content.split(' ').filter((param) => param);
 
         // Raw mention ziet er anders uit wanneer user een nickname heeft
-        const botMention = `<@${this.client.user.id}>`;
-        const botNickMention = `<@!${this.client.user.id}>`;
+        const botMention = `<@${this.client.user?.id}>`;
+        const botNickMention = `<@!${this.client.user?.id}>`;
 
         if (splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention) {
           msg.channel.startTyping();

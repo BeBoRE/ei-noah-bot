@@ -7,6 +7,8 @@ import QuoteRouter from './routes/QuoteRouter';
 
 dotenv.config();
 
+if (!process.env.CLIENT_TOKEN) throw new Error('Add a client token');
+
 const eiNoah = new EiNoah(process.env.CLIENT_TOKEN);
 
 // LobbyRouter wordt gebruikt wanneer mensen "ei lobby" aanroepen

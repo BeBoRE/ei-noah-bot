@@ -12,13 +12,18 @@ const router = new Router();
 const sendQuote = async (channel : TextBasedChannelFields, quote : Quote, client : Client) => {
   const quoted = client.users.fetch(quote.guildUser.user.id, true);
   const owner = client.users.fetch(quote.creator.user.id, true);
+
+  const { text } = quote;
+
+  text.replace('`', '\\`');
+
   channel.send(`> ${quote.text}\n- ${(await quoted).username} (door ${(await owner).username})`);
 };
 
 const handler : Handler = async ({
   params, msg, em, guildUser,
 }) => {
-  if (msg.channel instanceof DMChannel) {
+  if (msg.channel instanceof DMChannel || !msg.guild || !guildUser) {
     msg.channel.send('DM mij niet smeervent');
     return;
   }
@@ -60,7 +65,7 @@ const handler : Handler = async ({
   }
 
   if (params.some((param) => typeof param !== 'string')
-      || params.some((param) => (<string>param).toLowerCase() === '@everyone' || (<string>param).toLowerCase() === '@here')) {
+      || params.some((param) => (<string>param).toLowerCase().match('@everyone') || (<string>param).toLowerCase().match('@here'))) {
     await msg.channel.send('Een quote kan geen mentions bevatten');
     return;
   }
@@ -74,10 +79,16 @@ const handler : Handler = async ({
 
 router.use(DiscordUser, handler);
 router.use('add', handler);
+router.use('toevoegen', handler);
 
 const removeHandler : Handler = async ({
   msg, em, params, guildUser,
 }) => {
+  if (!msg.guild) {
+    msg.channel.send('Kan alleen in een server');
+    return;
+  }
+
   if (params.length < 1) {
     msg.channel.send('Verwijder quotes van wie?');
     return;
@@ -97,7 +108,7 @@ const removeHandler : Handler = async ({
 
   // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
-  if (guToRemoveFrom === guildUser || msg.member.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
+  if (guToRemoveFrom === guildUser || msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
     await guToRemoveFrom.quotes.init();
   } else await guToRemoveFrom.quotes.init({ where: { creator: guildUser } });
 
@@ -116,7 +127,7 @@ const removeHandler : Handler = async ({
     msg.author,
     msg.channel,
     '**Selecteer welke quote(s) je wil verwijderen**',
-    (q) => `${quotesToRemove.has(q) ? '✅ ' : ''}${q.text}`,
+    (q) => `${quotesToRemove.has(q) ? '✅' : ''}${q.text}`,
     (q) => {
       if (quotesToRemove.has(q)) quotesToRemove.delete(q);
       else quotesToRemove.add(q);
@@ -134,11 +145,16 @@ const removeHandler : Handler = async ({
 router.use('remove', removeHandler);
 router.use('delete', removeHandler);
 router.use('verwijder', removeHandler);
+router.use('verwijderen', removeHandler);
 router.use('manage', removeHandler);
 
 router.use(null, async ({ msg, em }) => {
-  const repo = em.getRepository(Quote);
-  const quotes = await repo.findAll();
+  if (!msg.guild) {
+    msg.channel.send('Dit commando alleen op een server gebruiken');
+    return;
+  }
+
+  const quotes = await em.find(Quote, { guildUser: { guild: { id: msg.guild.id } } });
 
   const quote = quotes[Math.floor(Math.random() * quotes.length)];
 

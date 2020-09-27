@@ -1,5 +1,5 @@
 import {
-  Message, User, Role, Channel, Client, DiscordAPIError, DMChannel, Guild,
+  Message, User, Role, Channel, Client, DiscordAPIError, TextChannel, NewsChannel, Guild,
 } from 'discord.js';
 import {
   EntityManager, MikroORM, IDatabaseDriver, Connection,
@@ -13,8 +13,8 @@ export interface RouteInfo {
   absoluteParams: Array<string | User | Role | Channel>
   params: Array<string | User | Role | Channel>
   flags: string[],
-  guildUser: GuildUser,
-  category?: Category,
+  guildUser: GuildUser | null,
+  category: Category | null,
   em: EntityManager
 }
 
@@ -26,7 +26,7 @@ export interface RouteList {
   [path : string]: Router | Handler
 }
 
-function getUserFromMention(_mention : string, client : Client, guild : Guild) {
+function getUserFromMention(_mention : string, client : Client, guild : Guild | null) {
   let mention = _mention;
 
   if (!mention) return null;
@@ -42,6 +42,7 @@ function getUserFromMention(_mention : string, client : Client, guild : Guild) {
       mention = mention.slice(1);
 
       if (Number.isNaN(+mention)) { return null; }
+      if (!guild) return null;
       return guild.roles.fetch(mention, true);
     }
 
@@ -56,7 +57,7 @@ function isFlag(argument: string) {
 }
 
 export async function messageParser(msg : Message, em: EntityManager) {
-  if (msg.channel instanceof DMChannel) throw new Error('Bot niet DMable');
+  if (!msg.content) throw new Error('Message heeft geen content');
 
   const splitted = msg.content.split(' ').filter((param) => param);
 
@@ -85,8 +86,15 @@ export async function messageParser(msg : Message, em: EntityManager) {
     } else throw new Error('Unknown Parsing error');
   }
 
-  const guildUser = await getUserGuildData(em, msg.author, msg.guild);
-  const category = await getCategoryData(em, msg.channel.parent);
+  let guildUser;
+  if (msg.guild) {
+    guildUser = await getUserGuildData(em, msg.author, msg.guild);
+  } else guildUser = null;
+
+  let category;
+  if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
+    category = await getCategoryData(em, msg.channel.parent);
+  } else category = null;
 
   const routeInfo : RouteInfo = {
     absoluteParams: resolved,
@@ -104,11 +112,11 @@ export async function messageParser(msg : Message, em: EntityManager) {
 export default class Router {
   private routes : RouteList = {};
 
-  private userRoute : Handler;
+  private userRoute ?: Handler;
 
-  private nullRoute : Handler;
+  private nullRoute ?: Handler;
 
-  private roleRoute : Handler;
+  private roleRoute ?: Handler;
 
   // Met use geef je aan welk commando waarheen gaat
   public use(route : typeof User, using: Handler) : void
@@ -143,7 +151,7 @@ export default class Router {
     return new Promise((resolve, reject) => {
       const currentRoute = info.params[0];
 
-      let handler : Router | Handler;
+      let handler : Router | Handler | undefined;
       let newInfo : RouteInfo = info;
 
       if (typeof currentRoute !== 'string') {

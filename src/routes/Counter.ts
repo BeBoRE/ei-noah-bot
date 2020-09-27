@@ -5,6 +5,11 @@ const router = new Router();
 router.use('add', async ({ msg, guildUser }) => {
   // NOOIT parameters direct aanpassen
   // kan undefined behaviour veroorzaken
+
+  if (guildUser == null) {
+    msg.channel.send('Alleen gebruiken in een server');
+    return;
+  }
   const data = guildUser;
 
   if (!data.user.count) data.user.count = 1;
@@ -14,7 +19,7 @@ router.use('add', async ({ msg, guildUser }) => {
 });
 
 router.use('get', async ({ msg, guildUser }) => {
-  msg.channel.send(`${msg.author.tag} is now on ${guildUser.user.count}`);
+  msg.channel.send(`${msg.author.tag} is now on ${guildUser?.user.count}`);
 
   // Geen data aangepast
   // Niks opslaan
