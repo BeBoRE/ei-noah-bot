@@ -12,9 +12,11 @@ import {
   Constants,
   Role,
   GuildMember,
+  TextBasedChannelFields,
   OverwriteResolvable,
 } from 'discord.js';
 import { EntityManager } from 'mikro-orm';
+import createMenu from '../createMenu';
 import { getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
 import Router, { Handler } from '../Router';
@@ -269,8 +271,98 @@ router.use('add', async ({ params, msg, guildUser }) => {
   msg.channel.send(`${allowedUsersMessage}\n${alreadyInMessage}`);
 });
 
+const removeFromLobby = (
+  channel : VoiceChannel,
+  toRemoveUsers : DiscordUser[],
+  toRemoveRoles : Role[],
+  textChannel : TextBasedChannelFields,
+  channelOwner : DiscordUser,
+) => {
+  const usersGivenPermissions : GuildMember[] = [];
+
+  const rolesRemoved : Role[] = [];
+  const rolesNotRemoved : Role[] = [];
+
+  toRemoveRoles.forEach((role) => {
+    const roleOverwrite = channel.permissionOverwrites.get(role.id);
+
+    if (roleOverwrite) {
+      role.members.forEach((member) => {
+        // eslint-disable-next-line max-len
+        if (!channel.permissionOverwrites.has(member.id)
+        && channel.members.has(member.id)
+        && !toRemoveUsers.some((user) => user.id === member.id)) {
+          channel.updateOverwrite(member.id, { CONNECT: true, SPEAK: true });
+          usersGivenPermissions.push(member);
+        }
+      });
+
+      roleOverwrite.delete();
+      rolesRemoved.push(role);
+    } else {
+      rolesNotRemoved.push(role);
+    }
+  });
+
+  let triedRemoveSelf = false;
+  let triedRemoveEi = false;
+  const removedList : DiscordUser[] = [];
+  const notRemoved = toRemoveUsers.filter((user) => {
+    let removed = false;
+    if (user.id === channelOwner.id) triedRemoveSelf = true;
+    else if (user.id === channelOwner.client.user?.id) triedRemoveEi = true;
+    else {
+      const member = channel.members.get(user.id);
+      if (member && member.voice.channelID === channel.id) {
+        member.voice.setChannel(null);
+        removed = true;
+      }
+
+      if (channel.permissionOverwrites.has(user.id)) {
+        channel.permissionOverwrites.get(user.id)?.delete();
+        removed = true;
+      }
+
+      if (removed) removedList.push(user);
+    }
+
+    return !removed;
+  });
+
+  let message = '';
+
+  if (usersGivenPermissions.length > 0) {
+    message += `Omdat ${usersGivenPermissions.map((user) => user.displayName).join(', ')} ${toRemoveRoles.length > 1 ? 'één of meer van de rollen' : 'de rol'} ${usersGivenPermissions.length > 1 ? 'hadden zijn ze' : 'had is hij'} niet verwijderd.`;
+    message += `\nVerwijder ${usersGivenPermissions.length > 1 ? 'hen' : 'hem'} met \`ei lobby remove ${usersGivenPermissions.map((member) => `@${member.user.tag}`).join(' ')}\``;
+  }
+
+  if (notRemoved.length > 0) {
+    if (triedRemoveSelf) message += '\nJe kan jezelf niet verwijderen';
+    if (triedRemoveEi) message += '\nEi Noah is omnipresent';
+    else message += `\n${notRemoved.map((user) => user.username).join(', ')} ${notRemoved.length > 1 ? 'konden' : 'kon'} niet verwijderd worden`;
+  } else if (removedList.length) {
+    message += `\n${removedList.map((user) => user.username).join(', ')} ${removedList.length > 1 ? 'zijn' : 'is'} verwijderd uit de lobby`;
+  }
+
+  if (rolesRemoved.length > 0) {
+    const roleNames = rolesRemoved.map((role) => role.name);
+    message += `\n${roleNames.join(', ')} rol${roleNames.length > 1 ? 'len zijn verwijderd' : ' is verwijderd'}`;
+  }
+
+  if (rolesNotRemoved.length > 0) {
+    const roleNames = rolesNotRemoved.map((role) => role.name);
+    message += `\nRol${rolesNotRemoved.length > 1 ? 'len' : ''} ${roleNames.join(', ')} ${rolesNotRemoved.length > 1 ? 'zijn niet verwijderd' : 'is niet verwijderd'}`;
+  }
+
+  if (message === '') {
+    textChannel.send('Geen users of roles gegeven');
+  } else {
+    textChannel.send(message);
+  }
+};
+
 router.use('remove', async ({ params, msg, guildUser }) => {
-  if (msg.channel instanceof DMChannel || guildUser === null) {
+  if (msg.channel instanceof DMChannel || guildUser === null || msg.guild == null) {
     msg.channel.send('Dit commando kan alleen gebruikt worden op een server');
     return;
   }
@@ -302,83 +394,58 @@ router.use('remove', async ({ params, msg, guildUser }) => {
     return;
   }
 
-  const usersGivenPermissions : GuildMember[] = [];
+  if (params.length === 0) {
+    const removeAbleRoles = msg.guild.roles.cache.array()
+      .filter((role) => activeChannel.permissionOverwrites.has(role.id))
+      .filter((role) => role.id !== msg.guild?.id);
 
-  const rolesRemoved : Role[] = [];
-  const rolesNotRemoved : Role[] = [];
+    const removeAbleUsers = msg.guild.members.cache.array()
+      .filter((member) => {
+        if (member.id === msg.author.id) return false;
+        if (member.id === msg.client.user?.id) return false;
+        if (activeChannel.permissionOverwrites.has(member.id)) return true;
+        if (activeChannel.members.has(member.id)) return true;
+        return false;
+      })
+      .map((member) => member.user);
 
-  roles.forEach((role) => {
-    const roleOverwrite = activeChannel.permissionOverwrites.get(role.id);
+    if (removeAbleUsers.length === 0 && removeAbleRoles.length === 0) {
+      msg.channel.send('Geen gebruikers of roles die verwijderd kunnen worden');
+      return;
+    }
 
-    if (roleOverwrite) {
-      role.members.forEach((member) => {
-        // eslint-disable-next-line max-len
-        if (!activeChannel.permissionOverwrites.has(member.id)
-        && activeChannel.members.has(member.id)
-        && !users.some((user) => user.id === member.id)) {
-          activeChannel.updateOverwrite(member.id, { CONNECT: true, SPEAK: true });
-          usersGivenPermissions.push(member);
+    const selectedUsers = new Set<DiscordUser>();
+    const selectedRoles = new Set<Role>();
+
+    createMenu([...removeAbleRoles, ...removeAbleUsers], msg.author, msg.channel, 'Welke user(s) of role(s) wil je verwijderen',
+      (item) => {
+        if (item instanceof DiscordUser) {
+          return `${selectedUsers.has(item) ? '✅' : ''}User: ${item.username}`;
         }
-      });
 
-      roleOverwrite.delete();
-      rolesRemoved.push(role);
-    } else {
-      rolesNotRemoved.push(role);
-    }
-  });
+        return `${selectedRoles.has(item) ? '✅' : ''}Role: ${item.name}`;
+      },
+      (selected) => {
+        if (selected instanceof DiscordUser) {
+          if (selectedUsers.has(selected)) selectedUsers.delete(selected);
+          else selectedUsers.add(selected);
+        } else if (selectedRoles.has(selected)) selectedRoles.delete(selected);
+        else selectedRoles.add(selected);
 
-  let triedRemoveSelf = false;
-  let triedRemoveEi = false;
-  const removedList : DiscordUser[] = [];
-  const notRemoved = users.filter((user) => {
-    let removed = false;
-    if (user.id === msg.author.id) triedRemoveSelf = true;
-    else if (user.id === msg.client.user?.id) triedRemoveEi = true;
-    else {
-      const member = activeChannel.members.get(user.id);
-      if (member && member.voice.channelID === activeChannel.id) {
-        member.voice.setChannel(null);
-        removed = true;
-      }
+        return false;
+      },
+      ['❌', () => {
+        removeFromLobby(activeChannel,
+          Array.from(selectedUsers),
+          Array.from(selectedRoles),
+          msg.channel,
+          msg.author);
+      }]);
 
-      if (activeChannel.permissionOverwrites.has(user.id)) {
-        activeChannel.permissionOverwrites.get(user.id)?.delete();
-        removed = true;
-      }
-
-      if (removed) removedList.push(user);
-    }
-
-    return !removed;
-  });
-
-  let message = '';
-
-  if (usersGivenPermissions.length > 0) {
-    message += `Omdat ${usersGivenPermissions.map((user) => user.displayName).join(', ')} ${roles.length > 1 ? 'één of meer van de rollen' : 'de rol'} ${usersGivenPermissions.length > 1 ? 'hadden zijn ze' : 'had is hij'} niet verwijderd.`;
-    message += `\nVerwijder ${usersGivenPermissions.length > 1 ? 'hen' : 'hem'} met \`ei lobby remove ${usersGivenPermissions.map((member) => `@${member.user.tag}`).join(' ')}\``;
+    return;
   }
 
-  if (notRemoved.length > 0) {
-    if (triedRemoveSelf) message += '\nJe kan jezelf niet verwijderen';
-    if (triedRemoveEi) message += '\nEi Noah is omnipresent';
-    else message += `\n${notRemoved.map((user) => user.username).join(', ')} ${notRemoved.length > 1 ? 'konden' : 'kon'} niet verwijderd worden`;
-  } else if (removedList.length) {
-    message += `\n${removedList.map((user) => user.username).join(', ')} ${removedList.length > 1 ? 'zijn' : 'is'} verwijderd uit de lobby`;
-  }
-
-  if (rolesRemoved.length > 0) {
-    const roleNames = rolesRemoved.map((role) => role.name);
-    message += `\n${roleNames.join(', ')} rol${roleNames.length > 1 ? 'len zijn verwijderd' : ' is verwijderd'}`;
-  }
-
-  if (rolesNotRemoved.length > 0) {
-    const roleNames = rolesNotRemoved.map((role) => role.name);
-    message += `\nRol${rolesNotRemoved.length > 1 ? 'len' : ''} ${roleNames.join(', ')} ${rolesNotRemoved.length > 1 ? 'zijn niet verwijderd' : 'is niet verwijderd'}`;
-  }
-
-  msg.channel.send(message);
+  removeFromLobby(activeChannel, users, roles, msg.channel, msg.author);
 });
 
 const changeTypeHandler : Handler = async ({ params, msg, guildUser }) => {
