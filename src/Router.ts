@@ -26,30 +26,26 @@ export interface RouteList {
   [path : string]: Router | Handler
 }
 
-function getUserFromMention(_mention : string, client : Client, guild : Guild | null) {
-  let mention = _mention;
+function mapParams(_mention : string,
+  client : Client,
+  guild : Guild | null) : Array<Promise<Role | User | string | null>> {
+  const mention = _mention;
 
-  if (!mention) return null;
+  const seperated = mention.match(/(<@!*[0-9]+>|<@&[0-9]+>|[<]|[^<]+)/g);
 
-  if (mention.startsWith('<@') && mention.endsWith('>')) {
-    mention = mention.slice(2, -1);
+  if (seperated) {
+    return seperated.map((param) => {
+      const user = param.match(/<@!*([0-9]+)>/);
+      if (user) return client.users.fetch(user[1], true);
 
-    if (mention.startsWith('!')) {
-      mention = mention.slice(1);
-    }
+      const role = param.match(/<&*([0-9]+)>/);
+      if (role && guild) return guild.roles.fetch(role[1], true);
 
-    if (mention.startsWith('&')) {
-      mention = mention.slice(1);
-
-      if (Number.isNaN(+mention)) { return null; }
-      if (!guild) return null;
-      return guild.roles.fetch(mention, true);
-    }
-
-    if (Number.isNaN(+mention)) { return null; }
-    return client.users.fetch(mention, true);
+      return Promise.resolve(param);
+    });
   }
-  return null;
+
+  return [Promise.resolve(null)];
 }
 
 function isFlag(argument: string) {
@@ -68,17 +64,14 @@ export async function messageParser(msg : Message, em: EntityManager) {
 
   if (nonFlags[0] && nonFlags[0].toLowerCase() === 'noah') nonFlags.shift();
 
-  const parsed = nonFlags.map(async (param) => {
-    const user = await getUserFromMention(param, msg.client, msg.guild);
+  const parsed : Array<Promise<User | Role | string | null>> = [];
 
-    if (user) return user;
-    return param;
-  });
+  nonFlags.forEach((param) => { parsed.push(...mapParams(param, msg.client, msg.guild)); });
 
-  let resolved : Array<User | string | Role>;
+  let resolved;
 
   try {
-    resolved = await Promise.all(parsed);
+    resolved = (await Promise.all(parsed)).filter(((item) : item is User | Role => !!item));
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.httpStatus === 404) throw new Error('Invalid Mention of User, Role or Channel');
