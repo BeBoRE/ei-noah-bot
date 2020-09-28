@@ -38,7 +38,7 @@ function mapParams(_mention : string,
       const user = param.match(/<@!*([0-9]+)>/);
       if (user) return client.users.fetch(user[1], true);
 
-      const role = param.match(/<&*([0-9]+)>/);
+      const role = param.match(/<@&*([0-9]+)>/);
       if (role && guild) return guild.roles.fetch(role[1], true);
 
       return Promise.resolve(param);
