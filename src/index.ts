@@ -1,5 +1,7 @@
 import dotenv from 'dotenv';
-import { User, Role } from 'discord.js';
+import {
+  User, Role, PresenceData,
+} from 'discord.js';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
@@ -46,5 +48,29 @@ eiNoah.use(null, (info) => {
 });
 
 eiNoah.use('quote', QuoteRouter);
+
+eiNoah.onInit = async (client) => {
+  const updatePrecense = () => {
+    const watDoetNoah : PresenceData[] = [{
+      activity: {
+        name: 'Probeer Niet Te Steken',
+        type: 'PLAYING',
+      },
+    }, {
+      activity: {
+        name: 'Steek Geluiden',
+        type: 'LISTENING',
+      },
+    }];
+
+    const precense = watDoetNoah[Math.floor(Math.random() * watDoetNoah.length)];
+
+    client.user?.setPresence(precense);
+
+    setTimeout(updatePrecense, 1000 * 60);
+  };
+
+  updatePrecense();
+};
 
 eiNoah.start();

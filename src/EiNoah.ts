@@ -1,7 +1,7 @@
 import {
   Client, User as DiscordUser, TextChannel, NewsChannel, Role,
 } from 'discord.js';
-import { MikroORM } from 'mikro-orm';
+import { Connection, IDatabaseDriver, MikroORM } from 'mikro-orm';
 import Router, { Handler, messageParser } from './Router';
 
 const errorToChannel = async (channelId : string, client : Client, err : Error) => {
@@ -32,6 +32,9 @@ class EiNoah {
   public use(route : any, using: any) : any {
     this.router.use(route, using);
   }
+
+  public onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
+  => void | Promise<void>);
 
   public async start() {
     // Creëerd de database connectie
@@ -91,6 +94,8 @@ class EiNoah {
     });
 
     await this.client.login(this.token);
+
+    this.router.onInit = this.onInit;
 
     this.router.initialize(this.client, orm);
     process.on('uncaughtException', (err) => {
