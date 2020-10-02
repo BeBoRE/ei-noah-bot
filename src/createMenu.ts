@@ -16,7 +16,7 @@ async function createMenu<T>(
   ...extraButtons : ExtraButton[]
 ) {
   const emotes = [
-    '1️⃣', '2️⃣', '3️⃣',
+    '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣',
   ];
   const pageLeft = '◀️';
   const pageRight = '▶️';
