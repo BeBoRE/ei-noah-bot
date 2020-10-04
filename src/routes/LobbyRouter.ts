@@ -32,7 +32,7 @@ enum ChannelType {
 function generateLobbyName(type : ChannelType, owner : DiscordUser) {
   let icon : string;
   if (type === ChannelType.Nojoin) icon = '🔐';
-  if (type === ChannelType.Mute) icon = '🔇';
+  if (type === ChannelType.Mute) icon = '🙊';
   else icon = '🔊';
   return `${icon} ${owner.username}'s Lobby`;
 }
