@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import moment from 'moment';
 import Router from '../Router';
 import CoronaData, { CoronaInfo } from '../entity/CoronaData';
 
@@ -17,7 +18,10 @@ router.onInit = async (client, orm) => {
 
     const coronaData = fetchedData
       .map((info) => new CoronaData(info))
-      .filter((data) => data.community !== null);
+      .filter((data) => data.community !== null)
+      .filter((data) => !inDb
+        .some((db) => db.community === data.community
+          && db.date.getTime() === data.date.getTime()));
 
     const duplicatesRemoved : CoronaData[] = [];
     coronaData.forEach((data) => {
@@ -28,13 +32,9 @@ router.onInit = async (client, orm) => {
       if (!duplicate) duplicatesRemoved.push(data);
     });
 
-    const newData = duplicatesRemoved
-      .filter((data) => !inDb
-        .some((db) => db.community === data.community
-          && db.date.getTime() === data.date.getTime()));
-    console.log(`${newData.length} new corona_data rows`);
+    if (duplicatesRemoved.length > 0) { console.log(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows`); }
 
-    em.persist(newData);
+    em.persist(duplicatesRemoved);
 
     await em.flush();
 
