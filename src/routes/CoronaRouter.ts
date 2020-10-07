@@ -1,27 +1,47 @@
 import fetch from 'node-fetch';
-import moment from 'moment';
 import Router from '../Router';
+import CoronaData, { CoronaInfo } from '../entity/CoronaData';
 
 const router = new Router();
 
-interface CoronaInfo {
-  Date_of_publication: string
-  Municipality_name: string
-  Province: string
-  Total_reported: number
-  Hospital_admission: number
-  Deceased: number
-}
-
 router.use(null, async ({ msg }) => {
-  const data = <CoronaInfo[]>(await fetch('https://data.rivm.nl/covid-19/COVID-19_aantallen_gemeente_per_dag.json').then((res) => res.json()));
-
-  const today = moment().format('YYYY-MM-DD');
-
-  const zwartewaterland = data.filter((info) => info.Municipality_name === 'Zwartewaterland' && info.Date_of_publication === '2020-10-04');
-  const report = zwartewaterland.map((info) => `${info.Date_of_publication}: ${info.Total_reported}`).join('\n');
-
-  msg.channel.send(report, { split: true });
+  msg.channel.send('a');
 });
+
+router.onInit = async (client, orm) => {
+  const refreshData = async () => {
+    const em = orm.em.fork();
+
+    const inDb = await em.getRepository(CoronaData).findAll();
+    const fetchedData = <CoronaInfo[]>(await fetch('https://data.rivm.nl/covid-19/COVID-19_aantallen_gemeente_per_dag.json').then((res) => res.json()));
+
+    const coronaData = fetchedData
+      .map((info) => new CoronaData(info))
+      .filter((data) => data.community !== null);
+
+    const duplicatesRemoved : CoronaData[] = [];
+    coronaData.forEach((data) => {
+      const duplicate = duplicatesRemoved
+        .find((item) => item.community === data.community
+        && item.date.getTime() === data.date.getTime());
+
+      if (!duplicate) duplicatesRemoved.push(data);
+    });
+
+    const newData = duplicatesRemoved
+      .filter((data) => !inDb
+        .some((db) => db.community === data.community
+          && db.date.getTime() === data.date.getTime()));
+    console.log(`${newData.length} new corona_data rows`);
+
+    em.persist(newData);
+
+    await em.flush();
+
+    setTimeout(() => refreshData, 1000 * 60 * 60 * 3);
+  };
+
+  refreshData();
+};
 
 export default router;
