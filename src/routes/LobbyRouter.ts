@@ -738,7 +738,6 @@ router.onInit = async (client, orm) => {
             (member1, member2) => (member1.joinedTimestamp || 0) - (member2.joinedTimestamp || 0),
           )
           .filter((member) => !guildUsers.find((gu) => gu.user.id === member.id)?.tempChannel)
-          // eslint-disable-next-line max-len
           .filter((member) => {
             const isPublic = getChannelType(activeChannel) === ChannelType.Public;
             const isAllowedUser = activeChannel.permissionOverwrites.has(member.id);
@@ -784,9 +783,6 @@ router.onInit = async (client, orm) => {
 
   const checkTempLobbies = async () => {
     const em = orm.em.fork();
-
-    const now = new Date();
-    console.log(`${now.toLocaleTimeString()}: checking lobbies`);
 
     const usersWithTemp = await em.find(GuildUser, { tempChannel: { $ne: null } });
 
