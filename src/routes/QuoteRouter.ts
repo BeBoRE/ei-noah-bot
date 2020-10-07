@@ -72,6 +72,11 @@ const handler : Handler = async ({
 
   const text = params.filter((param) : param is string => typeof param === 'string').join(' ');
 
+  if (text.length > 256) {
+    msg.channel.send('Quotes kunnen niet langer zijn dan 256 karakters');
+    return;
+  }
+
   quotedUser.quotes.add(new Quote(text, guildUser));
 
   msg.channel.send('Ait die ga ik onthouden');
