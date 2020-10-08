@@ -23,8 +23,7 @@
   },
   "homepage": "https://github.com/dotBeFoRE/ei-noah-bot#readme",
   "dependencies": {
-    "@types/node-fetch": "^2.5.7",
-    "@types/source-map-support": "^0.5.3",
+    "cron": "^1.8.2",
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
     "mikro-orm": "^3.6.15",
@@ -36,7 +35,10 @@
     "typescript": "^3.9.7"
   },
   "devDependencies": {
+    "@types/cron": "^1.7.2",
     "@types/node": "^14.0.27",
+    "@types/node-fetch": "^2.5.7",
+    "@types/source-map-support": "^0.5.3",
     "@types/ws": "^7.2.6",
     "@typescript-eslint/eslint-plugin": "^3.9.0",
     "@typescript-eslint/parser": "^3.9.0",
