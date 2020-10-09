@@ -186,7 +186,7 @@ router.onInit = async (client, orm) => {
 
       const report = `*Corona cijfers deze week:*\n${reports.join('\n')}`;
       const user = await client.users.fetch(groupedUsers[key][0].user.id, true);
-      user.send(report);
+      user.send(report, { split: true });
     });
   };
 
