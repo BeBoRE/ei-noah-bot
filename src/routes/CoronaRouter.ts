@@ -7,9 +7,18 @@ import CoronaData, { CoronaInfo } from '../entity/CoronaData';
 
 const router = new Router();
 
-router.use(null, async ({ msg }) => {
-  msg.channel.send('a');
-});
+const helpHandler : Handler = ({ msg }) => {
+  let message = '**Krijg iedere morgen een rapportage over de locale corona situatie**';
+  message += '\nMogelijke Commandos:';
+  message += '\n`ei corona regions`: Vraag alle mogelijke regio\'s op';
+  message += '\n`ei corona add <regio>`: Voeg een regio toe aan je dagelijkse rapportage';
+  message += '\n`ei corona remove <regio>`: Verwijder een regio van je dagelijkse rapportage';
+
+  msg.channel.send(message);
+};
+
+router.use(null, helpHandler);
+router.use('help', helpHandler);
 
 const addHandler : Handler = async ({
   msg, user, params, em,
@@ -33,7 +42,7 @@ const addHandler : Handler = async ({
     .findAll({ limit: 500 }))
     .find((cr) => cr.community.toLowerCase() === region.toLowerCase());
   if (!coronaReport) {
-    msg.channel.send(`${region} is niet een regio in de database`);
+    msg.channel.send(`${region} is niet een regio`);
     return;
   }
 
