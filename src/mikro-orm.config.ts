@@ -17,6 +17,7 @@ const options : Options = {
     path: './src/migrations',
     transactional: true,
   },
+  debug: process.env.DEBUG === 'true',
 };
 
 export default options;

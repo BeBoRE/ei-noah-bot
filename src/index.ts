@@ -6,6 +6,7 @@ import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
 import QuoteRouter from './routes/QuoteRouter';
+import CoronaRouter from './routes/CoronaRouter';
 
 dotenv.config();
 
@@ -72,5 +73,7 @@ eiNoah.onInit = async (client) => {
 
   updatePrecense();
 };
+
+eiNoah.use('corona', CoronaRouter);
 
 eiNoah.start();

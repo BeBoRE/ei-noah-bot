@@ -1,19 +1,28 @@
 import {
-  Message, User, Role, Channel, Client, DiscordAPIError, TextChannel, NewsChannel, Guild,
+  Message,
+  User as DiscordUser,
+  Role, Channel,
+  Client,
+  DiscordAPIError,
+  TextChannel,
+  NewsChannel,
+  Guild,
 } from 'discord.js';
 import {
   EntityManager, MikroORM, IDatabaseDriver, Connection,
 } from 'mikro-orm';
 import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
-import { getUserGuildData, getCategoryData } from './data';
+import { getUserGuildData, getCategoryData, getUserData } from './data';
+import { User } from './entity/User';
 
 export interface RouteInfo {
   msg: Message
-  absoluteParams: Array<string | User | Role | Channel>
-  params: Array<string | User | Role | Channel>
+  absoluteParams: Array<string | DiscordUser | Role | Channel>
+  params: Array<string | DiscordUser | Role | Channel>
   flags: string[],
   guildUser: GuildUser | null,
+  user: User,
   category: Category | null,
   em: EntityManager
 }
@@ -28,7 +37,7 @@ export interface RouteList {
 
 function mapParams(_mention : string,
   client : Client,
-  guild : Guild | null) : Array<Promise<Role | User | string | null>> {
+  guild : Guild | null) : Array<Promise<Role | DiscordUser | string | null>> {
   const mention = _mention;
 
   const seperated = mention.match(/(<@!*[0-9]+>|<@&[0-9]+>|[<]|[^<]+)/g);
@@ -64,14 +73,14 @@ export async function messageParser(msg : Message, em: EntityManager) {
 
   if (nonFlags[0] && nonFlags[0].toLowerCase() === 'noah') nonFlags.shift();
 
-  const parsed : Array<Promise<User | Role | string | null>> = [];
+  const parsed : Array<Promise<DiscordUser | Role | string | null>> = [];
 
   nonFlags.forEach((param) => { parsed.push(...mapParams(param, msg.client, msg.guild)); });
 
   let resolved;
 
   try {
-    resolved = (await Promise.all(parsed)).filter(((item) : item is User | Role => !!item));
+    resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role => !!item));
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.httpStatus === 404) throw new Error('Invalid Mention of User, Role or Channel');
@@ -89,12 +98,16 @@ export async function messageParser(msg : Message, em: EntityManager) {
     category = await getCategoryData(em, msg.channel.parent);
   } else category = null;
 
+  let user;
+  if (!guildUser) { user = await getUserData(em, msg.author); } else user = guildUser.user;
+
   const routeInfo : RouteInfo = {
     absoluteParams: resolved,
     params: resolved,
     msg,
     flags,
     guildUser,
+    user,
     category,
     em,
   };
@@ -112,12 +125,12 @@ export default class Router {
   private roleRoute ?: Handler;
 
   // Met use geef je aan welk commando waarheen gaat
-  public use(route : typeof User, using: Handler) : void
+  public use(route : typeof DiscordUser, using: Handler) : void
   public use(route : typeof Role, using: Handler) : void
   public use(route : string, using: Router | Handler) : void
   public use(route : null, using : Handler) : void
   public use(route : any, using: any) : void {
-    if (route === User) {
+    if (route === DiscordUser) {
       if (this.userRoute) throw new Error('User route already exists');
 
       if (using instanceof Router) throw new Error('Can\'t use Router on mention routing');
@@ -148,7 +161,7 @@ export default class Router {
       let newInfo : RouteInfo = info;
 
       if (typeof currentRoute !== 'string') {
-        if (currentRoute instanceof User) {
+        if (currentRoute instanceof DiscordUser) {
           handler = this.userRoute;
         } else if (typeof currentRoute === 'undefined') {
           handler = this.nullRoute;
@@ -162,7 +175,7 @@ export default class Router {
           info.msg.channel.send(`Ja ik heb toch geen idee wat \`${info.absoluteParams.map((param) => {
             if (typeof param === 'string') return param;
             if (param instanceof Role) return `@${param.name}`;
-            if (param instanceof User) return `@${param.username}`;
+            if (param instanceof DiscordUser) return `@${param.username}`;
             return '[UNKNOWN]';
           }).join(' ')}\` moet betekenen`);
         } else {
