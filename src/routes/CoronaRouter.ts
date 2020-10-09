@@ -59,7 +59,9 @@ const addHandler : Handler = async ({
 router.use('add', addHandler);
 router.use('toevoegen', addHandler);
 
-const removeHandler : Handler = async ({ msg, user, params }) => {
+const removeHandler : Handler = async ({
+  msg, user, params, em,
+}) => {
   if (!params.every((param) : param is string => typeof param === 'string')) {
     msg.channel.send('Jij denkt dat een persoon een regio is?');
     return;
@@ -75,7 +77,7 @@ const removeHandler : Handler = async ({ msg, user, params }) => {
     return;
   }
 
-  user.coronaRegions.remove(dbRegion);
+  em.removeEntity(dbRegion);
 
   msg.channel.send(`${dbRegion.region} is verwijderd van je dagelijkse rapport`);
 };

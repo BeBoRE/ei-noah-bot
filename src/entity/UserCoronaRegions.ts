@@ -7,7 +7,7 @@ import { User } from './User';
 @Entity()
 class UserCoronaRegions {
   @PrimaryKey()
-  private id!: number;
+  id!: number;
 
   @ManyToOne({ unique: 'userRegion' })
   user!: User;
