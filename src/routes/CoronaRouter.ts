@@ -44,7 +44,7 @@ const addHandler : Handler = async ({
 
   em.persist(newRegion);
 
-  msg.channel.send(`${coronaReport.community} toegevoegd aan je dagelijkse raport`);
+  msg.channel.send(`${coronaReport.community} toegevoegd aan je dagelijkse rapport`);
 };
 
 router.use('add', addHandler);
@@ -68,7 +68,7 @@ const removeHandler : Handler = async ({ msg, user, params }) => {
 
   user.coronaRegions.remove(dbRegion);
 
-  msg.channel.send(`${dbRegion.region} verwijderd van je dagelijkse raport`);
+  msg.channel.send(`${dbRegion.region} verwijderd van je dagelijkse rapport`);
 };
 
 router.use('remove', removeHandler);
