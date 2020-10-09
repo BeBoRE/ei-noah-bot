@@ -75,6 +75,21 @@ router.use('remove', removeHandler);
 router.use('verwijder', removeHandler);
 router.use('delete', removeHandler);
 
+const listRegionsHandler : Handler = async ({ msg, em }) => {
+  const coronaData = await em.getRepository(CoronaData).findAll({ limit: 500 });
+
+  const regions = Array.from(new Set<string>(coronaData.map((data) => data.community)))
+    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+  if (regions.length === 0) msg.channel.send('Regio\'s zijn nog niet geladen (dit kan 10 minuten duren)');
+  else msg.author.send(`Regio's:\n${regions.join('\n')}`, { split: true });
+};
+
+router.use('gemeentes', listRegionsHandler);
+router.use('regions', listRegionsHandler);
+router.use('steden', listRegionsHandler);
+router.use('communities', listRegionsHandler);
+
 router.onInit = async (client, orm) => {
   const refreshData = async () => {
     const em = orm.em.fork();
