@@ -34,7 +34,7 @@ const addHandler : Handler = async ({
     .find((r) => r.region.toLowerCase() === region.toLowerCase());
 
   if (currentRegions) {
-    msg.channel.send('Deze regio had je al toegevoegd');
+    msg.channel.send('Deze regio is al toegevoegd');
     return;
   }
 
@@ -53,7 +53,7 @@ const addHandler : Handler = async ({
 
   em.persist(newRegion);
 
-  msg.channel.send(`${coronaReport.community} toegevoegd aan je dagelijkse rapport`);
+  msg.channel.send(`${coronaReport.community} is toegevoegd aan je dagelijkse rapport`);
 };
 
 router.use('add', addHandler);
@@ -71,13 +71,13 @@ const removeHandler : Handler = async ({ msg, user, params }) => {
     .find((r) => r.region.toLowerCase() === region.toLowerCase());
 
   if (!dbRegion) {
-    msg.channel.send('Je hebt deze regio niet toegevoegd');
+    msg.channel.send('Je hebt deze regio nog niet toegevoegd');
     return;
   }
 
   user.coronaRegions.remove(dbRegion);
 
-  msg.channel.send(`${dbRegion.region} verwijderd van je dagelijkse rapport`);
+  msg.channel.send(`${dbRegion.region} is verwijderd van je dagelijkse rapport`);
 };
 
 router.use('remove', removeHandler);
@@ -90,7 +90,7 @@ const listRegionsHandler : Handler = async ({ msg, em }) => {
   const regions = Array.from(new Set<string>(coronaData.map((data) => data.community)))
     .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
-  if (regions.length === 0) msg.channel.send('Regio\'s zijn nog niet geladen (dit kan 10 minuten duren)');
+  if (regions.length === 0) msg.channel.send('Regio\'s zijn nog niet geladen (dit kan nog 10 minuten duren)');
   else msg.author.send(`Regio's:\n${regions.join('\n')}`, { split: true });
 };
 
