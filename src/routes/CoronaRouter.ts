@@ -151,7 +151,7 @@ router.onInit = async (client, orm) => {
 
     await em.flush();
 
-    setTimeout(() => refreshData, 1000 * 60 * 60 * 2);
+    setTimeout(refreshData, 1000 * 60 * 60 * 3);
   };
 
   const postReport = async () => {
@@ -161,6 +161,8 @@ router.onInit = async (client, orm) => {
 
     const relevantReports = await em
       .find(CoronaData, { community: { $in: userRegions.map((region) => region.region) } });
+
+    if (relevantReports.length === 0) return;
 
     const groupedReports : {[key : string]: CoronaData[]} = {};
     relevantReports.forEach((report) => {
