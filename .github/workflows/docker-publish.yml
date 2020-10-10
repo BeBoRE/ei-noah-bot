@@ -17,6 +17,8 @@ env:
   IMAGE_NAME: ei-noah
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
+
+jobs:  
   push:
     name: Push to Repository
     runs-on: ubuntu-latest
