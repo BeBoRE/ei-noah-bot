@@ -18,7 +18,25 @@ env:
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
 
-jobs:  
+jobs:
+  test:
+    name: Test Build Image
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run tests
+        run: |
+          if [ -f docker-compose.test.yml ]; then
+            docker-compose --file docker-compose.test.yml build
+            docker-compose --file docker-compose.test.yml run sut
+          else
+            docker build . --file Dockerfile
+          fi
+  # Push image to GitHub Packages.
+  # See also https://docs.docker.com/docker-hub/builds/
   push:
     name: Push to Repository
     runs-on: ubuntu-latest
