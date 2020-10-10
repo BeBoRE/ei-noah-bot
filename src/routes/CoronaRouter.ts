@@ -205,18 +205,25 @@ router.onInit = async (client, orm) => {
         const weeklyCount = weeklyCountPerRegion[r.region.toLowerCase()];
         const population = regionPopulations[r.region.toLowerCase()];
 
+        const casesPer = population
+          ? Math.round((weeklyCount.totalReported / population / 7) * 100_000) : 0;
+        const hospitalPer = population
+          ? Math.round((weeklyCount.hospitalized / population / 7) * 100_000) : 0;
+        const deceasedPer = population
+          ? Math.round((weeklyCount.deceased / population / 7) * 100_000) : 0;
+
         let message = `**${r.region}**`;
         message += `\nNieuwe gevallen: ${weeklyCount.totalReported}`;
-        if (population && weeklyCount.totalReported) message += ` (${Math.round((weeklyCount.totalReported / population / 7) * 100_000)} / 100,000 per dag)`;
+        if (casesPer) message += ` (${casesPer >= 7 && '**'}${casesPer} / 100,000 per dag${casesPer >= 7 && '**'})`;
         message += `\nZiekenhuis Opnames: ${weeklyCount.hospitalized}`;
-        if (population && weeklyCount.hospitalized) message += ` (${Math.round((weeklyCount.hospitalized / population / 7) * 100_000)} / 100,000 per dag)`;
+        if (hospitalPer) message += ` (${hospitalPer} / 100,000 per dag)`;
         message += `\nDoden: ${weeklyCount.deceased}`;
-        if (population && weeklyCount.deceased) message += ` (${Math.round((weeklyCount.deceased / population / 7) * 100_000)} / 100,000 per dag)`;
+        if (deceasedPer) message += ` (${deceasedPer} / 100,000 per dag)`;
 
         return message;
       });
 
-      const report = `*Corona cijfers deze week:*\n${reports.join('\n')}`;
+      const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}`;
       const user = await client.users.fetch(groupedUsers[key][0].user.id, true);
       user.send(report, { split: true });
     });
