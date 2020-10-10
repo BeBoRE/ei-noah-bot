@@ -124,13 +124,16 @@ router.onInit = async (client, orm) => {
       if (!duplicate) duplicatesRemoved.push(data);
     });
 
-    if (duplicatesRemoved.length > 0) { console.log(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows`); }
-
+    if (duplicatesRemoved.length > 0) {
+      console.log(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows`);
+    } else {
+      console.log(`${moment().format('HH:mm')}: no new data`);
+    }
     em.persist(duplicatesRemoved);
 
     await em.flush();
 
-    setTimeout(() => refreshData, 1000 * 60 * 60 * 3);
+    setTimeout(() => refreshData, 1000 * 60 * 60 * 2);
   };
 
   const reportCheck = async () => {
