@@ -179,7 +179,7 @@ router.onInit = async (client, orm) => {
 
     Object.keys(groupedReports).forEach((key) => {
       groupedReports[key] = groupedReports[key]
-        .sort((r1, r2) => 1 / r1.date.getTime() - 1 / r2.date.getTime());
+        .sort((r1, r2) => r2.date.getTime() - r1.date.getTime());
 
       weeklyCountPerRegion[key] = { deceased: 0, hospitalized: 0, totalReported: 0 };
 
@@ -214,7 +214,7 @@ router.onInit = async (client, orm) => {
 
         let message = `**${r.region}**`;
         message += `\nNieuwe gevallen: ${weeklyCount.totalReported}`;
-        if (casesPer) message += ` (${casesPer >= 7 && '**'}${casesPer} / 100,000 per dag${casesPer >= 7 && '**'})`;
+        if (casesPer) message += ` (${(casesPer >= 7 && '**') || ''}${casesPer} / 100,000 per dag${(casesPer >= 7 && '**') || ''})`;
         message += `\nZiekenhuis Opnames: ${weeklyCount.hospitalized}`;
         if (hospitalPer) message += ` (${hospitalPer} / 100,000 per dag)`;
         message += `\nDoden: ${weeklyCount.deceased}`;
