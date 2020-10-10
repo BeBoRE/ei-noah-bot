@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 import moment from 'moment';
 import { CronJob } from 'cron';
+import parse from 'csv-parse/lib/sync';
 import UserCoronaRegions from '../entity/UserCoronaRegions';
 import Router, { Handler } from '../Router';
 import CoronaData, { CoronaInfo } from '../entity/CoronaData';
@@ -101,7 +102,24 @@ router.use('regions', listRegionsHandler);
 router.use('steden', listRegionsHandler);
 router.use('communities', listRegionsHandler);
 
+const getPopulation = async () => {
+  const population : {[key: string]: number | undefined} = {};
+
+  const rawData = (await fetch('https://opendata.cbs.nl/CsvDownload/csv/03759ned/TypedDataSet?dl=41EB0').then((res) => res.text()))
+    .replace(/"/g, '');
+
+  const records = <Array<[string, string, string, string, string, string]>>parse(rawData, { delimiter: ';' });
+  records.forEach((row) => {
+    const amount = Number.parseInt(row[5], 10);
+    if (Number.isInteger(amount) && row[0] === 'Totaal mannen en vrouwen') population[row[4].toLowerCase()] = amount;
+  });
+
+  return population;
+};
+
 router.onInit = async (client, orm) => {
+  const regionPopulations = await getPopulation();
+
   const refreshData = async () => {
     const em = orm.em.fork();
 
@@ -136,7 +154,7 @@ router.onInit = async (client, orm) => {
     setTimeout(() => refreshData, 1000 * 60 * 60 * 2);
   };
 
-  const reportCheck = async () => {
+  const postReport = async () => {
     const em = orm.em.fork();
 
     const userRegions = await em.getRepository(UserCoronaRegions).findAll();
@@ -161,7 +179,7 @@ router.onInit = async (client, orm) => {
 
     Object.keys(groupedReports).forEach((key) => {
       groupedReports[key] = groupedReports[key]
-        .sort((r1, r2) => 1 / r1.date.getTime() - 1 / r2.date.getTime());
+        .sort((r1, r2) => r2.date.getTime() - r1.date.getTime());
 
       weeklyCountPerRegion[key] = { deceased: 0, hospitalized: 0, totalReported: 0 };
 
@@ -185,11 +203,27 @@ router.onInit = async (client, orm) => {
 
       const reports = regions.map((r) => {
         const weeklyCount = weeklyCountPerRegion[r.region.toLowerCase()];
+        const population = regionPopulations[r.region.toLowerCase()];
 
-        return `**${r.region}**:\nNieuwe gevallen: ${weeklyCount.totalReported}\nZiekenhuis Opnames: ${weeklyCount.hospitalized}\nDoden: ${weeklyCount.deceased}`;
+        const casesPer = population
+          ? Math.round((weeklyCount.totalReported / population / 7) * 100_000) : 0;
+        const hospitalPer = population
+          ? Math.round((weeklyCount.hospitalized / population / 7) * 100_000) : 0;
+        const deceasedPer = population
+          ? Math.round((weeklyCount.deceased / population / 7) * 100_000) : 0;
+
+        let message = `**${r.region}**`;
+        message += `\nNieuwe gevallen: ${weeklyCount.totalReported}`;
+        if (casesPer) message += ` (${(casesPer >= 7 && '**') || ''}${casesPer} / 100,000 per dag${(casesPer >= 7 && '**') || ''})`;
+        message += `\nZiekenhuis Opnames: ${weeklyCount.hospitalized}`;
+        if (hospitalPer) message += ` (${hospitalPer} / 100,000 per dag)`;
+        message += `\nDoden: ${weeklyCount.deceased}`;
+        if (deceasedPer) message += ` (${deceasedPer} / 100,000 per dag)`;
+
+        return message;
       });
 
-      const report = `*Corona cijfers deze week:*\n${reports.join('\n')}`;
+      const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}`;
       const user = await client.users.fetch(groupedUsers[key][0].user.id, true);
       user.send(report, { split: true });
     });
@@ -197,7 +231,10 @@ router.onInit = async (client, orm) => {
 
   refreshData();
 
-  const reportCron = new CronJob('0 8 * * *', reportCheck);
+  const reportCron = new CronJob('0 9 * * *', postReport);
+
+  if (process.env.NODE_ENV !== 'production') postReport();
+
   reportCron.start();
 };
 
