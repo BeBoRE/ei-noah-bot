@@ -117,6 +117,13 @@ const getPopulation = async () => {
   return population;
 };
 
+enum Niveau {
+  Waakzaam = 'Waakzaam',
+  zorgelijk = 'Zorgelijk',
+  ernstig = 'Ernstig',
+  zeerernstig = 'Zeer Ernstig'
+}
+
 router.onInit = async (client, orm) => {
   const regionPopulations = await getPopulation();
 
@@ -208,19 +215,26 @@ router.onInit = async (client, orm) => {
         const population = regionPopulations[r.region.toLowerCase()];
 
         const casesPer = population
-          ? Math.round((weeklyCount.totalReported / population / 7) * 100_000) : 0;
+          ? Math.round((weeklyCount.totalReported / population) * 100_000) : 0;
         const hospitalPer = population
-          ? Math.round((weeklyCount.hospitalized / population / 7) * 100_000) : 0;
+          ? Math.round((weeklyCount.hospitalized / population) * 100_000) : 0;
         const deceasedPer = population
-          ? Math.round((weeklyCount.deceased / population / 7) * 100_000) : 0;
+          ? Math.round((weeklyCount.deceased / population) * 100_000) : 0;
 
-        let message = `**${r.region}**`;
+        let niveau : Niveau;
+
+        if (casesPer < 50) niveau = Niveau.Waakzaam;
+        else if (casesPer <= 150) niveau = Niveau.zorgelijk;
+        else if (casesPer <= 250) niveau = Niveau.ernstig;
+        else niveau = Niveau.zeerernstig;
+
+        let message = `**${r.region} (${niveau})**`;
         message += `\nNieuwe gevallen: ${weeklyCount.totalReported}`;
-        if (casesPer) message += ` (${(casesPer >= 7 && '**') || ''}${casesPer} / 100,000 per dag${(casesPer >= 7 && '**') || ''})`;
+        if (casesPer) message += ` (${casesPer} / 100,000 per week)`;
         message += `\nZiekenhuis Opnames: ${weeklyCount.hospitalized}`;
-        if (hospitalPer) message += ` (${hospitalPer} / 100,000 per dag)`;
+        if (hospitalPer) message += ` (${hospitalPer} / 100,000 per week)`;
         message += `\nDoden: ${weeklyCount.deceased}`;
-        if (deceasedPer) message += ` (${deceasedPer} / 100,000 per dag)`;
+        if (deceasedPer) message += ` (${deceasedPer} / 100,000 per week)`;
 
         return message;
       });
