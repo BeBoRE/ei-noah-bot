@@ -2,9 +2,9 @@ import fetch from 'node-fetch';
 import moment from 'moment';
 import { CronJob } from 'cron';
 import parse from 'csv-parse/lib/sync';
-import UserCoronaRegions from '../../entity/UserCoronaRegions';
+import UserCoronaRegions from '../../data/entity/UserCoronaRegions';
 import Router, { Handler } from '../Router';
-import CoronaData, { CoronaInfo } from '../../entity/CoronaData';
+import CoronaData, { CoronaInfo } from '../../data/entity/CoronaData';
 
 const router = new Router();
 
@@ -245,7 +245,7 @@ router.onInit = async (client, orm) => {
     });
   };
 
-  refreshData();
+  setTimeout(refreshData, 1000 * 60 * 10);
 
   const reportCron = new CronJob('0 9 * * *', postReport);
 

@@ -3,15 +3,16 @@
   "plugins": ["@typescript-eslint"],
   "parserOptions": {
     "ecmaVersion": 2017,
-    "project": "./tsconfig.json"
-  },
-  "ecmaFeatures": {
-    "jsx": false
+    "project": "./tsconfig.json",
+    "ecmaFeatures": {
+      "jsx": true
+    }
   },
   "env": {
     "node": true
   },
   "extends": [
-    "airbnb-typescript"
+    "airbnb-typescript",
+    "plugin:react/recommended"
   ]
 }

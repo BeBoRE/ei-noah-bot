@@ -3,8 +3,8 @@ import {
   DMChannel, Permissions, TextBasedChannelFields, User as DiscordUser,
 } from 'discord.js';
 import createMenu from '../createMenu';
-import Quote from '../../entity/Quote';
-import { getUserGuildData } from '../../data';
+import Quote from '../../data/entity/Quote';
+import { getUserGuildData } from '../../data/data';
 import Router, { Handler } from '../Router';
 
 const router = new Router();
