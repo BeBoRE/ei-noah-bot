@@ -6,6 +6,7 @@ import bot from '../bot/index';
 
 bot.start();
 const nextApp = next({ dev: process.env.NODE_ENV !== 'production' });
+nextApp.prepare();
 
 const handler = nextApp.getRequestHandler();
 
