@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const options : Options = {
-  entitiesDirs: ['./src/entity'], // path to your TS entities (source), relative to `baseDir`
+  entitiesDirs: ['./entity'], // path to your TS entities (source), relative to `baseDir`
   dbName: process.env.DBNAME || 'ei-noah',
   type: 'postgresql', // one of `mongo` | `mysql` | `mariadb` | `postgresql` | `sqlite`
   host: process.env.HOST || 'localhost',
@@ -14,7 +14,7 @@ const options : Options = {
   user: 'ei-noah',
   migrations: {
     tableName: 'mikro_orm_migrations',
-    path: './src/migrations',
+    path: './migrations',
     transactional: true,
   },
   debug: process.env.DEBUG === 'true',

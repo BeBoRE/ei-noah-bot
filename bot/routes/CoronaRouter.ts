@@ -2,9 +2,9 @@ import fetch from 'node-fetch';
 import moment from 'moment';
 import { CronJob } from 'cron';
 import parse from 'csv-parse/lib/sync';
-import UserCoronaRegions from '../entity/UserCoronaRegions';
+import UserCoronaRegions from '../../entity/UserCoronaRegions';
 import Router, { Handler } from '../Router';
-import CoronaData, { CoronaInfo } from '../entity/CoronaData';
+import CoronaData, { CoronaInfo } from '../../entity/CoronaData';
 
 const router = new Router();
 

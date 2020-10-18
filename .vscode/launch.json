@@ -9,7 +9,7 @@
       "cwd":"${workspaceRoot}",
       "runtimeExecutable":"${workspaceRoot}/node_modules/.bin/ts-node-dev",
       "args":[  
-         "${workspaceRoot}/src/index.ts"
+         "${workspaceRoot}/index.ts"
       ],
       "restart":true
    }

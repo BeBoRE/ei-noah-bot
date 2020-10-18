@@ -4,8 +4,8 @@
   "description": "Ei Noah Bot",
   "main": "./dist/index.js",
   "scripts": {
-    "start": "npx ts-node ./src/index.ts",
-    "dev": "npx ts-node-dev ./src/index.ts",
+    "start": "npx ts-node ./index.ts",
+    "dev": "npx ts-node-dev ./index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -36,8 +36,11 @@
     "express": "^4.17.1",
     "mikro-orm": "^3.6.15",
     "moment": "^2.29.0",
+    "next": "^9.5.5",
     "node-fetch": "^2.6.1",
     "pg": "^8.3.3",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
     "source-map-support": "^0.5.19",
     "ts-node": "^9.0.0",
     "typescript": "^3.9.7"
@@ -56,7 +59,7 @@
   "mikro-orm": {
     "useTsNode": true,
     "configPaths": [
-      "./src/mikro-orm.config.ts"
+      "./mikro-orm.config.ts"
     ]
   }
 }

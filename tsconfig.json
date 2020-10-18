@@ -7,7 +7,7 @@
       "target": "es6",
       "noImplicitAny": true,
       "moduleResolution": "node",
-      "baseUrl": "src",
+      "baseUrl": "bot",
       "emitDecoratorMetadata": true,
       "experimentalDecorators": true,
       "sourceMap": true,

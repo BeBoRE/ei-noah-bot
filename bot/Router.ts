@@ -11,10 +11,10 @@ import {
 import {
   EntityManager, MikroORM, IDatabaseDriver, Connection,
 } from 'mikro-orm';
-import { Category } from './entity/Category';
-import { GuildUser } from './entity/GuildUser';
-import { getUserGuildData, getCategoryData, getUserData } from './data';
-import { User } from './entity/User';
+import { Category } from '../entity/Category';
+import { GuildUser } from '../entity/GuildUser';
+import { getUserGuildData, getCategoryData, getUserData } from '../data';
+import { User } from '../entity/User';
 
 export interface RouteInfo {
   msg: Message

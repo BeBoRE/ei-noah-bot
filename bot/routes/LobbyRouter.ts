@@ -17,8 +17,8 @@ import {
 } from 'discord.js';
 import { EntityManager } from 'mikro-orm';
 import createMenu from '../createMenu';
-import { getUserGuildData } from '../data';
-import { GuildUser } from '../entity/GuildUser';
+import { getUserGuildData } from '../../data';
+import { GuildUser } from '../../entity/GuildUser';
 import Router, { Handler } from '../Router';
 
 const router = new Router();
