@@ -249,7 +249,7 @@ router.onInit = async (client, orm) => {
 
   const reportCron = new CronJob('0 9 * * *', postReport);
 
-  if (process.env.NODE_ENV !== 'production') postReport();
+  if (process.env.POST_RAPPORT === 'true') postReport();
 
   reportCron.start();
 };

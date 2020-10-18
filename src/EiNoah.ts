@@ -42,7 +42,7 @@ class EiNoah {
     await orm.getMigrator().up();
 
     this.client.on('ready', () => {
-      console.log('client online');
+      console.log('Bot online');
     });
 
     this.client.on('message', async (msg) => {

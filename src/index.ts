@@ -2,11 +2,14 @@ import dotenv from 'dotenv';
 import {
   User, Role, PresenceData,
 } from 'discord.js';
+import https from 'https';
+import fs from 'fs';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
 import QuoteRouter from './routes/QuoteRouter';
 import CoronaRouter from './routes/CoronaRouter';
+import createServer from './server/server';
 
 dotenv.config();
 
@@ -77,3 +80,12 @@ eiNoah.onInit = async (client) => {
 eiNoah.use('corona', CoronaRouter);
 
 eiNoah.start();
+
+const server = createServer();
+const httpsServer = https.createServer({
+  key: fs.readFileSync('./ssl/localhost.key'),
+  cert: fs.readFileSync('./ssl/localhost.crt'),
+}, server);
+httpsServer.listen(443, '127.0.0.1', () => {
+  console.log('Webserver Online');
+});
