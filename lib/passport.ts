@@ -1,10 +1,10 @@
 import { Request } from 'express';
 import { IncomingMessage } from 'http';
-import { EntityManager } from 'mikro-orm';
+import { EntityManager } from '@mikro-orm/core';
 import passport from 'passport';
 import { Strategy } from 'passport-local';
-import User from '../../dist/data/entity/User';
-import AccessToken from '../../data/entity/AccessToken';
+import { User } from '../data/entity/User';
+import AccessToken from '../data/entity/AccessToken';
 
 passport.serializeUser<User, string>((user, done) => {
   done(null, user.id);

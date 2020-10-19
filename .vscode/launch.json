@@ -1,18 +1,15 @@
 {
   "version": "0.2.0",
   "configurations": [
-    {  
-      "name":"Debug and Watch",
-      "type":"node",
-      "request":"launch",
-      "protocol":"inspector",
-      "cwd":"${workspaceRoot}",
-      "runtimeExecutable":"${workspaceRoot}/node_modules/.bin/ts-node-dev",
-      "args":[  
-         "${workspaceRoot}/index.ts",
-         "--ignore-watch next"
-      ],
-      "restart":true
-   }
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Launch Program",
+      "skipFiles": ["<node_internals>/**"],
+      "port": 9229,
+      "env": {
+        "NODE_OPTIONS": "--inspect"
+      }
+    }
   ]
 }

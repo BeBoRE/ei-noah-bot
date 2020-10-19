@@ -1,6 +1,6 @@
 import {
   Entity, PrimaryKey, OneToMany, Property, Collection,
-} from 'mikro-orm';
+} from '@mikro-orm/core';
 // eslint-disable-next-line import/no-cycle
 import { GuildUser } from './GuildUser';
 // eslint-disable-next-line import/no-cycle
@@ -12,10 +12,10 @@ export class User {
   @PrimaryKey()
   id!: string;
 
-  @OneToMany(() => GuildUser, (gu) => gu.user)
+  @OneToMany('GuildUser', 'user')
   guildUsers = new Collection<GuildUser>(this);
 
-  @OneToMany(() => UserCoronaRegions, (ucr) => ucr.user)
+  @OneToMany('UserCoronaRegions', 'user')
   coronaRegions = new Collection<UserCoronaRegions>(this);
 
   @Property()

@@ -15,7 +15,7 @@ import {
   TextBasedChannelFields,
   OverwriteResolvable,
 } from 'discord.js';
-import { EntityManager } from 'mikro-orm';
+import { EntityManager } from '@mikro-orm/core';
 import createMenu from '../createMenu';
 import { getUserGuildData } from '../../data/data';
 import { GuildUser } from '../../data/entity/GuildUser';

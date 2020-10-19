@@ -1,6 +1,6 @@
 import {
   Entity, ManyToOne, PrimaryKey, Property,
-} from 'mikro-orm';
+} from '@mikro-orm/core';
 import { User } from './User';
 
 @Entity()

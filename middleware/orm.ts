@@ -1,12 +1,14 @@
 import { IncomingMessage } from 'http';
 import NextConnect from 'next-connect';
-import { ORM } from '../../data/data';
+import bot from '../bot/index';
+import ORM from '../data/orm';
 import { ReqExtended } from '../types';
 
 const handler = NextConnect<ReqExtended & IncomingMessage>()
   .use(async (req, res, next) => {
     if (!req.em) {
       const orm = await ORM;
+      if (!bot.started) bot.start();
 
       req.em = orm.em.fork();
 

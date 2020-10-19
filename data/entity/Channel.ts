@@ -1,4 +1,4 @@
-import { PrimaryKey, Entity, PrimaryKeyType } from 'mikro-orm';
+import { PrimaryKey, Entity, PrimaryKeyType } from '@mikro-orm/core';
 
 @Entity()
 // eslint-disable-next-line import/prefer-default-export

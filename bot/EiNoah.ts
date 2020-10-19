@@ -1,8 +1,8 @@
 import {
   Client, User as DiscordUser, TextChannel, NewsChannel, Role,
 } from 'discord.js';
-import { Connection, IDatabaseDriver, MikroORM } from 'mikro-orm';
-import { ORM } from '../data/data';
+import { Connection, IDatabaseDriver, MikroORM } from '@mikro-orm/core';
+import ORM from '../data/orm';
 import Router, { Handler, messageParser } from './Router';
 
 const errorToChannel = async (channelId : string, client : Client, err : Error) => {
@@ -16,6 +16,8 @@ const errorToChannel = async (channelId : string, client : Client, err : Error) 
 
 class EiNoah {
   public readonly client = new Client();
+
+  public started = false;
 
   private readonly router = new Router();
 
@@ -38,9 +40,9 @@ class EiNoah {
   => void | Promise<void>);
 
   public async start() {
+    this.started = true;
     // Creëerd de database connectie
     const orm = await ORM;
-    await orm.getMigrator().up();
 
     this.client.on('ready', () => {
       console.log('Bot online');
