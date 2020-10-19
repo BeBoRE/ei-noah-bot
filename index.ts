@@ -5,7 +5,7 @@ import bot from './bot/index';
 
 bot.start();
 
-const nextApp = next({ dev: process.env.NODE_ENV !== 'production', dir: './next' });
+const nextApp = next({ dev: process.env.NODE_ENV !== 'production' });
 nextApp.prepare().then(() => {
   const handler = nextApp.getRequestHandler();
 

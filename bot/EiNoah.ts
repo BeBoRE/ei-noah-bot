@@ -2,6 +2,7 @@ import {
   Client, User as DiscordUser, TextChannel, NewsChannel, Role,
 } from 'discord.js';
 import { Connection, IDatabaseDriver, MikroORM } from 'mikro-orm';
+import { ORM } from '../data/data';
 import Router, { Handler, messageParser } from './Router';
 
 const errorToChannel = async (channelId : string, client : Client, err : Error) => {
@@ -38,7 +39,7 @@ class EiNoah {
 
   public async start() {
     // Creëerd de database connectie
-    const orm = await MikroORM.init().catch((err) => { console.error(err); process.exit(-1); });
+    const orm = await ORM;
     await orm.getMigrator().up();
 
     this.client.on('ready', () => {

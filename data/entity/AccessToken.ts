@@ -1,7 +1,7 @@
 import {
   Entity, ManyToOne, PrimaryKey, Property,
 } from 'mikro-orm';
-import User from './User';
+import { User } from './User';
 
 @Entity()
 class AccessToken {

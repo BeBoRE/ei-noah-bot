@@ -1,5 +1,5 @@
 import { User as DiscordUser, Guild as DiscordGuild, CategoryChannel } from 'discord.js';
-import { EntityManager } from 'mikro-orm';
+import { EntityManager, MikroORM } from 'mikro-orm';
 import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
 import { User } from './entity/User';
@@ -69,6 +69,9 @@ const getCategoryData = async (em : EntityManager, category : CategoryChannel | 
 
   return newCategory;
 };
+
+export const ORM = MikroORM.init();
+ORM.then(() => console.log('OMR Ready'));
 
 export {
   getUserGuildData, getUserData, getGuildData, getCategoryData,
