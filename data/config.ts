@@ -11,6 +11,7 @@ import { GuildUser } from './entity/GuildUser';
 import Quote from './entity/Quote';
 import UserCoronaRegions from './entity/UserCoronaRegions';
 import { User } from './entity/User';
+import PublicKey from './entity/PublicKeys';
 
 dotenv.config();
 
@@ -24,7 +25,8 @@ const options : Options = {
     Guild,
     Quote,
     User,
-    UserCoronaRegions],
+    UserCoronaRegions,
+    PublicKey],
   dbName: process.env.DBNAME || 'ei-noah',
   type: 'postgresql', // one of `mongo` | `mysql` | `mariadb` | `postgresql` | `sqlite`
   host: process.env.HOST || 'localhost',

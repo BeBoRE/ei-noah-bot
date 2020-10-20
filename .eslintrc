@@ -11,6 +11,9 @@
   "env": {
     "node": true
   },
+  "rules": {
+    "no-param-reassign": "off"
+  },
   "extends": [
     "airbnb-typescript",
     "plugin:react/recommended"

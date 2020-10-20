@@ -25,7 +25,7 @@ export class GuildUser {
   @Property({ nullable: true, unique: true })
   tempChannel?: string;
 
-  @Property()
+  @Property({ nullable: true })
   tempCreatedAt?: Date;
 
   @OneToMany('Quote', 'guildUser')

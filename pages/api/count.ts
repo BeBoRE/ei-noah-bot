@@ -1,13 +1,11 @@
 import nextConnect from 'next-connect';
-import { User } from '../../data/entity/User';
-import orm from '../../middleware/orm';
+import crypto from 'crypto';
+import auth from '../../middleware/auth';
 import { ReqExtended } from '../../types';
 
 export default nextConnect()
-  .use(orm)
-  .get<ReqExtended>(async (req, res) => {
-  const user = await req.em.findOne(User, { id: '248143520005619713' });
-
+  .use(auth)
+  .get<ReqExtended>(async ({ user }, res) => {
   if (user) {
     user.count += 1;
     res.end(JSON.stringify(user));

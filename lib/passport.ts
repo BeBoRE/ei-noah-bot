@@ -26,11 +26,11 @@ passport.use(
   }, async (_req, id, token, done) => {
     const req = <Request & {em: EntityManager}>_req;
 
-    const user = await req.em.findOne(AccessToken, { user: { id }, token });
-    if (!user) {
+    const accessToken = await req.em.findOne(AccessToken, { user: { id }, token }, { populate: ['user'] });
+    if (!accessToken) {
       done(null, null);
     } else {
-      done(null, user);
+      done(null, accessToken.user);
     }
   }),
 );
