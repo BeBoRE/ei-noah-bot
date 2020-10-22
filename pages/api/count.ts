@@ -1,5 +1,4 @@
 import nextConnect from 'next-connect';
-import crypto from 'crypto';
 import auth from '../../middleware/auth';
 import { ReqExtended } from '../../types';
 

@@ -1,13 +1,9 @@
-import moment from 'moment';
-import { Crypto } from '@peculiar/webcrypto';
 import crypto from 'crypto';
 import AccessToken from '../../data/entity/AccessToken';
 import PublicKey from '../../data/entity/PublicKey';
 import Router from '../Router';
 
 const router = new Router();
-
-const shitCrypto = new Crypto();
 
 /*
 function importRsaKey(pem : string) {
