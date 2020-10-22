@@ -8,7 +8,7 @@ class AccessToken {
   @PrimaryKey({ length: 600 })
   token!: string;
 
-  @ManyToOne({ unique: true })
+  @ManyToOne()
   user!: User;
 
   @Property()

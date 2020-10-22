@@ -18,15 +18,15 @@ async function exportCryptoKey(key : CryptoKey) {
   );
   const exportedAsString = ab2str(exported);
   const exportedAsBase64 = window.btoa(exportedAsString);
-  const pemExported = `-----BEGIN PUBLIC KEY-----\n${exportedAsBase64}\n-----END PUBLIC KEY-----`;
-
-  return pemExported;
+  return `-----BEGIN PUBLIC KEY-----\n${exportedAsBase64}\n-----END PUBLIC KEY-----`;
 }
 
 function Page() {
   const [key, setKey] = useState<CryptoKeyPair>();
   const [keyId, setKeyId] = useState<string>();
-  const [encryptedInfo, setEncryptedInfo] = useState<string>();
+  const [encryptedInfo, setEncryptedInfo] = useState<string>('');
+  const [decrypted, setDecrypted] = useState<string>('');
+  const [user, setUser] = useState<Object>({});
 
   useEffect(() => {
     crypto.subtle.generateKey({
@@ -71,8 +71,21 @@ function Page() {
       crypto.subtle.decrypt({
         name: 'RSA-OAEP',
       }, key?.privateKey, buffer)
-        .then(console.log)
-        .catch(console.error);
+        .then((decryptedBuffer) => {
+          const decoder = new TextDecoder();
+          const text = decoder.decode(decryptedBuffer);
+          setDecrypted(text);
+          return text;
+        })
+        .then((loginInfo) => fetch('/api/login', {
+          body: loginInfo,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }))
+        .then((res) => res.json())
+        .then((res) => setUser(res));
     }
   }, [encryptedInfo]);
 
@@ -82,7 +95,17 @@ function Page() {
         ei login
         {' '}
         {keyId.toUpperCase()}
-        <input type="text" value={encryptedInfo} name="encryptedKey" onChange={(e) => setEncryptedInfo(e.target.value)} />
+        <input type="text" value={encryptedInfo} name="encryptedKey" onChange={({ target: { value } }) => setEncryptedInfo(value)} />
+        <p>
+          Decrypted:
+          {' '}
+          {decrypted}
+        </p>
+        <p>
+          User:
+          {' '}
+          {JSON.stringify(user)}
+        </p>
       </div>
     ) : <div>Welcome to login lol :)</div>
   );
