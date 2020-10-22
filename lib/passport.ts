@@ -26,7 +26,7 @@ passport.use(
   }, async (_req, id, token, done) => {
     const req = <Request & {em: EntityManager}>_req;
 
-    const accessToken = await req.em.findOne(AccessToken, { user: { id }, token }, { populate: ['user'] });
+    const accessToken = await req.em.findOne(AccessToken, { user: { id }, token, expires: { $gt: new Date() } }, { populate: ['user'] });
     if (!accessToken) {
       done(null, null);
     } else {

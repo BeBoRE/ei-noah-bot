@@ -1,4 +1,4 @@
-import { Migration } from 'mikro-orm';
+import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20200911183149 extends Migration {
 

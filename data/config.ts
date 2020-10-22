@@ -11,7 +11,7 @@ import { GuildUser } from './entity/GuildUser';
 import Quote from './entity/Quote';
 import UserCoronaRegions from './entity/UserCoronaRegions';
 import { User } from './entity/User';
-import PublicKey from './entity/PublicKeys';
+import PublicKey from './entity/PublicKey';
 
 dotenv.config();
 

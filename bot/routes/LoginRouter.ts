@@ -2,7 +2,7 @@ import moment from 'moment';
 import { Crypto } from '@peculiar/webcrypto';
 import crypto from 'crypto';
 import AccessToken from '../../data/entity/AccessToken';
-import PublicKey from '../../data/entity/PublicKeys';
+import PublicKey from '../../data/entity/PublicKey';
 import Router from '../Router';
 
 const router = new Router();
@@ -44,26 +44,16 @@ router.use(null, async ({
     if (!publicKey) {
       msg.channel.send('Deze code is verlopen of ongeldig');
     } else {
-      const randomBytes = new Uint8Array(128);
-      shitCrypto.getRandomValues(randomBytes);
-
-      const token = Buffer.from(randomBytes).toString('base64');
-
-      const accessToken = new AccessToken();
-      accessToken.token = token;
-      accessToken.expires = moment().add(10, 'minutes').toDate();
-      accessToken.user = user;
+      const accessToken = new AccessToken(user, publicKey);
 
       // const key = await importRsaKey(publicKey.key);
       const text = JSON.stringify({
-        token,
+        token: accessToken.token,
         id: user.id,
       });
 
       const enc = new TextEncoder();
       const encoded = enc.encode(text);
-
-      console.log(encoded.length);
 
       /*
       const tokenEncrypted = await shitCrypto.subtle.encrypt({
@@ -75,7 +65,8 @@ router.use(null, async ({
 
       em.persist(accessToken);
 
-      msg.channel.send(crypto.publicEncrypt({ key: publicKey.key, oaepHash: 'sha256' }, encoded).toString('base64'));
+      msg.channel.send(`https://ei.sweaties.net/ei-token-image/${crypto.publicEncrypt({ key: publicKey.key, oaepHash: 'sha256' }, encoded).toString('base64')}.png`);
+      if (msg.deletable) msg.delete();
     }
   } else {
     msg.channel.send('Kopieer de code uit het login schermpie');

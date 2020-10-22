@@ -4,7 +4,7 @@ import moment from 'moment';
 import { NextApiRequest, NextApiResponse } from 'next';
 import orm from '../../middleware/orm';
 import { ReqExtended } from '../../types';
-import PublicKey from '../../data/entity/PublicKeys';
+import PublicKey from '../../data/entity/PublicKey';
 
 interface Body {
   key?: string

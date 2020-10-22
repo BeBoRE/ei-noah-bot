@@ -1,5 +1,5 @@
 import {
-  Entity, ManyToOne, OneToMany, PrimaryKeyType, Property, Collection, PrimaryKey,
+  Entity, ManyToOne, OneToMany, PrimaryKeyType, Property, Collection, PrimaryKey, Unique,
 } from '@mikro-orm/core';
 // eslint-disable-next-line import/no-cycle
 import { User } from './User';
@@ -9,6 +9,14 @@ import { Guild } from './Guild';
 import Quote from './Quote';
 
 @Entity()
+@Unique({
+  properties: ['guild', 'user'],
+  name: 'unique_guild_user',
+})
+@Unique({
+  properties: 'tempChannel',
+  name: 'unique_tempchannel',
+})
 // eslint-disable-next-line import/prefer-default-export
 export class GuildUser {
   @PrimaryKey()
@@ -22,7 +30,7 @@ export class GuildUser {
 
   [PrimaryKeyType]: [string, string];
 
-  @Property({ nullable: true, unique: true })
+  @Property({ nullable: true })
   tempChannel?: string;
 
   @Property({ nullable: true })

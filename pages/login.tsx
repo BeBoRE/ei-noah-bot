@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Dropzone from '../components/EiDropzone';
 
 /*
 Convert  an ArrayBuffer into a string
@@ -25,7 +26,6 @@ function Page() {
   const [key, setKey] = useState<CryptoKeyPair>();
   const [keyId, setKeyId] = useState<string>();
   const [encryptedInfo, setEncryptedInfo] = useState<string>('');
-  const [decrypted, setDecrypted] = useState<string>('');
   const [user, setUser] = useState<Object>({});
   const [error, setError] = useState('');
 
@@ -68,12 +68,7 @@ function Page() {
       crypto.subtle.decrypt({
         name: 'RSA-OAEP',
       }, key?.privateKey, buffer)
-        .then((decryptedBuffer) => {
-          const decoder = new TextDecoder();
-          const text = decoder.decode(decryptedBuffer);
-          setDecrypted(text);
-          return text;
-        })
+        .then((decryptedBuffer) => (new TextDecoder()).decode(decryptedBuffer))
         .then((loginInfo) => fetch('/api/login', {
           body: loginInfo,
           method: 'POST',
@@ -90,22 +85,13 @@ function Page() {
   }, [encryptedInfo]);
 
   return (
-    keyId ? (
+    keyId && key ? (
       <div>
         ei login
         {' '}
         {keyId.toUpperCase()}
-        <input type="text" value={encryptedInfo} name="encryptedKey" onChange={({ target: { value } }) => setEncryptedInfo(value)} />
-        <p>
-          Decrypted:
-          {' '}
-          {decrypted}
-        </p>
-        <p>
-          User:
-          {' '}
-          {JSON.stringify(user)}
-        </p>
+        <Dropzone onResolve={(data) => { setEncryptedInfo(data); }} />
+        <p>{JSON.stringify(user)}</p>
         <p>{error}</p>
       </div>
     ) : <div>Welcome to login lol :)</div>
