@@ -7,6 +7,7 @@ import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
 import QuoteRouter from './routes/QuoteRouter';
 import CoronaRouter from './routes/CoronaRouter';
+import LoginRouter from './routes/LoginRouter';
 
 dotenv.config();
 
@@ -75,5 +76,7 @@ eiNoah.onInit = async (client) => {
 };
 
 eiNoah.use('corona', CoronaRouter);
+
+eiNoah.use('login', LoginRouter);
 
 export default eiNoah;

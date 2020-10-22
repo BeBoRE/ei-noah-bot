@@ -5,7 +5,7 @@ import { User } from './User';
 
 @Entity()
 class AccessToken {
-  @PrimaryKey()
+  @PrimaryKey({ length: 600 })
   token!: string;
 
   @ManyToOne({ unique: true })

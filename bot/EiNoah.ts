@@ -10,7 +10,7 @@ const errorToChannel = async (channelId : string, client : Client, err : Error) 
   if (errorChannel instanceof TextChannel
      || errorChannel instanceof NewsChannel
   ) {
-    errorChannel.send(`**${err?.name}**\n\`\`\`${err?.stack}\`\`\``);
+    errorChannel.send(`**${err?.name}**\n\`\`\`${err?.stack}\`\`\``, { split: true });
   }
 };
 

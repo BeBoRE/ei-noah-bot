@@ -1,4 +1,4 @@
-import React, { ChangeEventHandler, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 /*
 Convert  an ArrayBuffer into a string
@@ -26,6 +26,7 @@ async function exportCryptoKey(key : CryptoKey) {
 function Page() {
   const [key, setKey] = useState<CryptoKeyPair>();
   const [keyId, setKeyId] = useState<string>();
+  const [encryptedInfo, setEncryptedInfo] = useState<string>();
 
   useEffect(() => {
     crypto.subtle.generateKey({
@@ -63,12 +64,25 @@ function Page() {
       });
   }, []);
 
+  useEffect(() => {
+    if (encryptedInfo && key) {
+      const { buffer } = Uint8Array.from(atob(encryptedInfo), (c) => c.charCodeAt(0));
+
+      crypto.subtle.decrypt({
+        name: 'RSA-OAEP',
+      }, key?.privateKey, buffer)
+        .then(console.log)
+        .catch(console.error);
+    }
+  }, [encryptedInfo]);
+
   return (
     keyId ? (
       <div>
         ei login
         {' '}
         {keyId.toUpperCase()}
+        <input type="text" value={encryptedInfo} name="encryptedKey" onChange={(e) => setEncryptedInfo(e.target.value)} />
       </div>
     ) : <div>Welcome to login lol :)</div>
   );

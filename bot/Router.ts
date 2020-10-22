@@ -171,14 +171,7 @@ export default class Router {
       } else {
         const nameHandler = this.routes[currentRoute.toUpperCase()];
 
-        if (!nameHandler) {
-          info.msg.channel.send(`Ja ik heb toch geen idee wat \`${info.absoluteParams.map((param) => {
-            if (typeof param === 'string') return param;
-            if (param instanceof Role) return `@${param.name}`;
-            if (param instanceof DiscordUser) return `@${param.username}`;
-            return '[UNKNOWN]';
-          }).join(' ')}\` moet betekenen`);
-        } else {
+        if (nameHandler) {
           const newParams = [...info.params];
           newParams.shift();
 
@@ -186,6 +179,8 @@ export default class Router {
           handler = nameHandler;
         }
       }
+
+      if (!handler && this.nullRoute) handler = this.nullRoute;
 
       if (handler) {
         if (handler instanceof Router) {
@@ -199,6 +194,13 @@ export default class Router {
             reject(err);
           }
         }
+      } else {
+        info.msg.channel.send(`Ja ik heb toch geen idee wat \`${info.absoluteParams.map((param) => {
+          if (typeof param === 'string') return param;
+          if (param instanceof Role) return `@${param.name}`;
+          if (param instanceof DiscordUser) return `@${param.username}`;
+          return '[UNKNOWN]';
+        }).join(' ')}\` moet betekenen`);
       }
     });
   }
