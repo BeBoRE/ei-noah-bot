@@ -27,11 +27,12 @@ function Page() {
   const [encryptedInfo, setEncryptedInfo] = useState<string>('');
   const [decrypted, setDecrypted] = useState<string>('');
   const [user, setUser] = useState<Object>({});
+  const [error, setError] = useState('');
 
   useEffect(() => {
     crypto.subtle.generateKey({
       name: 'RSA-OAEP',
-      modulusLength: 1024,
+      modulusLength: 4096,
       publicExponent: new Uint8Array([1, 0, 1]),
       hash: 'SHA-256',
     }, true, ['decrypt'])
@@ -39,17 +40,13 @@ function Page() {
         setKey(k);
         return exportCryptoKey(k.publicKey);
       })
-      .then((pem) => {
-        console.log(pem.length);
-        console.log(pem);
-        return fetch('/api/publickey', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            key: pem,
-          }),
-        });
-      })
+      .then((pem) => fetch('/api/publickey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: pem,
+        }),
+      }))
       .then((res) => {
         if (res.ok) { return res.json(); }
         throw Error('error while sending public key');
@@ -85,7 +82,10 @@ function Page() {
           },
         }))
         .then((res) => res.json())
-        .then((res) => setUser(res));
+        .then((res) => setUser(res))
+        .catch((err) => {
+          if (err instanceof DOMException) setError('Je kan geen ei-noah gezicht van iemand anders gebruiken');
+        });
     }
   }, [encryptedInfo]);
 
@@ -106,6 +106,7 @@ function Page() {
           {' '}
           {JSON.stringify(user)}
         </p>
+        <p>{error}</p>
       </div>
     ) : <div>Welcome to login lol :)</div>
   );

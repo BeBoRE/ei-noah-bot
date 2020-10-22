@@ -13,7 +13,7 @@ interface Body {
 export default nextConnect<NextApiRequest, NextApiResponse>()
   .use(orm)
   .post<{body: Body} & ReqExtended>((req, res) => {
-  if (req.body.key && req.body.key.length === 268
+  if (req.body.key && req.body.key.length === 788
     && req.body.key.endsWith('-----END PUBLIC KEY-----')
     && req.body.key.startsWith('-----BEGIN PUBLIC KEY-----')) {
     const { key } = req.body;

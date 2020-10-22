@@ -78,7 +78,7 @@ const removeHandler : Handler = async ({
     return;
   }
 
-  em.removeEntity(dbRegion);
+  em.remove(dbRegion);
 
   msg.channel.send(`${dbRegion.region} is verwijderd van je dagelijkse rapport`);
 };
@@ -245,7 +245,7 @@ router.onInit = async (client, orm) => {
     });
   };
 
-  setTimeout(refreshData, 1000 * 60 * 10);
+  if (process.env.REFRESH_DATA !== 'false') setTimeout(refreshData, 1000 * 60 * 10);
 
   const reportCron = new CronJob('0 9 * * *', postReport);
 
