@@ -3,8 +3,10 @@ import { IncomingMessage } from 'http';
 import { EntityManager } from '@mikro-orm/core';
 import passport from 'passport';
 import { Strategy } from 'passport-local';
+import { Client } from 'discord.js';
 import { User } from '../data/entity/User';
 import AccessToken from '../data/entity/AccessToken';
+// eslint-disable-next-line import/no-cycle
 import { ReqExtended } from '../types';
 
 export interface ExtendedUser {
@@ -12,6 +14,12 @@ export interface ExtendedUser {
   avatar: string | null,
   username: string
 }
+
+const getExtendedUser = async (user : User, client : Client) : Promise<ExtendedUser> => {
+  const { avatar, username } = await client.users.fetch(user.id, true);
+
+  return { user, avatar, username };
+};
 
 passport.serializeUser<ExtendedUser, string>((user, done) => {
   done(null, user.user.id);
@@ -21,9 +29,7 @@ passport.deserializeUser<ExtendedUser, string, IncomingMessage & ReqExtended>(
   async (req, id, done) => {
     const user = await req.em.findOne(User, { id });
     if (user) {
-      const { avatar, username } = await req.bot.users.fetch(user.id, true);
-
-      done(null, { user, avatar, username });
+      done(null, await getExtendedUser(user, req.bot));
     } else done(null, undefined);
   },
 );
@@ -34,13 +40,17 @@ passport.use(
     passwordField: 'token',
     passReqToCallback: true,
   }, async (_req, id, token, done) => {
-    const req = <Request & {em: EntityManager}>_req;
+    const req = <Request & ReqExtended>_req;
 
-    const accessToken = await req.em.findOne(AccessToken, { user: { id }, token, expires: { $gt: new Date() } }, { populate: ['user'] });
-    if (!accessToken) {
-      done(null, null);
+    if (id && token) {
+      const accessToken = await req.em.findOne(AccessToken, { user: { id }, token, expires: { $gt: new Date() } }, { populate: ['user'] });
+      if (!accessToken) {
+        done(null, null);
+      } else {
+        done(null, await getExtendedUser(accessToken.user, req.bot));
+      }
     } else {
-      done(null, accessToken.user);
+      done(null, null);
     }
   }),
 );

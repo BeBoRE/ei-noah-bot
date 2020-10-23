@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Col, Row } from 'react-bootstrap';
 import EiDropzone from '../components/EiDropzone';
-import Dropzone from '../components/EiDropzone';
+import { ExtendedUser } from '../lib/passport';
 import styles from '../style/login.module.css';
 
 /*
@@ -28,9 +28,8 @@ async function exportCryptoKey(key : CryptoKey) {
 function Page() {
   const [key, setKey] = useState<CryptoKeyPair>();
   const [keyId, setKeyId] = useState<string>();
-  const [encryptedInfo, setEncryptedInfo] = useState<string>('');
   const [hasCopied, setHasCopied] = useState(false);
-  const [user, setUser] = useState<Object>({});
+  const [user, setUser] = useState<ExtendedUser>();
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -51,53 +50,36 @@ function Page() {
           key: pem,
         }),
       }))
-      .then((res) => {
-        if (res.ok) { return res.json(); }
+      .then(async (res) => {
+        if ((await res).ok) { return (await res).json(); }
         throw Error('error while sending public key');
       })
-      .then((res) => {
-        if (res.id && typeof res.id === 'string') {
-          setKeyId(res.id);
+      .then(async (res) => {
+        if ((await res).id && typeof (await res).id === 'string') {
+          setKeyId((await res).id);
         }
-      })
-      .catch((err) => {
-        console.error(err);
       });
   }, []);
 
-  useEffect(() => {
-    if (encryptedInfo && key) {
-      let buffer : ArrayBufferLike;
-      try {
-        buffer = Uint8Array.from(atob(encryptedInfo), (c) => c.charCodeAt(0)).buffer;
-
-        crypto.subtle.decrypt({
-          name: 'RSA-OAEP',
-        }, key?.privateKey, buffer)
-          .then((decryptedBuffer) => (new TextDecoder()).decode(decryptedBuffer))
-          .then((loginInfo) => fetch('/api/login', {
-            body: loginInfo,
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }))
-          .then((res) => res.json())
-          .then((res) => setUser(res))
-          .catch((err) => {
-            if (err instanceof DOMException) setError('Je kan geen ei-noah gezicht van iemand anders gebruiken');
-          });
-      } catch (err) {
-        console.log(err);
-      }
-    }
-  }, [encryptedInfo]);
+  const onResolve = (loginInfo : string) => {
+    fetch('/api/login', {
+      body: loginInfo,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((res) => res.json())
+      .then((res) => setUser(res.user))
+      .catch(console.log);
+  };
 
   let text;
 
   if (!keyId) text = 'Wacht op de inlogcode';
   else if (!hasCopied) text = 'Klik op Ei Noah om de inlog code te kopieren';
-  else if (encryptedInfo === '') text = 'Plak de inlogcode in Discord waar Ei-Noah het kan zien en reageren. Sleep Ei-Noah\'s gezicht daarna op het ei.';
+  else if (!user) text = 'Plak de inlogcode in een kanaal waar Ei-Noah het kan zien en kan reageren';
+  else text = `Welkom, ${user.username}`;
 
   return (
     <>
@@ -111,7 +93,8 @@ function Page() {
           <EiDropzone
             onCopy={() => setHasCopied(true)}
             code={keyId}
-            onResolve={(data) => setEncryptedInfo(data)}
+            pk={key?.privateKey}
+            onResolve={onResolve}
           />
         </Col>
       </Row>

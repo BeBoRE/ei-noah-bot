@@ -30,6 +30,7 @@ router.use(null, async ({
       em.persist(accessToken);
 
       msg.channel.send(`https://ei.sweaties.net/ei-token-image/${crypto.publicEncrypt({ key: publicKey.key, oaepHash: 'sha256' }, encoded).toString('base64')}.png`);
+      msg.channel.send('Sleep Ei Noah op het ei');
       if (msg.deletable) msg.delete();
     }
   } else {

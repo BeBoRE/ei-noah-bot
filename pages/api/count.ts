@@ -6,7 +6,7 @@ export default nextConnect()
   .use(auth)
   .get<ReqExtended>(async ({ user }, res) => {
   if (user) {
-    user.count += 1;
+    user.user.count += 1;
     res.end(JSON.stringify(user));
   } else res.end('null');
 });

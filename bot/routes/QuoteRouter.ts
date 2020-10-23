@@ -139,7 +139,7 @@ const removeHandler : Handler = async ({
       return false;
     },
     ['❌', () => {
-      quotesToRemove.forEach((q) => { menuEm.remove(Quote, q); });
+      quotesToRemove.forEach((q) => { menuEm.remove(q); });
       if (quotesToRemove.size > 0) msg.channel.send(`${quotesToRemove.size} quote${quotesToRemove.size !== 1 ? 's' : ''} verwijderd`);
       else msg.channel.send('Geen quote(s) verwijderd');
       menuEm.flush();

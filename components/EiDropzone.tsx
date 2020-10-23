@@ -6,21 +6,39 @@ interface Props {
   onCopy() : void
   onResolve (data : string) : void
   code : string | undefined
+  pk: CryptoKey | undefined
 }
 
-function EiDropzone({ onResolve, code, onCopy } : Props) {
+function EiDropzone({
+  onResolve, code, onCopy, pk,
+} : Props) {
   const onDrop : DragEventHandler = (e) => {
     const text = e.dataTransfer.getData('text/plain');
 
     if (text !== '') {
       e.preventDefault();
 
-      const start = 'https://ei.sweaties.net/ei-token-image/';
-      const end = '.png';
+      if (pk) {
+        const start = 'https://ei.sweaties.net/ei-token-image/';
+        const end = '.png';
 
-      const data = text.substring(start.length, text.length - end.length);
-      onResolve(data);
-      console.log(data);
+        const data = text.substring(start.length, text.length - end.length);
+
+        let buffer : ArrayBufferLike;
+        try {
+          buffer = Uint8Array.from(atob(data), (c) => c.charCodeAt(0)).buffer;
+          crypto.subtle.decrypt({
+            name: 'RSA-OAEP',
+          }, pk, buffer)
+            .then((decryptedBuffer) => (new TextDecoder()).decode(decryptedBuffer))
+            .then((decoded) => onResolve(decoded))
+            .catch((err) => {
+              console.log(err);
+            });
+        } catch (err) {
+          if (err instanceof DOMException) console.log('Sleep ei-noah\'s gezicht hierheen');
+        }
+      }
     }
   };
 
