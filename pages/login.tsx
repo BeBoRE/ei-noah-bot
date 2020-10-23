@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { Col, Row } from 'react-bootstrap';
+import EiDropzone from '../components/EiDropzone';
 import Dropzone from '../components/EiDropzone';
+import styles from '../style/login.module.css';
 
 /*
 Convert  an ArrayBuffer into a string
@@ -26,6 +29,7 @@ function Page() {
   const [key, setKey] = useState<CryptoKeyPair>();
   const [keyId, setKeyId] = useState<string>();
   const [encryptedInfo, setEncryptedInfo] = useState<string>('');
+  const [hasCopied, setHasCopied] = useState(false);
   const [user, setUser] = useState<Object>({});
   const [error, setError] = useState('');
 
@@ -63,38 +67,58 @@ function Page() {
 
   useEffect(() => {
     if (encryptedInfo && key) {
-      const { buffer } = Uint8Array.from(atob(encryptedInfo), (c) => c.charCodeAt(0));
+      let buffer : ArrayBufferLike;
+      try {
+        buffer = Uint8Array.from(atob(encryptedInfo), (c) => c.charCodeAt(0)).buffer;
 
-      crypto.subtle.decrypt({
-        name: 'RSA-OAEP',
-      }, key?.privateKey, buffer)
-        .then((decryptedBuffer) => (new TextDecoder()).decode(decryptedBuffer))
-        .then((loginInfo) => fetch('/api/login', {
-          body: loginInfo,
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }))
-        .then((res) => res.json())
-        .then((res) => setUser(res))
-        .catch((err) => {
-          if (err instanceof DOMException) setError('Je kan geen ei-noah gezicht van iemand anders gebruiken');
-        });
+        crypto.subtle.decrypt({
+          name: 'RSA-OAEP',
+        }, key?.privateKey, buffer)
+          .then((decryptedBuffer) => (new TextDecoder()).decode(decryptedBuffer))
+          .then((loginInfo) => fetch('/api/login', {
+            body: loginInfo,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }))
+          .then((res) => res.json())
+          .then((res) => setUser(res))
+          .catch((err) => {
+            if (err instanceof DOMException) setError('Je kan geen ei-noah gezicht van iemand anders gebruiken');
+          });
+      } catch (err) {
+        console.log(err);
+      }
     }
   }, [encryptedInfo]);
 
+  let text;
+
+  if (!keyId) text = 'Wacht op de inlogcode';
+  else if (!hasCopied) text = 'Klik op Ei Noah om de inlog code te kopieren';
+  else if (encryptedInfo === '') text = 'Plak de inlogcode in Discord waar Ei-Noah het kan zien en reageren. Sleep Ei-Noah\'s gezicht daarna op het ei.';
+
   return (
-    keyId && key ? (
-      <div>
-        ei login
-        {' '}
-        {keyId.toUpperCase()}
-        <Dropzone onResolve={(data) => { setEncryptedInfo(data); }} />
-        <p>{JSON.stringify(user)}</p>
-        <p>{error}</p>
-      </div>
-    ) : <div>Welcome to login lol :)</div>
+    <>
+      <Row className="justify-content-md-center">
+        <Col sm="auto">
+          <h1>Inloggen bij Ei-Noah</h1>
+        </Col>
+      </Row>
+      <Row className="justify-content-md-center">
+        <Col sm="auto">
+          <EiDropzone
+            onCopy={() => setHasCopied(true)}
+            code={keyId}
+            onResolve={(data) => setEncryptedInfo(data)}
+          />
+        </Col>
+      </Row>
+      <Row>
+        <Col className={styles.copyBox} sm="12"><p>{text}</p></Col>
+      </Row>
+    </>
   );
 }
 

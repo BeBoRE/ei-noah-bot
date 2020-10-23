@@ -5,16 +5,26 @@ import passport from 'passport';
 import { Strategy } from 'passport-local';
 import { User } from '../data/entity/User';
 import AccessToken from '../data/entity/AccessToken';
+import { ReqExtended } from '../types';
 
-passport.serializeUser<User, string>((user, done) => {
-  done(null, user.id);
+export interface ExtendedUser {
+  user: User
+  avatar: string | null,
+  username: string
+}
+
+passport.serializeUser<ExtendedUser, string>((user, done) => {
+  done(null, user.user.id);
 });
 
-passport.deserializeUser<User, string, IncomingMessage & {em: EntityManager}>(
+passport.deserializeUser<ExtendedUser, string, IncomingMessage & ReqExtended>(
   async (req, id, done) => {
     const user = await req.em.findOne(User, { id });
-    if (user) done(null, user);
-    else done(null, undefined);
+    if (user) {
+      const { avatar, username } = await req.bot.users.fetch(user.id, true);
+
+      done(null, { user, avatar, username });
+    } else done(null, undefined);
   },
 );
 

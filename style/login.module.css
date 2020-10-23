@@ -1,0 +1,15 @@
+.center{
+  text-align: center;
+}
+
+.copyBox {
+  margin-top: 1em;
+  text-align: center;
+  background-color: #21252B;
+  border-radius: 10px;
+}
+
+.copyBox p {
+  margin: 0;
+  padding: 20px 0;
+}

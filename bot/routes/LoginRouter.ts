@@ -5,29 +5,6 @@ import Router from '../Router';
 
 const router = new Router();
 
-/*
-function importRsaKey(pem : string) {
-  // fetch the part of the PEM string between header and footer
-  const pemHeader = '-----BEGIN PUBLIC KEY-----';
-  const pemFooter = '-----END PUBLIC KEY-----';
-  const pemContents = pem.substring(pemHeader.length, pem.length - pemFooter.length);
-
-  // convert from a binary string to an ArrayBuffer
-  const binaryDer = Buffer.from(pemContents, 'base64');
-
-  return shitCrypto.subtle.importKey(
-    'spki',
-    binaryDer,
-    {
-      name: 'RSA-OAEP',
-      hash: 'SHA-256',
-    },
-    false,
-    ['encrypt'],
-  );
-}
-*/
-
 router.use(null, async ({
   msg, em, params, user,
 }) => {
@@ -42,7 +19,6 @@ router.use(null, async ({
     } else {
       const accessToken = new AccessToken(user, publicKey);
 
-      // const key = await importRsaKey(publicKey.key);
       const text = JSON.stringify({
         token: accessToken.token,
         id: user.id,
@@ -50,14 +26,6 @@ router.use(null, async ({
 
       const enc = new TextEncoder();
       const encoded = enc.encode(text);
-
-      /*
-      const tokenEncrypted = await shitCrypto.subtle.encrypt({
-        name: 'RSA-OAEP',
-      },
-      key,
-      encoded);
-      */
 
       em.persist(accessToken);
 

@@ -1,5 +1,8 @@
-.dropzone {
-  height: 200px;
-  width: 200px;
-  background-color: aqua;
+.loading {
+  animation: loading 1s infinite alternate;
+}
+
+@keyframes loading {
+  0%   {opacity: 0.1;}
+  100% {opacity: 0.6;}
 }
