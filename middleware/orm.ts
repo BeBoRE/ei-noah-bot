@@ -8,10 +8,13 @@ const handler = NextConnect<ReqExtended & IncomingMessage>()
   .use(async (req, res, next) => {
     if (!req.em) {
       const orm = ORM;
-      if (!bot.started && process.env.DISABLE_BOT !== 'true') await bot.start();
+      if (!global.bot) {
+        global.bot = bot;
+        await bot.start();
+      }
 
       req.em = (await orm).em.fork();
-      req.bot = bot.client;
+      req.bot = global.bot.client;
 
       const oldEnd = res.end;
       res.end = async function resEndProxy(...args : any[]) {

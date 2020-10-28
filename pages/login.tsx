@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Col, Row } from 'react-bootstrap';
+import { useRouter } from 'next/router';
 import EiDropzone from '../components/EiDropzone';
-import { ExtendedUser } from '../lib/passport';
+import { useUser } from '../lib/hooks/useUser';
 import styles from '../style/login.module.css';
 
 /*
@@ -29,37 +30,43 @@ function Page() {
   const [key, setKey] = useState<CryptoKeyPair>();
   const [keyId, setKeyId] = useState<string>();
   const [hasCopied, setHasCopied] = useState(false);
-  const [user, setUser] = useState<ExtendedUser>();
-  const [error, setError] = useState('');
+  const [user, { mutate }] = useUser();
+  const router = useRouter();
 
   useEffect(() => {
-    crypto.subtle.generateKey({
-      name: 'RSA-OAEP',
-      modulusLength: 4096,
-      publicExponent: new Uint8Array([1, 0, 1]),
-      hash: 'SHA-256',
-    }, true, ['decrypt'])
-      .then((k) => {
-        setKey(k);
-        return exportCryptoKey(k.publicKey);
-      })
-      .then((pem) => fetch('/api/publickey', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: pem,
-        }),
-      }))
-      .then(async (res) => {
-        if ((await res).ok) { return (await res).json(); }
-        throw Error('error while sending public key');
-      })
-      .then(async (res) => {
-        if ((await res).id && typeof (await res).id === 'string') {
-          setKeyId((await res).id);
-        }
-      });
+    if (!user) {
+      crypto.subtle.generateKey({
+        name: 'RSA-OAEP',
+        modulusLength: 4096,
+        publicExponent: new Uint8Array([1, 0, 1]),
+        hash: 'SHA-256',
+      }, true, ['decrypt'])
+        .then((k) => {
+          setKey(k);
+          return exportCryptoKey(k.publicKey);
+        })
+        .then((pem) => fetch('/api/publickey', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: pem,
+          }),
+        }))
+        .then(async (res) => {
+          if ((await res).ok) { return (await res).json(); }
+          throw Error('error while sending public key');
+        })
+        .then(async (res) => {
+          if ((await res).id && typeof (await res).id === 'string') {
+            setKeyId((await res).id);
+          }
+        });
+    }
   }, []);
+
+  useEffect(() => {
+    if (user) router.push('/');
+  }, [user]);
 
   const onResolve = (loginInfo : string) => {
     fetch('/api/login', {
@@ -70,7 +77,7 @@ function Page() {
       },
     })
       .then((res) => res.json())
-      .then((res) => setUser(res.user))
+      .then((res) => mutate(res.user))
       .catch(console.log);
   };
 

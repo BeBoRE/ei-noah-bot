@@ -1,0 +1,14 @@
+.avatar {
+  width: 50px;
+}
+
+.name {
+  margin: auto 0;
+  padding: 0;
+}
+
+.header {
+  min-height: 50px;
+  padding: 10px;
+  background-color: #21252B;
+}

@@ -31,10 +31,7 @@ function EiDropzone({
             name: 'RSA-OAEP',
           }, pk, buffer)
             .then((decryptedBuffer) => (new TextDecoder()).decode(decryptedBuffer))
-            .then((decoded) => onResolve(decoded))
-            .catch((err) => {
-              console.log(err);
-            });
+            .then((decoded) => onResolve(decoded));
         } catch (err) {
           if (err instanceof DOMException) console.log('Sleep ei-noah\'s gezicht hierheen');
         }

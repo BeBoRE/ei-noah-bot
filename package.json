@@ -61,6 +61,7 @@
     "react-dom": "^16.14.0",
     "reflect-metadata": "^0.1.13",
     "source-map-support": "^0.5.19",
+    "swr": "^0.3.6",
     "ts-node": "^9.0.0",
     "typescript": "^3.9.7"
   },

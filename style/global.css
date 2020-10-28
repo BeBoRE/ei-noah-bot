@@ -6,16 +6,36 @@ html, body{
   color: #FFFFFF;
 }
 
-a {
+a, button.anchor {
   color: #ffcc5f;
   text-decoration: none;
 }
 
-a:hover {
+a:hover, button.anchor:hover {
+  color: #d1a74d;
   text-decoration: underline;
 }
 
 * {
   box-sizing: border-box;
   text-rendering: optimizeLegibility;
+}
+
+.app {
+  padding-top: 30px;
+}
+
+button {
+  border: none;
+  outline: none;
+  background: #21252B;
+  color: #FFF;
+}
+
+button:active {
+  outline: none;
+}
+
+button:focus {
+  outline: none;
 }

@@ -7,4 +7,5 @@ export interface ReqExtended {
   em: EntityManager,
   user: ExtendedUser | null
   bot: Client
+  logout: () => void
 }

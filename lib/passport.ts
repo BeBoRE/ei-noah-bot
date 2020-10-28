@@ -1,6 +1,5 @@
 import { Request } from 'express';
 import { IncomingMessage } from 'http';
-import { EntityManager } from '@mikro-orm/core';
 import passport from 'passport';
 import { Strategy } from 'passport-local';
 import { Client } from 'discord.js';
