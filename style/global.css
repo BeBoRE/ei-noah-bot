@@ -25,6 +25,10 @@ a:hover, button.anchor:hover {
   padding-top: 30px;
 }
 
+h1{
+  text-align: center;
+}
+
 button {
   border: none;
   outline: none;
@@ -42,4 +46,8 @@ button:focus {
 
 button.anchor {
   padding: 0;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }

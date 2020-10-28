@@ -18,10 +18,10 @@ function HeaderUser() {
     return (
       <Row>
         <Col sm="auto">
-          <Avatar className={styles.avatar} user={user} />
+          <Avatar className={`cursor-pointer ${styles.avatar}`} user={user} />
         </Col>
         <Col sm="auto" className={styles.name}>
-          <div>{user.username}</div>
+          <div><Link href={`/user/${user.user.id}`}><span className="cursor-pointer">{user.username}</span></Link></div>
           <div><button className="anchor" type="button" onClick={() => logout()}>Logout</button></div>
         </Col>
       </Row>
