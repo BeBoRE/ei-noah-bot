@@ -39,3 +39,7 @@ button:active {
 button:focus {
   outline: none;
 }
+
+button.anchor {
+  padding: 0;
+}
