@@ -1,4 +1,6 @@
-import { User as DiscordUser, Guild as DiscordGuild, CategoryChannel } from 'discord.js';
+import {
+  User as DiscordUser, Guild as DiscordGuild, CategoryChannel, Client,
+} from 'discord.js';
 import { EntityManager } from '@mikro-orm/core';
 import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
@@ -69,6 +71,18 @@ const getCategoryData = async (em : EntityManager, category : CategoryChannel | 
   await em.persistAndFlush(newCategory);
 
   return newCategory;
+};
+
+export interface ExtendedUser {
+  user: User
+  avatar: string | null,
+  username: string
+}
+
+export const getExtendedUser = async (user : User, client : Client) : Promise<ExtendedUser> => {
+  const { avatar, username } = await client.users.fetch(user.id, true);
+
+  return { user, avatar, username };
 };
 
 export {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Col, Row } from 'react-bootstrap';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import EiDropzone from '../components/EiDropzone';
 import { useUser } from '../lib/hooks/useUser';
 import styles from '../style/login.module.css';
@@ -90,6 +91,9 @@ function Page() {
 
   return (
     <>
+      <Head>
+        <title>Inloggen bij Ei-Noah</title>
+      </Head>
       <Row className="justify-content-md-center">
         <Col sm="auto">
           <h1>Inloggen bij Ei-Noah</h1>

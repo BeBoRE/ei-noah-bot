@@ -6,8 +6,8 @@ import { GuildUser } from './GuildUser';
 
 @Entity()
 class Quote {
-  @PrimaryKey({ serializedPrimaryKey: true })
-  private id!: number;
+  @PrimaryKey()
+  id!: number;
 
   @ManyToOne({ eager: true })
   guildUser!: GuildUser;

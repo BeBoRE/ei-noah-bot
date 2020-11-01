@@ -2,23 +2,12 @@ import { Request } from 'express';
 import { IncomingMessage } from 'http';
 import passport from 'passport';
 import { Strategy } from 'passport-local';
-import { Client } from 'discord.js';
 import { User } from '../data/entity/User';
 import AccessToken from '../data/entity/AccessToken';
 // eslint-disable-next-line import/no-cycle
 import { ReqExtended } from '../types';
-
-export interface ExtendedUser {
-  user: User
-  avatar: string | null,
-  username: string
-}
-
-const getExtendedUser = async (user : User, client : Client) : Promise<ExtendedUser> => {
-  const { avatar, username } = await client.users.fetch(user.id, true);
-
-  return { user, avatar, username };
-};
+import { getExtendedUser, ExtendedUser } from '../data/data';
+import PublicKey from '../data/entity/PublicKey';
 
 passport.serializeUser<ExtendedUser, string>((user, done) => {
   done(null, user.user.id);
@@ -46,6 +35,8 @@ passport.use(
       if (!accessToken) {
         done(null, null);
       } else {
+        req.em.nativeDelete(AccessToken, { publicKey: { id: accessToken.publicKey.id } });
+        req.em.remove(accessToken.publicKey);
         done(null, await getExtendedUser(accessToken.user, req.bot));
       }
     } else {
