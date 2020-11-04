@@ -40,7 +40,7 @@ function EiDropzone({
   };
 
   return (
-    <div className={`${code ? null : style.loading}`} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+    <div className={`${code ? style.loaded : style.loading}`} onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
       <CopyToClipboard text={code ? `ei login ${code.toUpperCase()}` : ''} onCopy={() => code && onCopy()}>
         <img draggable="false" src="https://ei.sweaties.net/ei-noah-empty.png" alt="ei-noah" />
       </CopyToClipboard>

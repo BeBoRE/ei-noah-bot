@@ -16,5 +16,8 @@ export class Guild {
   @OneToMany('GuildUser', 'guild')
   guildUsers = new Collection<GuildUser>(this);
 
+  @Property({ persist: false })
+  serverIcon!: string | null;
+
   [PrimaryKeyType]: [string];
 }

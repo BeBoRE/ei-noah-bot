@@ -2,6 +2,10 @@
   animation: loading 1s infinite alternate;
 }
 
+.loaded {
+  cursor: pointer;
+}
+
 @keyframes loading {
   0%   {opacity: 0.1;}
   100% {opacity: 0.6;}

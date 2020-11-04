@@ -12,6 +12,14 @@ export default nextConnect()
     const user = await req.em.findOne(User, { id: req.query.userId }, { populate: ['guildUsers', 'guildUsers.quotes', 'guildUsers.createdQuotes'] });
     if (user) {
       const extended = await getExtendedUser(user, req.bot);
+      const guildUsers = extended.user.guildUsers.getItems();
+
+      guildUsers.forEach((gu) => {
+        const icon = req.bot.guilds.cache
+          .find((g) => g.id === gu.guild.id)?.icon;
+
+        gu.guild.serverIcon = icon || null;
+      });
 
       if (extended) res.json(extended);
     } else {
