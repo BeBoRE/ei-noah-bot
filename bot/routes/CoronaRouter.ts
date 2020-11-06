@@ -2,6 +2,8 @@ import fetch from 'node-fetch';
 import moment from 'moment';
 import { CronJob } from 'cron';
 import parse from 'csv-parse/lib/sync';
+import { EntityManager } from '@mikro-orm/core';
+import { Client } from 'discord.js';
 import UserCoronaRegions from '../../data/entity/UserCoronaRegions';
 import Router, { Handler } from '../Router';
 import CoronaData, { CoronaInfo } from '../../data/entity/CoronaData';
@@ -105,14 +107,18 @@ router.use('communities', listRegionsHandler);
 const getPopulation = async () => {
   const population : {[key: string]: number | undefined} = {};
 
-  const rawData = (await fetch('https://opendata.cbs.nl/CsvDownload/csv/03759ned/TypedDataSet?dl=41EB0').then((res) => res.text()))
-    .replace(/"/g, '');
+  const loadPopulation = async () => {
+    const rawData = (await fetch('https://opendata.cbs.nl/CsvDownload/csv/03759ned/TypedDataSet?dl=41EB0').then((res) => res.text()))
+      .replace(/"/g, '');
 
-  const records = <Array<[string, string, string, string, string, string]>>parse(rawData, { delimiter: ';' });
-  records.forEach((row) => {
-    const amount = Number.parseInt(row[5], 10);
-    if (Number.isInteger(amount) && row[0] === 'Totaal mannen en vrouwen') population[row[4].toLowerCase()] = amount;
-  });
+    const records = <Array<[string, string, string, string, string, string]>>parse(rawData, { delimiter: ';' });
+    records.forEach((row) => {
+      const amount = Number.parseInt(row[5], 10);
+      if (Number.isInteger(amount) && row[0] === 'Totaal mannen en vrouwen') population[row[4].toLowerCase()] = amount;
+    });
+  };
+
+  if (Object.keys(population).length === 0) { await loadPopulation(); }
 
   return population;
 };
@@ -124,9 +130,100 @@ enum Niveau {
   zeerernstig = 'Zeer Ernstig'
 }
 
-router.onInit = async (client, orm) => {
+const postReport = async (em : EntityManager, client : Client, userId ?: string) => {
+  let userRegions : UserCoronaRegions[];
+  if (userId) userRegions = await em.find(UserCoronaRegions, { user: { id: userId } });
+  else userRegions = await em.getRepository(UserCoronaRegions).findAll();
   const regionPopulations = await getPopulation();
 
+  const relevantReports = await em
+    .find(CoronaData, { community: { $in: userRegions.map((region) => region.region) } });
+
+  if (relevantReports.length === 0) return;
+
+  const groupedReports : {[key : string]: CoronaData[]} = {};
+  relevantReports.forEach((report) => {
+    if (groupedReports[report.community.toLowerCase()]) {
+      groupedReports[report.community.toLowerCase()].push(report);
+    } else groupedReports[report.community.toLowerCase()] = [report];
+  });
+
+  interface WeeklyCoronaDataCounted {
+    deceased: number
+    totalReported: number
+    hospitalized: number
+  }
+
+  const weeklyCountPerRegion : {[key : string]: WeeklyCoronaDataCounted} = {};
+
+  Object.keys(groupedReports).forEach((key) => {
+    groupedReports[key] = groupedReports[key]
+      .sort((r1, r2) => r2.date.getTime() - r1.date.getTime());
+
+    weeklyCountPerRegion[key] = { deceased: 0, hospitalized: 0, totalReported: 0 };
+
+    for (let i = 0; i < 7; i += 1) {
+      const currentReport = groupedReports[key][i];
+
+      weeklyCountPerRegion[key].deceased += currentReport.deceased;
+      weeklyCountPerRegion[key].hospitalized += currentReport.hospitalAdmissions;
+      weeklyCountPerRegion[key].totalReported += currentReport.totalReported;
+    }
+  });
+
+  const groupedUsers : {[key : string]: UserCoronaRegions[]} = {};
+  userRegions.forEach((userRegion) => {
+    if (groupedUsers[userRegion.user.id]) groupedUsers[userRegion.user.id].push(userRegion);
+    else groupedUsers[userRegion.user.id] = [userRegion];
+  });
+
+  Object.keys(groupedUsers).forEach(async (key) => {
+    const regions = groupedUsers[key];
+
+    const reports = regions.map((r) => {
+      const weeklyCount = weeklyCountPerRegion[r.region.toLowerCase()];
+      const population = regionPopulations[r.region.toLowerCase()];
+
+      const casesPer = population
+        ? Math.round((weeklyCount.totalReported / population) * 100_000) : 0;
+      const hospitalPer = population
+        ? Math.round((weeklyCount.hospitalized / population) * 100_000) : 0;
+      const deceasedPer = population
+        ? Math.round((weeklyCount.deceased / population) * 100_000) : 0;
+
+      let niveau : Niveau;
+
+      if (casesPer < 50) niveau = Niveau.Waakzaam;
+      else if (casesPer <= 150) niveau = Niveau.zorgelijk;
+      else if (casesPer <= 250) niveau = Niveau.ernstig;
+      else niveau = Niveau.zeerernstig;
+
+      let message = `**${r.region} (${niveau})**`;
+      message += `\nNieuwe gevallen: ${weeklyCount.totalReported}`;
+      if (casesPer) message += ` (${casesPer} / 100,000 per week)`;
+      message += `\nZiekenhuis Opnames: ${weeklyCount.hospitalized}`;
+      if (hospitalPer) message += ` (${hospitalPer} / 100,000 per week)`;
+      message += `\nDoden: ${weeklyCount.deceased}`;
+      if (deceasedPer) message += ` (${deceasedPer} / 100,000 per week)`;
+
+      return message;
+    });
+
+    const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}`;
+    const user = await client.users.fetch(groupedUsers[key][0].user.id, true);
+    user.send(report, { split: true });
+  });
+};
+
+const raportHandle : Handler = ({ em, msg }) => {
+  postReport(em, msg.client, msg.author.id);
+};
+
+router.use('raport', raportHandle);
+router.use('rapport', raportHandle);
+router.use('report', raportHandle);
+
+router.onInit = async (client, orm) => {
   const refreshData = async () => {
     const em = orm.em.fork();
 
@@ -161,95 +258,13 @@ router.onInit = async (client, orm) => {
     setTimeout(refreshData, 1000 * 60 * 60 * 3);
   };
 
-  const postReport = async () => {
-    const em = orm.em.fork();
+  if (process.env.REFRESH_DATA !== 'false') {
+    refreshData();
+  }
 
-    const userRegions = await em.getRepository(UserCoronaRegions).findAll();
+  const reportCron = new CronJob('0 9 * * *', () => postReport(orm.em.fork(), client));
 
-    const relevantReports = await em
-      .find(CoronaData, { community: { $in: userRegions.map((region) => region.region) } });
-
-    if (relevantReports.length === 0) return;
-
-    const groupedReports : {[key : string]: CoronaData[]} = {};
-    relevantReports.forEach((report) => {
-      if (groupedReports[report.community.toLowerCase()]) {
-        groupedReports[report.community.toLowerCase()].push(report);
-      } else groupedReports[report.community.toLowerCase()] = [report];
-    });
-
-    interface WeeklyCoronaDataCounted {
-      deceased: number
-      totalReported: number
-      hospitalized: number
-    }
-
-    const weeklyCountPerRegion : {[key : string]: WeeklyCoronaDataCounted} = {};
-
-    Object.keys(groupedReports).forEach((key) => {
-      groupedReports[key] = groupedReports[key]
-        .sort((r1, r2) => r2.date.getTime() - r1.date.getTime());
-
-      weeklyCountPerRegion[key] = { deceased: 0, hospitalized: 0, totalReported: 0 };
-
-      for (let i = 0; i < 7; i += 1) {
-        const currentReport = groupedReports[key][i];
-
-        weeklyCountPerRegion[key].deceased += currentReport.deceased;
-        weeklyCountPerRegion[key].hospitalized += currentReport.hospitalAdmissions;
-        weeklyCountPerRegion[key].totalReported += currentReport.totalReported;
-      }
-    });
-
-    const groupedUsers : {[key : string]: UserCoronaRegions[]} = {};
-    userRegions.forEach((userRegion) => {
-      if (groupedUsers[userRegion.user.id]) groupedUsers[userRegion.user.id].push(userRegion);
-      else groupedUsers[userRegion.user.id] = [userRegion];
-    });
-
-    Object.keys(groupedUsers).forEach(async (key) => {
-      const regions = groupedUsers[key];
-
-      const reports = regions.map((r) => {
-        const weeklyCount = weeklyCountPerRegion[r.region.toLowerCase()];
-        const population = regionPopulations[r.region.toLowerCase()];
-
-        const casesPer = population
-          ? Math.round((weeklyCount.totalReported / population) * 100_000) : 0;
-        const hospitalPer = population
-          ? Math.round((weeklyCount.hospitalized / population) * 100_000) : 0;
-        const deceasedPer = population
-          ? Math.round((weeklyCount.deceased / population) * 100_000) : 0;
-
-        let niveau : Niveau;
-
-        if (casesPer < 50) niveau = Niveau.Waakzaam;
-        else if (casesPer <= 150) niveau = Niveau.zorgelijk;
-        else if (casesPer <= 250) niveau = Niveau.ernstig;
-        else niveau = Niveau.zeerernstig;
-
-        let message = `**${r.region} (${niveau})**`;
-        message += `\nNieuwe gevallen: ${weeklyCount.totalReported}`;
-        if (casesPer) message += ` (${casesPer} / 100,000 per week)`;
-        message += `\nZiekenhuis Opnames: ${weeklyCount.hospitalized}`;
-        if (hospitalPer) message += ` (${hospitalPer} / 100,000 per week)`;
-        message += `\nDoden: ${weeklyCount.deceased}`;
-        if (deceasedPer) message += ` (${deceasedPer} / 100,000 per week)`;
-
-        return message;
-      });
-
-      const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}`;
-      const user = await client.users.fetch(groupedUsers[key][0].user.id, true);
-      user.send(report, { split: true });
-    });
-  };
-
-  if (process.env.REFRESH_DATA !== 'false') setTimeout(refreshData, 1000 * 60 * 10);
-
-  const reportCron = new CronJob('0 9 * * *', postReport);
-
-  if (process.env.POST_RAPPORT === 'true') postReport();
+  if (process.env.POST_RAPPORT === 'true') postReport(orm.em.fork(), client);
 
   reportCron.start();
 };
