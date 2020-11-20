@@ -8,9 +8,9 @@ import styles from '../style/Header.module.css';
 function HeaderUser() {
   const [user, { loading, mutate }] = useUser();
 
-  const logout = () => {
+  const logout = async () => {
+    await fetch('/api/logout', { method: 'POST' });
     mutate(null, false);
-    fetch('/api/logout', { method: 'POST' });
   };
 
   if (loading) return <Col sm="auto" className={styles.name}>Retrieving User</Col>;
