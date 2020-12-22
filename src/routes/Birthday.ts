@@ -34,11 +34,9 @@ router.use('help', async ({ msg }) => {
   msg.channel.send('ei bday set - Geef je geboorte datum in een vorm van "dag/maand/jaar"');
 });
 
-router.use('show-all', async ({ msg }) => {
-  let message = 'Hier zijn alle verjaardagen die zijn geregistreerd: ';
-  users.forEach((name, index) => {
-    message += `\n${name}: ${bdays[index]}`;
-  });
+router.use('show-all', async ({ msg, em }) => {
+  const message = 'Hier zijn alle verjaardagen die zijn geregistreerd: ';
+
   msg.channel.send(message);
 });
 
