@@ -1,7 +1,7 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role,
 } from 'discord.js';
-import { createConnection } from 'typeorm';
+import { Connection, IDatabaseDriver, MikroORM } from 'mikro-orm';
 import Router, { Handler, messageParser } from './Router';
 
 const errorToChannel = async (channelId : string, client : Client, err : Error) => {
@@ -26,14 +26,20 @@ class EiNoah {
 
   // this.use wordt doorgepaast aan de echte router
   public use(route: typeof DiscordUser, using: Handler) : void
+  public use(route: typeof Role, using: Handler) : void
+  public use(route: null, using: Handler) : void
   public use(route : string, using: Router | Handler) : void
   public use(route : any, using: any) : any {
     this.router.use(route, using);
   }
 
+  public onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
+  => void | Promise<void>);
+
   public async start() {
     // Creëerd de database connectie
-    await createConnection().catch((err) => { console.error(err); process.exit(-1); });
+    const orm = await MikroORM.init().catch((err) => { console.error(err); process.exit(-1); });
+    await orm.getMigrator().up();
 
     this.client.on('ready', () => {
       console.log('client online');
@@ -44,13 +50,16 @@ class EiNoah {
         const splitted = msg.content.split(' ').filter((param) => param);
 
         // Raw mention ziet er anders uit wanneer user een nickname heeft
-        const botMention = `<@${this.client.user.id}>`;
-        const botNickMention = `<@!${this.client.user.id}>`;
+        const botMention = `<@${this.client.user?.id}>`;
+        const botNickMention = `<@!${this.client.user?.id}>`;
 
         if (splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention) {
           msg.channel.startTyping();
-          messageParser(msg).then((info) => {
+          const em = orm.em.fork();
+
+          messageParser(msg, em).then((info) => {
             this.router.handle(info)
+              .then(() => em.flush())
               .catch(async (err : Error) => {
                 if (process.env.NODE_ENV !== 'production') {
                 // Error message in development
@@ -80,9 +89,24 @@ class EiNoah {
       }
     });
 
+    this.client.on('rateLimit', () => {
+      console.log('We are getting rate limited');
+    });
+
     await this.client.login(this.token);
 
-    this.router.initialize(this.client);
+    this.router.onInit = this.onInit;
+
+    this.router.initialize(this.client, orm);
+    process.on('uncaughtException', (err) => {
+      if (process.env.ERROR_CHANNEL) errorToChannel(process.env.ERROR_CHANNEL, this.client, err);
+    });
+
+    process.on('unhandledRejection', (err) => {
+      if (err instanceof Error && process.env.ERROR_CHANNEL) {
+        errorToChannel(process.env.ERROR_CHANNEL, this.client, err);
+      }
+    });
   }
 }
 

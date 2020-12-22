@@ -1,13 +1,15 @@
 import {
-  Entity, PrimaryColumn, Column,
-} from 'typeorm';
+  PrimaryKey, Entity, Property, PrimaryKeyType,
+} from 'mikro-orm';
 
 @Entity()
 // eslint-disable-next-line import/prefer-default-export
 export class Category {
-  @PrimaryColumn()
-  id: string;
+  @PrimaryKey()
+  id!: string;
 
-  @Column()
+  @Property()
   isLobbyCategory: boolean = false;
+
+  [PrimaryKeyType]: [string];
 }

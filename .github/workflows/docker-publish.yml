@@ -1,4 +1,4 @@
-name: Docker
+name: Docker Build en Deploy
 
 on:
   push:
@@ -14,14 +14,15 @@ on:
   pull_request:
 
 env:
-  # TODO: Change variable to your image's name.
   IMAGE_NAME: ei-noah
+  # Push image to GitHub Packages.
+  # See also https://docs.docker.com/docker-hub/builds/
 
 jobs:
-  # Run tests.
-  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
   test:
+    name: Test Build Image
     runs-on: ubuntu-latest
+    if: github.event_name != 'push'
 
     steps:
       - uses: actions/checkout@v2
@@ -34,13 +35,10 @@ jobs:
           else
             docker build . --file Dockerfile
           fi
-
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
   push:
-    # Ensure test job passes before pushing image.
-    needs: test
-
+    name: Push to Repository
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
 
@@ -73,4 +71,36 @@ jobs:
           echo VERSION=$VERSION
 
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID:$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:${{ github.sha }}
+          docker push $IMAGE_ID
+  deploy:
+    needs: push
+    name: Deploy on Server
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+    - name: Connect and Redeploy on SSH Server
+      uses: appleboy/ssh-action@master
+      with: 
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.PRIVATE_KEY }}
+        script: ./redeploy.sh
+  discord:
+    needs: deploy
+    name: Publish Changelog
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get Body en Subject
+        run: |
+          echo SUBJECT=$(git log --format=%s -n 1) >> $GITHUB_ENV
+          echo BODY=$(git log --format=%b -n 1 | sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g') >> $GITHUB_ENV
+      - name: Send Discord Message
+        uses: tsickert/discord-webhook@v1.0.1
+        with:
+          webhook-url: ${{ secrets.WEBHOOK_URL }}
+          username: ei Noah
+          avatar-url: https://cdn.discordapp.com/avatars/730913870805336195/693419adb85f1416a0ec91d09864f1e4.png?size=256
+          content: "**${{ env.SUBJECT }}**\\n${{ env.BODY }}"

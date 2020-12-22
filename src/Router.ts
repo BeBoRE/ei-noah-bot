@@ -1,17 +1,30 @@
 import {
-  Message, User, Role, Channel, Client, DiscordAPIError, DMChannel,
+  Message,
+  User as DiscordUser,
+  Role, Channel,
+  Client,
+  DiscordAPIError,
+  TextChannel,
+  NewsChannel,
+  Guild,
 } from 'discord.js';
+import {
+  EntityManager, MikroORM, IDatabaseDriver, Connection,
+} from 'mikro-orm';
 import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
-import { getUserGuildData, getCategoryData } from './data';
+import { getUserGuildData, getCategoryData, getUserData } from './data';
+import { User } from './entity/User';
 
 export interface RouteInfo {
   msg: Message
-  absoluteParams: Array<string | User | Role | Channel>
-  params: Array<string | User | Role | Channel>
+  absoluteParams: Array<string | DiscordUser | Role | Channel>
+  params: Array<string | DiscordUser | Role | Channel>
   flags: string[],
-  guildUser: GuildUser,
-  category?: Category
+  guildUser: GuildUser | null,
+  user: User,
+  category: Category | null,
+  em: EntityManager
 }
 
 export interface Handler {
@@ -22,33 +35,34 @@ export interface RouteList {
   [path : string]: Router | Handler
 }
 
-function getUserFromMention(_mention : string, client : Client) {
-  let mention = _mention;
+function mapParams(_mention : string,
+  client : Client,
+  guild : Guild | null) : Array<Promise<Role | DiscordUser | string | null>> {
+  const mention = _mention;
 
-  if (!mention) return null;
+  const seperated = mention.match(/(<@!*[0-9]+>|<@&[0-9]+>|[<]|[^<]+)/g);
 
-  if (mention.startsWith('<@') && mention.endsWith('>')) {
-    mention = mention.slice(2, -1);
+  if (seperated) {
+    return seperated.map((param) => {
+      const user = param.match(/<@!*([0-9]+)>/);
+      if (user) return client.users.fetch(user[1], true);
 
-    if (mention.startsWith('!')) {
-      mention = mention.slice(1);
-    }
+      const role = param.match(/<@&*([0-9]+)>/);
+      if (role && guild) return guild.roles.fetch(role[1], true);
 
-    if (mention.startsWith('&')) {
-      return null;
-    }
-
-    return client.users.fetch(mention, true);
+      return Promise.resolve(param);
+    });
   }
-  return null;
+
+  return [Promise.resolve(null)];
 }
 
 function isFlag(argument: string) {
   return argument[0] === '-' && argument.length > 1;
 }
 
-export async function messageParser(msg : Message) {
-  if (msg.channel instanceof DMChannel) throw new Error('Ja ik steek je neer');
+export async function messageParser(msg : Message, em: EntityManager) {
+  if (!msg.content) throw new Error('Message heeft geen content');
 
   const splitted = msg.content.split(' ').filter((param) => param);
 
@@ -57,17 +71,16 @@ export async function messageParser(msg : Message) {
 
   nonFlags.shift();
 
-  const parsed = nonFlags.map(async (param) => {
-    const user = await getUserFromMention(param, msg.client);
+  if (nonFlags[0] && nonFlags[0].toLowerCase() === 'noah') nonFlags.shift();
 
-    if (user) return user;
-    return param;
-  });
+  const parsed : Array<Promise<DiscordUser | Role | string | null>> = [];
 
-  let resolved : Array<User | string>;
+  nonFlags.forEach((param) => { parsed.push(...mapParams(param, msg.client, msg.guild)); });
+
+  let resolved;
 
   try {
-    resolved = await Promise.all(parsed);
+    resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role => !!item));
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.httpStatus === 404) throw new Error('Invalid Mention of User, Role or Channel');
@@ -75,8 +88,18 @@ export async function messageParser(msg : Message) {
     } else throw new Error('Unknown Parsing error');
   }
 
-  const guildUser = await getUserGuildData(msg.author, msg.guild);
-  const category = await getCategoryData(msg.channel.parent);
+  let guildUser;
+  if (msg.guild) {
+    guildUser = await getUserGuildData(em, msg.author, msg.guild);
+  } else guildUser = null;
+
+  let category;
+  if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
+    category = await getCategoryData(em, msg.channel.parent);
+  } else category = null;
+
+  let user;
+  if (!guildUser) { user = await getUserData(em, msg.author); } else user = guildUser.user;
 
   const routeInfo : RouteInfo = {
     absoluteParams: resolved,
@@ -84,7 +107,9 @@ export async function messageParser(msg : Message) {
     msg,
     flags,
     guildUser,
+    user,
     category,
+    em,
   };
 
   return routeInfo;
@@ -93,21 +118,30 @@ export async function messageParser(msg : Message) {
 export default class Router {
   private routes : RouteList = {};
 
-  private typeOfUserRoute : Handler;
+  private userRoute ?: Handler;
 
-  private nullRoute : Handler;
+  private nullRoute ?: Handler;
+
+  private roleRoute ?: Handler;
 
   // Met use geef je aan welk commando waarheen gaat
-  public use(route : typeof User, using: Handler) : void
+  public use(route : typeof DiscordUser, using: Handler) : void
+  public use(route : typeof Role, using: Handler) : void
   public use(route : string, using: Router | Handler) : void
   public use(route : null, using : Handler) : void
   public use(route : any, using: any) : void {
-    if (route === User) {
-      if (this.typeOfUserRoute) throw new Error('User route already exists');
+    if (route === DiscordUser) {
+      if (this.userRoute) throw new Error('User route already exists');
 
       if (using instanceof Router) throw new Error('Can\'t use Router on mention routing');
 
-      this.typeOfUserRoute = using;
+      this.userRoute = using;
+    } else if (route === Role) {
+      if (this.roleRoute) throw new Error('Role route already exists');
+
+      if (using instanceof Router) throw new Error('Can\'t use Router on mention routing');
+
+      this.roleRoute = using;
     } else if (typeof route === 'string') {
       if (this.routes[route]) throw new Error('This Route Already Exists');
 
@@ -123,20 +157,27 @@ export default class Router {
     return new Promise((resolve, reject) => {
       const currentRoute = info.params[0];
 
-      let handler : Router | Handler;
+      let handler : Router | Handler | undefined;
       let newInfo : RouteInfo = info;
 
       if (typeof currentRoute !== 'string') {
-        if (currentRoute instanceof User) {
-          handler = this.typeOfUserRoute;
-        } if (typeof currentRoute === 'undefined') {
+        if (currentRoute instanceof DiscordUser) {
+          handler = this.userRoute;
+        } else if (typeof currentRoute === 'undefined') {
           handler = this.nullRoute;
+        } else if (currentRoute instanceof Role) {
+          handler = this.roleRoute;
         }
       } else {
         const nameHandler = this.routes[currentRoute.toUpperCase()];
 
         if (!nameHandler) {
-          info.msg.channel.send(`Route \`${info.absoluteParams.join(' ')}\` does not exist`);
+          info.msg.channel.send(`Ja ik heb toch geen idee wat \`${info.absoluteParams.map((param) => {
+            if (typeof param === 'string') return param;
+            if (param instanceof Role) return `@${param.name}`;
+            if (param instanceof DiscordUser) return `@${param.username}`;
+            return '[UNKNOWN]';
+          }).join(' ')}\` moet betekenen`);
         } else {
           const newParams = [...info.params];
           newParams.shift();
@@ -162,17 +203,18 @@ export default class Router {
     });
   }
 
-  public initialize(client : Client) {
+  public initialize(client : Client, orm : MikroORM<IDatabaseDriver<Connection>>) {
     Object.entries(this.routes).forEach(([, route]) => {
       if (route instanceof Router) {
-        route.initialize(client);
+        route.initialize(client, orm);
       }
 
-      if (this.typeOfUserRoute instanceof Router) this.typeOfUserRoute.initialize(client);
+      if (this.userRoute instanceof Router) this.userRoute.initialize(client, orm);
     });
 
-    if (this.onInit) this.onInit(client);
+    if (this.onInit) this.onInit(client, orm);
   }
 
-  public onInit ?: ((client : Client) => void | Promise<void>) | void;
+  public onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
+  => void | Promise<void>);
 }

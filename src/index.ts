@@ -1,12 +1,17 @@
 import dotenv from 'dotenv';
-import 'reflect-metadata';
-import { User } from 'discord.js';
+import {
+  User, Role, PresenceData,
+} from 'discord.js';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
 import Birthday from './routes/Birthday';
+import QuoteRouter from './routes/QuoteRouter';
+import CoronaRouter from './routes/CoronaRouter';
 
 dotenv.config();
+
+if (!process.env.CLIENT_TOKEN) throw new Error('Add a client token');
 
 const eiNoah = new EiNoah(process.env.CLIENT_TOKEN);
 
@@ -18,10 +23,16 @@ eiNoah.use('bday', Birthday);
 
 // Hier is een 'Handler' als argument in principe is dit een eindpunt van de routing.
 // Dit is waar berichten worden afgehandeld
-eiNoah.use('mention', (routeInfo) => {
+eiNoah.use('steek', (routeInfo) => {
   if (routeInfo.params[0] instanceof User) {
-    routeInfo.msg.channel.send(`I must mention you <@!${(routeInfo.params[0]).id}>`);
+    routeInfo.msg.channel.send(`Met plezier, kom hier <@!${(routeInfo.params[0]).id}>!`);
+  } else {
+    routeInfo.msg.channel.send('Lekker');
   }
+});
+
+eiNoah.use(Role, ({ msg, params }) => {
+  msg.channel.send(`${params[0]}s zijn gamers`);
 });
 
 // Als een mention als parameter is gebruikt wordt deze functie aangeroepen,
@@ -31,10 +42,42 @@ eiNoah.use(User, (routeInfo) => {
 });
 
 // Voorbeeld hoe je met user data omgaat
-eiNoah.use('counter', Counter);
+if (process.env.NODE_ENV !== 'production') eiNoah.use('counter', Counter);
 
-eiNoah.use('noah', (info) => {
-  info.msg.channel.send('Dat ben ik :D');
+eiNoah.use(null, (info) => {
+  const watZegtNoah = ['Ja wat jonge', '**Kabaal** ik zit op de fiets', 'Ik steek je neer', 'Hmm wat zegt noah nog meer', 'Ik laat het aan god over'];
+
+  const zeg = watZegtNoah[Math.floor(Math.random() * watZegtNoah.length)];
+
+  info.msg.channel.send(zeg);
 });
+
+eiNoah.use('quote', QuoteRouter);
+
+eiNoah.onInit = async (client) => {
+  const updatePrecense = () => {
+    const watDoetNoah : PresenceData[] = [{
+      activity: {
+        name: 'Probeer Niet Te Steken',
+        type: 'PLAYING',
+      },
+    }, {
+      activity: {
+        name: 'Steek Geluiden',
+        type: 'LISTENING',
+      },
+    }];
+
+    const precense = watDoetNoah[Math.floor(Math.random() * watDoetNoah.length)];
+
+    client.user?.setPresence(precense);
+
+    setTimeout(updatePrecense, 1000 * 60);
+  };
+
+  updatePrecense();
+};
+
+eiNoah.use('corona', CoronaRouter);
 
 eiNoah.start();

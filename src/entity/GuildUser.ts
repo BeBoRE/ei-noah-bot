@@ -1,26 +1,36 @@
 import {
-  Entity, ManyToOne, PrimaryColumn, OneToOne,
-} from 'typeorm';
+  Entity, ManyToOne, OneToMany, PrimaryKeyType, Property, Collection, PrimaryKey,
+} from 'mikro-orm';
+// eslint-disable-next-line import/no-cycle
 import { User } from './User';
+// eslint-disable-next-line import/no-cycle
 import { Guild } from './Guild';
 // eslint-disable-next-line import/no-cycle
-import { TempChannel } from './TempChannel';
+import Quote from './Quote';
 
 @Entity()
 // eslint-disable-next-line import/prefer-default-export
 export class GuildUser {
-  @PrimaryColumn()
-  private guildId: string;
+  @PrimaryKey()
+  id!: number;
 
-  @ManyToOne(() => Guild, { eager: true })
-  guild: Guild;
+  @ManyToOne({ eager: true })
+  guild!: Guild;
 
-  @PrimaryColumn()
-  private userId: string;
+  @ManyToOne({ eager: true })
+  user!: User;
 
-  @ManyToOne(() => User, { eager: true })
-  user: User;
+  [PrimaryKeyType]: [string, string];
 
-  @OneToOne(() => TempChannel, (temp) => temp.guildUser)
-  tempChannel: Promise<TempChannel>;
+  @Property({ nullable: true, unique: true })
+  tempChannel?: string;
+
+  @Property()
+  tempCreatedAt?: Date;
+
+  @OneToMany({ entity: () => Quote, mappedBy: 'guildUser' })
+  quotes = new Collection<Quote>(this);
+
+  @OneToMany({ entity: () => Quote, mappedBy: 'creator' })
+  createdQuotes = new Collection<Quote>(this);
 }
