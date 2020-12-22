@@ -1,14 +1,27 @@
+import { GuildUser } from 'entity/GuildUser';
+import moment from 'moment';
 import Router from '../Router';
 
-const Discord = require('discord.js');
-
 const router = new Router();
+const users: string[] = [];
+const bdays: any[] = [];
 
 router.use('set', async ({ msg, guildUser }) => {
-  msg.channel.send('Je verjaardag kan ook later toegevoegd worden.');
+  const prefix = 'ei bday set';
+  const args = msg.content.slice(prefix.length).trim().split('/');
+  if (!args.length) {
+    msg.channel.send('Je hebt geen datum gegeven.');
+  } else if (guildUser.user.birthday != null) {
+    msg.channel.send('Je verjaardag is al geregistreerd.');
+  } else {
+    const birth = new Date(parseInt(args[2], 10), parseInt(args[1], 10) - 1, parseInt(args[1], 10));
+    const birth1 = moment(birth);
+    guildUser.user.birthday = birth1.toDate();
+    msg.channel.send(`Je verjaardag is toegevoegd met de datum: ${birth1}`);
+  }
 });
 
-router.use('give', async ({ msg, guildUser }) => {
+router.use('give', async ({ msg }) => {
   // Toevoeging van een role op basis van ID
   const role = msg.member.roles.add('744926444756533358');
   const sendMessage = msg.channel.send('You have gained a birthday.');
@@ -17,8 +30,25 @@ router.use('give', async ({ msg, guildUser }) => {
   await sendMessage;
 });
 
-router.use('help', async ({ msg, guildUser }) => {
-  msg.channel.send('Hulp bericht is onderweg');
+router.use('help', async ({ msg }) => {
+  msg.channel.send('ei bday set - Geef je geboorte datum in een vorm van "dag/maand/jaar"');
 });
+
+router.use('show-all', async ({ msg }) => {
+  let message = 'Hier zijn alle verjaardagen die zijn geregistreerd: ';
+  users.forEach((name, index) => {
+    message += `\n${name}: ${bdays[index]}`;
+  });
+  msg.channel.send(message);
+});
+
+router.use('delete', async ({ msg, guildUser }) => {
+  guildUser.user.birthday = null;
+  msg.channel.send(`@${msg.member.user.tag}, je verjaardag is verwijderd.`);
+});
+
+router.onInit = async (client, orm) => {
+
+};
 
 export default router;

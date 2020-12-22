@@ -8,4 +8,7 @@ export class User {
 
   @Column()
   count: number = 0;
+
+  @Column()
+  birthday?: Date;
 }
