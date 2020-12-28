@@ -15,7 +15,7 @@ router.use('set', async ({ msg, user, params }) => {
     return;
   }
 
-  const args = msg.content.slice(rawDate.length).trim().split('/');
+  const args = rawDate.split('/');
   if (!args.length) {
     msg.channel.send('Je hebt geen datum gegeven.');
   } else {
