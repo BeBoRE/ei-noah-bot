@@ -7,24 +7,26 @@ import Router from '../Router';
 const router = new Router();
 
 router.use('set', async ({ msg, user, params }) => {
-  const rawDate = param[0]
-  
-  if (typeof(rawDate) !== 'string') {
+  const rawDate = params[0];
+
+  if (typeof (rawDate) !== 'string') {
     msg.channel.send('Ik verwacht een datum als argument');
-    
+
     return;
   }
-  
-  const args = msg.content.slice(rawDate).trim().split('/');
+
+  const args = msg.content.slice(rawDate.length).trim().split('/');
   if (!args.length) {
     msg.channel.send('Je hebt geen datum gegeven.');
-  } else if (user.birthday != null) {
-    msg.channel.send('Je verjaardag is al geregistreerd.');
   } else {
     const birth = new Date(parseInt(args[2], 10), parseInt(args[1], 10) - 1, parseInt(args[0], 10));
     const birth1 = moment(birth);
     user.birthday = birth1.toDate();
-    msg.channel.send(`Je verjaardag is toegevoegd met de datum: ${birth1.locale('nl').format('DD MMMM YYYY')}`);
+    if (user.birthday != null) {
+      msg.channel.send(`Je verjaardag is gewijzigd met de datum: ${birth1.locale('nl').format('DD MMMM YYYY')}`);
+    } else {
+      msg.channel.send(`Je verjaardag is toegevoegd met de datum: ${birth1.locale('nl').format('DD MMMM YYYY')}`);
+    }
   }
 });
 
@@ -75,7 +77,7 @@ router.use('delete', async ({ msg, user }) => {
   msg.channel.send(`@${msg.author.tag}, je verjaardag is verwijderd.`);
 });
 
-router.use('check', async ({ em, msg }) => {
+/* router.use('check', async ({ em, msg }) => {
   const today = moment().startOf('day').locale('nl').format('DD MMMM');
   const todayAge = moment().startOf('day').locale('nl').format('YYYY');
 
@@ -87,8 +89,10 @@ router.use('check', async ({ em, msg }) => {
   let message = '**Deze mensen zijn vandaag jarig**';
 
   discUsers.forEach((du) => {
-    const discBday = moment(users.find((u) => u.id === du.id)?.birthday).locale('nl').format('DD MMMM');
-    const discBdayAge = moment(users.find((u) => u.id === du.id)?.birthday).locale('nl').format('YYYY');
+    const discBday = moment(users.find((u) => u.id === du.id)?.birthday).locale('nl').
+    format('DD MMMM');
+    const discBdayAge = moment(users.find((u) => u.id === du.id)?.birthday).locale('nl').
+    format('YYYY');
     if (today === discBday) {
       bdayToday = true;
       const age = parseInt(todayAge, 10) - parseInt(discBdayAge, 10);
@@ -99,6 +103,7 @@ router.use('check', async ({ em, msg }) => {
     }
   });
 });
+*/
 
 router.use('set-channel', async ({ guildUser, msg }) => {
   if (!guildUser) {
