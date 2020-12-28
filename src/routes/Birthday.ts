@@ -74,6 +74,7 @@ router.use('show-all', async ({ msg, em }) => {
 });
 
 router.use('delete', async ({ msg, user }) => {
+  // eslint-disable-next-line no-param-reassign
   user.birthday = undefined;
   msg.channel.send(`@${msg.author.tag}, je verjaardag is verwijderd.`);
 });
