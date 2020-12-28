@@ -244,7 +244,7 @@ router.onInit = async (client, orm) => {
       user.send(report, { split: true });
     });
   };
-
+  
   refreshData();
   
   const reportCron = new CronJob('0 9 * * *', postReport);
