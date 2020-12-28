@@ -20,4 +20,7 @@ export class User {
 
   @Property()
   count: number = 0;
+
+  @Property()
+  birthday?: Date;
 }

@@ -5,6 +5,7 @@ import {
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
+import Birthday from './routes/Birthday';
 import QuoteRouter from './routes/QuoteRouter';
 import CoronaRouter from './routes/CoronaRouter';
 
@@ -16,6 +17,9 @@ const eiNoah = new EiNoah(process.env.CLIENT_TOKEN);
 
 // LobbyRouter wordt gebruikt wanneer mensen "ei lobby" aanroepen
 eiNoah.use('lobby', LobbyRouter);
+
+// Voor verjaardag handeling
+eiNoah.use('bday', Birthday);
 
 // Hier is een 'Handler' als argument in principe is dit een eindpunt van de routing.
 // Dit is waar berichten worden afgehandeld
