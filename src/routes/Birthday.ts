@@ -6,9 +6,16 @@ import Router from '../Router';
 
 const router = new Router();
 
-router.use('set', async ({ msg, user }) => {
-  const prefix = 'ei bday set';
-  const args = msg.content.slice(prefix.length).trim().split('/');
+router.use('set', async ({ msg, user, params }) => {
+  const rawDate = param[0]
+  
+  if (typeof(rawDate) !== 'string') {
+    msg.channel.send('Ik verwacht een datum als argument');
+    
+    return;
+  }
+  
+  const args = msg.content.slice(rawDate).trim().split('/');
   if (!args.length) {
     msg.channel.send('Je hebt geen datum gegeven.');
   } else if (user.birthday != null) {
