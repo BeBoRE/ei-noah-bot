@@ -48,6 +48,8 @@ router.use('help', async ({ msg }) => {
   message += '\n`ei bday set <DD/MM/YYYY>`: Registreerd jouw verjaardag';
   message += '\n`ei bday delete`: Verwijderd jouw verjaardag';
   message += '\n`ei bday check`: Laat zien wie er vandaag jarig is';
+  message += '\n***Admin Commando\'s***';
+  message += '\n`ei bday set-channel`: Selecteerd het huidige kanaal voor de dagelijkse update';
 
   msg.channel.send(message);
 });
