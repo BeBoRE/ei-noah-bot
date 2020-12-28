@@ -13,6 +13,12 @@ export class Guild {
   @Property({ default: 96000 })
   bitrate: number = 96000;
 
+  @Property()
+  birthdayChannel?: string;
+
+  @Property()
+  birthdayRole?: string;
+
   @OneToMany(() => GuildUser, (gu) => gu.guild)
   guildUsers = new Collection<GuildUser>(this);
 

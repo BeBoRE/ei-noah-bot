@@ -21,6 +21,6 @@ export class User {
   @Property()
   count: number = 0;
 
-  @Column()
+  @Property()
   birthday?: Date;
 }
