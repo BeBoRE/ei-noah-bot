@@ -1,6 +1,8 @@
 import moment from 'moment';
 import { CronJob } from 'cron';
-import { Permissions, TextChannel } from 'discord.js';
+import {
+  Permissions, Role, TextChannel,
+} from 'discord.js';
 import { User } from '../entity/User';
 import Router from '../Router';
 
@@ -15,12 +17,13 @@ router.use('set', async ({ msg, user, params }) => {
     return;
   }
 
-  const args = msg.content.slice(rawDate.length).trim().split('/');
+  const args = rawDate.split('/');
   if (!args.length) {
     msg.channel.send('Je hebt geen datum gegeven.');
   } else {
     const birth = new Date(parseInt(args[2], 10), parseInt(args[1], 10) - 1, parseInt(args[0], 10));
     const birth1 = moment(birth);
+    // eslint-disable-next-line no-param-reassign
     user.birthday = birth1.toDate();
     if (user.birthday != null) {
       msg.channel.send(`Je verjaardag is gewijzigd met de datum: ${birth1.locale('nl').format('DD MMMM YYYY')}`);
@@ -51,7 +54,7 @@ router.use('set', async ({ msg, user, params }) => {
 });
 */
 
-router.use('help', async ({ msg }) => {
+router.use('help' || null, async ({ msg }) => {
   let message = '**Krijg elke ochtend een melding als iemand jarig is**\nHier volgen alle commando\'s voor verjaardagen';
   message += '\n`ei bday show-all`: Laat alle geregistreerde verjaardagen zien';
   message += '\n`ei bday set <DD/MM/YYYY>`: Registreerd jouw verjaardag';
@@ -59,6 +62,7 @@ router.use('help', async ({ msg }) => {
   message += '\n`ei bday check`: Laat zien wie er vandaag jarig is';
   message += '\n***Admin Commando\'s***';
   message += '\n`ei bday set-channel`: Selecteerd het huidige kanaal voor de dagelijkse update';
+  message += '\n`ei bday set-role <Role Mention>`: Selecteerd de gekozen role voor de jarige-jop';
 
   msg.channel.send(message);
 });
@@ -73,6 +77,7 @@ router.use('show-all', async ({ msg, em }) => {
 });
 
 router.use('delete', async ({ msg, user }) => {
+  // eslint-disable-next-line no-param-reassign
   user.birthday = undefined;
   msg.channel.send(`@${msg.author.tag}, je verjaardag is verwijderd.`);
 });
@@ -120,9 +125,10 @@ router.use('set-channel', async ({ guildUser, msg }) => {
   const { channel } = msg;
 
   guild.birthdayChannel = channel.id;
+  msg.channel.send('Het huidige kanaal is geselecteerd voor deze server');
 });
 
-router.use('set-role', async ({ guildUser, msg }) => {
+router.use('set-role', async ({ guildUser, msg, params }) => {
   if (!guildUser) {
     msg.channel.send('Dit kan alleen in een server gebruikt worden');
     return;
@@ -132,12 +138,16 @@ router.use('set-role', async ({ guildUser, msg }) => {
     msg.channel.send('Alleen een Edwin mag dit aanpassen');
     return;
   }
+  const rawRole = params[0];
 
   const { guild } = guildUser;
-  const role = msg.guild?.roles.cache.get(msg.id);
-
-  if (role !== undefined) {
-    guild.birthdayRole = role.id;
+  if (rawRole instanceof Role) {
+    if (rawRole !== undefined) {
+      guild.birthdayRole = rawRole.id;
+      msg.channel.send('De role voor deze server is gezet');
+    }
+  } else {
+    msg.channel.send('Er is geen role gementioned');
   }
 });
 
@@ -155,7 +165,9 @@ router.onInit = async (client, orm) => {
       const user = users.find((u) => u.id === du.id);
       const discBday = moment(user?.birthday).locale('nl').format('DD MMMM');
       const discBdayAge = moment(user?.birthday).locale('nl').format('YYYY');
+      console.log('Checking Users');
       if (today === discBday) {
+        console.log('Found birthday');
         const age = parseInt(todayAge, 10) - parseInt(discBdayAge, 10);
         const message = (`**Deze makker is vandaag jarig**\n${du.username} is vandaag ${age} geworden!`);
 
@@ -164,7 +176,29 @@ router.onInit = async (client, orm) => {
           if (gu.guild.birthdayChannel) {
             const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true);
             if (bdayChannel instanceof TextChannel) {
+              console.log('Sending Message and Role');
+              const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
+              if (bdayRole instanceof Role) {
+                console.log('Role found');
+                bdayChannel.guild.member(user.id)?.roles.add(bdayRole);
+              }
               bdayChannel.send(message);
+            }
+          }
+        });
+      } else {
+        console.log('No birthday today');
+        await user?.guildUsers.init();
+        user?.guildUsers.getItems().forEach(async (gu) => {
+          if (gu.guild.birthdayChannel) {
+            const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true);
+            if (bdayChannel instanceof TextChannel) {
+              console.log('Found Channel');
+              const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
+              if (bdayRole instanceof Role) {
+                console.log('Removing Role');
+                bdayChannel.guild.member(user.id)?.roles.remove(bdayRole);
+              }
             }
           }
         });
@@ -172,7 +206,7 @@ router.onInit = async (client, orm) => {
     });
   };
 
-  const reportCron = new CronJob('0 7 * * *', checkBday);
+  const reportCron = new CronJob('45 11 * * *', checkBday);
 
   reportCron.start();
 };
