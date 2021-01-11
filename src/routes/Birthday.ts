@@ -4,7 +4,7 @@ import {
   Permissions, Role, TextChannel,
 } from 'discord.js';
 import { User } from '../entity/User';
-import Router from '../Router';
+import Router, { Handler } from '../Router';
 
 const router = new Router();
 
@@ -54,7 +54,7 @@ router.use('set', async ({ msg, user, params }) => {
 });
 */
 
-router.use('help' || null, async ({ msg }) => {
+const helpHandler : Handler = async ({ msg }) => {
   let message = '**Krijg elke ochtend een melding als iemand jarig is**\nHier volgen alle commando\'s voor verjaardagen';
   message += '\n`ei bday show-all`: Laat alle geregistreerde verjaardagen zien';
   message += '\n`ei bday set <DD/MM/YYYY>`: Registreerd jouw verjaardag';
@@ -64,7 +64,10 @@ router.use('help' || null, async ({ msg }) => {
   message += '\n`ei bday set-role <Role Mention>`: Selecteerd de gekozen role voor de jarige-jop';
 
   msg.channel.send(message);
-});
+};
+
+router.use('help', helpHandler);
+router.use(null, helpHandler);
 
 router.use('show-all', async ({ msg, em }) => {
   let message = 'Hier zijn alle verjaardagen die zijn geregistreerd: ';
