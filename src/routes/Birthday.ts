@@ -25,9 +25,9 @@ router.use('set', async ({ msg, user, params }) => {
     const birth1 = moment(birth);
 
     if (user.birthday != null) {
-      msg.channel.send(`Je verjaardag is gewijzigd met de datum: ${birth1.locale('nl').format('DD MMMM YYYY')}`);
+      msg.channel.send(`Je verjaardag is gewijzigd naar: ${birth1.locale('nl').format('D MMMM YYYY')}`);
     } else {
-      msg.channel.send(`Je verjaardag is toegevoegd met de datum: ${birth1.locale('nl').format('DD MMMM YYYY')}`);
+      msg.channel.send(`Je verjaardag is toegevoegd: ${birth1.locale('nl').format('D MMMM YYYY')}`);
     }
 
     // eslint-disable-next-line no-param-reassign
@@ -121,6 +121,7 @@ router.onInit = async (client, orm) => {
       const discBday = moment(user?.birthday).locale('nl').format('DD MMMM');
       const discBdayAge = moment(user?.birthday).locale('nl').format('YYYY');
       if (today === discBday) {
+        console.log(`${du.tag} is vandaag jarig`);
         const age = parseInt(todayAge, 10) - parseInt(discBdayAge, 10);
         const message = (`**Deze makker is vandaag jarig**\n${du.username} is vandaag ${age} geworden!`);
 
@@ -139,6 +140,7 @@ router.onInit = async (client, orm) => {
           }
         });
       } else {
+        console.log(`${du.tag} is vandaag niet jarig`);
         await user?.guildUsers.init();
         user?.guildUsers.getItems().forEach(async (gu) => {
           if (gu.guild.birthdayChannel) {
@@ -156,7 +158,7 @@ router.onInit = async (client, orm) => {
     });
   };
 
-  const reportCron = new CronJob('0 0 * * *', checkBday);
+  const reportCron = new CronJob('2 0 * * *', checkBday);
 
   reportCron.start();
 };
