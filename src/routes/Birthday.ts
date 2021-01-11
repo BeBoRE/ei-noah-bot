@@ -23,13 +23,15 @@ router.use('set', async ({ msg, user, params }) => {
   } else {
     const birth = new Date(parseInt(args[2], 10), parseInt(args[1], 10) - 1, parseInt(args[0], 10));
     const birth1 = moment(birth);
-    // eslint-disable-next-line no-param-reassign
-    user.birthday = birth1.toDate();
+
     if (user.birthday != null) {
       msg.channel.send(`Je verjaardag is gewijzigd met de datum: ${birth1.locale('nl').format('DD MMMM YYYY')}`);
     } else {
       msg.channel.send(`Je verjaardag is toegevoegd met de datum: ${birth1.locale('nl').format('DD MMMM YYYY')}`);
     }
+
+    // eslint-disable-next-line no-param-reassign
+    user.birthday = birth1.toDate();
   }
 });
 
