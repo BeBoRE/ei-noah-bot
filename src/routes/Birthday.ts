@@ -134,7 +134,6 @@ router.onInit = async (client, orm) => {
               console.log('Sending Message and Role');
               const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
               if (bdayRole instanceof Role) {
-                console.log('Role found');
                 const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
                 await member.roles.add(bdayRole);
               }
