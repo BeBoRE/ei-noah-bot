@@ -245,9 +245,7 @@ router.onInit = async (client, orm) => {
     });
   };
 
-  if (process.env.REFRESH_DATA !== 'false') {
-    refreshData();
-  }
+  refreshData();
 
   const reportCron = new CronJob('0 9 * * *', postReport);
 

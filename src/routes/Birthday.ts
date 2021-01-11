@@ -59,7 +59,6 @@ router.use('help' || null, async ({ msg }) => {
   message += '\n`ei bday show-all`: Laat alle geregistreerde verjaardagen zien';
   message += '\n`ei bday set <DD/MM/YYYY>`: Registreerd jouw verjaardag';
   message += '\n`ei bday delete`: Verwijderd jouw verjaardag';
-  message += '\n`ei bday check`: Laat zien wie er vandaag jarig is';
   message += '\n***Admin Commando\'s***';
   message += '\n`ei bday set-channel`: Selecteerd het huidige kanaal voor de dagelijkse update';
   message += '\n`ei bday set-role <Role Mention>`: Selecteerd de gekozen role voor de jarige-jop';
