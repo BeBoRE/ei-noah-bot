@@ -120,9 +120,7 @@ router.onInit = async (client, orm) => {
       const user = users.find((u) => u.id === du.id);
       const discBday = moment(user?.birthday).locale('nl').format('DD MMMM');
       const discBdayAge = moment(user?.birthday).locale('nl').format('YYYY');
-      console.log('Checking Users');
       if (today === discBday) {
-        console.log('Found birthday');
         const age = parseInt(todayAge, 10) - parseInt(discBdayAge, 10);
         const message = (`**Deze makker is vandaag jarig**\n${du.username} is vandaag ${age} geworden!`);
 
@@ -131,7 +129,6 @@ router.onInit = async (client, orm) => {
           if (gu.guild.birthdayChannel) {
             const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true);
             if (bdayChannel instanceof TextChannel) {
-              console.log('Sending Message and Role');
               const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
               if (bdayRole instanceof Role) {
                 const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
@@ -142,16 +139,13 @@ router.onInit = async (client, orm) => {
           }
         });
       } else {
-        console.log('No birthday today');
         await user?.guildUsers.init();
         user?.guildUsers.getItems().forEach(async (gu) => {
           if (gu.guild.birthdayChannel) {
             const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true);
             if (bdayChannel instanceof TextChannel) {
-              console.log('Found Channel');
               const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
               if (bdayRole instanceof Role) {
-                console.log('Removing Role');
                 const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
                 member.roles.remove(bdayRole);
               }
@@ -162,7 +156,7 @@ router.onInit = async (client, orm) => {
     });
   };
 
-  const reportCron = new CronJob('36 12 * * *', checkBday);
+  const reportCron = new CronJob('0 0 * * *', checkBday);
 
   reportCron.start();
 };
