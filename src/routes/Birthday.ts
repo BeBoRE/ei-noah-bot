@@ -33,27 +33,6 @@ router.use('set', async ({ msg, user, params }) => {
   }
 });
 
-/* router.use('get', async ({ msg, guildUser, em }) => {
-  // Toevoeging van een role op basis van ID
-  if (msg.member) {
-    const guild = await guildUser?.guild.birthdayRole;
-
-    if (guild !== undefined) {
-      const role = msg.member.roles.add(guild);
-      const sendMessage = msg.channel.send('You have gained a birthday.');
-
-      const today = moment().locale('nl').format('DD MMMM');
-      const discUser = msg.client.users.fetch(msg.member.id, true);
-
-      await role;
-      await sendMessage;
-    } else {
-      msg.channel.send('Er is nog geen role geselecteerd voor deze server');
-    }
-  }
-});
-*/
-
 const helpHandler : Handler = async ({ msg }) => {
   let message = '**Krijg elke ochtend een melding als iemand jarig is**\nHier volgen alle commando\'s voor verjaardagen';
   message += '\n`ei bday show-all`: Laat alle geregistreerde verjaardagen zien';
@@ -83,34 +62,6 @@ router.use('delete', async ({ msg, user }) => {
   user.birthday = undefined;
   msg.channel.send(`@${msg.author.tag}, je verjaardag is verwijderd.`);
 });
-
-/* router.use('check', async ({ em, msg }) => {
-  const today = moment().startOf('day').locale('nl').format('DD MMMM');
-  const todayAge = moment().startOf('day').locale('nl').format('YYYY');
-
-  const users = await em.find(User, { $not: { birthday: null } });
-  const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(u.id, true)));
-
-  let bdayToday = false;
-
-  let message = '**Deze mensen zijn vandaag jarig**';
-
-  discUsers.forEach((du) => {
-    const discBday = moment(users.find((u) => u.id === du.id)?.birthday).locale('nl').
-    format('DD MMMM');
-    const discBdayAge = moment(users.find((u) => u.id === du.id)?.birthday).locale('nl').
-    format('YYYY');
-    if (today === discBday) {
-      bdayToday = true;
-      const age = parseInt(todayAge, 10) - parseInt(discBdayAge, 10);
-      message += (`\n${du.username} is vandaag ${age} geworden!`);
-    }
-    if (bdayToday) {
-      msg.channel.send(message);
-    }
-  });
-});
-*/
 
 router.use('set-channel', async ({ guildUser, msg }) => {
   if (!guildUser) {
