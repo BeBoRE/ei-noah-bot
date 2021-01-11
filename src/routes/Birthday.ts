@@ -179,7 +179,8 @@ router.onInit = async (client, orm) => {
               const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
               if (bdayRole instanceof Role) {
                 console.log('Role found');
-                bdayChannel.guild.member(user.id)?.roles.add(bdayRole);
+                const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
+                await member.roles.add(bdayRole);
               }
               bdayChannel.send(message);
             }
@@ -196,7 +197,8 @@ router.onInit = async (client, orm) => {
               const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
               if (bdayRole instanceof Role) {
                 console.log('Removing Role');
-                bdayChannel.guild.member(user.id)?.roles.remove(bdayRole);
+                const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
+                member.roles.remove(bdayRole);
               }
             }
           }
@@ -205,7 +207,7 @@ router.onInit = async (client, orm) => {
     });
   };
 
-  const reportCron = new CronJob('45 11 * * *', checkBday);
+  const reportCron = new CronJob('36 12 * * *', checkBday);
 
   reportCron.start();
 };
