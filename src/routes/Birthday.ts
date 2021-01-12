@@ -132,9 +132,9 @@ const checkBday = async (client : Client, em : EntityManager) => {
             const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
             if (bdayRole instanceof Role) {
               const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
-              await member.roles.add(bdayRole);
+              if (!member.roles.cache.has(bdayRole.id)) { member.roles.add(bdayRole).catch(() => console.log('Kon geen rol geven')); }
             }
-            bdayChannel.send(message);
+            await bdayChannel.send(message);
           }
         }
       });
@@ -148,7 +148,7 @@ const checkBday = async (client : Client, em : EntityManager) => {
             const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
             if (bdayRole instanceof Role) {
               const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
-              member.roles.remove(bdayRole);
+              if (member.roles.cache.has(bdayRole.id)) member.roles.remove(bdayRole).catch(() => console.log('Kon rol niet verwijderen'));
             }
           }
         }
