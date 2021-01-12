@@ -1,8 +1,10 @@
 import moment from 'moment';
 import { CronJob } from 'cron';
 import {
+  Client,
   Permissions, Role, TextChannel,
 } from 'discord.js';
+import { EntityManager } from 'mikro-orm';
 import { User } from '../entity/User';
 import Router, { Handler } from '../Router';
 
@@ -106,61 +108,62 @@ router.use('set-role', async ({ guildUser, msg, params }) => {
   }
 });
 
+const checkBday = async (client : Client, em : EntityManager) => {
+  const today = moment().startOf('day').locale('nl').format('DD MMMM');
+  const todayAge = moment().startOf('day').locale('nl').format('YYYY');
+
+  const users = await em.find(User, { $not: { birthday: null } });
+  const discUsers = await Promise.all(users.map((u) => client.users.fetch(u.id, true)));
+
+  discUsers.forEach(async (du) => {
+    const user = users.find((u) => u.id === du.id);
+    const discBday = moment(user?.birthday).locale('nl').format('DD MMMM');
+    const discBdayAge = moment(user?.birthday).locale('nl').format('YYYY');
+    if (today === discBday) {
+      console.log(`${du.tag} is vandaag jarig`);
+      const age = parseInt(todayAge, 10) - parseInt(discBdayAge, 10);
+      const message = (`**Deze makker is vandaag jarig**\n${du.username} is vandaag ${age} geworden!`);
+
+      await user?.guildUsers.init();
+      user?.guildUsers.getItems().forEach(async (gu) => {
+        if (gu.guild.birthdayChannel) {
+          const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true);
+          if (bdayChannel instanceof TextChannel) {
+            const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
+            if (bdayRole instanceof Role) {
+              const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
+              await member.roles.add(bdayRole);
+            }
+            bdayChannel.send(message);
+          }
+        }
+      });
+    } else {
+      console.log(`${du.tag} is vandaag niet jarig`);
+      await user?.guildUsers.init();
+      user?.guildUsers.getItems().forEach(async (gu) => {
+        if (gu.guild.birthdayChannel) {
+          const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true);
+          if (bdayChannel instanceof TextChannel) {
+            const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
+            if (bdayRole instanceof Role) {
+              const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
+              member.roles.remove(bdayRole);
+            }
+          }
+        }
+      });
+    }
+  });
+};
+
 router.onInit = async (client, orm) => {
-  const checkBday = async () => {
-    const em = orm.em.fork();
-
-    const today = moment().startOf('day').locale('nl').format('DD MMMM');
-    const todayAge = moment().startOf('day').locale('nl').format('YYYY');
-
-    const users = await em.find(User, { $not: { birthday: null } });
-    const discUsers = await Promise.all(users.map((u) => client.users.fetch(u.id, true)));
-
-    discUsers.forEach(async (du) => {
-      const user = users.find((u) => u.id === du.id);
-      const discBday = moment(user?.birthday).locale('nl').format('DD MMMM');
-      const discBdayAge = moment(user?.birthday).locale('nl').format('YYYY');
-      if (today === discBday) {
-        console.log(`${du.tag} is vandaag jarig`);
-        const age = parseInt(todayAge, 10) - parseInt(discBdayAge, 10);
-        const message = (`**Deze makker is vandaag jarig**\n${du.username} is vandaag ${age} geworden!`);
-
-        await user?.guildUsers.init();
-        user?.guildUsers.getItems().forEach(async (gu) => {
-          if (gu.guild.birthdayChannel) {
-            const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true);
-            if (bdayChannel instanceof TextChannel) {
-              const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
-              if (bdayRole instanceof Role) {
-                const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
-                await member.roles.add(bdayRole);
-              }
-              bdayChannel.send(message);
-            }
-          }
-        });
-      } else {
-        console.log(`${du.tag} is vandaag niet jarig`);
-        await user?.guildUsers.init();
-        user?.guildUsers.getItems().forEach(async (gu) => {
-          if (gu.guild.birthdayChannel) {
-            const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true);
-            if (bdayChannel instanceof TextChannel) {
-              const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
-              if (bdayRole instanceof Role) {
-                const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
-                member.roles.remove(bdayRole);
-              }
-            }
-          }
-        });
-      }
-    });
-  };
-
-  const reportCron = new CronJob('2 0 * * *', checkBday);
+  const reportCron = new CronJob('2 0 * * *', () => { checkBday(client, orm.em.fork()); });
 
   reportCron.start();
+
+  // Check bday's één keer
+  checkBday(client, orm.em.fork());
 };
 
 export default router;
