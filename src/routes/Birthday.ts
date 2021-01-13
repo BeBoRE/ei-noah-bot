@@ -139,7 +139,6 @@ const checkBday = async (client : Client, em : EntityManager) => {
         }
       });
     } else {
-      console.log(`${du.tag} is vandaag niet jarig`);
       await user?.guildUsers.init();
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
@@ -158,7 +157,10 @@ const checkBday = async (client : Client, em : EntityManager) => {
 };
 
 router.onInit = async (client, orm) => {
-  const reportCron = new CronJob('2 0 * * *', () => { checkBday(client, orm.em.fork()); });
+  const offset = new Date().getTimezoneOffset();
+  console.log(`Offset in minutes: ${offset}`);
+
+  const reportCron = new CronJob('5 0 0 * * *', () => { checkBday(client, orm.em.fork()); });
 
   reportCron.start();
 
