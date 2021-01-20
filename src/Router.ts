@@ -8,6 +8,8 @@ import {
   NewsChannel,
   Guild,
   MessageOptions,
+  StringResolvable,
+  MessageAdditions,
 } from 'discord.js';
 import {
   EntityManager, MikroORM, IDatabaseDriver, Connection,
@@ -27,7 +29,8 @@ export interface RouteInfo {
   category: Category | null,
   em: EntityManager
 }
-export type HandlerReturn = MessageOptions | string | null;
+export type HandlerReturn =
+  (MessageOptions & {content: StringResolvable}) | MessageAdditions | string | null;
 
 export interface Handler {
   (info: RouteInfo) : HandlerReturn | Promise<HandlerReturn>
