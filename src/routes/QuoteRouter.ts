@@ -1,6 +1,6 @@
 import {
   Client,
-  DMChannel, Permissions, TextBasedChannelFields, User as DiscordUser,
+  DMChannel, MessageEmbed, Permissions, TextBasedChannelFields, TextChannel, User as DiscordUser,
 } from 'discord.js';
 import createMenu from '../createMenu';
 import Quote from '../entity/Quote';
@@ -13,11 +13,21 @@ const sendQuote = async (channel : TextBasedChannelFields, quote : Quote, client
   const quoted = client.users.fetch(quote.guildUser.user.id, true);
   const owner = client.users.fetch(quote.creator.user.id, true);
 
-  const { text } = quote;
+  const text = quote.text.replace('`', '\\`');
 
-  text.replace('`', '\\`');
+  const embed = new MessageEmbed();
 
-  await channel.send(`> ${quote.text}\n- ${(await quoted).username} (door ${(await owner).username})`);
+  const avatarURL = (await quoted).avatarURL() || undefined;
+  let color : number | undefined;
+  if (channel instanceof TextChannel) color = channel.guild.me?.displayColor;
+
+  embed.setAuthor((await quoted).username, avatarURL);
+  embed.setDescription(text);
+  embed.setFooter(`Door ${(await owner).username}`);
+  if (quote.date) embed.setTimestamp(quote.date);
+  if (color) embed.setColor(color);
+
+  await channel.send(embed);
 };
 
 const handler : Handler = async ({
