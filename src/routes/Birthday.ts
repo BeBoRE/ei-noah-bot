@@ -10,34 +10,30 @@ import Router, { Handler } from '../Router';
 
 const router = new Router();
 
-router.use('set', async ({ msg, user, params }) => {
+router.use('set', async ({ user, params }) => {
   const rawDate = params[0];
 
   if (typeof (rawDate) !== 'string') {
-    msg.channel.send('Ik verwacht een datum als argument');
-
-    return;
+    return 'Ik verwacht een datum als argument';
   }
 
   const args = rawDate.split('/');
   if (!args.length) {
-    msg.channel.send('Je hebt geen datum gegeven.');
-  } else {
-    const birth = new Date(parseInt(args[2], 10), parseInt(args[1], 10) - 1, parseInt(args[0], 10));
-    const birth1 = moment(birth);
-
-    if (user.birthday != null) {
-      msg.channel.send(`Je verjaardag is gewijzigd naar: ${birth1.locale('nl').format('D MMMM YYYY')}`);
-    } else {
-      msg.channel.send(`Je verjaardag is toegevoegd: ${birth1.locale('nl').format('D MMMM YYYY')}`);
-    }
-
-    // eslint-disable-next-line no-param-reassign
-    user.birthday = birth1.toDate();
+    return 'Je hebt geen datum gegeven.';
   }
+  const birth = new Date(parseInt(args[2], 10), parseInt(args[1], 10) - 1, parseInt(args[0], 10));
+  const birth1 = moment(birth);
+
+  // eslint-disable-next-line no-param-reassign
+  user.birthday = birth1.toDate();
+
+  if (user.birthday != null) {
+    return `Je verjaardag is gewijzigd naar: ${birth1.locale('nl').format('D MMMM YYYY')}`;
+  }
+  return `Je verjaardag is toegevoegd: ${birth1.locale('nl').format('D MMMM YYYY')}`;
 });
 
-const helpHandler : Handler = async ({ msg }) => {
+const helpHandler : Handler = async () => {
   let message = '**Krijg elke ochtend een melding als iemand jarig is**\nHier volgen alle commando\'s voor verjaardagen';
   message += '\n`ei bday show-all`: Laat alle geregistreerde verjaardagen zien';
   message += '\n`ei bday set <DD/MM/YYYY>`: Registreerd jouw verjaardag';
@@ -46,7 +42,7 @@ const helpHandler : Handler = async ({ msg }) => {
   message += '\n`ei bday set-channel`: Selecteerd het huidige kanaal voor de dagelijkse update';
   message += '\n`ei bday set-role <Role Mention>`: Selecteerd de gekozen role voor de jarige-jop';
 
-  msg.channel.send(message);
+  return message;
 };
 
 router.use('help', helpHandler);
@@ -58,54 +54,49 @@ router.use('show-all', async ({ msg, em }) => {
   const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(u.id, true)));
   discUsers.forEach((du) => { message += `\n${du.username} is geboren op ${moment(users.find((u) => u.id === du.id)?.birthday).locale('nl').format('DD MMMM YYYY')}`; });
 
-  msg.channel.send(message);
+  return message;
 });
 
-router.use('delete', async ({ msg, user }) => {
+router.use('delete', async ({ user }) => {
   // eslint-disable-next-line no-param-reassign
   user.birthday = undefined;
-  msg.channel.send(`@${msg.author.tag}, je verjaardag is verwijderd.`);
+  return 'Je verjaardag is verwijderd.';
 });
 
 router.use('set-channel', async ({ guildUser, msg }) => {
   if (!guildUser) {
-    msg.channel.send('This can only be used in a server');
-    return;
+    return 'This can only be used in a server';
   }
 
   if (!msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
-    msg.channel.send('Alleen een Edwin mag dit aanpassen');
-    return;
+    return 'Alleen een Edwin mag dit aanpassen';
   }
 
   const { guild } = guildUser;
   const { channel } = msg;
 
   guild.birthdayChannel = channel.id;
-  msg.channel.send('Het huidige kanaal is geselecteerd voor deze server');
+  return 'Het huidige kanaal is geselecteerd voor deze server';
 });
 
 router.use('set-role', async ({ guildUser, msg, params }) => {
   if (!guildUser) {
-    msg.channel.send('Dit kan alleen in een server gebruikt worden');
-    return;
+    return 'Dit kan alleen in een server gebruikt worden';
   }
 
   if (!msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
-    msg.channel.send('Alleen een Edwin mag dit aanpassen');
-    return;
+    return 'Alleen een Edwin mag dit aanpassen';
   }
-  const rawRole = params[0];
+  const role = params[0];
 
   const { guild } = guildUser;
-  if (rawRole instanceof Role) {
-    if (rawRole !== undefined) {
-      guild.birthdayRole = rawRole.id;
-      msg.channel.send('De role voor deze server is gezet');
-    }
-  } else {
-    msg.channel.send('Er is geen role gementioned');
+
+  if (role instanceof Role) {
+    guild.birthdayRole = role.id;
+    return 'De role voor deze server is gezet';
   }
+
+  return 'Mention een role';
 });
 
 const checkBday = async (client : Client, em : EntityManager) => {

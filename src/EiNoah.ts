@@ -59,7 +59,16 @@ class EiNoah {
 
           messageParser(msg, em).then((info) => {
             this.router.handle(info)
-              .then(() => em.flush())
+              .then(async (response) => {
+                if (response) {
+                  if (typeof (response) !== 'string') {
+                    await msg.channel.send(response);
+                  } else {
+                    await msg.channel.send(response, { split: true });
+                  }
+                }
+                await em.flush();
+              })
               .catch(async (err : Error) => {
                 if (process.env.NODE_ENV !== 'production') {
                 // Error message in development

@@ -7,6 +7,7 @@ import {
   TextChannel,
   NewsChannel,
   Guild,
+  MessageOptions,
 } from 'discord.js';
 import {
   EntityManager, MikroORM, IDatabaseDriver, Connection,
@@ -26,9 +27,10 @@ export interface RouteInfo {
   category: Category | null,
   em: EntityManager
 }
+export type HandlerReturn = MessageOptions | string | null;
 
 export interface Handler {
-  (info: RouteInfo) : void | Promise<void>
+  (info: RouteInfo) : HandlerReturn | Promise<HandlerReturn>
 }
 
 export interface RouteList {
@@ -153,7 +155,7 @@ export default class Router {
 
   // INTERNAL
   // Zorgt dat de commando's op de goede plek terecht komen
-  public handle(info: RouteInfo) : Promise<void> {
+  public handle(info: RouteInfo) : Promise<HandlerReturn> {
     return new Promise((resolve, reject) => {
       const currentRoute = info.params[0];
 
@@ -194,7 +196,7 @@ export default class Router {
           try {
             const handling = handler(newInfo);
             if (handling instanceof Promise) handling.then(resolve).catch(reject);
-            else resolve();
+            else resolve(handling);
           } catch (err) {
             reject(err);
           }

@@ -135,68 +135,68 @@ const createHandler : Handler = async ({
     || msg.channel instanceof NewsChannel
     || msg.guild === null
     || guildUser === null) {
-    msg.channel.send('Je kan alleen lobbies aanmaken op een server');
-  } else if (!category || !category.isLobbyCategory || msg.channel.parentID === null) {
-    msg.channel.send('Je mag geen lobbies aanmaken in deze categorie');
-  } else if (nonUsersAndRoles.length) {
-    msg.channel.send('Alleen mentions mogelijk als argument(en)');
-  } else {
-    const activeChannel = await activeTempChannel(guildUser, msg.client);
+    return 'Je kan alleen lobbies aanmaken op een server';
+  } if (!category || !category.isLobbyCategory || msg.channel.parentID === null) {
+    return 'Je mag geen lobbies aanmaken in deze categorie';
+  } if (nonUsersAndRoles.length) {
+    return 'Alleen mentions mogelijk als argument(en)';
+  }
+  const activeChannel = await activeTempChannel(guildUser, msg.client);
 
-    let type = ChannelType.Mute;
-    if (flags.some((flag) => flag.toLowerCase() === ChannelType.Mute)) type = ChannelType.Mute;
-    else if (flags.some((flag) => flag.toLowerCase() === ChannelType.Public)) {
-      type = ChannelType.Public;
-    } else if (flags.some((flag) => flag.toLowerCase() === ChannelType.Nojoin)) {
-      type = ChannelType.Nojoin;
-    }
+  let type = ChannelType.Mute;
+  if (flags.some((flag) => flag.toLowerCase() === ChannelType.Mute)) type = ChannelType.Mute;
+  else if (flags.some((flag) => flag.toLowerCase() === ChannelType.Public)) {
+    type = ChannelType.Public;
+  } else if (flags.some((flag) => flag.toLowerCase() === ChannelType.Nojoin)) {
+    type = ChannelType.Nojoin;
+  }
 
-    let userLimit = flags
-      .map((flag) => Number.parseInt(flag, 10))
-      .find((flag) => Number.isSafeInteger(flag));
+  let userLimit = flags
+    .map((flag) => Number.parseInt(flag, 10))
+    .find((flag) => Number.isSafeInteger(flag));
 
-    if (userLimit === undefined) {
-      userLimit = 0;
-    } else if (userLimit < 0) {
-      userLimit = 0;
-    } else if (userLimit > 99) {
-      userLimit = 99;
-    }
+  if (userLimit === undefined) {
+    userLimit = 0;
+  } else if (userLimit < 0) {
+    userLimit = 0;
+  } else if (userLimit > 99) {
+    userLimit = 99;
+  }
 
-    if (activeChannel) {
-      msg.channel.send('Je hebt al een lobby');
-    } else {
-      try {
-        const createdChannel = await createTempChannel(
-          msg.guild,
-          msg.channel.parentID,
-          invited,
-          msg.author,
-          guildUser.guild.bitrate,
-          type,
-          userLimit,
-        );
+  if (activeChannel) {
+    return 'Je hebt al een lobby';
+  }
+  try {
+    const createdChannel = await createTempChannel(
+      msg.guild,
+      msg.channel.parentID,
+      invited,
+      msg.author,
+      guildUser.guild.bitrate,
+      type,
+      userLimit,
+    );
 
-        const gu = guildUser;
+    const gu = guildUser;
 
-        gu.tempChannel = createdChannel.id;
-        gu.tempCreatedAt = new Date();
+    gu.tempChannel = createdChannel.id;
+    gu.tempCreatedAt = new Date();
 
-        if (invited.length > 0) {
-          msg.channel.send(`Lobby aangemaakt voor ${invited.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} en jij`);
-        } else msg.channel.send('Lobby aangemaakt');
-      } catch (err) {
-        if (err instanceof DiscordAPIError) {
-          if (err.code === Constants.APIErrors.INVALID_FORM_BODY) {
-            msg.channel.send('Neem contact op met de server admins, waarschijnlijk staat de bitrate voor de lobbies te hoog');
-          }
-        } else {
-          console.error(err);
-          msg.channel.send('Onverwachte error');
-        }
+    if (invited.length > 0) {
+      return `Lobby aangemaakt voor ${invited.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} en jij`;
+    } return 'Lobby aangemaakt';
+  } catch (err) {
+    if (err instanceof DiscordAPIError) {
+      if (err.code === Constants.APIErrors.INVALID_FORM_BODY) {
+        return 'Neem contact op met de server admins, waarschijnlijk staat de bitrate voor de lobbies te hoog';
       }
+    } else {
+      console.error(err);
+      return 'Onverwachte error';
     }
   }
+
+  return 'Er is iets fout gegaan, als je dit bericht ziet stuur een dm naar een ei-noah dev';
 };
 
 // ei lobby create ...
@@ -210,8 +210,7 @@ createRouter.use(null, createHandler);
 
 router.use('add', async ({ params, msg, guildUser }) => {
   if (msg.channel instanceof DMChannel || guildUser === null) {
-    msg.channel.send('Dit commando kan alleen gebruikt worden op een server');
-    return;
+    return 'Dit commando kan alleen gebruikt worden op een server';
   }
 
   const nonUserOrRole = params
@@ -221,20 +220,17 @@ router.use('add', async ({ params, msg, guildUser }) => {
     .filter((param): param is DiscordUser | Role => param instanceof DiscordUser || param instanceof Role);
 
   if (nonUserOrRole.length > 0) {
-    msg.channel.send('Alleen user mention(s) mogelijk als argument');
-    return;
+    return ('Alleen user mention(s) mogelijk als argument');
   }
 
   const activeChannel = await activeTempChannel(guildUser, msg.client);
 
   if (!activeChannel) {
-    msg.channel.send('Je hebt nog geen lobby aangemaakt\nMaak deze aan met `ei lobby create`');
-    return;
+    return 'Je hebt nog geen lobby aangemaakt\nMaak deze aan met `ei lobby create`';
   }
 
   if (activeChannel.parentID !== msg.channel.parentID) {
-    msg.channel.send('Je lobby is aanwezig in een andere categorie dan deze');
-    return;
+    return 'Je lobby is aanwezig in een andere categorie dan deze';
   }
 
   const allowedUsers : Array<DiscordUser | Role> = [];
@@ -268,7 +264,7 @@ router.use('add', async ({ params, msg, guildUser }) => {
   if (!alreadyAllowedUsers.length) alreadyInMessage = '';
   else alreadyInMessage = `${alreadyAllowedUsers.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} ${alreadyAllowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? 'konden' : 'kon'} al naar binnen`;
 
-  msg.channel.send(`${allowedUsersMessage}\n${alreadyInMessage}`);
+  return `${allowedUsersMessage}\n${alreadyInMessage}`;
 });
 
 const removeFromLobby = (
@@ -363,8 +359,7 @@ const removeFromLobby = (
 
 router.use('remove', async ({ params, msg, guildUser }) => {
   if (msg.channel instanceof DMChannel || guildUser === null || msg.guild == null) {
-    msg.channel.send('Dit commando kan alleen gebruikt worden op een server');
-    return;
+    return 'Dit commando kan alleen gebruikt worden op een server';
   }
 
   const nonUsersOrRoles = params
@@ -373,25 +368,21 @@ router.use('remove', async ({ params, msg, guildUser }) => {
   const roles = params.filter((param): param is Role => param instanceof Role);
 
   if (nonUsersOrRoles.length > 0) {
-    msg.channel.send('Alleen mention(s) mogelijk als argument');
-    return;
+    return 'Alleen mention(s) mogelijk als argument';
   }
 
   const activeChannel = await activeTempChannel(guildUser, msg.client);
 
   if (!activeChannel) {
-    msg.channel.send('Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`');
-    return;
+    return 'Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`';
   }
 
   if (activeChannel.parentID !== msg.channel.parentID) {
-    msg.channel.send('Je lobby is aanwezig in een andere categorie dan deze');
-    return;
+    return 'Je lobby is aanwezig in een andere categorie dan deze';
   }
 
   if (getChannelType(activeChannel) === ChannelType.Public) {
-    msg.channel.send('Wat snap jij niet aan een **public** lobby smeerjoch');
-    return;
+    return 'Wat snap jij niet aan een **public** lobby smeerjoch';
   }
 
   if (params.length === 0) {
@@ -410,8 +401,7 @@ router.use('remove', async ({ params, msg, guildUser }) => {
       .map((member) => member.user);
 
     if (removeAbleUsers.length === 0 && removeAbleRoles.length === 0) {
-      msg.channel.send('Geen gebruikers of roles die verwijderd kunnen worden');
-      return;
+      return 'Geen gebruikers of roles die verwijderd kunnen worden';
     }
 
     const selectedUsers = new Set<DiscordUser>();
@@ -441,57 +431,49 @@ router.use('remove', async ({ params, msg, guildUser }) => {
           msg.channel,
           msg.author);
       }]);
-
-    return;
   }
 
   removeFromLobby(activeChannel, users, roles, msg.channel, msg.author);
+  return null;
 });
 
 const changeTypeHandler : Handler = async ({ params, msg, guildUser }) => {
   if (msg.channel instanceof DMChannel || msg.guild === null || guildUser === null) {
-    msg.channel.send('Dit commando kan alleen op servers worden gebruikt');
-    return;
+    return 'Dit commando kan alleen op servers worden gebruikt';
   }
   const activeChannel = await activeTempChannel(guildUser, msg.client);
 
   if (!activeChannel) {
-    msg.channel.send('Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`');
-    return;
+    return 'Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`';
   }
 
   if (activeChannel.parentID !== msg.channel.parentID) {
-    msg.channel.send('Je lobby is aanwezig in een andere categorie dan deze');
-    return;
+    return 'Je lobby is aanwezig in een andere categorie dan deze';
   }
 
   if (params.length > 1) {
-    msg.channel.send('Ik verwachte niet meer dan **één** argument');
-    return;
+    return 'Ik verwachte niet meer dan **één** argument';
   }
 
   const type = getChannelType(activeChannel);
 
   if (params.length !== 1) {
-    if (type === ChannelType.Mute) msg.channel.send(`Type van lobby is \`${ChannelType.Mute}\` andere types zijn \`${ChannelType.Public}\` en \`${ChannelType.Nojoin}\``);
-    else if (type === ChannelType.Nojoin) msg.channel.send(`Type van lobby is \`${ChannelType.Nojoin}\` andere types zijn \`${ChannelType.Public}\` en \`${ChannelType.Mute}\``);
-    else msg.channel.send(`Type van lobby is \`${ChannelType.Public}\` andere types zijn \`${ChannelType.Mute}\` en \`${ChannelType.Nojoin}\``);
-  } else if (params.length === 1) {
+    if (type === ChannelType.Mute) return `Type van lobby is \`${ChannelType.Mute}\` andere types zijn \`${ChannelType.Public}\` en \`${ChannelType.Nojoin}\``;
+    if (type === ChannelType.Nojoin) return `Type van lobby is \`${ChannelType.Nojoin}\` andere types zijn \`${ChannelType.Public}\` en \`${ChannelType.Mute}\``;
+    return `Type van lobby is \`${ChannelType.Public}\` andere types zijn \`${ChannelType.Mute}\` en \`${ChannelType.Nojoin}\``;
+  } if (params.length === 1) {
     if (typeof params[0] !== 'string') {
-      msg.channel.send('Ik verwachte hier geen **mention**');
-      return;
+      return 'Ik verwachte hier geen **mention**';
     }
 
     const [changeTo] = <ChannelType[]>params;
 
     if (!Object.values(ChannelType).includes(changeTo)) {
-      msg.channel.send(`*${params[0]}* is niet een lobby type`);
-      return;
+      return `*${params[0]}* is niet een lobby type`;
     }
 
     if (changeTo === type) {
-      msg.channel.send(`Je lobby was al een **${type}** lobby`);
-      return;
+      return `Je lobby was al een **${type}** lobby`;
     }
 
     const deny = toDeny(changeTo);
@@ -517,11 +499,13 @@ const changeTypeHandler : Handler = async ({ params, msg, guildUser }) => {
       ...activeChannel.permissionOverwrites.array(),
       { id: msg.guild.id, deny },
       ...newOverwrites,
-    ]).then((channel) => {
-      channel.setName(generateLobbyName(changeTo, msg.author)).catch((err) => console.error('Change name error', err));
-      msg.channel.send(`Lobby type is veranderd naar *${changeTo}*`).catch((err) => console.error('Send message error', err));
-    }).catch((err) => console.error('Overwrite error', err));
+    ]).catch(console.error);
+
+    activeChannel.setName(generateLobbyName(changeTo, msg.author)).catch((err) => console.error('Change name error', err));
+    return `Lobby type is veranderd naar *${changeTo}*`;
   }
+
+  return 'Stuur een berichtje naar een ei-noah dev als je dit bericht ziet';
 };
 
 router.use('type', changeTypeHandler);
@@ -533,42 +517,35 @@ const sizeHandler : Handler = async ({
   msg, category, guildUser, params,
 }) => {
   if (msg.channel instanceof DMChannel || guildUser === null) {
-    msg.channel.send('Je kan dit commando alleen op servers gebruiken');
-    return;
+    return 'Je kan dit commando alleen op servers gebruiken';
   }
 
   if (!category || !category.isLobbyCategory) {
-    msg.channel.send('Dit is geen lobby category');
-    return;
+    return 'Dit is geen lobby category';
   }
 
   const activeChannel = await activeTempChannel(guildUser, msg.client);
 
   if (!activeChannel) {
-    msg.channel.send('Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`');
-    return;
+    return 'Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`';
   }
 
   if (activeChannel.parentID !== msg.channel.parentID) {
-    msg.channel.send('Je lobby is aanwezig in een andere categorie dan deze');
-    return;
+    return 'Je lobby is aanwezig in een andere categorie dan deze';
   }
 
   if (params.length === 0) {
-    msg.channel.send('Geen één (1) argument gegeven');
-    return;
+    return 'Geen één (1) argument gegeven';
   }
 
   if (params.length > 1) {
-    msg.channel.send('Ik verwachte maar één (1) argument');
-    return;
+    return 'Ik verwachte maar één (1) argument';
   }
 
   const sizeParam = params[0];
 
   if (typeof sizeParam !== 'string') {
-    msg.channel.send('Lijkt dat op een nummer??');
-    return;
+    return 'Lijkt dat op een nummer??';
   }
 
   let size = Number.parseInt(sizeParam, 10);
@@ -578,8 +555,7 @@ const sizeHandler : Handler = async ({
   }
 
   if (!Number.isSafeInteger(size)) {
-    msg.channel.send('Even een normaal nummer alstublieft');
-    return;
+    return 'Even een normaal nummer alstublieft';
   }
 
   if (size > 99) { size = 99; }
@@ -587,7 +563,7 @@ const sizeHandler : Handler = async ({
 
   await activeChannel.setUserLimit(size);
 
-  if (size === 0) { await msg.channel.send('Limiet is verwijderd'); } else msg.channel.send(`Limiet veranderd naar ${size}`);
+  if (size === 0) { return 'Limiet is verwijderd'; } return `Limiet veranderd naar ${size}`;
 };
 
 router.use('size', sizeHandler);
@@ -597,34 +573,28 @@ router.use('userlimit', sizeHandler);
 router.use('category', async ({ category, params, msg }) => {
   const ca = category;
   if (msg.channel instanceof DMChannel) {
-    msg.channel.send('Je kan dit commando alleen op servers gebruiken');
-    return;
+    return 'Je kan dit commando alleen op servers gebruiken';
   }
 
   if (params.length === 0) {
-    if (category && category.isLobbyCategory) msg.channel.send('Je mag lobbies aanmaken in deze categorie');
-    else msg.channel.send('Je mag geen lobbies aanmaken in deze categorie');
-    return;
+    if (category && category.isLobbyCategory) return 'Je mag lobbies aanmaken in deze categorie';
+    return 'Je mag geen lobbies aanmaken in deze categorie';
   }
 
   if (params.length > 1) {
-    msg.channel.send('Ik verwacht maar één argument');
-    return;
+    return 'Ik verwacht maar één argument';
   }
 
   if (typeof params[0] !== 'string') {
-    msg.channel.send('Ik verwacht een string als argument');
-    return;
+    return 'Ik verwacht een string als argument';
   }
 
   if (!msg.member?.hasPermission('ADMINISTRATOR')) {
-    msg.channel.send('Alleen een Edwin mag dit aanpassen');
-    return;
+    return 'Alleen een Edwin mag dit aanpassen';
   }
 
   if (!category) {
-    msg.channel.send('Dit kanaal zit niet in een categorie');
-    return;
+    return 'Dit kanaal zit niet in een categorie';
   }
 
   let isAllowed : boolean;
@@ -632,63 +602,56 @@ router.use('category', async ({ category, params, msg }) => {
   if (params[0].toLowerCase() === 'true' || params[0] === '1') isAllowed = true;
   else if (params[0].toLowerCase() === 'false' || params[0] === '0') isAllowed = false;
   else {
-    msg.channel.send(`\`${params[0]}\` is niet een argument, verwacht \`true\` of \`false\``);
-    return;
+    return `\`${params[0]}\` is niet een argument, verwacht \`true\` of \`false\``;
   }
 
-  msg.channel.send(isAllowed ? 'Users kunnen nu lobbies aanmaken in deze category' : 'User kunnen nu geen lobbies meer aanmaken in deze category');
-
   if (ca) { ca.isLobbyCategory = isAllowed; }
+
+  return isAllowed ? 'Users kunnen nu lobbies aanmaken in deze category' : 'User kunnen nu geen lobbies meer aanmaken in deze category';
 });
 
 router.use('bitrate', async ({ msg, guildUser, params }) => {
   if (msg.channel instanceof DMChannel || guildUser === null) {
-    msg.channel.send('Je kan dit commando alleen op servers gebruiken');
-    return;
+    return 'Je kan dit commando alleen op servers gebruiken';
   }
 
   if (params.length === 0) {
-    msg.channel.send(`Lobby bitrate is ${guildUser.guild.bitrate}`);
-    return;
+    return `Lobby bitrate is ${guildUser.guild.bitrate}`;
   }
 
   if (params.length > 1) {
-    msg.channel.send('Ik verwacht maar één argument');
-    return;
+    return 'Ik verwacht maar één argument';
   }
 
   if (typeof params[0] !== 'string') {
-    msg.channel.send('Ik verwacht een string als argument');
-    return;
+    return 'Ik verwacht een string als argument';
   }
 
   if (!msg.member?.hasPermission('ADMINISTRATOR')) {
-    msg.channel.send('Alleen een Edwin mag dit aanpassen');
-    return;
+    return 'Alleen een Edwin mag dit aanpassen';
   }
 
   const newBitrate = Number(params[0]);
 
   if (Number.isNaN(newBitrate)) {
-    msg.channel.send(`${params[0]} is niet een nummer`);
-    return;
+    return `${params[0]} is niet een nummer`;
   }
 
   if (newBitrate > 128000) {
-    msg.channel.send('Bitrate gaat tot 128000');
-    return;
+    return 'Bitrate gaat tot 128000';
   }
 
   if (newBitrate < 8000) {
-    msg.channel.send('Bitrate gaat boven 8000');
-    return;
+    return 'Bitrate gaat boven 8000';
   }
 
   // eslint-disable-next-line no-param-reassign
   guildUser.guild.bitrate = newBitrate;
+
+  return `Bitrate veranderd naar ${newBitrate}`;
 });
 
-const helpHanlder : Handler = ({ msg }) => {
+const helpHanlder : Handler = () => {
   let message = '**Maak een tijdelijke voice kanaal aan**';
   message += '\nMogelijke Commandos:';
   message += '\n`ei lobby create [@mention ...]`: Maak een private lobby aan en laat alleen de toegestaande mensen joinen';
@@ -701,7 +664,7 @@ const helpHanlder : Handler = ({ msg }) => {
   message += '\n`ei lobby limit <nummer>`: Verander de lobby user limit';
   message += '\n`*Admin* ei lobby category true/ false`: Sta users toe lobbies aan te maken in deze categorie';
   message += '\n`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt';
-  msg.channel.send(message);
+  return message;
 };
 
 router.use(null, helpHanlder);
