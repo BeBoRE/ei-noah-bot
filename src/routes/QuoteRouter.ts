@@ -17,7 +17,7 @@ const sendQuote = async (channel : TextBasedChannelFields, quote : Quote, client
 
   text.replace('`', '\\`');
 
-  return `> ${quote.text}\n- ${(await quoted).username} (door ${(await owner).username})`;
+  await channel.send(`> ${quote.text}\n- ${(await quoted).username} (door ${(await owner).username})`);
 };
 
 const handler : Handler = async ({
@@ -56,7 +56,9 @@ const handler : Handler = async ({
       msg.channel,
       '**Kiest U Maar**',
       (q) => q.text,
-      (q) => { sendQuote(msg.channel, q, msg.client); });
+      (q) => {
+        sendQuote(msg.channel, q, msg.client);
+      });
     return null;
   }
 
