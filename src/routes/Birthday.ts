@@ -52,7 +52,14 @@ router.use('show-all', async ({ msg, em }) => {
   let message = 'Hier zijn alle verjaardagen die zijn geregistreerd: ';
   const users = await em.find(User, { $not: { birthday: null } });
   const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(u.id, true)));
-  discUsers.forEach((du) => { message += `\n${du.username} is geboren op ${moment(users.find((u) => u.id === du.id)?.birthday).locale('nl').format('DD MMMM YYYY')}`; });
+  discUsers
+    .sort((a, b) => {
+      const momentA = moment(users.find((u) => u.id === a.id)?.birthday);
+      const momentB = moment(users.find((u) => u.id === b.id)?.birthday);
+
+      return momentA.dayOfYear() - momentB.dayOfYear();
+    })
+    .forEach((du) => { message += `\n${du.username} is geboren op ${moment(users.find((u) => u.id === du.id)?.birthday).locale('nl').format('DD MMMM YYYY')}`; });
 
   return message;
 });
