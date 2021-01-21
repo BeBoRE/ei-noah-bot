@@ -8,25 +8,24 @@ import CoronaData, { CoronaInfo } from '../entity/CoronaData';
 
 const router = new Router();
 
-const helpHandler : Handler = ({ msg }) => {
+const helpHandler : Handler = () => {
   let message = '**Krijg iedere morgen een rapportage over de locale corona situatie**';
   message += '\nMogelijke Commandos:';
   message += '\n`ei corona regions`: Vraag alle mogelijke regio\'s op';
   message += '\n`ei corona add <regio>`: Voeg een regio toe aan je dagelijkse rapportage';
   message += '\n`ei corona remove <regio>`: Verwijder een regio van je dagelijkse rapportage';
 
-  msg.channel.send(message);
+  return message;
 };
 
 router.use(null, helpHandler);
 router.use('help', helpHandler);
 
 const addHandler : Handler = async ({
-  msg, user, params, em,
+  user, params, em,
 }) => {
   if (!params.every((param) : param is string => typeof param === 'string')) {
-    msg.channel.send('Jij denkt dat een persoon een regio is?');
-    return;
+    return 'Jij denkt dat een persoon een regio is?';
   }
 
   const region = params.filter((param) : param is string => typeof param === 'string').join(' ');
@@ -35,16 +34,14 @@ const addHandler : Handler = async ({
     .find((r) => r.region.toLowerCase() === region.toLowerCase());
 
   if (currentRegions) {
-    msg.channel.send('Deze regio is al toegevoegd');
-    return;
+    return 'Deze regio is al toegevoegd';
   }
 
   const coronaReport = (await em.getRepository(CoronaData)
     .findAll({ limit: 500 }))
     .find((cr) => cr.community.toLowerCase() === region.toLowerCase());
   if (!coronaReport) {
-    msg.channel.send(`${region} is niet een regio`);
-    return;
+    return `${region} is niet een regio`;
   }
 
   const newRegion = new UserCoronaRegions();
@@ -54,18 +51,17 @@ const addHandler : Handler = async ({
 
   em.persist(newRegion);
 
-  msg.channel.send(`${coronaReport.community} is toegevoegd aan je dagelijkse rapport`);
+  return `${coronaReport.community} is toegevoegd aan je dagelijkse rapport`;
 };
 
 router.use('add', addHandler);
 router.use('toevoegen', addHandler);
 
 const removeHandler : Handler = async ({
-  msg, user, params, em,
+  user, params, em,
 }) => {
   if (!params.every((param) : param is string => typeof param === 'string')) {
-    msg.channel.send('Jij denkt dat een persoon een regio is?');
-    return;
+    return 'Jij denkt dat een persoon een regio is?';
   }
 
   const region = params.filter((param) : param is string => typeof param === 'string').join(' ');
@@ -74,13 +70,12 @@ const removeHandler : Handler = async ({
     .find((r) => r.region.toLowerCase() === region.toLowerCase());
 
   if (!dbRegion) {
-    msg.channel.send('Je hebt deze regio nog niet toegevoegd');
-    return;
+    return 'Je hebt deze regio nog niet toegevoegd';
   }
 
   em.removeEntity(dbRegion);
 
-  msg.channel.send(`${dbRegion.region} is verwijderd van je dagelijkse rapport`);
+  return `${dbRegion.region} is verwijderd van je dagelijkse rapport`;
 };
 
 router.use('remove', removeHandler);
@@ -93,8 +88,10 @@ const listRegionsHandler : Handler = async ({ msg, em }) => {
   const regions = Array.from(new Set<string>(coronaData.map((data) => data.community)))
     .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
-  if (regions.length === 0) msg.channel.send('Regio\'s zijn nog niet geladen (dit kan nog 10 minuten duren)');
-  else msg.author.send(`Regio's:\n${regions.join('\n')}`, { split: true });
+  if (regions.length === 0) return 'Regio\'s zijn nog niet geladen (dit kan nog 10 minuten duren)';
+
+  msg.author.send(`Regio's:\n${regions.join('\n')}`, { split: true });
+  return null;
 };
 
 router.use('gemeentes', listRegionsHandler);
@@ -245,7 +242,9 @@ router.onInit = async (client, orm) => {
     });
   };
 
-  refreshData();
+  if (process.env.REFRESH_DATA?.toLowerCase() !== 'false') {
+    refreshData();
+  }
 
   const reportCron = new CronJob('0 9 * * *', postReport);
 

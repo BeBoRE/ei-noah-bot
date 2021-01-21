@@ -1,6 +1,6 @@
 import {
   Client,
-  DMChannel, Permissions, TextBasedChannelFields, User as DiscordUser,
+  DMChannel, MessageEmbed, Permissions, TextBasedChannelFields, TextChannel, User as DiscordUser,
 } from 'discord.js';
 import createMenu from '../createMenu';
 import Quote from '../entity/Quote';
@@ -13,29 +13,36 @@ const sendQuote = async (channel : TextBasedChannelFields, quote : Quote, client
   const quoted = client.users.fetch(quote.guildUser.user.id, true);
   const owner = client.users.fetch(quote.creator.user.id, true);
 
-  const { text } = quote;
+  const text = quote.text.replace('`', '\\`');
 
-  text.replace('`', '\\`');
+  const embed = new MessageEmbed();
 
-  channel.send(`> ${quote.text}\n- ${(await quoted).username} (door ${(await owner).username})`);
+  const avatarURL = (await quoted).avatarURL() || undefined;
+  let color : number | undefined;
+  if (channel instanceof TextChannel) color = channel.guild.me?.displayColor;
+
+  embed.setAuthor((await quoted).username, avatarURL);
+  embed.setDescription(text);
+  embed.setFooter(`Door ${(await owner).username}`);
+  if (quote.date) embed.setTimestamp(quote.date);
+  if (color) embed.setColor(color);
+
+  await channel.send(embed);
 };
 
 const handler : Handler = async ({
   params, msg, em, guildUser,
 }) => {
   if (msg.channel instanceof DMChannel || !msg.guild || !guildUser) {
-    msg.channel.send('DM mij niet smeervent');
-    return;
+    return 'DM mij niet smeervent';
   }
 
   if (params.length < 1) {
-    msg.channel.send('Zet er dan ook wat neer lul');
-    return;
+    return 'Zet er dan ook wat neer lul';
   }
 
   if (!(params[0] instanceof DiscordUser)) {
-    msg.channel.send('Ok dat is niet een persoon, mention iemand');
-    return;
+    return 'Ok dat is niet een persoon, mention iemand';
   }
 
   const user = params[0];
@@ -46,13 +53,12 @@ const handler : Handler = async ({
 
   if (params.length === 0) {
     if (quotedUser.quotes.length === 0) {
-      msg.channel.send(`${user.username} is niet populair en heeft dus nog geen quotes`);
-      return;
+      return `${user.username} is niet populair en heeft nog geen quotes`;
     }
 
     if (quotedUser.quotes.length === 1) {
       await sendQuote(msg.channel, quotedUser.quotes[0], msg.client);
-      return;
+      return null;
     }
 
     createMenu(quotedUser.quotes.getItems(),
@@ -60,26 +66,26 @@ const handler : Handler = async ({
       msg.channel,
       '**Kiest U Maar**',
       (q) => q.text,
-      (q) => sendQuote(msg.channel, q, msg.client));
-    return;
+      (q) => {
+        sendQuote(msg.channel, q, msg.client);
+      });
+    return null;
   }
 
   if (params.some((param) => typeof param !== 'string')
       || params.some((param) => (<string>param).toLowerCase().match('@everyone') || (<string>param).toLowerCase().match('@here'))) {
-    await msg.channel.send('Een quote kan geen mentions bevatten');
-    return;
+    return 'Een quote kan geen mentions bevatten';
   }
 
   const text = params.filter((param) : param is string => typeof param === 'string').join(' ');
 
   if (text.length > 256) {
-    msg.channel.send('Quotes kunnen niet langer zijn dan 256 karakters');
-    return;
+    return 'Quotes kunnen niet langer zijn dan 256 karakters';
   }
 
   quotedUser.quotes.add(new Quote(text, guildUser));
 
-  msg.channel.send('Ait die ga ik onthouden');
+  return 'Ait die ga ik onthouden';
 };
 
 router.use(DiscordUser, handler);
@@ -90,23 +96,19 @@ const removeHandler : Handler = async ({
   msg, em, params, guildUser,
 }) => {
   if (!msg.guild) {
-    msg.channel.send('Kan alleen in een server');
-    return;
+    return 'Kan alleen in een server';
   }
 
   if (params.length < 1) {
-    msg.channel.send('Verwijder quotes van wie?');
-    return;
+    return 'Verwijder quotes van wie?';
   }
 
   if (params.length > 1) {
-    msg.channel.send('Alleen de gebruiker graag');
-    return;
+    return 'Alleen de gebruiker graag';
   }
 
   if (!(params[0] instanceof DiscordUser)) {
-    msg.channel.send('Hoe moeilijk is het om daar een mention neer te zetten?');
-    return;
+    return 'Hoe moeilijk is het om daar een mention neer te zetten?';
   }
 
   const guToRemoveFrom = await getUserGuildData(em, params[0], msg.guild);
@@ -120,8 +122,7 @@ const removeHandler : Handler = async ({
   const quotes = guToRemoveFrom.quotes.getItems();
 
   if (quotes.length < 1) {
-    msg.channel.send('Jij hebt geen quotes aangemaakt voor deze user');
-    return;
+    return 'Jij hebt geen quotes aangemaakt voor deze user';
   }
 
   const quotesToRemove : Set<Quote> = new Set<Quote>();
@@ -145,6 +146,8 @@ const removeHandler : Handler = async ({
       menuEm.flush();
       return true;
     }]);
+
+  return null;
 };
 
 router.use('remove', removeHandler);
@@ -155,18 +158,22 @@ router.use('manage', removeHandler);
 
 router.use(null, async ({ msg, em }) => {
   if (!msg.guild) {
-    msg.channel.send('Dit commando alleen op een server gebruiken');
-    return;
+    return 'Dit commando alleen op een server gebruiken';
   }
 
   const quotes = await em.find(Quote, { guildUser: { guild: { id: msg.guild.id } } });
 
   const quote = quotes[Math.floor(Math.random() * quotes.length)];
 
-  if (quotes) { await sendQuote(msg.channel, quote, msg.client); } else msg.channel.send('Deze server heeft nog geen quotes');
+  if (quotes) {
+    await sendQuote(msg.channel, quote, msg.client);
+    return null;
+  }
+
+  return 'Deze server heeft nog geen quotes';
 });
 
-router.use('help', ({ msg }) => {
+router.use('help', () => {
   let message = '**Hou quotes van je makkermaten bij!**';
   message += '\nMogelijke Commandos:';
   message += '\n`ei quote`: Verstuur een random quote';
@@ -175,7 +182,7 @@ router.use('help', ({ msg }) => {
   message += '\n`ei quote remove <@member>`: Verwijder een selectie aan quotes van dat persoon';
   message += '\n> Je kan alleen de quotes verwijderen die je voor dat persoon geschreven hebt';
   message += '\n> Alleen quotes van jezelf kan je volledig beheren';
-  msg.channel.send(message);
+  return message;
 });
 
 export default router;

@@ -7,7 +7,7 @@ import { GuildUser } from './GuildUser';
 @Entity()
 class Quote {
   @PrimaryKey({ serializedPrimaryKey: true })
-  private id!: number;
+  id!: number;
 
   @ManyToOne({ eager: true })
   guildUser!: GuildUser;
@@ -18,9 +18,13 @@ class Quote {
   @Property()
   text!: string;
 
+  @Property()
+  date?: Date;
+
   constructor(text : string, creator: GuildUser) {
     this.text = text;
     this.creator = creator;
+    this.date = new Date();
   }
 }
 

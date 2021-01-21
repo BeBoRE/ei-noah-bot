@@ -2,7 +2,9 @@ import {
   CollectorFilter, MessageReaction, TextBasedChannelFields, User as DiscordUser,
 } from 'discord.js';
 
-export type ButtonReturn = boolean | Promise<boolean> | void | Promise<void>;
+export type ButtonReturn = boolean | Promise<boolean>
+| void | Promise<void>
+| string | Promise<string>;
 
 export type ExtraButton = [string, () => ButtonReturn];
 

@@ -7,22 +7,16 @@ router.use('add', async ({ msg, guildUser }) => {
   // kan undefined behaviour veroorzaken
 
   if (guildUser == null) {
-    msg.channel.send('Alleen gebruiken in een server');
-    return;
+    return 'Alleen gebruiken in een server';
   }
   const data = guildUser;
 
   if (!data.user.count) data.user.count = 1;
   else data.user.count += 1;
 
-  msg.channel.send(`${msg.author.tag} has counted to ${data.user.count}`);
+  return `${msg.author.tag} has counted to ${data.user.count}`;
 });
 
-router.use('get', async ({ msg, guildUser }) => {
-  msg.channel.send(`${msg.author.tag} is now on ${guildUser?.user.count}`);
-
-  // Geen data aangepast
-  // Niks opslaan
-});
+router.use('get', async ({ msg, guildUser }) => `${msg.author.tag} is now on ${guildUser?.user.count}`);
 
 export default router;

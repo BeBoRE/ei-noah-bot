@@ -25,31 +25,29 @@ eiNoah.use('bday', Birthday);
 // Dit is waar berichten worden afgehandeld
 eiNoah.use('steek', (routeInfo) => {
   if (routeInfo.params[0] instanceof User) {
-    routeInfo.msg.channel.send(`Met plezier, kom hier <@!${(routeInfo.params[0]).id}>!`);
-  } else {
-    routeInfo.msg.channel.send('Lekker');
+    return `Met plezier, kom hier <@!${(routeInfo.params[0]).id}>!`;
   }
+  return 'Lekker';
 });
 
-eiNoah.use(Role, ({ msg, params }) => {
-  msg.channel.send(`${params[0]}s zijn gamers`);
-});
+eiNoah.use(Role, ({ params }) => `${params[0]}s zijn gamers`);
 
 // Als een mention als parameter is gebruikt wordt deze functie aangeroepen,
 // je kan hiervoor geen Router gebruiken
 eiNoah.use(User, (routeInfo) => {
-  if (routeInfo.params[0] instanceof User) routeInfo.msg.channel.send(`What about ${routeInfo.params[0]}`);
+  if (routeInfo.params[0] instanceof User) return `What about ${routeInfo.params[0]}`;
+  return null;
 });
 
 // Voorbeeld hoe je met user data omgaat
 if (process.env.NODE_ENV !== 'production') eiNoah.use('counter', Counter);
 
-eiNoah.use(null, (info) => {
+eiNoah.use(null, () => {
   const watZegtNoah = ['Ja wat jonge', '**Kabaal** ik zit op de fiets', 'Ik steek je neer', 'Hmm wat zegt noah nog meer', 'Ik laat het aan god over'];
 
   const zeg = watZegtNoah[Math.floor(Math.random() * watZegtNoah.length)];
 
-  info.msg.channel.send(zeg);
+  return zeg;
 });
 
 eiNoah.use('quote', QuoteRouter);
