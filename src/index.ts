@@ -52,6 +52,15 @@ eiNoah.use(null, () => {
 
 eiNoah.use('quote', QuoteRouter);
 
+eiNoah.use('help', () => {
+  let message = "**Alle Commando's**";
+  message += '\n`ei bday` Laat Ei je verjaardag bijhouden, of vraag die van anderen op';
+  message += '\n`ei corona` Krijg iedere morgen een rapportage over de locale corona situatie';
+  message += '\n`ei lobby` Maak en beheer een lobby (tijdelijk kanaal)';
+
+  return message;
+});
+
 eiNoah.onInit = async (client) => {
   const updatePrecense = () => {
     const watDoetNoah : PresenceData[] = [{
