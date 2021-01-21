@@ -2,6 +2,8 @@ import moment from 'moment';
 import { CronJob } from 'cron';
 import {
   Client,
+  MessageEmbed,
+  NewsChannel,
   Permissions, Role, TextChannel,
 } from 'discord.js';
 import { EntityManager } from 'mikro-orm';
@@ -49,19 +51,35 @@ router.use('help', helpHandler);
 router.use(null, helpHandler);
 
 router.use('show-all', async ({ msg, em }) => {
-  let message = 'Hier zijn alle verjaardagen die zijn geregistreerd: ';
   const users = await em.find(User, { $not: { birthday: null } });
   const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(u.id, true)));
-  discUsers
+  const discription = discUsers
     .sort((a, b) => {
-      const momentA = moment(users.find((u) => u.id === a.id)?.birthday);
-      const momentB = moment(users.find((u) => u.id === b.id)?.birthday);
+      let dayA = moment(users.find((u) => u.id === a.id)?.birthday).dayOfYear();
+      let dayB = moment(users.find((u) => u.id === b.id)?.birthday).dayOfYear();
 
-      return momentA.dayOfYear() - momentB.dayOfYear();
+      const todayDayOfYear = moment().dayOfYear();
+
+      if (dayA < todayDayOfYear) dayA += 365;
+      if (dayB < todayDayOfYear) dayB += 365;
+
+      return dayA - dayB;
     })
-    .forEach((du) => { message += `\n${du.username} is geboren op ${moment(users.find((u) => u.id === du.id)?.birthday).locale('nl').format('DD MMMM YYYY')}`; });
+    .map((du) => `\n${du.username} is geboren op ${moment(users.find((u) => u.id === du.id)?.birthday).locale('nl').format('D MMMM YYYY')}`);
 
-  return message;
+  let color : string | undefined;
+  if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
+    color = msg.channel.guild.me?.displayHexColor;
+  }
+
+  if (!color || color === '#000000') color = '#ffcc5f';
+
+  const embed = new MessageEmbed();
+  embed.setColor(color);
+  embed.setTitle('Verjaardagen:');
+  embed.addField('Aankomende Eerst', discription);
+
+  return embed;
 });
 
 router.use('delete', async ({ user }) => {
