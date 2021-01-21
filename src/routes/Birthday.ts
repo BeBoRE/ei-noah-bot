@@ -26,6 +26,14 @@ router.use('set', async ({ user, params }) => {
   const birth = new Date(parseInt(args[2], 10), parseInt(args[1], 10) - 1, parseInt(args[0], 10));
   const birth1 = moment(birth);
 
+  if (birth1.isAfter(new Date())) {
+    return 'Je geboorte kan niet in de toekomst zijn';
+  }
+
+  if (moment().subtract(80, 'years').isAfter(birth1)) {
+    return 'Zo oud? 🤔';
+  }
+
   // eslint-disable-next-line no-param-reassign
   user.birthday = birth1.toDate();
 
