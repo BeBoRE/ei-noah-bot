@@ -61,7 +61,7 @@ router.use(null, helpHandler);
 router.use('show-all', async ({ msg, em }) => {
   const users = await em.find(User, { $not: { birthday: null } });
   const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(u.id, true)));
-  const discription = discUsers
+  const description = discUsers
     .sort((a, b) => {
       let dayA = moment(users.find((u) => u.id === a.id)?.birthday).dayOfYear();
       let dayB = moment(users.find((u) => u.id === b.id)?.birthday).dayOfYear();
@@ -85,7 +85,35 @@ router.use('show-all', async ({ msg, em }) => {
   const embed = new MessageEmbed();
   embed.setColor(color);
   embed.setTitle('Verjaardagen:');
-  embed.addField('Aankomende Eerst', discription);
+  embed.addField('Aankomende Eerst', description);
+
+  return embed;
+});
+
+router.use('show-age', async ({ msg, em }) => {
+  const users = await em.find(User, { $not: { birthday: null } });
+  const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(u.id, true)));
+  const description = discUsers
+    .sort((a, b) => {
+      const bdayA = users.find((u) => u.id === a.id)?.birthday;
+      const bdayB = users.find((u) => u.id === b.id)?.birthday;
+
+      return (bdayA?.valueOf() || 0) - (bdayB?.valueOf() || 0);
+    })
+    .map((du) => `\n${du.username} is ${-moment(users.find((u) => u.id === du.id)?.birthday).diff(moment(), 'years')}`)
+    .join('\n');
+
+  let color : string | undefined;
+  if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
+    color = msg.channel.guild.me?.displayHexColor;
+  }
+
+  if (!color || color === '#000000') color = '#ffcc5f';
+
+  const embed = new MessageEmbed();
+  embed.setColor(color);
+  embed.setTitle('Leeftijden:');
+  embed.description = description;
 
   return embed;
 });
