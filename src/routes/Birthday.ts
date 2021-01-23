@@ -5,8 +5,10 @@ import {
   MessageEmbed,
   NewsChannel,
   Permissions, Role, TextChannel,
+  User as DiscordUser,
 } from 'discord.js';
 import { EntityManager } from 'mikro-orm';
+import { getUserData } from '../data';
 import { User } from '../entity/User';
 import Router, { Handler } from '../Router';
 
@@ -85,7 +87,7 @@ router.use('show-all', async ({ msg, em }) => {
   const embed = new MessageEmbed();
   embed.setColor(color);
   embed.setTitle('Verjaardagen:');
-  embed.addField('Aankomende Eerst', description);
+  embed.addField('Aankomende eerst', description);
 
   return embed;
 });
@@ -114,6 +116,33 @@ router.use('show-age', async ({ msg, em }) => {
   embed.setColor(color);
   embed.setTitle('Leeftijden:');
   embed.description = description;
+
+  return embed;
+});
+
+router.use(DiscordUser, async ({ params, em, msg }) => {
+  const user = params[0];
+
+  if (!(user instanceof DiscordUser)) {
+    return 'Onmogelijk pad, gefeliciteerd';
+  }
+
+  const dbUser = await getUserData(em, user);
+
+  if (!dbUser.birthday) { return `${user.username} heeft geen verjaardag, dit is zo zielig`; }
+
+  const embed = new MessageEmbed();
+
+  let color : string | undefined;
+  if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
+    color = msg.channel.guild.me?.displayHexColor;
+  }
+
+  if (!color || color === '#000000') color = '#ffcc5f';
+
+  embed.setColor(color);
+  embed.setAuthor(user.username, user.avatarURL() || undefined);
+  embed.description = `Geboren op ${moment(dbUser.birthday).format('D MMMM YYYY')} en is ${moment().diff(moment(dbUser.birthday), 'year')} jaar oud`;
 
   return embed;
 });
