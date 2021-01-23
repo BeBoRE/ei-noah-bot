@@ -46,9 +46,11 @@ router.use('set', async ({ user, params }) => {
 });
 
 const helpHandler : Handler = async () => {
-  let message = '**Krijg elke ochtend een melding als iemand jarig is**\nHier volgen alle commando\'s voor verjaardagen';
-  message += '\n`ei bday show-all`: Laat alle geregistreerde verjaardagen zien';
-  message += '\n`ei bday set <DD/MM/YYYY>`: Registreerd jouw verjaardag';
+  let message = '**Krijg elke ochtend een melding als iemand jarig is**';
+  message += '\n`ei bday set <DD/MM/YYYY>`: Stel je geboortedatum in';
+  message += '\n`ei bday show-all`: Laat iedereens geboortedatum zien';
+  message += '\n`ei bday show-age`: Laat iedereens leeftijd zien';
+  message += '\n`ei bday <@user>`: Laat de geboortedatum en leeftijd van een user zien';
   message += '\n`ei bday delete`: Verwijderd jouw verjaardag';
   message += '\n***Admin Commando\'s***';
   message += '\n`ei bday set-channel`: Selecteerd het huidige kanaal voor de dagelijkse update';
