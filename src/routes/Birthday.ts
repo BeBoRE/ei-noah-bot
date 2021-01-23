@@ -203,7 +203,8 @@ const checkBday = async (client : Client, em : EntityManager) => {
     if (today === discBday) {
       console.log(`${du.tag} is vandaag jarig`);
       const age = parseInt(todayAge, 10) - parseInt(discBdayAge, 10);
-      const message = (`**Deze makker is vandaag jarig**\n${du.username} is vandaag ${age} geworden!`);
+
+      const message = (`Is vandaag ${age} geworden!`);
 
       await user?.guildUsers.init();
       user?.guildUsers.getItems().forEach(async (gu) => {
@@ -213,9 +214,26 @@ const checkBday = async (client : Client, em : EntityManager) => {
             const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
             if (bdayRole instanceof Role) {
               const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
-              if (!member.roles.cache.has(bdayRole.id)) { member.roles.add(bdayRole).catch(() => console.log('Kon geen rol geven')); }
+              if (!member.roles.cache.has(bdayRole.id)) {
+                member.roles.add(bdayRole).catch(() => console.log('Kon geen rol geven'));
+
+                const embed = new MessageEmbed();
+
+                let color : string | undefined;
+                color = member.guild.me?.displayHexColor;
+
+                if (!color || color === '#000000') color = '#ffcc5f';
+
+                embed.setColor(color);
+
+                // eslint-disable-next-line max-len
+                embed.setAuthor(member.nickname || member.user.username, member.user.avatarURL() || undefined);
+                embed.description = message;
+                embed.setThumbnail('http://clipart-library.com/images/kcKnBz4Ai.jpg');
+
+                await bdayChannel.send(embed);
+              }
             }
-            await bdayChannel.send(message);
           }
         }
       });
@@ -243,10 +261,11 @@ router.onInit = async (client, orm) => {
 
   const reportCron = new CronJob('5 0 0 * * *', () => { checkBday(client, orm.em.fork()); });
 
-  reportCron.start();
+  if (process.env.NODE_ENV !== 'production') {
+    checkBday(client, orm.em.fork());
+  }
 
-  // Check bday's één keer
-  checkBday(client, orm.em.fork());
+  reportCron.start();
 };
 
 export default router;
