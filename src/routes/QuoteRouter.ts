@@ -173,16 +173,15 @@ router.use(null, async ({ msg, em }) => {
   return 'Deze server heeft nog geen quotes';
 });
 
-router.use('help', () => {
-  let message = '**Hou quotes van je makkermaten bij!**';
-  message += '\nMogelijke Commandos:';
-  message += '\n`ei quote`: Verstuur een random quote';
-  message += '\n`ei quote <@member>`: Verstuur een quote van dat persoon';
-  message += '\n`ei quote <@member> <quote>`: Sla een nieuwe quote op van dat persoon';
-  message += '\n`ei quote remove <@member>`: Verwijder een selectie aan quotes van dat persoon';
-  message += '\n> Je kan alleen de quotes verwijderen die je voor dat persoon geschreven hebt';
-  message += '\n> Alleen quotes van jezelf kan je volledig beheren';
-  return message;
-});
+router.use('help', () => [
+  '**Hou quotes van je makkermaten bij!**',
+  'Mogelijke Commandos:',
+  '`ei quote`: Verstuur een random quote',
+  '`ei quote <@member>`: Verstuur een quote van dat persoon',
+  '`ei quote <@member> <quote>`: Sla een nieuwe quote op van dat persoon',
+  '`ei quote remove <@member>`: Verwijder een selectie aan quotes van dat persoon',
+  '> Je kan alleen de quotes verwijderen die je voor dat persoon geschreven hebt',
+  '> Alleen quotes van jezelf kan je volledig beheren',
+].join('\n'));
 
 export default router;

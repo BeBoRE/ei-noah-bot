@@ -45,19 +45,17 @@ router.use('set', async ({ user, params }) => {
   return `Je verjaardag is toegevoegd: ${birth1.locale('nl').format('D MMMM YYYY')}`;
 });
 
-const helpHandler : Handler = async () => {
-  let message = '**Krijg elke ochtend een melding als iemand jarig is**';
-  message += '\n`ei bday set <DD/MM/YYYY>`: Stel je geboortedatum in';
-  message += '\n`ei bday show-all`: Laat iedereens geboortedatum zien';
-  message += '\n`ei bday show-age`: Laat iedereens leeftijd zien';
-  message += '\n`ei bday <@user>`: Laat de geboortedatum en leeftijd van een user zien';
-  message += '\n`ei bday delete`: Verwijderd jouw verjaardag';
-  message += '\n***Admin Commando\'s***';
-  message += '\n`ei bday set-channel`: Selecteerd het huidige kanaal voor de dagelijkse update';
-  message += '\n`ei bday set-role <Role Mention>`: Selecteerd de gekozen role voor de jarige-jop';
-
-  return message;
-};
+const helpHandler : Handler = async () => [
+  '**Krijg elke ochtend een melding als iemand jarig is**',
+  '`ei bday set <DD/MM/YYYY>`: Stel je geboortedatum in',
+  '`ei bday show-all`: Laat iedereens geboortedatum zien',
+  '`ei bday show-age`: Laat iedereens leeftijd zien',
+  '`ei bday <@user>`: Laat de geboortedatum en leeftijd van een user zien',
+  '`ei bday delete`: Verwijderd jouw verjaardag',
+  '***Admin Commando\'s***',
+  '`ei bday set-channel`: Selecteerd het huidige kanaal voor de dagelijkse update',
+  '`ei bday set-role <Role Mention>`: Selecteerd de gekozen role voor de jarige-jop',
+].join('\n');
 
 router.use('help', helpHandler);
 router.use(null, helpHandler);
