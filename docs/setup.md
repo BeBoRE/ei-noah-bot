@@ -39,17 +39,38 @@ aan toe. Je JS/TS code wordt nu automatisch geformat.
 ### 2.3 Clone De Repo
 Open CMD en clone de repo `git clone https://github.com/Sweaty-Tryhards/ei-noah-bot.git` en `cd ei-noah-bot` om erin te navigeren. Type in `npm i` om alle dependencies te installeren. Om VSCode te openen in de directory type in `code .` (vergeet de punt niet)
 
-### 2.4 Environment
-De settings van de applicatie staan in een `.env` file, omdat hier gevoelige info instaat zoals de **Discord Bot Token**, je zult deze zelf moeten aanmaken in de root van bot (waar package.json staat). 
-```s 
+### 2.4 Database
+Ei-Noah maakt gebruik van Postgres. Postgres kan je [hier downloaden](https://www.postgresql.org/download/). Ik raad je aan om PGAdmin te installeren tijdens het installatie proces. Nadat je Postgres hebt geïnstalleerd, start PGAdmin. 
+
+Voer een wachtwoord in en voeg de lokale database toe (als die er nog niet staat). Rechtermuis klik op *Servers*. Selecteer *Create* en *Server...* Geef de connectie een naam en navigeer naar *connection*. Zet bij host `localhost` neer en bij gebruiker en wachtwoord wat je bij het installatie proces hebt neergezet. 
+
+Maak een nieuwe database aan `ei-noah`, je doet dit door rechtermuis klik op *databases* te doen en naar *Create > database...* te navigeren. Noem de database `ei-noah`. En maak hem aan.
+
+### 2.5 Environment
+
+De settings van de applicatie staan in een `.env` file, omdat hier gevoelige info instaat zoals de **Discord Bot Token**, je zult deze zelf moeten aanmaken in de root van bot (waar package.json staat).
+
+```s
+
 CLIENT_TOKEN="<Jou Discord Bot Token>"
+
 ERROR_CHANNEL=743906228052164720
+
 NODE_ENV="development"
+
+DBUSER="<Jouw postgres user>"
+
+PASSWORD="<Jouw postgres wachtwoord>"
+
+REFRESH_DATA=false
 ```
+
 Om de app in te laten loggen met jou **Discord Bot** moet je gebruik maken van jou **Discord Bot Token**. Deze staat onder het tapje **Bot** bij de applicatie die je net hebt aangemaakt op de [Discord Developer Portal.](https://discord.com/developers/applications) Vul deze in bij `CLIENT_TOKEN`.
 
-### 2.5 Start de Bot
-Je kan nu de applicatie starten door in de root van applicatie `npm run build` en `npm start` uit te voeren. Wanneer in de CMD `client online` verschijnt is de bot volledig online. Je kan nu commando's uitvoeren in de Discord text-chat, zoals `ei noah`.
+`REFRESH_DATA` geeft aan dat de bot niet corona-data op moet halen, dit zorgt ervoor dat de bot vastloopt voor een tijdje, afhankelijk van je hardware soms meerdere kwartieren.
 
-### 2.6 Watch
-Om de applicatie automatisch te compilen wanneer je veranderingen maakt aan je code. Voer `npm run watch` uit. Gebruik `F5` om de applicatie te starten.
+  
+
+### 2.6 Start de Bot
+
+Om de bot te starten, druk op `F5`. Als er aanpassingen gedaan worden wordt de bot opnieuw gestart.
