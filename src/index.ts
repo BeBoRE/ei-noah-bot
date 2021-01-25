@@ -57,6 +57,7 @@ eiNoah.use('help', () => [
   '`ei bday`: Laat Ei je verjaardag bijhouden, of vraag die van anderen op',
   '`ei corona`: Krijg iedere morgen een rapportage over de locale corona situatie',
   '`ei lobby`: Maak en beheer een lobby (tijdelijk kanaal)',
+  '`ei quote` Houd quotes van je makkermaten bij',
 ].join('\n'));
 
 eiNoah.onInit = async (client) => {
