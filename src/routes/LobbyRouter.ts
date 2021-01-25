@@ -651,21 +651,20 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
   return `Bitrate veranderd naar ${newBitrate}`;
 });
 
-const helpHanlder : Handler = () => {
-  let message = '**Maak een tijdelijke voice kanaal aan**';
-  message += '\nMogelijke Commandos:';
-  message += '\n`ei lobby create [@mention ...]`: Maak een private lobby aan en laat alleen de toegestaande mensen joinen';
-  message += '\n`ei lobby create [@mention ...] -mute`: Iedereen mag joinen, maar alleen toegestaande mensen mogen spreken';
-  message += '\n`ei lobby create [@mention ...] -public`: Iedereen mag joinen';
-  message += '\n`ei lobby create [@mention ...] -<nummer>`: Zet een user limit op de lobby';
-  message += '\n`ei lobby add @mention ...`: Laat user(s) toe aan de lobby';
-  message += '\n`ei lobby remove [@mention ...]`: Verwijder user(s)/ role(s) uit de lobby';
-  message += '\n`ei lobby set [mute / private / public]`: Verander het type van de lobby';
-  message += '\n`ei lobby limit <nummer>`: Verander de lobby user limit';
-  message += '\n`*Admin* ei lobby category true/ false`: Sta users toe lobbies aan te maken in deze categorie';
-  message += '\n`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt';
-  return message;
-};
+const helpHanlder : Handler = () => [
+  '**Maak een tijdelijke voice kanaal aan**',
+  'Mogelijke Commandos:',
+  '`ei lobby create [@mention ...]`: Maak een private lobby aan en laat alleen de toegestaande mensen joinen',
+  '`ei lobby create [@mention ...] -mute`: Iedereen mag joinen, maar alleen toegestaande mensen mogen spreken',
+  '`ei lobby create [@mention ...] -public`: Iedereen mag joinen',
+  '`ei lobby create [@mention ...] -<nummer>`: Zet een user limit op de lobby',
+  '`ei lobby add @mention ...`: Laat user(s) toe aan de lobby',
+  '`ei lobby remove [@mention ...]`: Verwijder user(s)/ role(s) uit de lobby',
+  '`ei lobby set [mute / private / public]`: Verander het type van de lobby',
+  '`ei lobby limit <nummer>`: Verander de lobby user limit',
+  '`*Admin* ei lobby category true/ false`: Sta users toe lobbies aan te maken in deze categorie',
+  '`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
+].join('\n');
 
 router.use(null, helpHanlder);
 router.use('help', helpHanlder);

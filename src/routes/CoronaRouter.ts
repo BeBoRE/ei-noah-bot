@@ -8,15 +8,13 @@ import CoronaData, { CoronaInfo } from '../entity/CoronaData';
 
 const router = new Router();
 
-const helpHandler : Handler = () => {
-  let message = '**Krijg iedere morgen een rapportage over de locale corona situatie**';
-  message += '\nMogelijke Commandos:';
-  message += '\n`ei corona regions`: Vraag alle mogelijke regio\'s op';
-  message += '\n`ei corona add <regio>`: Voeg een regio toe aan je dagelijkse rapportage';
-  message += '\n`ei corona remove <regio>`: Verwijder een regio van je dagelijkse rapportage';
-
-  return message;
-};
+const helpHandler : Handler = () => [
+  '**Krijg iedere morgen een rapportage over de locale corona situatie**',
+  'Mogelijke Commandos:',
+  '`ei corona regions`: Vraag alle mogelijke regio\'s op',
+  '`ei corona add <regio>`: Voeg een regio toe aan je dagelijkse rapportage',
+  '`ei corona remove <regio>`: Verwijder een regio van je dagelijkse rapportage',
+].join('\n');
 
 router.use(null, helpHandler);
 router.use('help', helpHandler);
