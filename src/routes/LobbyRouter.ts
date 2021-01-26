@@ -72,7 +72,12 @@ async function createTempChannel(
     permissionOverwrites.push({
       id: bot.id,
       allow: [
-        Permissions.ALL,
+        Permissions.FLAGS.CONNECT,
+        Permissions.FLAGS.SPEAK,
+        Permissions.FLAGS.MUTE_MEMBERS,
+        Permissions.FLAGS.MOVE_MEMBERS,
+        Permissions.FLAGS.DEAFEN_MEMBERS,
+        Permissions.FLAGS.MANAGE_CHANNELS,
       ],
     });
   }
@@ -190,13 +195,12 @@ const createHandler : Handler = async ({
       if (err.code === Constants.APIErrors.INVALID_FORM_BODY) {
         return 'Neem contact op met de server admins, waarschijnlijk staat de bitrate voor de lobbies te hoog';
       }
-    } else {
-      console.error(err);
-      return 'Onverwachte error';
+      console.log(err);
+      return 'Onverwachte DiscordAPIError';
     }
+    console.error(err);
+    return 'Onverwachte error';
   }
-
-  return 'Er is iets fout gegaan, als je dit bericht ziet stuur een dm naar een ei-noah dev';
 };
 
 // ei lobby create ...
@@ -675,13 +679,14 @@ const removeTempLobby = (gu : GuildUser) => {
 };
 
 router.onInit = async (client, orm) => {
-  const checkTempChannel = async (userWithTemp : GuildUser, em : EntityManager) => {
+  const checkTempChannel = async (userWithTemp : GuildUser,
+    em : EntityManager, respectTimeLimit = true) => {
     const now = new Date();
 
     if (!userWithTemp.tempChannel || !userWithTemp.tempCreatedAt) return;
 
     const difference = Math.abs(now.getMinutes() - userWithTemp.tempCreatedAt.getMinutes());
-    if (difference >= 2) {
+    if (!respectTimeLimit || difference >= 2) {
       const activeChannel = await activeTempChannel(userWithTemp, client);
 
       if (!activeChannel) {
@@ -762,7 +767,7 @@ router.onInit = async (client, orm) => {
     if (oldState?.channel && oldState.channel.id !== newState?.channel?.id) {
       const em = orm.em.fork();
       const tempChannel = await em.findOne(GuildUser, { tempChannel: oldState.channel.id });
-      if (tempChannel) await checkTempChannel(tempChannel, em);
+      if (tempChannel) await checkTempChannel(tempChannel, em, false);
 
       em.flush().catch((err) => console.log(err));
     }
