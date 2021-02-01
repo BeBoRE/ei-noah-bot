@@ -28,6 +28,9 @@ export class GuildUser {
   @Property()
   tempCreatedAt?: Date;
 
+  @Property({ length: 98 })
+  tempName?: string;
+
   @OneToMany({ entity: () => Quote, mappedBy: 'guildUser' })
   quotes = new Collection<Quote>(this);
 

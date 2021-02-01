@@ -29,12 +29,13 @@ enum ChannelType {
   Nojoin = 'private'
 }
 
-function generateLobbyName(type : ChannelType, owner : DiscordUser) {
+function generateLobbyName(type : ChannelType, owner : DiscordUser, guildUser : GuildUser) {
   let icon : string;
   if (type === ChannelType.Nojoin) icon = '🔐';
   if (type === ChannelType.Mute) icon = '🙊';
   else icon = '🔊';
-  return `${icon} ${owner.username}'s Lobby`;
+
+  return `${icon} ${guildUser.tempName || `${owner.username}'s Lobby`}`;
 }
 
 function toDeny(type : ChannelType) {
@@ -52,12 +53,19 @@ function getChannelType(channel : VoiceChannel) {
   } return ChannelType.Nojoin;
 }
 
+const removeTempLobby = (gu : GuildUser) => {
+  gu.tempChannel = undefined;
+  gu.tempCreatedAt = undefined;
+  gu.tempName = undefined;
+};
+
 async function createTempChannel(
   guild: DiscordGuild, parent: string,
   users: Array<DiscordUser | Role>, owner: DiscordUser,
   bitrate: number,
   type: ChannelType,
   userLimit = 0,
+  guildUser : GuildUser,
 ) {
   const userSnowflakes = [...new Set([...users.map((user) => user.id), owner.id])];
 
@@ -97,7 +105,7 @@ async function createTempChannel(
     deny,
   });
 
-  return guild.channels.create(generateLobbyName(type, owner), {
+  return guild.channels.create(generateLobbyName(type, owner, guildUser), {
     type: 'voice',
     permissionOverwrites,
     parent,
@@ -172,6 +180,8 @@ const createHandler : Handler = async ({
     return 'Je hebt al een lobby';
   }
   try {
+    removeTempLobby(guildUser);
+
     const createdChannel = await createTempChannel(
       msg.guild,
       msg.channel.parentID,
@@ -180,6 +190,7 @@ const createHandler : Handler = async ({
       guildUser.guild.bitrate,
       type,
       userLimit,
+      guildUser,
     );
 
     const gu = guildUser;
@@ -505,7 +516,7 @@ const changeTypeHandler : Handler = async ({ params, msg, guildUser }) => {
       ...newOverwrites,
     ]).catch(console.error);
 
-    activeChannel.setName(generateLobbyName(changeTo, msg.author)).catch((err) => console.error('Change name error', err));
+    activeChannel.setName(generateLobbyName(changeTo, msg.author, guildUser)).catch((err) => console.error('Change name error', err));
     return `Lobby type is veranderd naar *${changeTo}*`;
   }
 
@@ -655,6 +666,36 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
   return `Bitrate veranderd naar ${newBitrate}`;
 });
 
+const nameHandler : Handler = async ({
+  params, guildUser, category, msg,
+}) => {
+  if (!guildUser || !category) return 'Dit commando kan alleen op een server worden gebruikt';
+  if (!category.isLobbyCategory) return 'Je kan geen lobbies aanmaken in deze categorie';
+
+  if (!params.length) return 'Geef een naam in';
+
+  const tempChannel = await activeTempChannel(guildUser, msg.client);
+
+  if (!tempChannel) return 'Je moet een lobby hebben om dit commando te kunnen gebruiken';
+
+  const nameArray = params.filter((param) : param is string => typeof param === 'string');
+  if (nameArray.length !== params.length) return 'Je mag alleen tekst gebruiken in de naam';
+
+  const name = nameArray.join(' ');
+
+  if (name.length > 98) return 'De naam mag niet langer zijn dan 98 tekens';
+
+  guildUser.tempName = name;
+  tempChannel.setName(generateLobbyName(getChannelType(tempChannel), msg.author, guildUser));
+
+  return 'Lobby naam is aangepast\n> Bij overmatig gebruik kan het meer dan 10 minuten duren';
+};
+
+router.use('name', nameHandler);
+router.use('rename', nameHandler);
+router.use('naam', nameHandler);
+router.use('hernoem', nameHandler);
+
 const helpHanlder : Handler = () => [
   '**Maak een tijdelijke voice kanaal aan**',
   'Mogelijke Commandos:',
@@ -672,11 +713,6 @@ const helpHanlder : Handler = () => [
 
 router.use(null, helpHanlder);
 router.use('help', helpHanlder);
-
-const removeTempLobby = (gu : GuildUser) => {
-  gu.tempChannel = undefined;
-  gu.tempCreatedAt = undefined;
-};
 
 router.onInit = async (client, orm) => {
   const checkTempChannel = async (userWithTemp : GuildUser,
@@ -730,7 +766,7 @@ router.onInit = async (client, orm) => {
 
           await Promise.all([
             activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true }),
-            activeChannel.setName(generateLobbyName(type, newOwner.user)),
+            activeChannel.setName(generateLobbyName(type, newOwner.user, newOwnerGuildUser)),
             newOwner.voice.setMute(false),
             newOwner.send('Jij bent nu de eigenaar van de lobby'),
           ]);
@@ -741,9 +777,11 @@ router.onInit = async (client, orm) => {
         const discordUser = await client.users.fetch(userWithTemp.user.id);
         const lobbyType = getChannelType(activeChannel);
 
-        const correctName = generateLobbyName(lobbyType, discordUser);
+        const correctName = generateLobbyName(lobbyType, discordUser, userWithTemp);
 
-        if (activeChannel.name !== correctName) await activeChannel.setName(correctName);
+        if (activeChannel.name !== correctName) {
+          await activeChannel.setName(correctName);
+        }
       }
     }
   };
