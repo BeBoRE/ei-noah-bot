@@ -16,6 +16,7 @@ import {
   OverwriteResolvable,
 } from 'discord.js';
 import { EntityManager } from 'mikro-orm';
+import emojiRegex from 'emoji-regex';
 import createMenu from '../createMenu';
 import { getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
@@ -29,11 +30,32 @@ enum ChannelType {
   Nojoin = 'private'
 }
 
-function generateLobbyName(type : ChannelType, owner : DiscordUser, guildUser : GuildUser) {
+function generateLobbyName(
+  type : ChannelType,
+  owner : DiscordUser,
+  guildUser : GuildUser,
+) : string {
   let icon : string;
   if (type === ChannelType.Nojoin) icon = '🔐';
   if (type === ChannelType.Mute) icon = '🙊';
   else icon = '🔊';
+
+  if (type === 'public') {
+    if (guildUser.tempName) {
+      const result = emojiRegex().exec(guildUser.tempName);
+      if (result && result[0] === guildUser.tempName.substr(0, result[0].length)) {
+        const [customIcon] = result;
+
+        if (customIcon !== '🔐' && customIcon !== '🙊') {
+          const name = guildUser.tempName
+            .substring(result[0].length, guildUser.tempName.length)
+            .trim();
+
+          return `${customIcon} ${name}`;
+        }
+      }
+    }
+  }
 
   return `${icon} ${guildUser.tempName || `${owner.username}'s Lobby`}`;
 }
