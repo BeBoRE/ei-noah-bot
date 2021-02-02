@@ -435,6 +435,7 @@ router.use('remove', async ({ params, msg, guildUser }) => {
           msg.channel,
           msg.author);
       }]);
+    return null;
   }
 
   removeFromLobby(activeChannel, users, roles, msg.channel, msg.author);
