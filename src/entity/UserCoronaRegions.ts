@@ -9,7 +9,7 @@ class UserCoronaRegions {
   @PrimaryKey()
   id!: number;
 
-  @ManyToOne({ unique: 'userRegion' })
+  @ManyToOne({ unique: 'userRegion', entity: 'User' })
   user!: User;
 
   @Property({ unique: 'userRegion' })

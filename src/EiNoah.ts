@@ -1,7 +1,7 @@
 import {
   Client, User as DiscordUser, TextChannel, NewsChannel, Role,
 } from 'discord.js';
-import { Connection, IDatabaseDriver, MikroORM } from 'mikro-orm';
+import { Connection, IDatabaseDriver, MikroORM } from '@mikro-orm/core';
 import Router, { Handler, messageParser } from './Router';
 
 const errorToChannel = async (channelId : string, client : Client, err : Error) => {

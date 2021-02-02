@@ -71,7 +71,7 @@ const removeHandler : Handler = async ({
     return 'Je hebt deze regio nog niet toegevoegd';
   }
 
-  em.removeEntity(dbRegion);
+  em.remove(dbRegion);
 
   return `${dbRegion.region} is verwijderd van je dagelijkse rapport`;
 };
