@@ -8,7 +8,7 @@ export class Migration20210202231241 extends Migration {
     this.addSql('alter table "guild_user" drop column "temp_created_at";');
     this.addSql('alter table "guild_user" drop column "temp_name";');
 
-    this.addSql('create table "temp_channel" ("channel_id" varchar(255) not null, "guild_user_id" int4 not null, "created_at" timestamptz(0) not null, "name" varchar(255) null);');
+    this.addSql('create table "temp_channel" ("channel_id" varchar(98) not null, "guild_user_id" int4 not null, "created_at" timestamptz(0) not null, "name" varchar(255) null);');
     this.addSql('alter table "temp_channel" add constraint "temp_channel_pkey" primary key ("channel_id");');
     this.addSql('alter table "temp_channel" add constraint "temp_channel_guild_user_id_unique" unique ("guild_user_id");');
 

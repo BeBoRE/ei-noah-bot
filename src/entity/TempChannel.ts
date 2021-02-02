@@ -23,7 +23,7 @@ class TempChannel {
   @Property()
   createdAt!: Date;
 
-  @Property()
+  @Property({ length: 98 })
   name?: string;
 }
 
