@@ -1,6 +1,7 @@
 import {
   Options,
 } from '@mikro-orm/core';
+import { TsMorphMetadataProvider } from '@mikro-orm/reflection';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -18,6 +19,7 @@ const options : Options = {
     transactional: true,
   },
   debug: process.env.DEBUG === 'true',
+  metadataProvider: TsMorphMetadataProvider,
 };
 
 export default options;
