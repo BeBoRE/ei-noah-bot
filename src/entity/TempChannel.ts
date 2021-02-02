@@ -25,6 +25,9 @@ class TempChannel {
 
   @Property({ length: 98 })
   name?: string;
+
+  @Property({ length: 16 })
+  textChannelId?: string;
 }
 
 export default TempChannel;

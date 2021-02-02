@@ -14,6 +14,7 @@ import {
   GuildMember,
   TextBasedChannelFields,
   OverwriteResolvable,
+  TextChannel,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/core';
 import emojiRegex from 'emoji-regex';
@@ -150,6 +151,48 @@ async function activeTempChannel(client : Client, em : EntityManager, tempChanne
   }
 
   return undefined;
+}
+
+async function activeTempText(client : Client, tempChannel : TempChannel) {
+  if (!tempChannel || !tempChannel.textChannelId) return undefined;
+
+  try {
+    const activeChannel = await client.channels.fetch(tempChannel.textChannelId, false);
+    if (activeChannel instanceof TextChannel) {
+      return activeChannel;
+    }
+  } catch (err) {
+    if (err instanceof DiscordAPIError) {
+      if (err.httpStatus === 404) {
+        tempChannel.textChannelId = undefined;
+        return undefined;
+      }
+      throw Error('Unknown Discord API Error');
+    }
+  }
+
+  return undefined;
+}
+
+async function createTextChannel(
+  client : Client,
+  em : EntityManager,
+  tempChannel : TempChannel,
+  owner : DiscordUser,
+) : Promise<TextChannel> {
+  const voiceChannel = await activeTempChannel(client, em, tempChannel);
+  if (!voiceChannel) throw Error('There is no active temp channel');
+
+  const { permissionOverwrites } = voiceChannel;
+
+  return voiceChannel.guild.channels.create(
+    generateLobbyName(getChannelType(voiceChannel), owner, tempChannel.guildUser),
+    {
+      type: 'text',
+      parent: voiceChannel.parent || undefined,
+      permissionOverwrites,
+    },
+  );
 }
 
 const createHandler : Handler = async ({
