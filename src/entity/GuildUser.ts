@@ -1,6 +1,6 @@
 import {
   Entity, ManyToOne, OneToMany, PrimaryKeyType, Property, Collection, PrimaryKey,
-} from 'mikro-orm';
+} from '@mikro-orm/core';
 // eslint-disable-next-line import/no-cycle
 import { User } from './User';
 // eslint-disable-next-line import/no-cycle

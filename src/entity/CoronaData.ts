@@ -1,4 +1,4 @@
-import { Entity, PrimaryKey, Property } from 'mikro-orm';
+import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
 
 export interface CoronaInfo {
   Date_of_publication: string
