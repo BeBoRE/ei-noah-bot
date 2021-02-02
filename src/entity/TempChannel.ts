@@ -1,0 +1,30 @@
+import {
+  Entity, OneToOne, PrimaryKey, Property,
+} from '@mikro-orm/core';
+// eslint-disable-next-line import/no-cycle
+import { GuildUser } from './GuildUser';
+
+@Entity()
+class TempChannel {
+  constructor(channelId: string, guildUser : GuildUser) {
+    this.channelId = channelId;
+    this.guildUser = guildUser;
+    this.createdAt = new Date();
+  }
+
+  @PrimaryKey()
+  channelId!: string;
+
+  @OneToOne({
+    entity: 'GuildUser', unique: true, eager: true, owner: true,
+  })
+  guildUser!: GuildUser;
+
+  @Property()
+  createdAt!: Date;
+
+  @Property()
+  name?: string;
+}
+
+export default TempChannel;
