@@ -61,7 +61,7 @@ function generateLobbyName(
     }
   }
 
-  if (textChat) return `${icon}${guildUser.tempChannel?.name || `${owner.username} chat`}`;
+  if (textChat) return `${icon}${guildUser.tempChannel?.name || `${owner.username}`} chat`;
   return `${icon} ${guildUser.tempChannel?.name || `${owner.username}'s Lobby`}`;
 }
 
@@ -555,7 +555,7 @@ const changeTypeHandler : Handler = async ({
   }
   const activeChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
 
-  if (!activeChannel) {
+  if (!activeChannel || !guildUser.tempChannel) {
     return 'Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`';
   }
 
@@ -614,6 +614,10 @@ const changeTypeHandler : Handler = async ({
     ]).catch(console.error);
 
     activeChannel.setName(generateLobbyName(changeTo, msg.author, guildUser)).catch((err) => console.error('Change name error', err));
+    activeTempText(msg.client, guildUser.tempChannel)
+      .then((textChannel) => {
+        textChannel?.setName(generateLobbyName(changeTo, msg.author, guildUser, true));
+      });
     return `Lobby type is veranderd naar *${changeTo}*`;
   }
 
@@ -783,7 +787,10 @@ const nameHandler : Handler = async ({
   if (name.length > 98) return 'De naam mag niet langer zijn dan 98 tekens';
 
   guildUser.tempChannel.name = name;
-  tempChannel.setName(generateLobbyName(getChannelType(tempChannel), msg.author, guildUser));
+  const type = getChannelType(tempChannel);
+  tempChannel.setName(generateLobbyName(type, msg.author, guildUser));
+  activeTempText(msg.client, guildUser.tempChannel)
+    .then((tc) => tc?.setName(generateLobbyName(type, msg.author, guildUser, true)));
 
   return 'Lobby naam is aangepast\n> Bij overmatig gebruik kan het meer dan 10 minuten duren';
 };
@@ -837,6 +844,7 @@ router.onInit = async (client, orm) => {
     const difference = Math.abs(now.getMinutes() - tempChannel.createdAt.getMinutes());
     if (!respectTimeLimit || difference >= 2) {
       const activeChannel = await activeTempChannel(client, em, tempChannel);
+      const activeTextChannel = await activeTempText(client, tempChannel);
 
       if (!activeChannel) {
         em.remove(tempChannel);
@@ -844,7 +852,6 @@ router.onInit = async (client, orm) => {
       } else if (!activeChannel.members.size) {
         await activeChannel.delete();
 
-        const activeTextChannel = await activeTempText(client, tempChannel);
         if (activeTextChannel) await activeTextChannel.delete();
         console.log('Verwijderd: Niemand in lobby');
         em.remove(tempChannel);
@@ -880,6 +887,9 @@ router.onInit = async (client, orm) => {
           await Promise.all([
             activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true }),
             activeChannel.setName(generateLobbyName(type, newOwner.user, newOwnerGuildUser)),
+            activeTextChannel?.setName(
+              generateLobbyName(type, newOwner.user, newOwnerGuildUser, true)
+            ),
             newOwner.voice.setMute(false),
             newOwner.send('Jij bent nu de eigenaar van de lobby'),
           ]);
