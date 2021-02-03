@@ -186,13 +186,18 @@ async function activeTempText(client : Client, tempChannel : TempChannel) {
 }
 
 function getTextPermissionOverwrites(voice : VoiceChannel) : OverwriteData[] {
-  return voice.permissionOverwrites.map((overwrite) => {
-    const data : OverwriteData = {
+  return voice.permissionOverwrites.map((overwrite) : OverwriteData => {
+    if (overwrite.id === voice.guild.id) {
+      return {
+        id: overwrite.id,
+        deny: toDenyText(getChannelType(voice)),
+      };
+    }
+
+    return {
       allow: [Permissions.FLAGS.SEND_MESSAGES, Permissions.FLAGS.VIEW_CHANNEL],
       id: overwrite.id,
     };
-
-    return data;
   });
 }
 
@@ -221,6 +226,10 @@ async function createTextChannel(
       position: voiceChannel.calculatedPosition + 1,
     },
   );
+}
+
+async function updateTextChannel(voice : VoiceChannel, text : TextChannel) {
+  text.edit({ permissionOverwrites: getTextPermissionOverwrites(voice) });
 }
 
 const createHandler : Handler = async ({
@@ -288,6 +297,10 @@ const createHandler : Handler = async ({
     gu.tempChannel = new TempChannel(createdChannel.id, gu);
     em.persist(gu.tempChannel);
 
+    const textChannel = createTextChannel(msg.client, em, gu.tempChannel, msg.author);
+
+    gu.tempChannel.textChannelId = (await textChannel).id;
+
     if (invited.length > 0) {
       return `Lobby aangemaakt voor ${invited.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} en jij`;
     } return 'Lobby aangemaakt';
@@ -343,14 +356,16 @@ router.use('add', async ({
   const allowedUsers : Array<DiscordUser | Role> = [];
   const alreadyAllowedUsers : Array<DiscordUser | Role> = [];
 
+  const overwritePromise : Promise<any>[] = [];
+
   userOrRole.forEach((uOrR) => {
     if (activeChannel.permissionOverwrites.some((o) => uOrR.id === o.id)) {
       alreadyAllowedUsers.push(uOrR);
     } else {
-      activeChannel.updateOverwrite(uOrR, {
+      overwritePromise.push(activeChannel.updateOverwrite(uOrR, {
         CONNECT: true,
         SPEAK: true,
-      });
+      }));
 
       allowedUsers.push(uOrR);
 
@@ -360,6 +375,13 @@ router.use('add', async ({
         activeChannel.members
           .each((member) => { if (uOrR.members.has(member.id)) member.voice.setMute(false); });
       }
+    }
+  });
+
+  Promise.all(overwritePromise).then(async () => {
+    if (guildUser.tempChannel) {
+      const textChannel = await activeTempText(msg.client, guildUser.tempChannel);
+      if (textChannel) updateTextChannel(activeChannel, textChannel);
     }
   });
 
@@ -380,11 +402,14 @@ const removeFromLobby = (
   toRemoveRoles : Role[],
   textChannel : TextBasedChannelFields,
   channelOwner : DiscordUser,
+  tempChannel ?: TempChannel,
 ) => {
   const usersGivenPermissions : GuildMember[] = [];
 
   const rolesRemoved : Role[] = [];
   const rolesNotRemoved : Role[] = [];
+
+  const deletePromises : Array<Promise<unknown> | undefined> = [];
 
   toRemoveRoles.forEach((role) => {
     const roleOverwrite = channel.permissionOverwrites.get(role.id);
@@ -395,12 +420,12 @@ const removeFromLobby = (
         if (!channel.permissionOverwrites.has(member.id)
         && channel.members.has(member.id)
         && !toRemoveUsers.some((user) => user.id === member.id)) {
-          channel.updateOverwrite(member.id, { CONNECT: true, SPEAK: true });
+          deletePromises.push(channel.updateOverwrite(member.id, { CONNECT: true, SPEAK: true }));
           usersGivenPermissions.push(member);
         }
       });
 
-      roleOverwrite.delete();
+      deletePromises.push(roleOverwrite.delete());
       rolesRemoved.push(role);
     } else {
       rolesNotRemoved.push(role);
@@ -422,7 +447,7 @@ const removeFromLobby = (
       }
 
       if (channel.permissionOverwrites.has(user.id)) {
-        channel.permissionOverwrites.get(user.id)?.delete();
+        deletePromises.push(channel.permissionOverwrites.get(user.id)?.delete());
         removed = true;
       }
 
@@ -457,6 +482,13 @@ const removeFromLobby = (
     message += `\nRol${rolesNotRemoved.length > 1 ? 'len' : ''} ${roleNames.join(', ')} ${rolesNotRemoved.length > 1 ? 'zijn niet verwijderd' : 'is niet verwijderd'}`;
   }
 
+  Promise.all(deletePromises).then(() => {
+    if (tempChannel) {
+      const tempText = activeTempText(channel.client, tempChannel);
+      tempText.then((text) => { if (text) updateTextChannel(channel, text); });
+    }
+  });
+
   if (message === '') {
     textChannel.send('Geen users of roles gegeven');
   } else {
@@ -482,7 +514,7 @@ router.use('remove', async ({
 
   const activeChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
 
-  if (!activeChannel) {
+  if (!activeChannel || !guildUser.tempChannel) {
     return 'Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`';
   }
 
@@ -538,12 +570,13 @@ router.use('remove', async ({
           Array.from(selectedUsers),
           Array.from(selectedRoles),
           msg.channel,
-          msg.author);
+          msg.author,
+          guildUser.tempChannel);
       }]);
     return null;
   }
 
-  removeFromLobby(activeChannel, users, roles, msg.channel, msg.author);
+  removeFromLobby(activeChannel, users, roles, msg.channel, msg.author, guildUser.tempChannel);
   return null;
 });
 
@@ -613,11 +646,20 @@ const changeTypeHandler : Handler = async ({
       ...newOverwrites,
     ]).catch(console.error);
 
-    activeChannel.setName(generateLobbyName(changeTo, msg.author, guildUser)).catch((err) => console.error('Change name error', err));
-    activeTempText(msg.client, guildUser.tempChannel)
-      .then((textChannel) => {
-        textChannel?.setName(generateLobbyName(changeTo, msg.author, guildUser, true));
-      });
+    activeChannel.setName(generateLobbyName(changeTo, msg.author, guildUser))
+      .then((voice) => {
+        if (guildUser.tempChannel) {
+          activeTempText(msg.client, guildUser.tempChannel)
+            .then(async (textChannel) => {
+              if (textChannel) {
+                await textChannel.setName(generateLobbyName(changeTo, msg.author, guildUser, true));
+                updateTextChannel(voice, textChannel);
+              }
+            });
+        }
+      })
+      .catch((err) => console.error('Change name error', err));
+
     return `Lobby type is veranderd naar *${changeTo}*`;
   }
 
