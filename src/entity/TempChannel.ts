@@ -26,7 +26,7 @@ class TempChannel {
   @Property({ length: 98 })
   name?: string;
 
-  @Property({ length: 16 })
+  @Property({ length: 24 })
   textChannelId?: string;
 }
 

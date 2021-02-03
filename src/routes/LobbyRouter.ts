@@ -36,6 +36,7 @@ function generateLobbyName(
   type : ChannelType,
   owner : DiscordUser,
   guildUser : GuildUser,
+  textChat?: boolean,
 ) : string {
   let icon : string;
   if (type === ChannelType.Nojoin) icon = '🔐';
@@ -53,18 +54,28 @@ function generateLobbyName(
             .substring(result[0].length, guildUser.tempChannel.name.length)
             .trim();
 
+          if (textChat) return `${customIcon}${name} chat`;
           return `${customIcon} ${name}`;
         }
       }
     }
   }
 
+  if (textChat) return `${icon}${guildUser.tempChannel?.name || `${owner.username} chat`}`;
   return `${icon} ${guildUser.tempChannel?.name || `${owner.username}'s Lobby`}`;
 }
 
 function toDeny(type : ChannelType) {
   if (type === ChannelType.Mute) return [Permissions.FLAGS.SPEAK];
   if (type === ChannelType.Nojoin) return [Permissions.FLAGS.CONNECT, Permissions.FLAGS.SPEAK];
+  if (type === ChannelType.Public) return [];
+
+  return [];
+}
+
+function toDenyText(type : ChannelType) {
+  if (type === ChannelType.Mute) return [Permissions.FLAGS.SEND_MESSAGES];
+  if (type === ChannelType.Nojoin) return [Permissions.FLAGS.VIEW_CHANNEL];
   if (type === ChannelType.Public) return [];
 
   return [];
@@ -174,6 +185,17 @@ async function activeTempText(client : Client, tempChannel : TempChannel) {
   return undefined;
 }
 
+function getTextPermissionOverwrites(voice : VoiceChannel) : OverwriteData[] {
+  return voice.permissionOverwrites.map((overwrite) => {
+    const data : OverwriteData = {
+      allow: [Permissions.FLAGS.SEND_MESSAGES, Permissions.FLAGS.VIEW_CHANNEL],
+      id: overwrite.id,
+    };
+
+    return data;
+  });
+}
+
 async function createTextChannel(
   client : Client,
   em : EntityManager,
@@ -183,14 +205,20 @@ async function createTextChannel(
   const voiceChannel = await activeTempChannel(client, em, tempChannel);
   if (!voiceChannel) throw Error('There is no active temp channel');
 
-  const { permissionOverwrites } = voiceChannel;
+  const permissionOverwrites : OverwriteData[] = [
+    ...getTextPermissionOverwrites(voiceChannel),
+    {
+      id: voiceChannel.guild.id,
+      deny: toDenyText(getChannelType(voiceChannel)),
+    }];
 
   return voiceChannel.guild.channels.create(
-    generateLobbyName(getChannelType(voiceChannel), owner, tempChannel.guildUser),
+    generateLobbyName(getChannelType(voiceChannel), owner, tempChannel.guildUser, true),
     {
       type: 'text',
       parent: voiceChannel.parent || undefined,
       permissionOverwrites,
+      position: voiceChannel.calculatedPosition + 1,
     },
   );
 }
@@ -765,6 +793,24 @@ router.use('rename', nameHandler);
 router.use('naam', nameHandler);
 router.use('hernoem', nameHandler);
 
+const chatHandler : Handler = async ({ guildUser, em, msg }) => {
+  if (!guildUser) return 'Je kan dit commando alleen op een server gebruiken';
+
+  const activeVoice = await activeTempChannel(msg.client, em, guildUser?.tempChannel);
+  if (!activeVoice || !guildUser.tempChannel) return 'Je hebt nog geen voice-channel, maak er één aan met `ei lobby create`';
+
+  const activeText = await activeTempText(msg.client, guildUser.tempChannel);
+  if (activeText) return `Er is al een chat: ${activeText}`;
+
+  const newTextChat = await createTextChannel(msg.client, em, guildUser.tempChannel, msg.author);
+
+  guildUser.tempChannel.textChannelId = newTextChat.id;
+  return `Tekstkanaal aangemaakt: ${newTextChat}`;
+};
+
+router.use('text', chatHandler);
+router.use('chat', chatHandler);
+
 const helpHanlder : Handler = () => [
   '**Maak een tijdelijke voice kanaal aan**',
   'Mogelijke Commandos:',
@@ -797,6 +843,9 @@ router.onInit = async (client, orm) => {
         console.log('Lobby bestond niet meer');
       } else if (!activeChannel.members.size) {
         await activeChannel.delete();
+
+        const activeTextChannel = await activeTempText(client, tempChannel);
+        if (activeTextChannel) await activeTextChannel.delete();
         console.log('Verwijderd: Niemand in lobby');
         em.remove(tempChannel);
       } else if (!activeChannel.members.has(tempChannel.guildUser.user.id)) {
