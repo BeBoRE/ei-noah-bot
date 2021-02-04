@@ -925,7 +925,8 @@ router.onInit = async (client, orm) => {
 
           const type = getChannelType(activeChannel);
 
-          await activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true });
+          await activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true })
+            .catch(console.error);
 
           await Promise.all([
             activeChannel.setName(generateLobbyName(type, newOwner.user, newOwnerGuildUser)),
