@@ -38,10 +38,9 @@ function generateLobbyName(
   guildUser : GuildUser,
   textChat?: boolean,
 ) : string {
-  let icon : string;
+  let icon : string = '🔊';
   if (type === ChannelType.Nojoin) icon = '🔐';
-  else if (type === ChannelType.Mute) icon = '🙊';
-  else icon = '🔊';
+  if (type === ChannelType.Mute) icon = '🙊';
 
   if (type === 'public') {
     if (guildUser.tempChannel?.name) {
