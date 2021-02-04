@@ -925,15 +925,16 @@ router.onInit = async (client, orm) => {
 
           const type = getChannelType(activeChannel);
 
+          await activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true });
+
           await Promise.all([
-            activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true }),
             activeChannel.setName(generateLobbyName(type, newOwner.user, newOwnerGuildUser)),
             activeTextChannel?.setName(
               generateLobbyName(type, newOwner.user, newOwnerGuildUser, true)
             ),
             newOwner.voice.setMute(false),
             newOwner.send('Jij bent nu de eigenaar van de lobby'),
-          ]);
+          ]).catch(console.error);
 
           console.log('Ownership is overgedragen');
         } else { console.log('Owner is weggegaan, maar niemand kwam in aanmerking om de nieuwe leider te worden'); }
@@ -957,12 +958,10 @@ router.onInit = async (client, orm) => {
 
     const tempChecks = usersWithTemp.map((tcs) => checkTempChannel(tcs, em));
 
-    try {
-      await Promise.all(tempChecks);
-      await em.flush();
-    } catch (err) { console.error(err); } finally {
-      setTimeout(checkTempLobbies, 1000 * 60);
-    }
+    await Promise.all(tempChecks).catch(console.error);
+    await em.flush().catch(console.error);
+
+    setTimeout(checkTempLobbies, 1000 * 60);
   };
 
   client.on('voiceStateUpdate', async (oldState, newState) => {
@@ -973,7 +972,7 @@ router.onInit = async (client, orm) => {
       });
       if (tempChannel) await checkTempChannel(tempChannel, em, false);
 
-      em.flush().catch((err) => console.log(err));
+      await em.flush().catch((err) => console.log(err));
     }
   });
 
