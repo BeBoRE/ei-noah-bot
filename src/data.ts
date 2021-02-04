@@ -11,7 +11,7 @@ const getGuildData = async (em : EntityManager, guild : DiscordGuild) : Promise<
   if (!dbGuild) {
     const newGuild = em.create(Guild, { id: guild.id });
 
-    await em.persist(newGuild).flush();
+    await em.persist(newGuild);
 
     return newGuild;
   }
@@ -25,7 +25,7 @@ const getUserData = async (em : EntityManager, user: DiscordUser) : Promise<User
   if (!dbUser) {
     const newUser = em.create(User, { id: user.id });
 
-    await em.persist(newUser).flush();
+    await em.persist(newUser);
 
     return newUser;
   }
@@ -43,7 +43,7 @@ const getUserGuildData = async (em : EntityManager, user : DiscordUser, guild : 
 
     const newGuildUser = em.create(GuildUser, { user: dbUser, guild: dbGuild });
 
-    await em.persist(newGuildUser).flush();
+    await em.persist(newGuildUser);
 
     return newGuildUser;
   }
@@ -60,7 +60,7 @@ const getCategoryData = async (em : EntityManager, category : CategoryChannel | 
 
   const newCategory = em.create(Category, { id: category.id });
 
-  await em.persist(newCategory).flush();
+  await em.persist(newCategory);
 
   return newCategory;
 };
