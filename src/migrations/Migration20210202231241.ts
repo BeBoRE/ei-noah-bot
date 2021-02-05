@@ -9,7 +9,7 @@ export class Migration20210202231241 extends Migration {
 
     this.addSql('alter table "temp_channel" add constraint "temp_channel_guild_user_id_foreign" foreign key ("guild_user_id") references "guild_user" ("id") on update cascade;');
 
-    this.addSql('INSERT INTO "temp_channel" ("channel_id", "guild_user_id", "created_at", "name") SELECT "temp_channel", "id", "temp_created_at", "temp_name" WHERE "temp_channel" IS NOT NULL')
+    this.addSql('INSERT INTO "temp_channel" ("channel_id", "guild_user_id", "created_at", "name") SELECT "temp_channel", "id", "temp_created_at", "temp_name" FROM "guild_user" WHERE "temp_channel" IS NOT NULL')
 
     this.addSql('alter table "guild_user" drop constraint "guild_user_temp_channel_unique";');
     this.addSql('alter table "guild_user" drop column "temp_channel";');
