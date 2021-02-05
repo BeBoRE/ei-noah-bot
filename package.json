@@ -23,6 +23,11 @@
   },
   "homepage": "https://github.com/dotBeFoRE/ei-noah-bot#readme",
   "dependencies": {
+    "@mikro-orm/core": "^4.4.1",
+    "@mikro-orm/knex": "^4.4.1",
+    "@mikro-orm/migrations": "^4.4.1",
+    "@mikro-orm/postgresql": "^4.4.1",
+    "@mikro-orm/reflection": "^4.4.1",
     "@types/cron": "^1.7.2",
     "@types/node": "^14.0.27",
     "@types/node-fetch": "^2.5.7",
@@ -33,7 +38,6 @@
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
     "emoji-regex": "^9.2.1",
-    "mikro-orm": "^3.6.15",
     "moment": "^2.29.0",
     "node-fetch": "^2.6.1",
     "pg": "^8.3.3",
@@ -42,6 +46,7 @@
     "typescript": "^3.9.7"
   },
   "devDependencies": {
+    "@mikro-orm/cli": "^4.4.1",
     "@types/emoji-regex": "^9.2.0",
     "@typescript-eslint/eslint-plugin": "^3.9.0",
     "@typescript-eslint/parser": "^3.9.0",

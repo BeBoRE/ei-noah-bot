@@ -1,6 +1,6 @@
 import {
   Entity, ManyToOne, PrimaryKey, Property,
-} from 'mikro-orm';
+} from '@mikro-orm/core';
 // eslint-disable-next-line import/no-cycle
 import { GuildUser } from './GuildUser';
 
@@ -9,10 +9,10 @@ class Quote {
   @PrimaryKey({ serializedPrimaryKey: true })
   id!: number;
 
-  @ManyToOne({ eager: true })
+  @ManyToOne({ eager: true, entity: 'GuildUser' })
   guildUser!: GuildUser;
 
-  @ManyToOne({ eager: true })
+  @ManyToOne({ eager: true, entity: 'GuildUser' })
   creator!: GuildUser;
 
   @Property()

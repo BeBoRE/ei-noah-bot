@@ -1,6 +1,6 @@
 import {
   Entity, PrimaryKey, OneToMany, Property, Collection,
-} from 'mikro-orm';
+} from '@mikro-orm/core';
 // eslint-disable-next-line import/no-cycle
 import { GuildUser } from './GuildUser';
 // eslint-disable-next-line import/no-cycle

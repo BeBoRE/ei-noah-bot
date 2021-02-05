@@ -1,5 +1,5 @@
 import { User as DiscordUser, Guild as DiscordGuild, CategoryChannel } from 'discord.js';
-import { EntityManager } from 'mikro-orm';
+import { EntityManager } from '@mikro-orm/core';
 import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
 import { User } from './entity/User';
@@ -9,10 +9,9 @@ const getGuildData = async (em : EntityManager, guild : DiscordGuild) : Promise<
   const dbGuild = await em.findOne(Guild, { id: guild.id });
 
   if (!dbGuild) {
-    const newGuild = new Guild();
-    newGuild.id = guild.id;
+    const newGuild = em.create(Guild, { id: guild.id });
 
-    await em.persist(newGuild, true);
+    await em.persist(newGuild);
 
     return newGuild;
   }
@@ -24,10 +23,9 @@ const getUserData = async (em : EntityManager, user: DiscordUser) : Promise<User
   const dbUser = await em.findOne(User, { id: user.id });
 
   if (!dbUser) {
-    const newUser = new User();
-    newUser.id = user.id;
+    const newUser = em.create(User, { id: user.id });
 
-    await em.persist(newUser, true);
+    await em.persist(newUser);
 
     return newUser;
   }
@@ -43,11 +41,9 @@ const getUserGuildData = async (em : EntityManager, user : DiscordUser, guild : 
     const dbUser = await getUserData(em, user);
     const dbGuild = await getGuildData(em, guild);
 
-    const newGuildUser = new GuildUser();
-    newGuildUser.user = dbUser;
-    newGuildUser.guild = dbGuild;
+    const newGuildUser = em.create(GuildUser, { user: dbUser, guild: dbGuild });
 
-    await em.persist(newGuildUser, true);
+    await em.persist(newGuildUser);
 
     return newGuildUser;
   }
@@ -62,10 +58,9 @@ const getCategoryData = async (em : EntityManager, category : CategoryChannel | 
 
   if (dbCategory) return dbCategory;
 
-  const newCategory = new Category();
-  newCategory.id = category.id;
+  const newCategory = em.create(Category, { id: category.id });
 
-  await em.persist(newCategory, true);
+  await em.persist(newCategory);
 
   return newCategory;
 };

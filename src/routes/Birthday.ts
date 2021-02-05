@@ -7,7 +7,7 @@ import {
   Permissions, Role, TextChannel,
   User as DiscordUser,
 } from 'discord.js';
-import { EntityManager } from 'mikro-orm';
+import { EntityManager } from '@mikro-orm/core';
 import { getUserData } from '../data';
 import { User } from '../entity/User';
 import Router, { Handler } from '../Router';

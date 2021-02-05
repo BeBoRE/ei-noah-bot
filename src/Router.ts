@@ -13,7 +13,7 @@ import {
 } from 'discord.js';
 import {
   EntityManager, MikroORM, IDatabaseDriver, Connection,
-} from 'mikro-orm';
+} from '@mikro-orm/core';
 import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
 import { getUserGuildData, getCategoryData, getUserData } from './data';

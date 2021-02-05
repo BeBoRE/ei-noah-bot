@@ -1,6 +1,6 @@
 import {
   Entity, ManyToOne, PrimaryKey, Property,
-} from 'mikro-orm';
+} from '@mikro-orm/core';
 // eslint-disable-next-line import/no-cycle
 import { User } from './User';
 
@@ -9,7 +9,7 @@ class UserCoronaRegions {
   @PrimaryKey()
   id!: number;
 
-  @ManyToOne({ unique: 'userRegion' })
+  @ManyToOne({ unique: 'userRegion', entity: 'User' })
   user!: User;
 
   @Property({ unique: 'userRegion' })

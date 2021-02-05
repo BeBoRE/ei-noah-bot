@@ -1,12 +1,13 @@
 import {
   Options,
-} from 'mikro-orm';
+} from '@mikro-orm/core';
+import { TsMorphMetadataProvider } from '@mikro-orm/reflection';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const options : Options = {
-  entitiesDirs: ['./src/entity'], // path to your TS entities (source), relative to `baseDir`
+  entities: ['./src/entity'], // path to your TS entities (source), relative to `baseDir`
   dbName: process.env.DBNAME || 'ei-noah',
   type: 'postgresql', // one of `mongo` | `mysql` | `mariadb` | `postgresql` | `sqlite`
   host: process.env.HOST || 'localhost',
@@ -18,6 +19,7 @@ const options : Options = {
     transactional: true,
   },
   debug: process.env.DEBUG === 'true',
+  metadataProvider: TsMorphMetadataProvider,
 };
 
 export default options;
