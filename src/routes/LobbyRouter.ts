@@ -2,14 +2,12 @@
 import {
   User as DiscordUser,
   DMChannel,
-  NewsChannel,
   OverwriteData,
   Permissions,
   Guild as DiscordGuild,
   Client,
   VoiceChannel,
   DiscordAPIError,
-  Constants,
   Role,
   GuildMember,
   TextBasedChannelFields,
@@ -23,7 +21,7 @@ import emojiRegex from 'emoji-regex';
 import { Category } from '../entity/Category';
 import TempChannel from '../entity/TempChannel';
 import createMenu from '../createMenu';
-import { getGuildData, getUserGuildData } from '../data';
+import { getCategoryData, getGuildData, getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
 import Router, { Handler } from '../Router';
 
@@ -285,7 +283,7 @@ const createCreateChannels = async (category : Category, client : Client, em : E
 
 const voiceCreateHandler : Handler = async ({ msg, category, em }) => {
   if (!(msg.channel instanceof TextChannel) || !msg.guild) return 'Dit commando kan alleen op een server gebruikt worden';
-  if (!msg.channel.parent || !category || !category.isLobbyCategory) return 'Dit is geen lobby category';
+  if (!category) return 'Dit is geen lobby category';
 
   await createCreateChannels(category, msg.client, em);
 
@@ -293,100 +291,6 @@ const voiceCreateHandler : Handler = async ({ msg, category, em }) => {
 };
 
 router.use('create-channels', voiceCreateHandler);
-
-const createHandler : Handler = async ({
-  msg, params, flags, guildUser, category, em,
-}) => {
-  const nonUsersAndRoles = params
-    .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
-  const invited = params
-    // eslint-disable-next-line max-len
-    .filter((param): param is DiscordUser | Role => param instanceof DiscordUser || param instanceof Role)
-    .filter((user) => user.id !== msg.author.id && user.id !== msg.client.user?.id);
-
-  if (msg.channel instanceof DMChannel
-    || msg.channel instanceof NewsChannel
-    || msg.guild === null
-    || guildUser === null) {
-    return 'Je kan alleen lobbies aanmaken op een server';
-  } if (!category || !category.isLobbyCategory || msg.channel.parentID === null) {
-    return 'Je mag geen lobbies aanmaken in deze categorie';
-  } if (nonUsersAndRoles.length) {
-    return 'Alleen mentions mogelijk als argument(en)';
-  }
-  const activeChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
-
-  let type = ChannelType.Mute;
-  if (flags.some((flag) => flag.toLowerCase() === ChannelType.Mute)) type = ChannelType.Mute;
-  else if (flags.some((flag) => flag.toLowerCase() === ChannelType.Public)) {
-    type = ChannelType.Public;
-  } else if (flags.some((flag) => flag.toLowerCase() === ChannelType.Nojoin)) {
-    type = ChannelType.Nojoin;
-  }
-
-  let userLimit = flags
-    .map((flag) => Number.parseInt(flag, 10))
-    .find((flag) => Number.isSafeInteger(flag));
-
-  if (userLimit === undefined) {
-    userLimit = 0;
-  } else if (userLimit < 0) {
-    userLimit = 0;
-  } else if (userLimit > 99) {
-    userLimit = 99;
-  }
-
-  if (activeChannel) {
-    return 'Je hebt al een lobby';
-  }
-  try {
-    guildUser.tempChannel = undefined;
-
-    const createdChannel = await createTempChannel(
-      msg.guild,
-      msg.channel.parentID,
-      invited,
-      msg.author,
-      guildUser.guild.bitrate,
-      type,
-      userLimit,
-      guildUser,
-    );
-
-    const gu = guildUser;
-
-    if (gu.tempChannel) { em.remove(gu.tempChannel); }
-    gu.tempChannel = new TempChannel(createdChannel.id, gu);
-    em.persist(gu.tempChannel);
-
-    const textChannel = createTextChannel(msg.client, em, gu.tempChannel, msg.author);
-
-    gu.tempChannel.textChannelId = (await textChannel).id;
-
-    if (invited.length > 0) {
-      return `Lobby aangemaakt voor ${invited.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} en jij`;
-    } return 'Lobby aangemaakt';
-  } catch (err) {
-    if (err instanceof DiscordAPIError) {
-      if (err.code === Constants.APIErrors.INVALID_FORM_BODY) {
-        return 'Neem contact op met de server admins, waarschijnlijk staat de bitrate voor de lobbies te hoog';
-      }
-      console.log(err);
-      return 'Onverwachte DiscordAPIError';
-    }
-    console.error(err);
-    return 'Onverwachte error';
-  }
-};
-
-// ei lobby create ...
-const createRouter = new Router();
-router.use('create', createRouter);
-router.use('aanmaken', createRouter);
-
-createRouter.use(Role, createHandler);
-createRouter.use(DiscordUser, createHandler);
-createRouter.use(null, createHandler);
 
 router.use('add', async ({
   params, msg, guildUser, em,
@@ -790,15 +694,9 @@ router.use('size', sizeHandler);
 router.use('limit', sizeHandler);
 router.use('userlimit', sizeHandler);
 
-router.use('category', async ({ category, params, msg }) => {
-  const ca = category;
-  if (msg.channel instanceof DMChannel) {
+router.use('category', async ({ params, msg, guildUser }) => {
+  if (msg.channel instanceof DMChannel || !guildUser) {
     return 'Je kan dit commando alleen op servers gebruiken';
-  }
-
-  if (params.length === 0) {
-    if (category && category.isLobbyCategory) return 'Je mag lobbies aanmaken in deze categorie';
-    return 'Je mag geen lobbies aanmaken in deze categorie';
   }
 
   if (params.length > 1) {
@@ -813,21 +711,59 @@ router.use('category', async ({ category, params, msg }) => {
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
-  if (!category) {
-    return 'Dit kanaal zit niet in een categorie';
+  if (params[0].toLowerCase() === 'none') {
+    guildUser.guild.lobbyCategory = undefined;
+    return 'Server heeft nu geen lobby categorie meer';
   }
 
-  let isAllowed : boolean;
+  const category = await msg.client.channels.fetch(params[0], true);
+  if (!(category instanceof CategoryChannel)) return 'Gegeven is niet `none` en geen categorie';
 
-  if (params[0].toLowerCase() === 'true' || params[0] === '1') isAllowed = true;
-  else if (params[0].toLowerCase() === 'false' || params[0] === '0') isAllowed = false;
-  else {
-    return `\`${params[0]}\` is niet een argument, verwacht \`true\` of \`false\``;
+  if (category.guild !== msg.guild) return 'Gegeven categorie van een andere server';
+
+  guildUser.guild.lobbyCategory = category.id;
+  return `${category.name} is nu de lobby categorie`;
+});
+
+router.use('create-category', async ({
+  params, msg, em, guildUser,
+}) => {
+  if (msg.channel instanceof DMChannel || !guildUser) {
+    return 'Je kan dit commando alleen op servers gebruiken';
   }
 
-  if (ca) { ca.isLobbyCategory = isAllowed; }
+  if (params.length > 1) {
+    return 'Ik verwacht maar één argument';
+  }
 
-  return isAllowed ? 'Users kunnen nu lobbies aanmaken in deze category' : 'User kunnen nu geen lobbies meer aanmaken in deze category';
+  if (typeof params[0] !== 'string') {
+    return 'Ik verwacht een string als argument';
+  }
+
+  if (!msg.member?.hasPermission('ADMINISTRATOR')) {
+    return 'Alleen een Edwin mag dit aanpassen';
+  }
+
+  const category = await msg.client.channels.fetch(params[0], true);
+  if (!(category instanceof CategoryChannel)) return 'Gegeven is geen categorie';
+
+  const categoryData = await getCategoryData(em, category);
+  if (!categoryData) return 'Dit pad is onmogelijk :D';
+
+  if (category.guild !== msg.guild) return 'Gegeven categorie van een andere server';
+
+  categoryData.isLobbyCategory = !categoryData.isLobbyCategory;
+
+  if (categoryData.isLobbyCategory) {
+    createCreateChannels(categoryData, msg.client, em);
+
+    return `${category.name} is nu een lobby aanmaak categorie`;
+  }
+
+  getChannel(msg.client, guildUser.guild.publicVoice).then((channel) => { if (channel) channel.delete(); });
+  getChannel(msg.client, guildUser.guild.privateVoice).then((channel) => { if (channel) channel.delete(); });
+  getChannel(msg.client, guildUser.guild.muteVoice).then((channel) => { if (channel) channel.delete(); });
+  return `${category.name} is nu geen lobby aanmaak categorie meer`;
 });
 
 router.use('bitrate', async ({ msg, guildUser, params }) => {
@@ -925,16 +861,14 @@ router.use('chat', chatHandler);
 const helpHanlder : Handler = () => [
   '**Maak een tijdelijke voice kanaal aan**',
   'Mogelijke Commandos:',
-  '`ei lobby create [@mention ...]`: Maak een private lobby aan en laat alleen de toegestaande mensen joinen',
-  '`ei lobby create [@mention ...] -mute`: Iedereen mag joinen, maar alleen toegestaande mensen mogen spreken',
-  '`ei lobby create [@mention ...] -public`: Iedereen mag joinen',
-  '`ei lobby create [@mention ...] -<nummer>`: Zet een user limit op de lobby',
   '`ei lobby add @mention ...`: Laat user(s) toe aan de lobby',
   '`ei lobby remove [@mention ...]`: Verwijder user(s)/ role(s) uit de lobby',
   '`ei lobby set [mute / private / public]`: Verander het type van de lobby',
   '`ei lobby limit <nummer>`: Verander de lobby user limit',
-  '`*Admin* ei lobby category true/ false`: Sta users toe lobbies aan te maken in deze categorie',
+  '`*Admin* ei lobby category none/<category id>`: Verander de categorie waar de lobbies worden neergezet',
   '`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
+  '`*Admin* ei lobby category-create <category id>`: Maak in gegeven categorie lobby aanmaak channels aan',
+  '> Verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
 ].join('\n');
 
 router.use(null, helpHanlder);
@@ -1068,7 +1002,7 @@ router.onInit = async (client, orm) => {
         if (channel.id === (await guildData).privateVoice) type = ChannelType.Nojoin;
         if (channel.id === (await guildData).muteVoice) type = ChannelType.Mute;
 
-        const createdChannel = await createTempChannel(newState.guild, channel.parent.id, [], newState.member.user, (await guildData).bitrate, type, undefined, await guildUserPromise);
+        const createdChannel = await createTempChannel(newState.guild, (await guildData).lobbyCategory || channel.parent.id, [], newState.member.user, (await guildData).bitrate, type, undefined, await guildUserPromise);
         guildUser.tempChannel = new TempChannel(createdChannel.id, guildUser);
 
         newState.setChannel(createdChannel);

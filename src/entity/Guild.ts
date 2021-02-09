@@ -30,4 +30,7 @@ export class Guild {
 
   @Property()
   privateVoice?: string;
+
+  @Property()
+  lobbyCategory?: string;
 }
