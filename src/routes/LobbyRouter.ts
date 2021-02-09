@@ -15,12 +15,15 @@ import {
   TextBasedChannelFields,
   OverwriteResolvable,
   TextChannel,
+  CategoryChannel,
+  Channel,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/core';
 import emojiRegex from 'emoji-regex';
+import { Category } from '../entity/Category';
 import TempChannel from '../entity/TempChannel';
 import createMenu from '../createMenu';
-import { getUserGuildData } from '../data';
+import { getGuildData, getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
 import Router, { Handler } from '../Router';
 
@@ -32,17 +35,21 @@ enum ChannelType {
   Nojoin = 'private'
 }
 
+function getIcon(type : ChannelType) {
+  if (type === ChannelType.Nojoin) return '🔐';
+  if (type === ChannelType.Mute) return '🙊';
+  return '🔊';
+}
+
 function generateLobbyName(
   type : ChannelType,
   owner : DiscordUser,
   guildUser : GuildUser,
   textChat?: boolean,
 ) : string {
-  let icon : string = '🔊';
-  if (type === ChannelType.Nojoin) icon = '🔐';
-  if (type === ChannelType.Mute) icon = '🙊';
+  const icon = getIcon(type);
 
-  if (type === 'public') {
+  if (type === ChannelType.Public) {
     if (guildUser.tempChannel?.name) {
       const result = emojiRegex().exec(guildUser.tempChannel.name);
       if (result && result[0] === guildUser.tempChannel.name.substr(0, result[0].length)) {
@@ -230,6 +237,62 @@ async function createTextChannel(
 async function updateTextChannel(voice : VoiceChannel, text : TextChannel) {
   text.edit({ permissionOverwrites: getTextPermissionOverwrites(voice) });
 }
+
+const createCreateChannel = (type : ChannelType, category : CategoryChannel) => {
+  const typeName = `${type[0].toUpperCase()}${type.substring(1, type.length)}`;
+  return category.guild.channels.create(`${getIcon(type)} Maak ${typeName} Lobby`, {
+    type: 'voice',
+    parent: category,
+  });
+};
+
+const getChannel = (client : Client, channelId ?: string) => new Promise<null | Channel>(
+  (resolve) => {
+    if (channelId === undefined) { resolve(null); return; }
+    client.channels.fetch(channelId, true)
+      .then((channel) => resolve(channel))
+      .catch(() => resolve(null))
+      .finally(() => resolve(null));
+  },
+);
+
+const createCreateChannels = async (category : Category, client : Client, em : EntityManager) => {
+  const actualCategory = await client.channels.fetch(category.id, true);
+  if (!(actualCategory instanceof CategoryChannel)) return false;
+
+  const guildData = await getGuildData(em, actualCategory.guild);
+
+  let publicVoice = await getChannel(client, guildData.publicVoice);
+  if (publicVoice === null) {
+    publicVoice = await createCreateChannel(ChannelType.Public, actualCategory);
+    guildData.publicVoice = publicVoice.id;
+  }
+
+  let muteVoice = await getChannel(client, guildData.muteVoice);
+  if (muteVoice === null) {
+    muteVoice = await createCreateChannel(ChannelType.Mute, actualCategory);
+    guildData.muteVoice = muteVoice.id;
+  }
+
+  let privateVoice = await getChannel(client, guildData.privateVoice);
+  if (privateVoice === null) {
+    privateVoice = await createCreateChannel(ChannelType.Nojoin, actualCategory);
+    guildData.privateVoice = privateVoice.id;
+  }
+
+  return true;
+};
+
+const voiceCreateHandler : Handler = async ({ msg, category, em }) => {
+  if (!(msg.channel instanceof TextChannel) || !msg.guild) return 'Dit commando kan alleen op een server gebruikt worden';
+  if (!msg.channel.parent || !category || !category.isLobbyCategory) return 'Dit is geen lobby category';
+
+  await createCreateChannels(category, msg.client, em);
+
+  return 'AAAAAA';
+};
+
+router.use('create-channels', voiceCreateHandler);
 
 const createHandler : Handler = async ({
   msg, params, flags, guildUser, category, em,
@@ -877,6 +940,12 @@ const helpHanlder : Handler = () => [
 router.use(null, helpHanlder);
 router.use('help', helpHanlder);
 
+const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => {
+  const categories = await em.find(Category, { isLobbyCategory: true });
+
+  await Promise.all(categories.map((category) => createCreateChannels(category, client, em)));
+};
+
 router.onInit = async (client, orm) => {
   const checkTempChannel = async (tempChannel: TempChannel,
     em : EntityManager, respectTimeLimit = true) => {
@@ -978,6 +1047,10 @@ router.onInit = async (client, orm) => {
   });
 
   checkTempLobbies();
+
+  const em = orm.em.fork();
+  await checkVoiceCreateChannels(em, client);
+  em.flush();
 };
 
 export default router;
