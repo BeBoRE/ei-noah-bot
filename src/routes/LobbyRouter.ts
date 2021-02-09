@@ -866,7 +866,7 @@ router.use('help', helpHanlder);
 const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => {
   const categories = await em.find(Category, { isLobbyCategory: true });
 
-  await Promise.all(categories.map((category) => createCreateChannels(category, client, em)));
+  await Promise.all(categories.map((category) => createCreateChannels(category, client, em).catch(console.error)));
 };
 
 router.onInit = async (client, orm) => {
@@ -966,38 +966,38 @@ router.onInit = async (client, orm) => {
       if (tempChannel) await checkTempChannel(tempChannel, em, false);
 
       await em.flush().catch((err) => console.log(err));
-    } else {
-      const guildData = getGuildData(em, newState.guild);
-      const guildUserPromise = newState.member?.user ? getUserGuildData(em, newState.member?.user, newState.guild) : null;
+    }
 
-      const { channel } = newState;
+    const guildData = getGuildData(em, newState.guild);
+    const guildUserPromise = newState.member?.user ? getUserGuildData(em, newState.member?.user, newState.guild) : null;
 
-      if (
-        channel
+    const { channel } = newState;
+
+    if (
+      channel
         && guildUserPromise
         && newState.member?.user
         && (
           channel.id === (await guildData).publicVoice
           || channel.id === (await guildData).muteVoice
           || channel.id === (await guildData).privateVoice)) {
-        const activeChannel = await activeTempChannel(client, em, (await guildUserPromise).tempChannel);
-        const guildUser = await guildUserPromise;
+      const activeChannel = await activeTempChannel(client, em, (await guildUserPromise).tempChannel);
+      const guildUser = await guildUserPromise;
 
-        if (activeChannel) {
-          newState.setChannel(activeChannel);
-        } else if (channel.parent?.id) {
-          let type : ChannelType = ChannelType.Public;
-          if (channel.id === (await guildData).privateVoice) type = ChannelType.Nojoin;
-          if (channel.id === (await guildData).muteVoice) type = ChannelType.Mute;
+      if (activeChannel) {
+        newState.setChannel(activeChannel);
+      } else if (channel.parent?.id) {
+        let type : ChannelType = ChannelType.Public;
+        if (channel.id === (await guildData).privateVoice) type = ChannelType.Nojoin;
+        if (channel.id === (await guildData).muteVoice) type = ChannelType.Mute;
 
-          const createdChannel = await createTempChannel(newState.guild, (await guildData).lobbyCategory || channel.parent.id, [], newState.member.user, (await guildData).bitrate, type, undefined, await guildUserPromise);
-          guildUser.tempChannel = new TempChannel(createdChannel.id, guildUser);
+        const createdChannel = await createTempChannel(newState.guild, (await guildData).lobbyCategory || channel.parent.id, [], newState.member.user, (await guildData).bitrate, type, undefined, await guildUserPromise);
+        guildUser.tempChannel = new TempChannel(createdChannel.id, guildUser);
 
-          newState.setChannel(createdChannel);
+        newState.setChannel(createdChannel);
 
-          const textChannel = await createTextChannel(client, em, guildUser.tempChannel, newState.member.user);
-          guildUser.tempChannel.textChannelId = textChannel.id;
-        }
+        const textChannel = await createTextChannel(client, em, guildUser.tempChannel, newState.member.user);
+        guildUser.tempChannel.textChannelId = textChannel.id;
       }
     }
 
@@ -1008,7 +1008,7 @@ router.onInit = async (client, orm) => {
 
   const em = orm.em.fork();
   await checkVoiceCreateChannels(em, client);
-  em.flush();
+  await em.flush();
 };
 
 export default router;
