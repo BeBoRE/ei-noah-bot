@@ -966,7 +966,7 @@ router.onInit = async (client, orm) => {
       if (tempChannel) await checkTempChannel(tempChannel, em, false);
 
       await em.flush().catch((err) => console.log(err));
-    }
+    } 
 
     const guildData = getGuildData(em, newState.guild);
     const guildUserPromise = newState.member?.user ? getUserGuildData(em, newState.member?.user, newState.guild) : null;
