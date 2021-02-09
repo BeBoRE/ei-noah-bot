@@ -866,7 +866,7 @@ router.use('help', helpHanlder);
 const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => {
   const categories = await em.find(Category, { isLobbyCategory: true });
 
-  await Promise.all(categories.map((category) => createCreateChannels(category, client, em).catch(console.error)));
+  await Promise.all(categories.map((category) => createCreateChannels(category, client, em).catch()));
 };
 
 router.onInit = async (client, orm) => {
