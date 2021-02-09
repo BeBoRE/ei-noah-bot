@@ -13,5 +13,8 @@
   },
   "extends": [
     "airbnb-typescript"
-  ]
+  ],
+  "rules": {
+    "max-len": "off"
+  }
 }

@@ -1,5 +1,5 @@
 import {
-  PrimaryKey, Entity, Property, PrimaryKeyType,
+  PrimaryKey, Entity, Property,
 } from '@mikro-orm/core';
 
 @Entity()
@@ -10,6 +10,4 @@ export class Category {
 
   @Property()
   isLobbyCategory: boolean = false;
-
-  [PrimaryKeyType]: [string];
 }
