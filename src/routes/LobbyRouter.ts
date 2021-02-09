@@ -281,17 +281,6 @@ const createCreateChannels = async (category : Category, client : Client, em : E
   return true;
 };
 
-const voiceCreateHandler : Handler = async ({ msg, category, em }) => {
-  if (!(msg.channel instanceof TextChannel) || !msg.guild) return 'Dit commando kan alleen op een server gebruikt worden';
-  if (!category) return 'Dit is geen lobby category';
-
-  await createCreateChannels(category, msg.client, em);
-
-  return 'AAAAAA';
-};
-
-router.use('create-channels', voiceCreateHandler);
-
 router.use('add', async ({
   params, msg, guildUser, em,
 }) => {
