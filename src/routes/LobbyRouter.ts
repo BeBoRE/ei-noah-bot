@@ -926,7 +926,6 @@ router.onInit = async (client, orm) => {
               generateLobbyName(type, newOwner.user, newOwnerGuildUser, true)
             ),
             newOwner.voice.setMute(false),
-            newOwner.send('Jij bent nu de eigenaar van de lobby'),
           ]).catch(console.error);
 
           console.log('Ownership is overgedragen');
