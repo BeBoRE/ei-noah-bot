@@ -250,7 +250,7 @@ const coronaRefresher = async (client : Client, orm : MikroORM<IDatabaseDriver<C
 
   const reportCron = new CronJob('0 9 * * *', postReport);
 
-  if (process.env.NODE_ENV !== 'production') postReport();
+  if (process.env.POST_RAPPORT?.toLowerCase() !== 'true') postReport();
 
   reportCron.start();
 };
