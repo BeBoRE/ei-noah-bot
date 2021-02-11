@@ -2,6 +2,8 @@ import fetch from 'node-fetch';
 import moment from 'moment';
 import { CronJob } from 'cron';
 import parse from 'csv-parse/lib/sync';
+import { Client } from 'discord.js';
+import { Connection, IDatabaseDriver, MikroORM } from '@mikro-orm/core';
 import UserCoronaRegions from '../entity/UserCoronaRegions';
 import Router, { Handler } from '../Router';
 import CoronaData, { CoronaInfo } from '../entity/CoronaData';
@@ -119,11 +121,13 @@ enum Niveau {
   zeerernstig = 'Zeer Ernstig'
 }
 
-router.onInit = async (client, orm) => {
+const coronaRefresher = async (client : Client, orm : MikroORM<IDatabaseDriver<Connection>>) => {
   const regionPopulations = await getPopulation();
 
   const refreshData = async () => {
     const em = orm.em.fork();
+
+    console.log(`${moment().format('HH:mm')}: corona fetch started`);
 
     const inDb = await em.getRepository(CoronaData).findAll();
     const fetchedData = <CoronaInfo[]>(await fetch('https://data.rivm.nl/covid-19/COVID-19_aantallen_gemeente_per_dag.json').then((res) => res.json()));
@@ -252,3 +256,4 @@ router.onInit = async (client, orm) => {
 };
 
 export default router;
+export { coronaRefresher };
