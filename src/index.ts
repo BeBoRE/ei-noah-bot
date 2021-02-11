@@ -97,5 +97,4 @@ dotenv.config();
   eiNoah.use('corona', CoronaRouter);
 
   await eiNoah.start();
-  // coronaRefresher(eiNoah.client, orm);
 })();
