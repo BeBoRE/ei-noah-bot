@@ -800,13 +800,13 @@ const nameHandler : Handler = async ({
   params, guildUser, category, msg, em,
 }) => {
   if (!guildUser || !category) return 'Dit commando kan alleen op een server worden gebruikt';
-  if (!category.isLobbyCategory) return 'Je kan geen lobbies aanmaken in deze categorie';
 
   if (!params.length) return 'Geef een naam in';
 
   const tempChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
 
   if (!tempChannel || !guildUser.tempChannel) return 'Je moet een lobby hebben om dit commando te kunnen gebruiken';
+  if ((<VoiceChannel>tempChannel)?.parentID !== (<TextChannel>msg.channel)?.parentID) return 'Lobby is niet in dezelfde categorie';
 
   const nameArray = params.filter((param) : param is string => typeof param === 'string');
   if (nameArray.length !== params.length) return 'Je mag alleen tekst gebruiken in de naam';
