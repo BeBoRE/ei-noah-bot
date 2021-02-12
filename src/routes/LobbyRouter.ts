@@ -998,7 +998,7 @@ router.onInit = async (client, orm) => {
       }
     }
 
-    em.flush();
+    await em.flush();
   });
 
   checkTempLobbies();
