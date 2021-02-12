@@ -904,7 +904,7 @@ router.onInit = async (client, orm) => {
               .some((overwrite) => overwrite.id !== activeChannel.guild.id
               && member.roles.cache.has(overwrite.id));
 
-            return isPublic || isAllowedUser || hasAllowedRole;
+            return (isPublic || isAllowedUser || hasAllowedRole) && !member.user.bot;
           })
           .first();
 
@@ -926,6 +926,7 @@ router.onInit = async (client, orm) => {
               generateLobbyName(type, newOwner.user, newOwnerGuildUser, true)
             ),
             newOwner.voice.setMute(false),
+            activeTextChannel?.send(`De lobby is overgedragen aan ${newOwner.displayName}`),
           ]).catch(console.error);
 
           console.log('Ownership is overgedragen');
