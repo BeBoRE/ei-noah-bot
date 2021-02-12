@@ -20,8 +20,11 @@ class EiNoah {
 
   private readonly token : string;
 
-  constructor(token : string) {
+  private readonly orm : MikroORM<IDatabaseDriver<Connection>>;
+
+  constructor(token : string, orm : MikroORM<IDatabaseDriver<Connection>>) {
     this.token = token;
+    this.orm = orm;
   }
 
   // this.use wordt doorgepaast aan de echte router
@@ -37,9 +40,7 @@ class EiNoah {
   => void | Promise<void>);
 
   public async start() {
-    // Creëerd de database connectie
-    const orm = await MikroORM.init().catch((err) => { console.error(err); process.exit(-1); });
-    await orm.getMigrator().up();
+    const { orm } = this;
 
     this.client.on('ready', () => {
       console.log('client online');

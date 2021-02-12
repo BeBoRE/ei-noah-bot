@@ -11,7 +11,11 @@
       "args":[  
          "${workspaceRoot}/src/index.ts"
       ],
-      "restart":true
+      "restart":true,
+      "skipFiles": [
+        "${workspaceFolder}/node_modules/**/*.js",
+        "<node_internals>/**/*.js"
+      ]
    }
   ]
 }

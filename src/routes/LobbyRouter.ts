@@ -904,7 +904,7 @@ router.onInit = async (client, orm) => {
               .some((overwrite) => overwrite.id !== activeChannel.guild.id
               && member.roles.cache.has(overwrite.id));
 
-            return isPublic || isAllowedUser || hasAllowedRole;
+            return (isPublic || isAllowedUser || hasAllowedRole) && !member.user.bot;
           })
           .first();
 
@@ -926,7 +926,7 @@ router.onInit = async (client, orm) => {
               generateLobbyName(type, newOwner.user, newOwnerGuildUser, true)
             ),
             newOwner.voice.setMute(false),
-            newOwner.send('Jij bent nu de eigenaar van de lobby'),
+            activeTextChannel?.send(`De lobby is overgedragen aan ${newOwner.displayName}`),
           ]).catch(console.error);
 
           console.log('Ownership is overgedragen');
@@ -964,8 +964,6 @@ router.onInit = async (client, orm) => {
         channelId: oldState.channel.id,
       });
       if (tempChannel) await checkTempChannel(tempChannel, em, false);
-
-      await em.flush().catch((err) => console.log(err));
     }
 
     const guildData = getGuildData(em, newState.guild);
