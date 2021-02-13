@@ -938,7 +938,10 @@ router.onInit = async (client, orm) => {
         const correctName = generateLobbyName(lobbyType, discordUser, tempChannel.guildUser);
 
         if (activeChannel.name !== correctName) {
-          await activeChannel.setName(correctName);
+          await Promise.all([
+            activeChannel.setName(correctName),
+            activeTextChannel?.setName(generateLobbyName(lobbyType, discordUser, tempChannel.guildUser, true)),
+          ]);
         }
       }
     }
