@@ -14,7 +14,7 @@ import Router, { Handler } from '../Router';
 
 const router = new Router();
 
-router.use('set', async ({ user, params }) => {
+const setRouter : Handler = async ({ user, params }) => {
   const rawDate = params[0];
 
   if (typeof (rawDate) !== 'string') {
@@ -23,7 +23,8 @@ router.use('set', async ({ user, params }) => {
 
   const args = rawDate.split('/');
   if (!args.length) {
-    return 'Je hebt geen datum gegeven.';
+    if (!user.birthday) return 'Voeg je verjaardag toe met DD/MM/YYYY als argument';
+    return 'Verander je verjaardag door DD/MM/YYYY als argument';
   }
   const birth = new Date(parseInt(args[2], 10), parseInt(args[1], 10) - 1, parseInt(args[0], 10));
   const birth1 = moment(birth);
@@ -45,7 +46,11 @@ router.use('set', async ({ user, params }) => {
     return `Je verjaardag is gewijzigd naar: ${birth1.locale('nl').format('D MMMM YYYY')}`;
   }
   return `Je verjaardag is toegevoegd: ${birth1.locale('nl').format('D MMMM YYYY')}`;
-});
+};
+
+router.use('set', setRouter);
+router.use('add', setRouter);
+router.use('change', setRouter);
 
 const helpHandler : Handler = async () => [
   '**Krijg elke ochtend een melding als iemand jarig is**',
