@@ -18,8 +18,8 @@ const setRouter : Handler = async ({ user, params }) => {
   const rawDate = params[0];
 
   if (typeof (rawDate) !== 'string') {
-    if (!user.birthday) return 'Voeg je verjaardag toe met DD/MM/YYYY als argument';
-    return 'Verander je verjaardag door DD/MM/YYYY als argument';
+    if (!user.birthday) return 'Voeg je verjaardag toe door DD/MM/YYYY als argument te gegeven';
+    return 'Verander je verjaardag door DD/MM/YYYY als argument te geven';
   }
 
   const args = rawDate.split('/');
