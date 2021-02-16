@@ -61,6 +61,7 @@ dotenv.config();
   });
 
   eiNoah.use('quote', QuoteRouter);
+  eiNoah.use('qoute', QuoteRouter);
 
   eiNoah.use('help', () => [
     '**Alle Commando\'s**',

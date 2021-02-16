@@ -854,6 +854,7 @@ const helpHanlder : Handler = () => [
   '`ei lobby remove [@mention ...]`: Verwijder user(s)/ role(s) uit de lobby',
   '`ei lobby set [mute / private / public]`: Verander het type van de lobby',
   '`ei lobby limit <nummer>`: Verander de lobby user limit',
+  '`ei lobby name <lobby naam>`: Geef de lobby een naam',
   '`*Admin* ei lobby category none/<category id>`: Verander de categorie waar de lobbies worden neergezet',
   '`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
   '`*Admin* ei lobby category-create <category id>`: Maak in gegeven categorie lobby aanmaak channels aan',
