@@ -237,12 +237,12 @@ const checkBday = async (client : Client, em : EntityManager) => {
       await user?.guildUsers.init();
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
-          const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true);
+          const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true).catch(() => {});
           if (bdayChannel instanceof TextChannel) {
-            const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
+            const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true).catch(() => {});
             if (bdayRole instanceof Role) {
-              const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
-              if (!member.roles.cache.has(bdayRole.id)) {
+              const member = await bdayChannel.guild.members.fetch({ user: du, cache: true }).catch(() => {});
+              if (member && !member.roles.cache.has(bdayRole.id)) {
                 member.roles.add(bdayRole).catch(() => console.log('Kon geen rol geven'));
 
                 const embed = new MessageEmbed();
@@ -269,12 +269,12 @@ const checkBday = async (client : Client, em : EntityManager) => {
       await user?.guildUsers.init();
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
-          const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true);
+          const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true).catch(() => {});
           if (bdayChannel instanceof TextChannel) {
-            const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
+            const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true).catch(() => {});
             if (bdayRole instanceof Role) {
-              const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
-              if (member.roles.cache.has(bdayRole.id)) member.roles.remove(bdayRole).catch(() => console.log('Kon rol niet verwijderen'));
+              const member = await bdayChannel.guild.members.fetch({ user: du, cache: true }).catch(() => {});
+              if (member && member.roles.cache.has(bdayRole.id)) member.roles.remove(bdayRole).catch(() => console.log('Kon rol niet verwijderen'));
             }
           }
         }
