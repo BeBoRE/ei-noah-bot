@@ -58,8 +58,8 @@ const helpHandler : Handler = async () => [
   '`ei bday <@user>`: Laat de geboortedatum en leeftijd van een user zien',
   '`ei bday delete`: Verwijderd jouw verjaardag',
   '***Admin Commando\'s***',
-  '`ei bday set-channel`: Selecteerd het huidige kanaal voor de dagelijkse update',
-  '`ei bday set-role <Role Mention>`: Selecteerd de gekozen role voor de jarige-jop',
+  '`ei bday channel`: Selecteerd het huidige kanaal voor de dagelijkse update',
+  '`ei bday role <Role Mention>`: Selecteerd de gekozen role voor de jarige-jop',
 ].join('\n');
 
 router.use('help', helpHandler);
@@ -97,7 +97,7 @@ router.use('show-all', async ({ msg, em }) => {
   return embed;
 });
 
-router.use('show-age', async ({ msg, em }) => {
+const showAgeHandler : Handler = async ({ msg, em }) => {
   const users = await em.find(User, { $not: { birthday: null } });
   const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(u.id, true)));
   const description = discUsers
@@ -123,7 +123,10 @@ router.use('show-age', async ({ msg, em }) => {
   embed.description = description;
 
   return embed;
-});
+};
+
+router.use('show-age', showAgeHandler);
+router.use('ages', showAgeHandler);
 
 router.use(DiscordUser, async ({ params, em, msg }) => {
   const user = params[0];
@@ -158,7 +161,7 @@ router.use('delete', async ({ user }) => {
   return 'Je verjaardag is verwijderd.';
 });
 
-router.use('set-channel', async ({ guildUser, msg }) => {
+const setChannelHandler : Handler = async ({ guildUser, msg }) => {
   if (!guildUser) {
     return 'This can only be used in a server';
   }
@@ -170,11 +173,19 @@ router.use('set-channel', async ({ guildUser, msg }) => {
   const { guild } = guildUser;
   const { channel } = msg;
 
-  guild.birthdayChannel = channel.id;
-  return 'Het huidige kanaal is geselecteerd voor deze server';
-});
+  if (guild.birthdayChannel === channel.id) {
+    guild.birthdayChannel = undefined;
+    return 'Kanaal niet meer geselecteerd als announcement kanaal';
+  }
 
-router.use('set-role', async ({ guildUser, msg, params }) => {
+  guild.birthdayChannel = channel.id;
+  return 'Het huidige kanaal is nu geselecteerd als bday announcement kanaal';
+};
+
+router.use('set-channel', setChannelHandler);
+router.use('channel', setChannelHandler);
+
+const setRoleHandler : Handler = async ({ guildUser, msg, params }) => {
   if (!guildUser || !msg.guild) {
     return 'Dit kan alleen in een server gebruikt worden';
   }
@@ -201,7 +212,10 @@ router.use('set-role', async ({ guildUser, msg, params }) => {
   }
 
   return 'Mention een role';
-});
+};
+
+router.use('set-role', setRoleHandler);
+router.use('role', setRoleHandler);
 
 const checkBday = async (client : Client, em : EntityManager) => {
   const today = moment().startOf('day').locale('nl').format('DD MMMM');
