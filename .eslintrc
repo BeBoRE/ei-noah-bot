@@ -15,6 +15,7 @@
     "airbnb-typescript"
   ],
   "rules": {
-    "max-len": "off"
+    "max-len": "off",
+    "no-console": "off"
   }
 }

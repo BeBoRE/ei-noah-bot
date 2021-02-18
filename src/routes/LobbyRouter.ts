@@ -158,7 +158,7 @@ async function activeTempChannel(client : Client, em : EntityManager, tempChanne
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.httpStatus === 404) {
-        await em.remove(tempChannel).flush();
+        await em.remove(tempChannel);
         return undefined;
       }
       throw Error('Unknown Discord API Error');
@@ -256,7 +256,7 @@ const getChannel = (client : Client, channelId ?: string) => new Promise<null | 
 
 const createCreateChannels = async (category : Category, client : Client, em : EntityManager) => {
   const actualCategory = await client.channels.fetch(category.id, true);
-  if (!(actualCategory instanceof CategoryChannel)) return false;
+  if (!(actualCategory instanceof CategoryChannel)) return;
 
   const guildData = await getGuildData(em, actualCategory.guild);
 
@@ -277,8 +277,6 @@ const createCreateChannels = async (category : Category, client : Client, em : E
     privateVoice = await createCreateChannel(ChannelType.Nojoin, actualCategory);
     guildData.privateVoice = privateVoice.id;
   }
-
-  return true;
 };
 
 router.use('add', async ({
