@@ -232,8 +232,8 @@ async function createTextChannel(
   );
 }
 
-async function updateTextChannel(voice : VoiceChannel, text : TextChannel) {
-  text.edit({ permissionOverwrites: getTextPermissionOverwrites(voice) });
+function updateTextChannel(voice : VoiceChannel, text : TextChannel) {
+  return text.edit({ permissionOverwrites: getTextPermissionOverwrites(voice) });
 }
 
 const createCreateChannel = (type : ChannelType, category : CategoryChannel) => {
@@ -715,7 +715,7 @@ router.use('category', async ({ params, msg, guildUser }) => {
 router.use('create-category', async ({
   params, msg, em, guildUser,
 }) => {
-  if (msg.channel instanceof DMChannel || !guildUser) {
+  if (msg.channel instanceof DMChannel || !guildUser || !msg.client.user) {
     return 'Je kan dit commando alleen op servers gebruiken';
   }
 
@@ -731,8 +731,16 @@ router.use('create-category', async ({
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
-  const category = await msg.client.channels.fetch(params[0], true);
+  const category = await msg.client.channels.fetch(params[0], true).catch(() => {});
   if (!(category instanceof CategoryChannel)) return 'Gegeven is geen categorie';
+
+  if (!category.permissionsFor(msg.client.user)?.has('MANAGE_CHANNELS')) {
+    return 'Ik heb niet de permission om kanalen aan te maken';
+  }
+
+  if (!category.permissionsFor(msg.client.user)?.has('MOVE_MEMBERS')) {
+    return 'Ik heb niet de permission om members te verplaatsen';
+  }
 
   const categoryData = await getCategoryData(em, category);
   if (!categoryData) return 'Dit pad is onmogelijk :D';
@@ -836,8 +844,8 @@ const helpHanlder : Handler = () => [
   '`ei lobby limit <nummer>`: Verander de lobby user limit',
   '`ei lobby name <lobby naam>`: Geef de lobby een naam',
   '`*Admin* ei lobby category none/<category id>`: Verander de categorie waar de lobbies worden neergezet',
+  '`*Admin* ei lobby create-category <category id>`: Maak in gegeven categorie lobby aanmaak channels aan',
   '`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
-  '`*Admin* ei lobby category-create <category id>`: Maak in gegeven categorie lobby aanmaak channels aan',
   '> Verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
 ].join('\n');
 
@@ -847,7 +855,7 @@ router.use('help', helpHanlder);
 const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => {
   const categories = await em.find(Category, { isLobbyCategory: true });
 
-  await Promise.all(categories.map((category) => createCreateChannels(category, client, em).catch()));
+  await Promise.all(categories.map((category) => createCreateChannels(category, client, em).catch(() => {})));
 };
 
 router.onInit = async (client, orm) => {
