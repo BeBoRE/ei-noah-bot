@@ -175,20 +175,29 @@ router.use('set-channel', async ({ guildUser, msg }) => {
 });
 
 router.use('set-role', async ({ guildUser, msg, params }) => {
-  if (!guildUser) {
+  if (!guildUser || !msg.guild) {
     return 'Dit kan alleen in een server gebruikt worden';
   }
 
   if (!msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
+
+  if (!msg.guild.me?.permissions.has(Permissions.FLAGS.MANAGE_ROLES)) {
+    return 'Ik heb geen permissions om iemand een rol te geven';
+  }
+
   const role = params[0];
 
   const { guild } = guildUser;
 
   if (role instanceof Role) {
-    guild.birthdayRole = role.id;
-    return 'De role voor deze server is gezet';
+    if (msg.guild && msg.guild.me && msg.guild?.me?.roles.highest.position > role.position) {
+      guild.birthdayRole = role.id;
+      return 'De role voor deze server is gezet';
+    }
+
+    return 'De rol is hoger dan mijn rol';
   }
 
   return 'Mention een role';
@@ -236,7 +245,7 @@ const checkBday = async (client : Client, em : EntityManager) => {
                 embed.description = message;
                 embed.setThumbnail('http://clipart-library.com/images/kcKnBz4Ai.jpg');
 
-                await bdayChannel.send(embed);
+                await bdayChannel.send(embed).catch(() => {});
               }
             }
           }
