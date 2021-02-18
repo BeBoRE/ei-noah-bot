@@ -827,24 +827,6 @@ router.use('rename', nameHandler);
 router.use('naam', nameHandler);
 router.use('hernoem', nameHandler);
 
-const chatHandler : Handler = async ({ guildUser, em, msg }) => {
-  if (!guildUser) return 'Je kan dit commando alleen op een server gebruiken';
-
-  const activeVoice = await activeTempChannel(msg.client, em, guildUser?.tempChannel);
-  if (!activeVoice || !guildUser.tempChannel) return 'Je hebt nog geen voice-channel, maak er één aan met `ei lobby create`';
-
-  const activeText = await activeTempText(msg.client, guildUser.tempChannel);
-  if (activeText) return `Er is al een chat: ${activeText}`;
-
-  const newTextChat = await createTextChannel(msg.client, em, guildUser.tempChannel, msg.author);
-
-  guildUser.tempChannel.textChannelId = newTextChat.id;
-  return `Tekstkanaal aangemaakt: ${newTextChat}`;
-};
-
-router.use('text', chatHandler);
-router.use('chat', chatHandler);
-
 const helpHanlder : Handler = () => [
   '**Maak een tijdelijke voice kanaal aan**',
   'Mogelijke Commandos:',
