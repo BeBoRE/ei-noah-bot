@@ -197,7 +197,7 @@ router.use('set-role', async ({ guildUser, msg, params }) => {
       return 'De role voor deze server is gezet';
     }
 
-    return 'De rol is hoger dan mijn rol';
+    return 'Gegeven rol is hoger dan mijn rol';
   }
 
   return 'Mention een role';
