@@ -128,8 +128,14 @@ const showAgeHandler : Handler = async ({ msg, em }) => {
   if (!color || color === '#000000') color = '#ffcc5f';
 
   const embed = new MessageEmbed();
+
   embed.setColor(color);
   embed.setTitle('Leeftijden:');
+
+  if (users.length === 0) {
+    embed.setDescription('Geen verjaardagen geregistreerd');
+    return embed;
+  }
   embed.description = description;
 
   return embed;
