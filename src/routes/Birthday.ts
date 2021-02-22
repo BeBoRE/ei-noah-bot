@@ -67,6 +67,9 @@ router.use(null, helpHandler);
 
 router.use('show-all', async ({ msg, em }) => {
   const users = await em.find(User, { $not: { birthday: null } });
+
+  if (users.length === 0) return 'Geen geboortedatum\'s geregistreerd';
+
   const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(u.id, true)));
   const description = discUsers
     .sort((a, b) => {
@@ -99,6 +102,9 @@ router.use('show-all', async ({ msg, em }) => {
 
 const showAgeHandler : Handler = async ({ msg, em }) => {
   const users = await em.find(User, { $not: { birthday: null } });
+
+  if (users.length === 0) return 'Geen geboortedatum\'s geregistreerd';
+
   const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(u.id, true)));
   const description = discUsers
     .sort((a, b) => {
