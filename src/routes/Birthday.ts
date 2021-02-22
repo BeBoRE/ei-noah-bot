@@ -133,7 +133,7 @@ const showAgeHandler : Handler = async ({ msg, em }) => {
   embed.setTitle('Leeftijden:');
 
   if (users.length === 0) {
-    embed.setDescription('Geen verjaardagen geregistreerd--Signtest');
+    embed.setDescription('Geen verjaardagen geregistreerd');
     return embed;
   }
   embed.description = description;
