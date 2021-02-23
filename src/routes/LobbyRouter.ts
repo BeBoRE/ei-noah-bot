@@ -871,7 +871,7 @@ router.onInit = async (client, orm) => {
       if (!activeChannel) {
         em.remove(tempChannel);
         console.log('Lobby bestond niet meer');
-      } else if (!activeChannel.members.size) {
+      } else if (!activeChannel.members.filter((member) => !member.user.bot).size) {
         await activeChannel.delete();
 
         if (activeTextChannel) await activeTextChannel.delete();
