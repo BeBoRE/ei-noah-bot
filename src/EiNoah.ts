@@ -161,7 +161,7 @@ class EiNoah {
               return;
             }
 
-            msg.author.send('Ik kan niet in dat kanaal reageren, kunnen die kanker admins niet hun werk doen??').catch(() => { });
+            msg.author.send('Ik kan niet in dat kanaal reageren, kunnen die klote admins niet hun werk doen??').catch(() => { });
             return;
           }
 
