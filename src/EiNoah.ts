@@ -85,6 +85,7 @@ class EiNoah {
           const em = orm.em.fork();
 
           messageParser(msg, em)
+            // @ts-ignore
             .then((info) => this.router.handle(info))
             .then((response) => {
               if (response) {
@@ -124,6 +125,7 @@ class EiNoah {
 
     this.router.onInit = this.onInit;
 
+    // @ts-ignore
     this.router.initialize(this.client, orm);
     process.on('uncaughtException', async (err) => {
       if (process.env.ERROR_CHANNEL) await errorToChannel(process.env.ERROR_CHANNEL, this.client, err, ErrorType.Uncaught);

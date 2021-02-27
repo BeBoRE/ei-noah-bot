@@ -158,7 +158,7 @@ export default class Router {
 
   // INTERNAL
   // Zorgt dat de commando's op de goede plek terecht komen
-  public handle(info: RouteInfo) : Promise<HandlerReturn> {
+  protected handle(info: RouteInfo) : Promise<HandlerReturn> {
     return new Promise((resolve, reject) => {
       const currentRoute = info.params[0];
 
@@ -208,7 +208,7 @@ export default class Router {
     });
   }
 
-  public initialize(client : Client, orm : MikroORM<IDatabaseDriver<Connection>>) {
+  protected initialize(client : Client, orm : MikroORM<IDatabaseDriver<Connection>>) {
     Object.entries(this.routes).forEach(([, route]) => {
       if (route instanceof Router) {
         route.initialize(client, orm);
