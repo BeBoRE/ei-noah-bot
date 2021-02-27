@@ -5,6 +5,7 @@ import {
 import { MikroORM } from '@mikro-orm/core';
 import { fork } from 'child_process';
 import { createCanvas, loadImage } from 'canvas';
+import { Handler } from 'Router';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
@@ -38,7 +39,7 @@ dotenv.config();
 
   // Hier is een 'Handler' als argument in principe is dit een eindpunt van de routing.
   // Dit is waar berichten worden afgehandeld
-  eiNoah.use('steek', async ({ params, msg }) => {
+  const stabHandler : Handler = async ({ params, msg }) => {
     const [user] = params;
     if (user instanceof User) {
       const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
@@ -76,7 +77,10 @@ dotenv.config();
       return new MessageAttachment(canvas.createPNGStream());
     }
     return 'Lekker';
-  });
+  };
+
+  eiNoah.use('steek', stabHandler);
+  eiNoah.use('stab', stabHandler);
 
   eiNoah.use(Role, ({ params }) => `${params[0]}s zijn gamers`);
 
