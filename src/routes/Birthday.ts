@@ -58,8 +58,8 @@ const helpHandler : Handler = async () => [
   '`ei bday <@user>`: Laat de geboortedatum en leeftijd van een user zien',
   '`ei bday delete`: Verwijderd jouw verjaardag',
   '***Admin Commando\'s***',
-  '`ei bday set-channel`: Selecteerd het huidige kanaal voor de dagelijkse update',
-  '`ei bday set-role <Role Mention>`: Selecteerd de gekozen role voor de jarige-jop',
+  '`ei bday channel`: Selecteerd het huidige kanaal voor de dagelijkse update',
+  '`ei bday role <Role Mention>`: Selecteerd de gekozen role voor de jarige-jop',
 ].join('\n');
 
 router.use('help', helpHandler);
@@ -67,6 +67,7 @@ router.use(null, helpHandler);
 
 router.use('show-all', async ({ msg, em }) => {
   const users = await em.find(User, { $not: { birthday: null } });
+
   const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(u.id, true)));
   const description = discUsers
     .sort((a, b) => {
@@ -92,13 +93,22 @@ router.use('show-all', async ({ msg, em }) => {
   const embed = new MessageEmbed();
   embed.setColor(color);
   embed.setTitle('Verjaardagen:');
+
+  if (users.length === 0) {
+    embed.setDescription('Geen verjaardagen geregistreerd');
+    return embed;
+  }
+
   embed.addField('Aankomende eerst', description);
 
   return embed;
 });
 
-router.use('show-age', async ({ msg, em }) => {
+const showAgeHandler : Handler = async ({ msg, em }) => {
   const users = await em.find(User, { $not: { birthday: null } });
+
+  if (users.length === 0) return 'Geen geboortedatum\'s geregistreerd';
+
   const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(u.id, true)));
   const description = discUsers
     .sort((a, b) => {
@@ -118,12 +128,21 @@ router.use('show-age', async ({ msg, em }) => {
   if (!color || color === '#000000') color = '#ffcc5f';
 
   const embed = new MessageEmbed();
+
   embed.setColor(color);
   embed.setTitle('Leeftijden:');
+
+  if (users.length === 0) {
+    embed.setDescription('Geen verjaardagen geregistreerd');
+    return embed;
+  }
   embed.description = description;
 
   return embed;
-});
+};
+
+router.use('show-age', showAgeHandler);
+router.use('ages', showAgeHandler);
 
 router.use(DiscordUser, async ({ params, em, msg }) => {
   const user = params[0];
@@ -158,7 +177,7 @@ router.use('delete', async ({ user }) => {
   return 'Je verjaardag is verwijderd.';
 });
 
-router.use('set-channel', async ({ guildUser, msg }) => {
+const setChannelHandler : Handler = async ({ guildUser, msg }) => {
   if (!guildUser) {
     return 'This can only be used in a server';
   }
@@ -170,29 +189,49 @@ router.use('set-channel', async ({ guildUser, msg }) => {
   const { guild } = guildUser;
   const { channel } = msg;
 
-  guild.birthdayChannel = channel.id;
-  return 'Het huidige kanaal is geselecteerd voor deze server';
-});
+  if (guild.birthdayChannel === channel.id) {
+    guild.birthdayChannel = undefined;
+    return 'Kanaal niet meer geselecteerd als announcement kanaal';
+  }
 
-router.use('set-role', async ({ guildUser, msg, params }) => {
-  if (!guildUser) {
+  guild.birthdayChannel = channel.id;
+  return 'Het huidige kanaal is nu geselecteerd als bday announcement kanaal';
+};
+
+router.use('set-channel', setChannelHandler);
+router.use('channel', setChannelHandler);
+
+const setRoleHandler : Handler = async ({ guildUser, msg, params }) => {
+  if (!guildUser || !msg.guild) {
     return 'Dit kan alleen in een server gebruikt worden';
   }
 
   if (!msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
+
+  if (!msg.guild.me?.permissions.has(Permissions.FLAGS.MANAGE_ROLES)) {
+    return 'Ik heb geen permissions om iemand een rol te geven';
+  }
+
   const role = params[0];
 
   const { guild } = guildUser;
 
   if (role instanceof Role) {
-    guild.birthdayRole = role.id;
-    return 'De role voor deze server is gezet';
+    if (msg.guild && msg.guild.me && msg.guild?.me?.roles.highest.position > role.position) {
+      guild.birthdayRole = role.id;
+      return 'De role voor deze server is gezet';
+    }
+
+    return 'Gegeven rol is hoger dan mijn rol';
   }
 
   return 'Mention een role';
-});
+};
+
+router.use('set-role', setRoleHandler);
+router.use('role', setRoleHandler);
 
 const checkBday = async (client : Client, em : EntityManager) => {
   const today = moment().startOf('day').locale('nl').format('DD MMMM');
@@ -214,12 +253,12 @@ const checkBday = async (client : Client, em : EntityManager) => {
       await user?.guildUsers.init();
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
-          const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true);
+          const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true).catch(() => {});
           if (bdayChannel instanceof TextChannel) {
-            const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
+            const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true).catch(() => {});
             if (bdayRole instanceof Role) {
-              const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
-              if (!member.roles.cache.has(bdayRole.id)) {
+              const member = await bdayChannel.guild.members.fetch({ user: du, cache: true }).catch(() => {});
+              if (member && !member.roles.cache.has(bdayRole.id)) {
                 member.roles.add(bdayRole).catch(() => console.log('Kon geen rol geven'));
 
                 const embed = new MessageEmbed();
@@ -236,7 +275,7 @@ const checkBday = async (client : Client, em : EntityManager) => {
                 embed.description = message;
                 embed.setThumbnail('http://clipart-library.com/images/kcKnBz4Ai.jpg');
 
-                await bdayChannel.send(embed);
+                await bdayChannel.send(embed).catch(() => {});
               }
             }
           }
@@ -246,12 +285,12 @@ const checkBday = async (client : Client, em : EntityManager) => {
       await user?.guildUsers.init();
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
-          const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true);
+          const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true).catch(() => {});
           if (bdayChannel instanceof TextChannel) {
-            const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true);
+            const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true).catch(() => {});
             if (bdayRole instanceof Role) {
-              const member = await bdayChannel.guild.members.fetch({ user: du, cache: true });
-              if (member.roles.cache.has(bdayRole.id)) member.roles.remove(bdayRole).catch(() => console.log('Kon rol niet verwijderen'));
+              const member = await bdayChannel.guild.members.fetch({ user: du, cache: true }).catch(() => {});
+              if (member && member.roles.cache.has(bdayRole.id)) member.roles.remove(bdayRole).catch(() => console.log('Kon rol niet verwijderen'));
             }
           }
         }

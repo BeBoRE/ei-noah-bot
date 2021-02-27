@@ -158,7 +158,7 @@ async function activeTempChannel(client : Client, em : EntityManager, tempChanne
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.httpStatus === 404) {
-        await em.remove(tempChannel).flush();
+        await em.remove(tempChannel);
         return undefined;
       }
       throw Error('Unknown Discord API Error');
@@ -232,8 +232,8 @@ async function createTextChannel(
   );
 }
 
-async function updateTextChannel(voice : VoiceChannel, text : TextChannel) {
-  text.edit({ permissionOverwrites: getTextPermissionOverwrites(voice) });
+function updateTextChannel(voice : VoiceChannel, text : TextChannel) {
+  return text.edit({ permissionOverwrites: getTextPermissionOverwrites(voice) });
 }
 
 const createCreateChannel = (type : ChannelType, category : CategoryChannel) => {
@@ -256,7 +256,7 @@ const getChannel = (client : Client, channelId ?: string) => new Promise<null | 
 
 const createCreateChannels = async (category : Category, client : Client, em : EntityManager) => {
   const actualCategory = await client.channels.fetch(category.id, true);
-  if (!(actualCategory instanceof CategoryChannel)) return false;
+  if (!(actualCategory instanceof CategoryChannel)) return;
 
   const guildData = await getGuildData(em, actualCategory.guild);
 
@@ -277,8 +277,6 @@ const createCreateChannels = async (category : Category, client : Client, em : E
     privateVoice = await createCreateChannel(ChannelType.Nojoin, actualCategory);
     guildData.privateVoice = privateVoice.id;
   }
-
-  return true;
 };
 
 router.use('add', async ({
@@ -717,7 +715,7 @@ router.use('category', async ({ params, msg, guildUser }) => {
 router.use('create-category', async ({
   params, msg, em, guildUser,
 }) => {
-  if (msg.channel instanceof DMChannel || !guildUser) {
+  if (msg.channel instanceof DMChannel || !guildUser || !msg.client.user) {
     return 'Je kan dit commando alleen op servers gebruiken';
   }
 
@@ -733,8 +731,16 @@ router.use('create-category', async ({
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
-  const category = await msg.client.channels.fetch(params[0], true);
+  const category = await msg.client.channels.fetch(params[0], true).catch(() => {});
   if (!(category instanceof CategoryChannel)) return 'Gegeven is geen categorie';
+
+  if (!category.permissionsFor(msg.client.user)?.has('MANAGE_CHANNELS')) {
+    return 'Ik heb niet de permission om kanalen aan te maken';
+  }
+
+  if (!category.permissionsFor(msg.client.user)?.has('MOVE_MEMBERS')) {
+    return 'Ik heb niet de permission om members te verplaatsen';
+  }
 
   const categoryData = await getCategoryData(em, category);
   if (!categoryData) return 'Dit pad is onmogelijk :D';
@@ -829,24 +835,6 @@ router.use('rename', nameHandler);
 router.use('naam', nameHandler);
 router.use('hernoem', nameHandler);
 
-const chatHandler : Handler = async ({ guildUser, em, msg }) => {
-  if (!guildUser) return 'Je kan dit commando alleen op een server gebruiken';
-
-  const activeVoice = await activeTempChannel(msg.client, em, guildUser?.tempChannel);
-  if (!activeVoice || !guildUser.tempChannel) return 'Je hebt nog geen voice-channel, maak er één aan met `ei lobby create`';
-
-  const activeText = await activeTempText(msg.client, guildUser.tempChannel);
-  if (activeText) return `Er is al een chat: ${activeText}`;
-
-  const newTextChat = await createTextChannel(msg.client, em, guildUser.tempChannel, msg.author);
-
-  guildUser.tempChannel.textChannelId = newTextChat.id;
-  return `Tekstkanaal aangemaakt: ${newTextChat}`;
-};
-
-router.use('text', chatHandler);
-router.use('chat', chatHandler);
-
 const helpHanlder : Handler = () => [
   '**Maak een tijdelijke voice kanaal aan**',
   'Mogelijke Commandos:',
@@ -856,8 +844,8 @@ const helpHanlder : Handler = () => [
   '`ei lobby limit <nummer>`: Verander de lobby user limit',
   '`ei lobby name <lobby naam>`: Geef de lobby een naam',
   '`*Admin* ei lobby category none/<category id>`: Verander de categorie waar de lobbies worden neergezet',
+  '`*Admin* ei lobby create-category <category id>`: Maak in gegeven categorie lobby aanmaak channels aan',
   '`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
-  '`*Admin* ei lobby category-create <category id>`: Maak in gegeven categorie lobby aanmaak channels aan',
   '> Verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
 ].join('\n');
 
@@ -867,7 +855,7 @@ router.use('help', helpHanlder);
 const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => {
   const categories = await em.find(Category, { isLobbyCategory: true });
 
-  await Promise.all(categories.map((category) => createCreateChannels(category, client, em).catch()));
+  await Promise.all(categories.map((category) => createCreateChannels(category, client, em).catch(() => {})));
 };
 
 router.onInit = async (client, orm) => {
@@ -883,7 +871,7 @@ router.onInit = async (client, orm) => {
       if (!activeChannel) {
         em.remove(tempChannel);
         console.log('Lobby bestond niet meer');
-      } else if (!activeChannel.members.size) {
+      } else if (!activeChannel.members.filter((member) => !member.user.bot).size) {
         await activeChannel.delete();
 
         if (activeTextChannel) await activeTextChannel.delete();

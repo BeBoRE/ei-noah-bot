@@ -239,8 +239,9 @@ const coronaRefresher = async (client : Client, orm : MikroORM<IDatabaseDriver<C
       });
 
       const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}`;
-      const user = await client.users.fetch(groupedUsers[key][0].user.id, true);
-      user.send(report, { split: true });
+      client.users.fetch(groupedUsers[key][0].user.id, true)
+        .then((user) => user.send(report, { split: true }))
+        .catch(() => {});
     });
   };
 
