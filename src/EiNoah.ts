@@ -5,7 +5,7 @@ import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
 } from '@mikro-orm/core';
 
-import { getCategoryData, getUserData, getUserGuildData } from 'data';
+import { getCategoryData, getUserData, getUserGuildData } from './data';
 import Router, { Handler, RouteInfo } from './Router';
 
 enum ErrorType {
