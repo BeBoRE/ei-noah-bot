@@ -65,7 +65,7 @@ function generateLobbyName(
     }
   }
 
-  if (textChat) return `${icon}${guildUser.tempChannel?.name || `${owner.username}`} chat`;
+  if (textChat) return `📝${guildUser.tempChannel?.name || `${owner.username}`} chat`;
   return `${icon} ${guildUser.tempChannel?.name || `${owner.username}'s Lobby`}`;
 }
 
