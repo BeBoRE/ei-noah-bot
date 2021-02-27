@@ -1,9 +1,10 @@
 import dotenv from 'dotenv';
 import {
-  User, Role, PresenceData,
+  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { fork } from 'child_process';
+import { createCanvas, loadImage } from 'canvas';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
@@ -31,11 +32,48 @@ dotenv.config();
   // Voor verjaardag handeling
   eiNoah.use('bday', Birthday);
 
+  const eiImage = loadImage('./src/images/eiNoah.png');
+  const knife = loadImage('./src/images/knife.png');
+  const blood = loadImage('./src/images/blood.png');
+
   // Hier is een 'Handler' als argument in principe is dit een eindpunt van de routing.
   // Dit is waar berichten worden afgehandeld
-  eiNoah.use('steek', (routeInfo) => {
-    if (routeInfo.params[0] instanceof User) {
-      return `Met plezier, kom hier <@!${(routeInfo.params[0]).id}>!`;
+  eiNoah.use('steek', async ({ params, msg }) => {
+    const [user] = params;
+    if (user instanceof User) {
+      const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
+
+      if (!url || !(
+        msg.channel instanceof TextChannel
+        && msg.client.user
+        && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES))) {
+        return `Met plezier, kom hier <@!${user.id}>!`;
+      }
+
+      const canvas = createCanvas(800, 600);
+      const ctx = canvas.getContext('2d');
+
+      const avatar = await loadImage(url);
+
+      ctx.drawImage(await eiImage, 0, Math.abs((await eiImage).height - canvas.height) / 2);
+
+      const x = 500;
+      const y = Math.abs(avatar.height - canvas.height) / 2;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x + avatar.width / 2, y + avatar.height / 2, avatar.height / 2, 0, Math.PI * 2, true);
+      ctx.closePath();
+      ctx.clip();
+
+      ctx.drawImage(avatar, x + 0, y + 0, avatar.width, avatar.height);
+      ctx.closePath();
+      ctx.restore();
+
+      ctx.drawImage(await knife, 0, 0, 600, 760, 200, 70, 400, 500);
+      ctx.drawImage(await blood, 450, 220, 300, 300);
+
+      return new MessageAttachment(canvas.createPNGStream());
     }
     return 'Lekker';
   });
