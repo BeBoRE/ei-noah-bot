@@ -3,10 +3,6 @@ import {
   User as DiscordUser,
   Role, Channel,
   Client,
-  DiscordAPIError,
-  TextChannel,
-  NewsChannel,
-  Guild,
   MessageOptions,
   StringResolvable,
   MessageAdditions,
@@ -16,7 +12,6 @@ import {
 } from '@mikro-orm/core';
 import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
-import { getUserGuildData, getCategoryData, getUserData } from './data';
 import { User } from './entity/User';
 
 export interface RouteInfo {
@@ -36,88 +31,8 @@ export interface Handler {
   (info: RouteInfo) : HandlerReturn | Promise<HandlerReturn>
 }
 
-export interface RouteList {
+interface RouteList {
   [path : string]: Router | Handler
-}
-
-function mapParams(_mention : string,
-  client : Client,
-  guild : Guild | null) : Array<Promise<Role | DiscordUser | string | null>> {
-  const mention = _mention;
-
-  const seperated = mention.match(/(<@!*[0-9]+>|<@&[0-9]+>|[<]|[^<]+)/g);
-
-  if (seperated) {
-    return seperated.map((param) => {
-      const user = param.match(/<@!*([0-9]+)>/);
-      if (user) return client.users.fetch(user[1], true);
-
-      const role = param.match(/<@&*([0-9]+)>/);
-      if (role && guild) return guild.roles.fetch(role[1], true);
-
-      return Promise.resolve(param);
-    });
-  }
-
-  return [Promise.resolve(null)];
-}
-
-function isFlag(argument: string) {
-  return argument[0] === '-' && argument.length > 1;
-}
-
-export async function messageParser(msg : Message, em: EntityManager) {
-  if (!msg.content) throw new Error('Message heeft geen content');
-
-  const splitted = msg.content.split(' ').filter((param) => param);
-
-  const flags = splitted.filter(isFlag).map((rawFlag) => rawFlag.substr(1, rawFlag.length - 1));
-  const nonFlags = splitted.filter((argument) => !isFlag(argument));
-
-  nonFlags.shift();
-
-  if (nonFlags[0] && nonFlags[0].toLowerCase() === 'noah') nonFlags.shift();
-
-  const parsed : Array<Promise<DiscordUser | Role | string | null>> = [];
-
-  nonFlags.forEach((param) => { parsed.push(...mapParams(param, msg.client, msg.guild)); });
-
-  let resolved;
-
-  try {
-    resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role => !!item));
-  } catch (err) {
-    if (err instanceof DiscordAPIError) {
-      if (err.httpStatus === 404) throw new Error('Invalid Mention of User, Role or Channel');
-      else throw new Error('Unknown Discord Error');
-    } else throw new Error('Unknown Parsing error');
-  }
-
-  let guildUser;
-  if (msg.guild) {
-    guildUser = await getUserGuildData(em, msg.author, msg.guild);
-  } else guildUser = null;
-
-  let category;
-  if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
-    category = await getCategoryData(em, msg.channel.parent);
-  } else category = null;
-
-  let user;
-  if (!guildUser) { user = await getUserData(em, msg.author); } else user = guildUser.user;
-
-  const routeInfo : RouteInfo = {
-    absoluteParams: resolved,
-    params: resolved,
-    msg,
-    flags,
-    guildUser,
-    user,
-    category,
-    em,
-  };
-
-  return routeInfo;
 }
 
 export default class Router {
@@ -158,7 +73,7 @@ export default class Router {
 
   // INTERNAL
   // Zorgt dat de commando's op de goede plek terecht komen
-  public handle(info: RouteInfo) : Promise<HandlerReturn> {
+  protected handle(info: RouteInfo) : Promise<HandlerReturn> {
     return new Promise((resolve, reject) => {
       const currentRoute = info.params[0];
 
@@ -208,7 +123,7 @@ export default class Router {
     });
   }
 
-  public initialize(client : Client, orm : MikroORM<IDatabaseDriver<Connection>>) {
+  protected initialize(client : Client, orm : MikroORM<IDatabaseDriver<Connection>>) {
     Object.entries(this.routes).forEach(([, route]) => {
       if (route instanceof Router) {
         route.initialize(client, orm);
