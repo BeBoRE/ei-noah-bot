@@ -73,11 +73,11 @@ class EiNoah {
         if ((splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention)) {
           if (!canSendMessage) {
             if (msg.member && msg.member.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
-              msg.author.send('Ik kan toch niet in dat kanaal praten, doe je fucking werk of ik steek je neer');
+              msg.author.send('Ik kan toch niet in dat kanaal praten, doe je fucking werk of ik steek je neer').catch(() => { });
               return;
             }
 
-            msg.author.send('Ik kan niet in dat kanaal reageren, kunnen die kanker admins niet hun werk doen??');
+            msg.author.send('Ik kan niet in dat kanaal reageren, kunnen die kanker admins niet hun werk doen??').catch(() => { });
             return;
           }
 
