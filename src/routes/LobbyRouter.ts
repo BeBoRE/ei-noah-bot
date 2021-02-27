@@ -750,7 +750,7 @@ router.use('create-category', async ({
   categoryData.isLobbyCategory = !categoryData.isLobbyCategory;
 
   if (categoryData.isLobbyCategory) {
-    createCreateChannels(categoryData, msg.client, em);
+    await createCreateChannels(categoryData, msg.client, em);
 
     return `${category.name} is nu een lobby aanmaak categorie`;
   }
