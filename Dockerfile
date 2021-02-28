@@ -27,6 +27,7 @@ RUN apk --no-cache --virtual .build-deps add \
         giflib \
         libjpeg
 
+RUN npm i
 RUN chmod 500 entrypoint.sh
 
 CMD [ "./entrypoint.sh" ]
