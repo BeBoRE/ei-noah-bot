@@ -25,7 +25,8 @@ RUN apk --no-cache --virtual .build-deps add \
         cairo \
         pango \
         giflib \
-        libjpeg
+        libjpeg \
+        ttf-mscorefonts-installer
 
 RUN npm i
 RUN chmod 500 entrypoint.sh
