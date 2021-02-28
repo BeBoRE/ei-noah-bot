@@ -20,13 +20,17 @@ RUN apk --no-cache --virtual .build-deps add \
         pangomm-dev \
         libjpeg-turbo-dev \
         freetype-dev \
+        bash \
+        cabextract \
     && apk --no-cache add \
         pixman \
         cairo \
         pango \
         giflib \
-        libjpeg \
-        ttf-mscorefonts-installer
+        libjpeg
+
+RUN mkdir ~/.fonts
+RUN wget -qO- http://plasmasturm.org/code/vistafonts-installer/vistafonts-installer | bash
 
 RUN npm i
 RUN chmod 500 entrypoint.sh
