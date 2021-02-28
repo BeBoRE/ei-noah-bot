@@ -16,4 +16,4 @@ COPY --from=build /usr/src/app/src ./src
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY ./tsconfig.json ./
 
-CMD ["npm", "start"]
+CMD ["npm", "i", "&&", "npm", "start"]
