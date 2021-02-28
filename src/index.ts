@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import {
-  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions,
+  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { fork } from 'child_process';
@@ -44,37 +44,34 @@ dotenv.config();
     if (user instanceof User) {
       const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
 
-      if (!url || !(
-        msg.channel instanceof TextChannel
-        && msg.client.user
-        && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES))) {
-        return `Met plezier, kom hier <@!${user.id}>!`;
+      if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
+        const canvas = createCanvas(800, 600);
+        const ctx = canvas.getContext('2d');
+
+        const avatar = await loadImage(url);
+
+        ctx.drawImage(await eiImage, 0, Math.abs((await eiImage).height - canvas.height) / 2);
+
+        const x = 500;
+        const y = Math.abs(avatar.height - canvas.height) / 2;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + avatar.width / 2, y + avatar.height / 2, avatar.height / 2, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.clip();
+
+        ctx.drawImage(avatar, x + 0, y + 0, avatar.width, avatar.height);
+        ctx.closePath();
+        ctx.restore();
+
+        ctx.drawImage(await knife, 0, 0, 600, 760, 200, 70, 400, 500);
+        ctx.drawImage(await blood, 450, 220, 300, 300);
+
+        return new MessageAttachment(canvas.createPNGStream());
       }
 
-      const canvas = createCanvas(800, 600);
-      const ctx = canvas.getContext('2d');
-
-      const avatar = await loadImage(url);
-
-      ctx.drawImage(await eiImage, 0, Math.abs((await eiImage).height - canvas.height) / 2);
-
-      const x = 500;
-      const y = Math.abs(avatar.height - canvas.height) / 2;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(x + avatar.width / 2, y + avatar.height / 2, avatar.height / 2, 0, Math.PI * 2, true);
-      ctx.closePath();
-      ctx.clip();
-
-      ctx.drawImage(avatar, x + 0, y + 0, avatar.width, avatar.height);
-      ctx.closePath();
-      ctx.restore();
-
-      ctx.drawImage(await knife, 0, 0, 600, 760, 200, 70, 400, 500);
-      ctx.drawImage(await blood, 450, 220, 300, 300);
-
-      return new MessageAttachment(canvas.createPNGStream());
+      return `Met plezier, kom hier <@!${user.id}>!`;
     }
     return 'Lekker';
   };
