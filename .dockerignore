@@ -9,3 +9,7 @@ dist
 .gitignore
 LICENSE
 **/.DS_Store
+.env
+README.md
+run.cmd
+ormconfig.json

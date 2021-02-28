@@ -1,19 +1,30 @@
-FROM node:lts as build
-WORKDIR /usr/src/app
-
-COPY package*.json ./
-RUN npm i
-
-COPY . .
-
-RUN npm ci --prod
-
 FROM node:lts-alpine
 WORKDIR /usr/src/app
 
-COPY --from=build /usr/src/app/package*.json ./
-COPY --from=build /usr/src/app/src ./src
-COPY --from=build /usr/src/app/node_modules ./node_modules
-COPY ./tsconfig.json ./
+COPY package*.json ./
+COPY . .
+COPY tsconfig.json ./
+COPY entrypoint.sh ./
 
-CMD ["npm", "i", "&&", "npm", "start"]
+RUN apk --no-cache --virtual .build-deps add \
+        python \
+        make \
+        g++ \
+    && apk --no-cache --virtual .canvas-build-deps add \
+        build-base \
+        cairo-dev \
+        jpeg-dev \
+        pango-dev \
+        giflib-dev \
+        pixman-dev \
+        pangomm-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+    && apk --no-cache add \
+        pixman \
+        cairo \
+        pango \
+        giflib \
+        libjpeg
+
+CMD [ "./entrypoint.sh" ]
