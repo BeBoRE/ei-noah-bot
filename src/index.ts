@@ -1,10 +1,12 @@
 import dotenv from 'dotenv';
 import {
-  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions,
+  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel, NewsChannel,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { fork } from 'child_process';
-import { createCanvas, loadImage } from 'canvas';
+import {
+  CanvasRenderingContext2D, createCanvas, loadImage,
+} from 'canvas';
 import { Handler } from 'Router';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
@@ -33,48 +35,100 @@ dotenv.config();
   // Voor verjaardag handeling
   eiNoah.use('bday', Birthday);
 
+  function getLines(ctx : CanvasRenderingContext2D, text : string, maxWidth : number) {
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i += 1) {
+      const word = words[i];
+      const { width } = ctx.measureText(`${currentLine} ${word}`);
+      if (width < maxWidth) {
+        currentLine += ` ${word}`;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    }
+    lines.push(currentLine);
+    return lines;
+  }
+
   const eiImage = loadImage('./src/images/eiNoah.png');
   const knife = loadImage('./src/images/knife.png');
   const blood = loadImage('./src/images/blood.png');
 
   // Hier is een 'Handler' als argument in principe is dit een eindpunt van de routing.
   // Dit is waar berichten worden afgehandeld
-  const stabHandler : Handler = async ({ params, msg }) => {
+  const stabHandler : Handler = async ({ params, msg, flags }) => {
     const [user] = params;
     if (user instanceof User) {
       const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
+      const messageArray : string[] = [];
 
-      if (!url || !(
-        msg.channel instanceof TextChannel
-        && msg.client.user
-        && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES))) {
-        return `Met plezier, kom hier <@!${user.id}>!`;
+      for (let i = 1; i < params.length; i += 1) {
+        const item = params[i];
+        if (typeof item === 'string') {
+          messageArray.push(item);
+        } else if (item instanceof User) {
+          messageArray.push(item.username);
+        } else if (item instanceof TextChannel || item instanceof NewsChannel) {
+          messageArray.push(item.name);
+        } else if (item instanceof Role) {
+          messageArray.push(item.name);
+        }
       }
 
-      const canvas = createCanvas(800, 600);
-      const ctx = canvas.getContext('2d');
+      if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
+        const canvas = createCanvas(800, 600);
+        const ctx = canvas.getContext('2d');
 
-      const avatar = await loadImage(url);
+        const avatar = await loadImage(url);
 
-      ctx.drawImage(await eiImage, 0, Math.abs((await eiImage).height - canvas.height) / 2);
+        ctx.drawImage(await eiImage, 0, Math.abs((await eiImage).height - canvas.height) / 2);
 
-      const x = 500;
-      const y = Math.abs(avatar.height - canvas.height) / 2;
+        const x = 500;
+        const y = Math.abs(avatar.height - canvas.height) / 2;
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(x + avatar.width / 2, y + avatar.height / 2, avatar.height / 2, 0, Math.PI * 2, true);
-      ctx.closePath();
-      ctx.clip();
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + avatar.width / 2, y + avatar.height / 2, avatar.height / 2, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.clip();
 
-      ctx.drawImage(avatar, x + 0, y + 0, avatar.width, avatar.height);
-      ctx.closePath();
-      ctx.restore();
+        ctx.drawImage(avatar, x + 0, y + 0, avatar.width, avatar.height);
+        ctx.closePath();
+        ctx.restore();
 
-      ctx.drawImage(await knife, 0, 0, 600, 760, 200, 70, 400, 500);
-      ctx.drawImage(await blood, 450, 220, 300, 300);
+        ctx.drawImage(await knife, 0, 0, 600, 760, 200, 70, 400, 500);
+        ctx.drawImage(await blood, 450, 220, 300, 300);
 
-      return new MessageAttachment(canvas.createPNGStream());
+        const fontSize = 70;
+
+        ctx.font = `${fontSize}px Calibri`;
+        ctx.fillStyle = '#FFFFFF';
+
+        const lines = getLines(ctx, messageArray.join(' '), 800);
+
+        for (let i = 0; i < lines.length; i += 1) {
+          const { width } = ctx.measureText(lines[i]);
+          ctx.fillText(lines[i], Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (i * fontSize));
+          ctx.strokeText(lines[i], Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (i * fontSize));
+        }
+
+        if (flags.some((flag) => flag.toLowerCase() === 'bottom' || flag.toLowerCase() === 'bodem')) {
+          const bottom = 'BODEM TEKST';
+          const bottomX = Math.abs(ctx.measureText(bottom).width - canvas.width) / 2;
+          const bottomY = 540;
+
+          ctx.fillText(bottom, bottomX, bottomY);
+          ctx.strokeText(bottom, bottomX, bottomY);
+        }
+
+        return new MessageAttachment(canvas.createPNGStream());
+      }
+
+      return `Met plezier, kom hier <@!${user.id}>!`;
     }
     return 'Lekker';
   };
