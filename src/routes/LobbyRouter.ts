@@ -955,7 +955,10 @@ router.onInit = async (client, orm) => {
       const tempChannel = await em.findOne(TempChannel, {
         channelId: oldState.channel.id,
       });
-      if (tempChannel) await checkTempChannel(tempChannel, em, false);
+      if (tempChannel) {
+        await checkTempChannel(tempChannel, em, false);
+      }
+      await em.flush();
     }
 
     const guildData = getGuildData(em, newState.guild);
