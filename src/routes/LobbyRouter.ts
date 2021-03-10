@@ -950,16 +950,18 @@ router.onInit = async (client, orm) => {
   };
 
   client.on('voiceStateUpdate', async (oldState, newState) => {
-    const em = orm.em.fork();
     if (oldState?.channel && oldState.channel.id !== newState?.channel?.id) {
+      const em = orm.em.fork();
       const tempChannel = await em.findOne(TempChannel, {
         channelId: oldState.channel.id,
       });
       if (tempChannel) {
         await checkTempChannel(tempChannel, em, false);
+        await em.flush();
       }
-      await em.flush();
     }
+
+    const em = orm.em.fork();
 
     const guildData = getGuildData(em, newState.guild);
     const guildUserPromise = newState.member?.user ? getUserGuildData(em, newState.member?.user, newState.guild) : null;
