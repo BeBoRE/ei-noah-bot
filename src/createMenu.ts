@@ -45,7 +45,7 @@ async function createMenu<T>(
   const message = await channel.send(await generateText());
 
   if (list.length > emotes.length) {
-    await Promise.all([message.react(pageLeft), message.react(pageRight)]);
+    await Promise.all([message.react(pageLeft), message.react(pageRight)]).catch(() => { });
   }
 
   const awaitList : Promise<unknown>[] = [];
@@ -56,7 +56,7 @@ async function createMenu<T>(
   Promise.all(message.reactions.cache.map((r) => {
     if (r.users.cache.has(owner.id)) return r.users.remove(owner);
     return null;
-  }));
+  })).catch(() => { });
 
   // eslint-disable-next-line max-len
   const filter : CollectorFilter = (r : MessageReaction, u : DiscordUser) => (emotes.some((e) => e === r.emoji.name) || extraButtons.some((b) => b[0] === r.emoji.name) || r.emoji.name === pageLeft || r.emoji.name === pageRight) && u.id === owner.id;
@@ -87,13 +87,13 @@ async function createMenu<T>(
       const destroyMessage = await selectCallback(item);
 
       if (destroyMessage || destroyMessage === undefined) {
-        await Promise.all(awaitList);
-        message.delete();
+        await Promise.all(awaitList).catch(() => { });
+        message.delete().catch(() => {});
         collector.stop();
         timeout('stop');
       } else {
         timeout('reset');
-        message.edit(await generateText());
+        message.edit(await generateText()).catch(() => {});
       }
     }
 
@@ -103,13 +103,13 @@ async function createMenu<T>(
       const destroyMessage = await extraButton[1]();
 
       if (destroyMessage || destroyMessage === undefined) {
-        await Promise.all(awaitList);
-        message.delete();
+        await Promise.all(awaitList).catch(() => {});
+        message.delete().catch(() => {});
         collector.stop();
         timeout('stop');
       } else {
         timeout('reset');
-        message.edit(await generateText());
+        message.edit(await generateText()).catch(() => {});
       }
     }
 
@@ -119,7 +119,7 @@ async function createMenu<T>(
         page += 1;
       }
 
-      message.edit(await generateText());
+      message.edit(await generateText()).catch(() => {});
 
       timeout('reset');
     }
