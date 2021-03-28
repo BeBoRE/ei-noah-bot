@@ -98,8 +98,6 @@ export default class Router {
             if (param instanceof DiscordUser) return `@${param.username}`;
             return '[UNKNOWN]';
           }).join(' ')}\` moet betekenen`);
-
-          resolve(null);
         } else {
           const newParams = [...info.params];
           newParams.shift();
@@ -121,6 +119,8 @@ export default class Router {
             reject(err);
           }
         }
+      } else {
+        resolve(null);
       }
     });
   }
