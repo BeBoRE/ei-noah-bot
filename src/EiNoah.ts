@@ -165,7 +165,7 @@ class EiNoah {
             return;
           }
 
-          msg.channel.startTyping(10000).catch(() => { });
+          msg.channel.startTyping().catch(() => { });
           const em = orm.em.fork();
 
           messageParser(msg, em)
@@ -183,7 +183,7 @@ class EiNoah {
               return null;
             })
             .finally(() => {
-              msg.channel.stopTyping(true);
+              msg.channel.stopTyping();
               return em.flush();
             })
             .catch((err) => {

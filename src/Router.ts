@@ -120,6 +120,8 @@ export default class Router {
           }
         }
       }
+
+      resolve(null);
     });
   }
 
