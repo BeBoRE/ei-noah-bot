@@ -165,7 +165,7 @@ router.use(null, async ({ msg, em }) => {
 
   const quote = quotes[Math.floor(Math.random() * quotes.length)];
 
-  if (quotes) {
+  if (quote) {
     await sendQuote(msg.channel, quote, msg.client);
     return null;
   }
