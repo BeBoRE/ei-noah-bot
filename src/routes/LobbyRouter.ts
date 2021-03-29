@@ -15,6 +15,7 @@ import {
   TextChannel,
   CategoryChannel,
   Channel,
+  Message,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/core';
 import emojiRegex from 'emoji-regex';
@@ -279,39 +280,13 @@ const createCreateChannels = async (category : Category, client : Client, em : E
   }
 };
 
-router.use('add', async ({
-  params, msg, guildUser, em,
-}) => {
-  if (msg.channel instanceof DMChannel || guildUser === null) {
-    return 'Dit commando kan alleen gebruikt worden op een server';
-  }
-
-  const nonUserOrRole = params
-    .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
-  const userOrRole = params
-    // eslint-disable-next-line max-len
-    .filter((param): param is DiscordUser | Role => param instanceof DiscordUser || param instanceof Role);
-
-  if (nonUserOrRole.length > 0) {
-    return ('Alleen user mention(s) mogelijk als argument');
-  }
-
-  const activeChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
-
-  if (!activeChannel) {
-    return 'Je hebt nog geen lobby aangemaakt\nMaak deze aan met `ei lobby create`';
-  }
-
-  if (activeChannel.parentID !== msg.channel.parentID) {
-    return 'Je lobby is aanwezig in een andere categorie dan deze';
-  }
-
+const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChannel, guildUser : GuildUser, msg : Message) : string => {
   const allowedUsers : Array<DiscordUser | Role> = [];
   const alreadyAllowedUsers : Array<DiscordUser | Role> = [];
 
   const overwritePromise : Promise<any>[] = [];
 
-  userOrRole.forEach((uOrR) => {
+  toAllow.forEach((uOrR) => {
     if (activeChannel.permissionOverwrites.some((o) => uOrR.id === o.id)) {
       alreadyAllowedUsers.push(uOrR);
     } else {
@@ -347,6 +322,36 @@ router.use('add', async ({
   else alreadyInMessage = `${alreadyAllowedUsers.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} ${alreadyAllowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? 'konden' : 'kon'} al naar binnen`;
 
   return `${allowedUsersMessage}\n${alreadyInMessage}`;
+};
+
+router.use('add', async ({
+  params, msg, guildUser, em,
+}) => {
+  if (msg.channel instanceof DMChannel || guildUser === null) {
+    return 'Dit commando kan alleen gebruikt worden op een server';
+  }
+
+  const nonUserOrRole = params
+    .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
+  const userOrRole = params
+    // eslint-disable-next-line max-len
+    .filter((param): param is DiscordUser | Role => param instanceof DiscordUser || param instanceof Role);
+
+  if (nonUserOrRole.length > 0) {
+    return ('Alleen user mention(s) mogelijk als argument');
+  }
+
+  const activeChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
+
+  if (!activeChannel) {
+    return 'Je hebt nog geen lobby aangemaakt\nMaak deze aan met `ei lobby create`';
+  }
+
+  if (activeChannel.parentID !== msg.channel.parentID) {
+    return 'Je lobby is aanwezig in een andere categorie dan deze';
+  }
+
+  return addUsers(userOrRole, activeChannel, guildUser, msg);
 });
 
 const removeFromLobby = (

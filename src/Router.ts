@@ -119,6 +119,8 @@ export default class Router {
             reject(err);
           }
         }
+      } else {
+        resolve(null);
       }
     });
   }
