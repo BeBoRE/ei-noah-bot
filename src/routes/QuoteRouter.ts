@@ -4,7 +4,7 @@ import {
   DMChannel, MessageEmbed, NewsChannel, Permissions, Role, TextBasedChannelFields, TextChannel, User as DiscordUser, Util,
 } from 'discord.js';
 import { GuildUser } from 'entity/GuildUser';
-import { mapParams, parseParams } from '../EiNoah';
+import { parseParams } from '../EiNoah';
 import createMenu from '../createMenu';
 import Quote from '../entity/Quote';
 import { getUserGuildData } from '../data';
