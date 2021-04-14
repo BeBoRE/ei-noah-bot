@@ -842,18 +842,24 @@ router.use('rename', nameHandler);
 router.use('naam', nameHandler);
 router.use('hernoem', nameHandler);
 
-const helpHandler = () => [
-  '**Maak een tijdelijke voice kanaal aan**',
-  'Mogelijke Commandos:',
+const memberCommandText = [
   '`ei lobby add @mention...`: Laat user(s) toe aan de lobby',
   '`ei lobby remove @mention...`: Verwijder user(s)/ role(s) uit de lobby',
   '`ei lobby type [mute / private / public]`: Verander het type van de lobby',
   '`ei lobby limit <nummer>`: Verander de lobby user limit',
   '`ei lobby name <lobby naam>`: Geef de lobby een naam',
+].join('\n');
+
+const helpCommandText = [
+  '**Maak een tijdelijke voice kanaal aan**',
+  'Mogelijke Commandos:',
+  memberCommandText,
   '`*Admin* ei lobby category none/<category id>`: Verander de categorie waar de lobbies worden neergezet',
   '`*Admin* ei lobby create-category <category id>`: Maak in gegeven categorie lobby-aanmaak-kanalen aan, verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
   '`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
 ].join('\n');
+
+const helpHandler = () => helpCommandText;
 
 router.use(null, helpHandler);
 router.use('help', helpHandler);
@@ -1024,7 +1030,7 @@ router.onInit = async (client, orm) => {
         const textChannel = await createTextChannel(client, em, guildUser.tempChannel, user);
         guildUser.tempChannel.textChannelId = textChannel.id;
 
-        textChannel.send(helpHandler());
+        textChannel.send(['**Beheer je lobby met deze commands:**', memberCommandText].join('\n'));
       }
     } else if (
       channel
