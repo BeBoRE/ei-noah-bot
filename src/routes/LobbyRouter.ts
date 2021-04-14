@@ -876,7 +876,7 @@ const createAddMessage = async (tempChannel : TempChannel, guildUser : GuildUser
   const activeChannel = await activeTempChannel(client, em, tempChannel);
   if (!activeChannel) throw new Error('No active temp channel');
 
-  textChannel.send(`Allow ${user.username} into the lobby?`).then((msg) => {
+  textChannel.send(`Laat ${user.username} toe in de lobby?`).then((msg) => {
     const filter : CollectorFilter = (reaction : MessageReaction, reactor : User) => reactor.id === tempChannel.guildUser.user.id && reaction.emoji.name === '✅';
 
     msg.awaitReactions(filter)
