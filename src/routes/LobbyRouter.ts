@@ -15,7 +15,9 @@ import {
   TextChannel,
   CategoryChannel,
   Channel,
-  Message,
+  CollectorFilter,
+  MessageReaction,
+  User,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/core';
 import emojiRegex from 'emoji-regex';
@@ -280,7 +282,7 @@ const createCreateChannels = async (category : Category, client : Client, em : E
   }
 };
 
-const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChannel, guildUser : GuildUser, msg : Message) : string => {
+const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChannel, guildUser : GuildUser, client : Client) : string => {
   const allowedUsers : Array<DiscordUser | Role> = [];
   const alreadyAllowedUsers : Array<DiscordUser | Role> = [];
 
@@ -308,7 +310,7 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
 
   Promise.all(overwritePromise).then(async () => {
     if (guildUser.tempChannel) {
-      const textChannel = await activeTempText(msg.client, guildUser.tempChannel);
+      const textChannel = await activeTempText(client, guildUser.tempChannel);
       if (textChannel) updateTextChannel(activeChannel, textChannel);
     }
   });
@@ -351,7 +353,7 @@ router.use('add', async ({
     return 'Je lobby is aanwezig in een andere categorie dan deze';
   }
 
-  return addUsers(userOrRole, activeChannel, guildUser, msg);
+  return addUsers(userOrRole, activeChannel, guildUser, msg.client);
 });
 
 const removeFromLobby = (
@@ -863,6 +865,28 @@ const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => 
   await Promise.all(categories.map((category) => createCreateChannels(category, client, em).catch(() => {})));
 };
 
+const createAddMessage = async (tempChannel : TempChannel, guildUser : GuildUser, client : Client, em : EntityManager) => {
+  const user = await client.users.fetch(guildUser.user.id, true).catch(() => null);
+  if (!user) throw new Error('User not found');
+  if (!tempChannel.textChannelId) throw new Error('Text channel not defined');
+
+  const textChannel = await client.channels.fetch(tempChannel.textChannelId, true);
+  if (!textChannel || !(textChannel instanceof TextChannel)) throw new Error('Text channel not found');
+
+  const activeChannel = await activeTempChannel(client, em, tempChannel);
+  if (!activeChannel) throw new Error('No active temp channel');
+
+  textChannel.send(`Allow ${user.username} into the lobby?`).then((msg) => {
+    const filter : CollectorFilter = (reaction : MessageReaction, reactor : User) => reactor.id === tempChannel.guildUser.user.id && reaction.emoji.name === '✅';
+
+    msg.awaitReactions(filter)
+      .then(() => {
+        msg.delete();
+        addUsers([user], activeChannel, guildUser, client);
+      });
+  });
+};
+
 router.onInit = async (client, orm) => {
   const checkTempChannel = async (tempChannel: TempChannel,
     em : EntityManager, respectTimeLimit = true) => {
@@ -970,13 +994,14 @@ router.onInit = async (client, orm) => {
 
     const guildData = getGuildData(em, newState.guild);
     const guildUserPromise = newState.member?.user ? getUserGuildData(em, newState.member?.user, newState.guild) : null;
+    const user = newState.member?.user;
 
     const { channel } = newState;
 
     if (
       channel
         && guildUserPromise
-        && newState.member?.user
+        && user
         && (
           channel.id === (await guildData).publicVoice
           || channel.id === (await guildData).muteVoice
@@ -991,13 +1016,29 @@ router.onInit = async (client, orm) => {
         if (channel.id === (await guildData).privateVoice) type = ChannelType.Nojoin;
         if (channel.id === (await guildData).muteVoice) type = ChannelType.Mute;
 
-        const createdChannel = await createTempChannel(newState.guild, (await guildData).lobbyCategory || channel.parent.id, [], newState.member.user, (await guildData).bitrate, type, undefined, await guildUserPromise);
+        const createdChannel = await createTempChannel(newState.guild, (await guildData).lobbyCategory || channel.parent.id, [], user, (await guildData).bitrate, type, undefined, await guildUserPromise);
         guildUser.tempChannel = new TempChannel(createdChannel.id, guildUser);
 
         newState.setChannel(createdChannel);
 
-        const textChannel = await createTextChannel(client, em, guildUser.tempChannel, newState.member.user);
+        const textChannel = await createTextChannel(client, em, guildUser.tempChannel, user);
         guildUser.tempChannel.textChannelId = textChannel.id;
+      }
+    } else if (
+      channel
+      && guildUserPromise
+      && user
+    ) {
+      const tempChannel = await em.findOne(TempChannel, {
+        channelId: channel.id,
+      });
+
+      if (tempChannel) {
+        const activeChannel = await activeTempChannel(client, em, tempChannel);
+
+        if (!activeChannel?.permissionsFor(user)?.has(Permissions.FLAGS.SPEAK, true)) {
+          await createAddMessage(tempChannel, await guildUserPromise, client, em);
+        }
       }
     }
 
