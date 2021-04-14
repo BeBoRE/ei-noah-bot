@@ -286,34 +286,36 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
   const allowedUsers : Array<DiscordUser | Role> = [];
   const alreadyAllowedUsers : Array<DiscordUser | Role> = [];
 
-  const overwritePromise : Promise<any>[] = [];
-
-  toAllow.forEach((uOrR) => {
+  const overwritePromise = toAllow.map((uOrR) => {
     if (activeChannel.permissionOverwrites.some((o) => uOrR.id === o.id)) {
       alreadyAllowedUsers.push(uOrR);
-    } else {
-      overwritePromise.push(activeChannel.updateOverwrite(uOrR, {
-        CONNECT: true,
-        SPEAK: true,
-      }));
+      return null;
+    }
+    allowedUsers.push(uOrR);
 
-      allowedUsers.push(uOrR);
-
-      if (uOrR instanceof DiscordUser) {
+    if (uOrR instanceof DiscordUser) {
         activeChannel.members.get(uOrR.id)?.voice.setMute(false);
-      } else {
-        activeChannel.members
-          .each((member) => { if (uOrR.members.has(member.id)) member.voice.setMute(false); });
-      }
+    } else {
+      activeChannel.members
+        .each((member) => { if (uOrR.members.has(member.id)) member.voice.setMute(false); });
     }
-  });
 
-  Promise.all(overwritePromise).then(async () => {
-    if (guildUser.tempChannel) {
-      const textChannel = await activeTempText(client, guildUser.tempChannel);
-      if (textChannel) updateTextChannel(activeChannel, textChannel);
-    }
-  });
+    return activeChannel.updateOverwrite(uOrR, {
+      CONNECT: true,
+      SPEAK: true,
+    });
+  }).filter((value) : value is Promise<VoiceChannel> => !!value);
+
+  console.log('Lets wait :D');
+  Promise.all(overwritePromise)
+    .then(async () => {
+      console.log('then');
+      if (guildUser.tempChannel) {
+        const textChannel = await activeTempText(client, guildUser.tempChannel);
+        if (textChannel) { updateTextChannel(activeChannel, textChannel); }
+      }
+    })
+    .catch(() => console.log('Overwrite permission error'));
 
   let allowedUsersMessage : string;
   if (!allowedUsers.length) allowedUsersMessage = 'Geen user(s) toegevoegd';
@@ -879,11 +881,12 @@ const createAddMessage = async (tempChannel : TempChannel, guildUser : GuildUser
   textChannel.send(`Allow ${user.username} into the lobby?`).then((msg) => {
     const filter : CollectorFilter = (reaction : MessageReaction, reactor : User) => reactor.id === tempChannel.guildUser.user.id && reaction.emoji.name === '✅';
 
-    msg.awaitReactions(filter)
-      .then(() => {
-        msg.delete();
-        addUsers([user], activeChannel, guildUser, client);
-      });
+    const collector = msg.createReactionCollector(filter);
+    collector.on('collect', () => {
+      msg.delete();
+      textChannel.send(addUsers([user], activeChannel, tempChannel.guildUser, client));
+    });
+    msg.react('✅');
   });
 };
 
@@ -1028,6 +1031,7 @@ router.onInit = async (client, orm) => {
       channel
       && guildUserPromise
       && user
+      && newState.channelID !== oldState.channelID
     ) {
       const tempChannel = await em.findOne(TempChannel, {
         channelId: channel.id,
