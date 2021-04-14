@@ -4,7 +4,7 @@ import {
   DMChannel, MessageEmbed, NewsChannel, Permissions, Role, TextBasedChannelFields, TextChannel, User as DiscordUser, Util,
 } from 'discord.js';
 import { GuildUser } from 'entity/GuildUser';
-import { mapParams } from '../EiNoah';
+import { mapParams, parseParams } from '../EiNoah';
 import createMenu from '../createMenu';
 import Quote from '../entity/Quote';
 import { getUserGuildData } from '../data';
@@ -177,18 +177,8 @@ router.use(null, async ({ msg, em, guildUser }) => {
     const quotedUser = await getUserGuildData(em, toQuote.author, msg.guild);
 
     const splitted = toQuote.content.split(' ').filter((param) => param);
-    const parsed : Array<Promise<DiscordUser | Role | string | null>> = [];
-    splitted.forEach((param) => {
-      parsed.push(...mapParams(param, msg.client, msg.guild));
-    });
 
-    let resolved;
-
-    try {
-      resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role | string => !!item));
-    } catch (err) {
-      return 'Fout in verwezen message';
-    }
+    const resolved = await parseParams(splitted, msg.client, msg.guild);
 
     const quote = addQuote(resolved, quotedUser, guildUser);
     if (typeof quote === 'string') return quote;
