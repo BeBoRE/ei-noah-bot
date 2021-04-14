@@ -306,10 +306,8 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
     });
   }).filter((value) : value is Promise<VoiceChannel> => !!value);
 
-  console.log('Lets wait :D');
   Promise.all(overwritePromise)
     .then(async () => {
-      console.log('then');
       if (guildUser.tempChannel) {
         const textChannel = await activeTempText(client, guildUser.tempChannel);
         if (textChannel) { updateTextChannel(activeChannel, textChannel); }
@@ -847,8 +845,8 @@ router.use('hernoem', nameHandler);
 const helpHandler = () => [
   '**Maak een tijdelijke voice kanaal aan**',
   'Mogelijke Commandos:',
-  '`ei lobby add @mention ...`: Laat user(s) toe aan de lobby',
-  '`ei lobby remove [@mention ...]`: Verwijder user(s)/ role(s) uit de lobby',
+  '`ei lobby add @mention...`: Laat user(s) toe aan de lobby',
+  '`ei lobby remove @mention...`: Verwijder user(s)/ role(s) uit de lobby',
   '`ei lobby type [mute / private / public]`: Verander het type van de lobby',
   '`ei lobby limit <nummer>`: Verander de lobby user limit',
   '`ei lobby name <lobby naam>`: Geef de lobby een naam',
