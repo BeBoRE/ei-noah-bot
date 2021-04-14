@@ -27,7 +27,7 @@ const errorToChannel = async (channelId : string, client : Client, err : Error, 
   return null;
 };
 
-function mapParams(_mention : string,
+export function mapParams(_mention : string,
   client : Client,
   guild : Guild | null) : Array<Promise<Role | DiscordUser | string | null>> {
   const mention = _mention;
