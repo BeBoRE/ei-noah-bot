@@ -844,22 +844,21 @@ router.use('rename', nameHandler);
 router.use('naam', nameHandler);
 router.use('hernoem', nameHandler);
 
-const helpHanlder : Handler = () => [
+const helpHandler = () => [
   '**Maak een tijdelijke voice kanaal aan**',
   'Mogelijke Commandos:',
   '`ei lobby add @mention ...`: Laat user(s) toe aan de lobby',
   '`ei lobby remove [@mention ...]`: Verwijder user(s)/ role(s) uit de lobby',
-  '`ei lobby set [mute / private / public]`: Verander het type van de lobby',
+  '`ei lobby type [mute / private / public]`: Verander het type van de lobby',
   '`ei lobby limit <nummer>`: Verander de lobby user limit',
   '`ei lobby name <lobby naam>`: Geef de lobby een naam',
   '`*Admin* ei lobby category none/<category id>`: Verander de categorie waar de lobbies worden neergezet',
-  '`*Admin* ei lobby create-category <category id>`: Maak in gegeven categorie lobby aanmaak channels aan',
+  '`*Admin* ei lobby create-category <category id>`: Maak in gegeven categorie lobby-aanmaak-kanalen aan, verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
   '`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
-  '> Verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
 ].join('\n');
 
-router.use(null, helpHanlder);
-router.use('help', helpHanlder);
+router.use(null, helpHandler);
+router.use('help', helpHandler);
 
 const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => {
   const categories = await em.find(Category, { isLobbyCategory: true });
@@ -1026,6 +1025,8 @@ router.onInit = async (client, orm) => {
 
         const textChannel = await createTextChannel(client, em, guildUser.tempChannel, user);
         guildUser.tempChannel.textChannelId = textChannel.id;
+
+        textChannel.send(helpHandler());
       }
     } else if (
       channel
