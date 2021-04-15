@@ -1,7 +1,10 @@
 import {
+  Channel,
   Client,
-  DMChannel, MessageEmbed, Permissions, TextBasedChannelFields, TextChannel, User as DiscordUser,
+  DMChannel, MessageEmbed, NewsChannel, Permissions, Role, TextBasedChannelFields, TextChannel, User as DiscordUser, Util,
 } from 'discord.js';
+import { GuildUser } from 'entity/GuildUser';
+import { parseParams } from '../EiNoah';
 import createMenu from '../createMenu';
 import Quote from '../entity/Quote';
 import { getUserGuildData } from '../data';
@@ -30,6 +33,25 @@ const sendQuote = async (channel : TextBasedChannelFields, quote : Quote, client
   await channel.send(embed);
 };
 
+const addQuote = (params : (string | DiscordUser | Channel | Role)[], quotedUser : GuildUser, owner : GuildUser) => {
+  const text = Util.removeMentions(params.map((param) => {
+    if (typeof param === 'string') return param;
+    if (param instanceof DiscordUser) return param.username;
+    if (param instanceof Role) return param.name;
+    if (param instanceof TextChannel || param instanceof NewsChannel) return param.name;
+    return '[UNKNOWN]';
+  }).join(' '));
+
+  if (text.length > 256) {
+    return 'Quotes kunnen niet langer zijn dan 256 karakters';
+  }
+
+  const quote = new Quote(text, owner);
+  quotedUser.quotes.add(quote);
+
+  return quote;
+};
+
 const handler : Handler = async ({
   params, msg, em, guildUser,
 }) => {
@@ -37,12 +59,8 @@ const handler : Handler = async ({
     return 'DM mij niet smeervent';
   }
 
-  if (params.length < 1) {
-    return 'Zet er dan ook wat neer lul';
-  }
-
   if (!(params[0] instanceof DiscordUser)) {
-    return 'Ok dat is niet een persoon, mention iemand';
+    return 'Ok, dat is niet een persoon, mention iemand';
   }
 
   const user = params[0];
@@ -72,20 +90,11 @@ const handler : Handler = async ({
     return null;
   }
 
-  if (params.some((param) => typeof param !== 'string')
-      || params.some((param) => (<string>param).toLowerCase().match('@everyone') || (<string>param).toLowerCase().match('@here'))) {
-    return 'Een quote kan geen mentions bevatten';
-  }
+  const quote = addQuote(params, quotedUser, guildUser);
+  if (typeof quote === 'string') return quote;
 
-  const text = params.filter((param) : param is string => typeof param === 'string').join(' ');
-
-  if (text.length > 256) {
-    return 'Quotes kunnen niet langer zijn dan 256 karakters';
-  }
-
-  quotedUser.quotes.add(new Quote(text, guildUser));
-
-  return 'Ait die ga ik onthouden';
+  await sendQuote(msg.channel, quote, msg.client);
+  return null;
 };
 
 router.use(DiscordUser, handler);
@@ -156,9 +165,26 @@ router.use('verwijder', removeHandler);
 router.use('verwijderen', removeHandler);
 router.use('manage', removeHandler);
 
-router.use(null, async ({ msg, em }) => {
-  if (!msg.guild) {
+router.use(null, async ({ msg, em, guildUser }) => {
+  if (!msg.guild || !guildUser) {
     return 'Dit commando alleen op een server gebruiken';
+  }
+
+  if (msg.reference?.messageID) {
+    const toQuote = await msg.channel.messages.fetch(msg.reference.messageID).catch(() => null);
+    if (!toQuote) return 'Ik heb hard gezocht, maar kon het gegeven bericht is niet vinden';
+
+    const quotedUser = await getUserGuildData(em, toQuote.author, msg.guild);
+
+    const splitted = toQuote.content.split(' ').filter((param) => param);
+
+    const resolved = await parseParams(splitted, msg.client, msg.guild);
+
+    const quote = addQuote(resolved, quotedUser, guildUser);
+    if (typeof quote === 'string') return quote;
+
+    await sendQuote(msg.channel, quote, msg.client);
+    return null;
   }
 
   const quotes = await em.find(Quote, { guildUser: { guild: { id: msg.guild.id } } });

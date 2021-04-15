@@ -82,7 +82,7 @@ function toDeny(type : ChannelType) {
 
 function toDenyText(type : ChannelType) {
   if (type === ChannelType.Mute) return [Permissions.FLAGS.SEND_MESSAGES];
-  if (type === ChannelType.Nojoin) return [Permissions.FLAGS.VIEW_CHANNEL];
+  if (type === ChannelType.Nojoin) return [Permissions.FLAGS.SEND_MESSAGES, Permissions.FLAGS.READ_MESSAGE_HISTORY];
   if (type === ChannelType.Public) return [];
 
   return [];

@@ -49,6 +49,25 @@ function mapParams(_mention : string,
   return [Promise.resolve(null)];
 }
 
+export async function parseParams(params : string[], client : Client, guild : Guild | null) {
+  const parsed : Array<Promise<DiscordUser | Role | string | null>> = [];
+
+  params.forEach((param) => { parsed.push(...mapParams(param, client, guild)); });
+
+  let resolved;
+
+  try {
+    resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role => !!item));
+  } catch (err) {
+    if (err instanceof DiscordAPIError) {
+      if (err.httpStatus === 404) throw new Error('Invalid Mention of User, Role or Channel');
+      else throw new Error('Unknown Discord Error');
+    } else throw new Error('Unknown Parsing error');
+  }
+
+  return resolved;
+}
+
 function isFlag(argument: string) {
   return argument[0] === '-' && argument.length > 1;
 }
@@ -65,20 +84,7 @@ async function messageParser(msg : Message, em: EntityManager) {
 
   if (nonFlags[0] && nonFlags[0].toLowerCase() === 'noah') nonFlags.shift();
 
-  const parsed : Array<Promise<DiscordUser | Role | string | null>> = [];
-
-  nonFlags.forEach((param) => { parsed.push(...mapParams(param, msg.client, msg.guild)); });
-
-  let resolved;
-
-  try {
-    resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role => !!item));
-  } catch (err) {
-    if (err instanceof DiscordAPIError) {
-      if (err.httpStatus === 404) throw new Error('Invalid Mention of User, Role or Channel');
-      else throw new Error('Unknown Discord Error');
-    } else throw new Error('Unknown Parsing error');
-  }
+  const resolved = await parseParams(nonFlags, msg.client, msg.guild);
 
   let guildUser;
   if (msg.guild) {
