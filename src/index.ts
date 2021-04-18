@@ -136,6 +136,85 @@ dotenv.config();
   eiNoah.use('steek', stabHandler);
   eiNoah.use('stab', stabHandler);
 
+  const hugImg = loadImage('./src/images/hug.png');
+
+  const hugHandler : Handler = async ({ params, msg, flags }) => {
+    const [user] = params;
+    if (user instanceof User) {
+      const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
+      const messageArray : string[] = [];
+
+      for (let i = 1; i < params.length; i += 1) {
+        const item = params[i];
+        if (typeof item === 'string') {
+          messageArray.push(item);
+        } else if (item instanceof User) {
+          messageArray.push(item.username);
+        } else if (item instanceof TextChannel || item instanceof NewsChannel) {
+          messageArray.push(item.name);
+        } else if (item instanceof Role) {
+          messageArray.push(item.name);
+        }
+      }
+
+      if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
+        const canvas = createCanvas(800, 600);
+        const ctx = canvas.getContext('2d');
+
+        const avatar = await loadImage(url);
+
+        ctx.drawImage(await eiImage, Math.abs((await eiImage).width - canvas.width) / 2, Math.abs((await eiImage).height - canvas.height) / 2);
+
+        const x = Math.abs(avatar.width - canvas.width) / 2;
+        const y = Math.abs(avatar.height - canvas.height) / 2 + 120;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + avatar.width / 2, y + avatar.height / 2, avatar.height / 2, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.clip();
+
+        ctx.drawImage(avatar, x, y, avatar.width, avatar.height);
+        ctx.closePath();
+        ctx.restore();
+
+        const hug = await hugImg;
+
+        ctx.drawImage(hug, 230, 240, 350, 350);
+
+        const fontSize = 70;
+
+        ctx.font = `${fontSize}px Calibri`;
+        ctx.fillStyle = '#FFFFFF';
+
+        const lines = getLines(ctx, messageArray.join(' '), 800);
+
+        for (let i = 0; i < lines.length; i += 1) {
+          const { width } = ctx.measureText(lines[i]);
+          ctx.fillText(lines[i], Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (i * fontSize));
+          ctx.strokeText(lines[i], Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (i * fontSize));
+        }
+
+        if (flags.some((flag) => flag.toLowerCase() === 'bottom' || flag.toLowerCase() === 'bodem')) {
+          const bottom = 'BODEM TEKST';
+          const bottomX = Math.abs(ctx.measureText(bottom).width - canvas.width) / 2;
+          const bottomY = 540;
+
+          ctx.fillText(bottom, bottomX, bottomY);
+          ctx.strokeText(bottom, bottomX, bottomY);
+        }
+
+        return new MessageAttachment(canvas.createPNGStream());
+      }
+
+      return `Met plezier, kom hier <@!${user.id}>!`;
+    }
+    return 'Knuffel wie?';
+  };
+
+  eiNoah.use('hug', hugHandler);
+  eiNoah.use('knuffel', hugHandler);
+
   eiNoah.use(Role, ({ params }) => `${params[0]}s zijn gamers`);
 
   // Als een mention als parameter is gebruikt wordt deze functie aangeroepen,
