@@ -18,7 +18,7 @@ export interface RouteInfo {
   msg: Message
   absoluteParams: Array<string | DiscordUser | Role | Channel>
   params: Array<string | DiscordUser | Role | Channel>
-  flags: string[],
+  flags: Map<string, Array<string | DiscordUser | Role | Channel>>,
   guildUser: GuildUser | null,
   user: User,
   category: Category | null,

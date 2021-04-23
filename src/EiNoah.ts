@@ -57,7 +57,7 @@ export async function parseParams(params : string[], client : Client, guild : Gu
   let resolved;
 
   try {
-    resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role => !!item));
+    resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role | string => !!item));
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.httpStatus === 404) throw new Error('Invalid Mention of User, Role or Channel');
@@ -77,14 +77,30 @@ async function messageParser(msg : Message, em: EntityManager) {
 
   const splitted = msg.content.split(' ').filter((param) => param);
 
-  const flags = splitted.filter(isFlag).map((rawFlag) => rawFlag.substr(1, rawFlag.length - 1));
-  const nonFlags = splitted.filter((argument) => !isFlag(argument));
+  const flags = new Map<string, Array<Role | DiscordUser | string>>();
+  const nonFlags : Array<Role | DiscordUser | string> = [];
 
-  nonFlags.shift();
+  splitted.shift();
 
-  if (nonFlags[0] && nonFlags[0].toLowerCase() === 'noah') nonFlags.shift();
+  if (splitted[0] && splitted[0].toLowerCase() === 'noah') splitted.shift();
 
-  const resolved = await parseParams(nonFlags, msg.client, msg.guild);
+  const resolved = await parseParams(splitted, msg.client, msg.guild);
+
+  let flag : string | null = null;
+  resolved.forEach((param) => {
+    if (typeof param === 'string' && isFlag(param)) {
+      flag = param.substr(1, param.length - 1).toLowerCase();
+      flags.set(flag, []);
+      return;
+    }
+
+    if (flag) {
+      flags.get(flag)?.push(param);
+      return;
+    }
+
+    nonFlags.push(param);
+  });
 
   let guildUser;
   if (msg.guild) {
@@ -100,8 +116,8 @@ async function messageParser(msg : Message, em: EntityManager) {
   if (!guildUser) { user = await getUserData(em, msg.author); } else user = guildUser.user;
 
   const routeInfo : RouteInfo = {
-    absoluteParams: resolved,
-    params: resolved,
+    absoluteParams: nonFlags,
+    params: nonFlags,
     msg,
     flags,
     guildUser,
