@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import {
-  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel, NewsChannel,
+  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel, NewsChannel, Channel,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { fork } from 'child_process';
@@ -16,6 +16,24 @@ import QuoteRouter from './routes/QuoteRouter';
 import CoronaRouter from './routes/CoronaRouter';
 
 dotenv.config();
+
+const mentionsToText = (params : Array<string | User | Role | Channel>) : string => {
+  const messageArray : string[] = [];
+  for (let i = 0; i < params.length; i += 1) {
+    const item = params[i];
+    if (typeof item === 'string') {
+      messageArray.push(item);
+    } else if (item instanceof User) {
+      messageArray.push(item.username);
+    } else if (item instanceof TextChannel || item instanceof NewsChannel) {
+      messageArray.push(item.name);
+    } else if (item instanceof Role) {
+      messageArray.push(item.name);
+    }
+  }
+
+  return messageArray.join(' ');
+};
 
 (async () => {
   if (!process.env.CLIENT_TOKEN) throw new Error('Add a client token');
@@ -64,20 +82,7 @@ dotenv.config();
     const [user] = params;
     if (user instanceof User) {
       const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
-      const messageArray : string[] = [];
-
-      for (let i = 1; i < params.length; i += 1) {
-        const item = params[i];
-        if (typeof item === 'string') {
-          messageArray.push(item);
-        } else if (item instanceof User) {
-          messageArray.push(item.username);
-        } else if (item instanceof TextChannel || item instanceof NewsChannel) {
-          messageArray.push(item.name);
-        } else if (item instanceof Role) {
-          messageArray.push(item.name);
-        }
-      }
+      const messageArray : string = mentionsToText(params);
 
       if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
         const canvas = createCanvas(800, 600);
@@ -108,7 +113,7 @@ dotenv.config();
         ctx.font = `${fontSize}px Calibri`;
         ctx.fillStyle = '#FFFFFF';
 
-        const lines = getLines(ctx, messageArray.join(' '), 800);
+        const lines = getLines(ctx, messageArray, 800);
 
         for (let i = 0; i < lines.length; i += 1) {
           const { width } = ctx.measureText(lines[i]);
@@ -116,13 +121,14 @@ dotenv.config();
           ctx.strokeText(lines[i], Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (i * fontSize));
         }
 
-        if (flags.some((flag) => flag.toLowerCase() === 'bottom' || flag.toLowerCase() === 'bodem')) {
-          const bottom = 'BODEM TEKST';
-          const bottomX = Math.abs(ctx.measureText(bottom).width - canvas.width) / 2;
+        const bottom = flags.get('b') || flags.get('bottom') || flags.get('bodem');
+        if (bottom) {
+          const bottomText = mentionsToText(bottom);
+          const bottomX = Math.abs(ctx.measureText(bottomText).width - canvas.width) / 2;
           const bottomY = 540;
 
-          ctx.fillText(bottom, bottomX, bottomY);
-          ctx.strokeText(bottom, bottomX, bottomY);
+          ctx.fillText(bottomText, bottomX, bottomY);
+          ctx.strokeText(bottomText, bottomX, bottomY);
         }
 
         return new MessageAttachment(canvas.createPNGStream());
@@ -195,13 +201,14 @@ dotenv.config();
           ctx.strokeText(lines[i], Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (i * fontSize));
         }
 
-        if (flags.some((flag) => flag.toLowerCase() === 'bottom' || flag.toLowerCase() === 'bodem')) {
-          const bottom = 'BODEM TEKST';
-          const bottomX = Math.abs(ctx.measureText(bottom).width - canvas.width) / 2;
+        const bottom = flags.get('bottom') || flags.get('bodem');
+        if (bottom) {
+          const bottomText = mentionsToText(bottom);
+          const bottomX = Math.abs(ctx.measureText(bottomText).width - canvas.width) / 2;
           const bottomY = 540;
 
-          ctx.fillText(bottom, bottomX, bottomY);
-          ctx.strokeText(bottom, bottomX, bottomY);
+          ctx.fillText(bottomText, bottomX, bottomY);
+          ctx.strokeText(bottomText, bottomX, bottomY);
         }
 
         return new MessageAttachment(canvas.createPNGStream());
