@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: 🔃 Run Tests
+      - name: 🧪 Run Tests
         run: |
           if [ -f docker-compose.test.yml ]; then
             docker-compose --file docker-compose.test.yml build
