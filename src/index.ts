@@ -17,9 +17,9 @@ import CoronaRouter from './routes/CoronaRouter';
 
 dotenv.config();
 
-const mentionsToText = (params : Array<string | User | Role | Channel>) : string => {
+const mentionsToText = (params : Array<string | User | Role | Channel>, startAt = 0) : string => {
   const messageArray : string[] = [];
-  for (let i = 0; i < params.length; i += 1) {
+  for (let i = startAt; i < params.length; i += 1) {
     const item = params[i];
     if (typeof item === 'string') {
       messageArray.push(item);
@@ -82,7 +82,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel>) : string
     const [user] = params;
     if (user instanceof User) {
       const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
-      const messageArray : string = mentionsToText(params);
+      const messageArray : string = mentionsToText(params, 1);
 
       if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
         const canvas = createCanvas(800, 600);
@@ -123,7 +123,8 @@ const mentionsToText = (params : Array<string | User | Role | Channel>) : string
 
         const bottom = flags.get('b') || flags.get('bottom') || flags.get('bodem');
         if (bottom) {
-          const bottomText = mentionsToText(bottom);
+          let bottomText = mentionsToText(bottom);
+          if (bottomText === '') bottomText = 'BODEM TEKST';
           const bottomX = Math.abs(ctx.measureText(bottomText).width - canvas.width) / 2;
           const bottomY = 540;
 
@@ -148,20 +149,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel>) : string
     const [user] = params;
     if (user instanceof User) {
       const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
-      const messageArray : string[] = [];
-
-      for (let i = 1; i < params.length; i += 1) {
-        const item = params[i];
-        if (typeof item === 'string') {
-          messageArray.push(item);
-        } else if (item instanceof User) {
-          messageArray.push(item.username);
-        } else if (item instanceof TextChannel || item instanceof NewsChannel) {
-          messageArray.push(item.name);
-        } else if (item instanceof Role) {
-          messageArray.push(item.name);
-        }
-      }
+      const message : string = mentionsToText(params, 1);
 
       if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
         const canvas = createCanvas(800, 600);
@@ -193,7 +181,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel>) : string
         ctx.font = `${fontSize}px Calibri`;
         ctx.fillStyle = '#FFFFFF';
 
-        const lines = getLines(ctx, messageArray.join(' '), 800);
+        const lines = getLines(ctx, message, 800);
 
         for (let i = 0; i < lines.length; i += 1) {
           const { width } = ctx.measureText(lines[i]);
@@ -203,7 +191,8 @@ const mentionsToText = (params : Array<string | User | Role | Channel>) : string
 
         const bottom = flags.get('bottom') || flags.get('bodem');
         if (bottom) {
-          const bottomText = mentionsToText(bottom);
+          let bottomText = mentionsToText(bottom);
+          if (bottomText === '') bottomText = 'BODEM TEKST';
           const bottomX = Math.abs(ctx.measureText(bottomText).width - canvas.width) / 2;
           const bottomY = 540;
 
@@ -251,6 +240,8 @@ const mentionsToText = (params : Array<string | User | Role | Channel>) : string
     '`ei corona`: Krijg iedere morgen een rapportage over de locale corona situatie',
     '`ei lobby`: Maak en beheer een lobby (tijdelijk kanaal)',
     '`ei quote` Houd quotes van je makkermaten bij',
+    '`ei knuffel <@User> [tekst] [-b bodemtekst]`: Geef iemand een knuffel die het verdiend heeft <3',
+    '`ei stab <@User> [tekst] [-b bodemtekst]`: Steek iemand met een mes die het verdiend heeft <3',
   ].join('\n'));
 
   eiNoah.onInit = async (client) => {
