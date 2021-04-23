@@ -20,14 +20,14 @@ env:
 
 jobs:
   test:
-    name: Test Build Image
+    name: ✅ Test Build
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Run tests
+      - name: 🔃 Run Tests
         run: |
           if [ -f docker-compose.test.yml ]; then
             docker-compose --file docker-compose.test.yml build
@@ -38,20 +38,20 @@ jobs:
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
   push:
-    name: Push to Repository
+    name: ☁ Push to Repository
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Build image
+      - name: 🔨 Build Image
         run: docker build . --file Dockerfile --tag $IMAGE_NAME
 
-      - name: Log into registry
+      - name: 🔑 Login To Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
 
-      - name: Push image
+      - name: 🔼 Push image
         run: |
           IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
 
@@ -75,11 +75,11 @@ jobs:
           docker push $IMAGE_ID
   deploy:
     needs: push
-    name: Deploy on Server
+    name: 🎉 Deploy On Server
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     steps:
-    - name: Connect and Redeploy on SSH Server
+    - name: 🔁 Redeploy on Server
       uses: appleboy/ssh-action@master
       with: 
         host: ${{ secrets.HOST }}
@@ -88,7 +88,7 @@ jobs:
         script: ./redeploy.sh
   discord:
     needs: deploy
-    name: Publish Changelog
+    name: 📃 Publish Changelog
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     steps:
