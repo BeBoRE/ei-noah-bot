@@ -95,8 +95,7 @@ async function messageParser(msg : Message, em: EntityManager) {
     }
 
     if (flag) {
-      const flagArray = flags.get(flag);
-      flagArray?.push(param);
+      flags.get(flag)?.push(param);
       return;
     }
 
