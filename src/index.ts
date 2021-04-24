@@ -189,7 +189,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
           ctx.strokeText(lines[i], Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (i * fontSize));
         }
 
-        const bottom = flags.get('bottom') || flags.get('bodem');
+        const bottom = flags.get('b') || flags.get('bottom') || flags.get('bodem');
         if (bottom) {
           let bottomText = mentionsToText(bottom);
           if (bottomText === '') bottomText = 'BODEM TEKST';
