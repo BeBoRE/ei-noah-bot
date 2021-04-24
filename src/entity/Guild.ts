@@ -33,4 +33,16 @@ export class Guild {
 
   @Property()
   lobbyCategory?: string;
+
+  @Property()
+  roleMenuId?: string;
+
+  @Property()
+  defaultColor?: string;
+
+  @Property()
+  requierdRole?: string;
+
+  @Property()
+  category?: string;
 }
