@@ -202,7 +202,7 @@ function getTextPermissionOverwrites(voice : VoiceChannel) : OverwriteData[] {
     }
 
     return {
-      allow: [Permissions.FLAGS.SEND_MESSAGES, Permissions.FLAGS.VIEW_CHANNEL, Permissions.FLAGS.ADD_REACTIONS],
+      allow: [Permissions.FLAGS.SEND_MESSAGES, Permissions.FLAGS.VIEW_CHANNEL, Permissions.FLAGS.ADD_REACTIONS, Permissions.FLAGS.READ_MESSAGE_HISTORY],
       id: overwrite.id,
     };
   });
