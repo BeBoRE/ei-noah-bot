@@ -8,6 +8,7 @@ import {
   CanvasRenderingContext2D, createCanvas, loadImage,
 } from 'canvas';
 import { Handler } from 'Router';
+import { fillTextWithTwemoji, strokeTextWithTwemoji, measureText } from 'node-canvas-with-twemoji';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
@@ -60,7 +61,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
 
     for (let i = 1; i < words.length; i += 1) {
       const word = words[i];
-      const { width } = ctx.measureText(`${currentLine} ${word}`);
+      const { width } = measureText(ctx, `${currentLine} ${word}`);
       if (width < maxWidth) {
         currentLine += ` ${word}`;
       } else {
@@ -115,11 +116,13 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
 
         const lines = getLines(ctx, messageArray, 800);
 
-        for (let i = 0; i < lines.length; i += 1) {
-          const { width } = ctx.measureText(lines[i]);
-          ctx.fillText(lines[i], Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (i * fontSize));
-          ctx.strokeText(lines[i], Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (i * fontSize));
-        }
+        await Promise.all(lines.map((line, index) => {
+          const { width } = measureText(ctx, line);
+          return Promise.all([
+            fillTextWithTwemoji(ctx, line, Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (index * fontSize)),
+            strokeTextWithTwemoji(ctx, line, Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (index * fontSize)),
+          ]);
+        }));
 
         const bottom = flags.get('b') || flags.get('bottom') || flags.get('bodem');
         if (bottom) {
@@ -128,8 +131,8 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
           const bottomX = Math.abs(ctx.measureText(bottomText).width - canvas.width) / 2;
           const bottomY = 540;
 
-          ctx.fillText(bottomText, bottomX, bottomY);
-          ctx.strokeText(bottomText, bottomX, bottomY);
+          await fillTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
+          await strokeTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
         }
 
         return new MessageAttachment(canvas.createPNGStream());
@@ -183,11 +186,13 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
 
         const lines = getLines(ctx, message, 800);
 
-        for (let i = 0; i < lines.length; i += 1) {
-          const { width } = ctx.measureText(lines[i]);
-          ctx.fillText(lines[i], Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (i * fontSize));
-          ctx.strokeText(lines[i], Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (i * fontSize));
-        }
+        await Promise.all(lines.map((line, index) => {
+          const { width } = measureText(ctx, line);
+          return Promise.all([
+            fillTextWithTwemoji(ctx, line, Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (index * fontSize)),
+            strokeTextWithTwemoji(ctx, line, Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (index * fontSize)),
+          ]);
+        }));
 
         const bottom = flags.get('b') || flags.get('bottom') || flags.get('bodem');
         if (bottom) {
@@ -196,8 +201,8 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
           const bottomX = Math.abs(ctx.measureText(bottomText).width - canvas.width) / 2;
           const bottomY = 540;
 
-          ctx.fillText(bottomText, bottomX, bottomY);
-          ctx.strokeText(bottomText, bottomX, bottomY);
+          await fillTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
+          await strokeTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
         }
 
         return new MessageAttachment(canvas.createPNGStream());

@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel,
 } from 'discord.js';
 import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
@@ -27,37 +27,51 @@ const errorToChannel = async (channelId : string, client : Client, err : Error, 
   return null;
 };
 
-function mapParams(_mention : string,
+function mapParams(mention : string,
   client : Client,
-  guild : Guild | null) : Array<Promise<Role | DiscordUser | string | null>> {
-  const mention = _mention;
+  guild : Guild | null) : Array<Promise<Role | DiscordUser | string | Channel | null>> {
+  const seperated : string[] = [];
 
-  const seperated = mention.match(/(<@!*[0-9]+>|<@&[0-9]+>|[<]|[^<]+)/g);
+  const matches = mention.match(/<(@[!&]?|#)[0-9]+>/g);
+  if (matches) {
+    let index = 0;
+    matches.forEach((match) => {
+      const found = mention.indexOf(match, index);
+      if (found !== index) seperated.push(mention.substring(index, found));
+      seperated.push(mention.substr(found, match.length));
 
-  if (seperated) {
-    return seperated.map((param) => {
-      const user = param.match(/<@!*([0-9]+)>/);
-      if (user) return client.users.fetch(user[1], true);
-
-      const role = param.match(/<@&*([0-9]+)>/);
-      if (role && guild) return guild.roles.fetch(role[1], true);
-
-      return Promise.resolve(param);
+      index = found + match.length;
     });
+    if (index < mention.length) {
+      seperated.push(mention.substring(index, mention.length));
+    }
+  } else {
+    seperated.push(mention);
   }
 
-  return [Promise.resolve(null)];
+  return seperated.map((param) => {
+    const user = param.match(/<@!?([0-9]+)>/);
+    if (user) return client.users.fetch(user[1], true);
+
+    const role = param.match(/<@&([0-9]+)>/);
+    if (role && guild) return guild.roles.fetch(role[1], true);
+
+    const channel = param.match(/<@&([0-9]+)>/);
+    if (channel && guild) return client.channels.fetch(channel[1], true);
+
+    return Promise.resolve(param);
+  });
 }
 
 export async function parseParams(params : string[], client : Client, guild : Guild | null) {
-  const parsed : Array<Promise<DiscordUser | Role | string | null>> = [];
+  const parsed : Array<Promise<DiscordUser | Channel | Role | string | null>> = [];
 
   params.forEach((param) => { parsed.push(...mapParams(param, client, guild)); });
 
   let resolved;
 
   try {
-    resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role | string => !!item));
+    resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role | string | Channel => !!item));
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.httpStatus === 404) throw new Error('Invalid Mention of User, Role or Channel');
@@ -77,8 +91,8 @@ async function messageParser(msg : Message, em: EntityManager) {
 
   const splitted = msg.content.split(' ').filter((param) => param);
 
-  const flags = new Map<string, Array<Role | DiscordUser | string>>();
-  const nonFlags : Array<Role | DiscordUser | string> = [];
+  const flags = new Map<string, Array<Role | DiscordUser | string | Channel>>();
+  const nonFlags : Array<Role | DiscordUser | string | Channel> = [];
 
   splitted.shift();
 
