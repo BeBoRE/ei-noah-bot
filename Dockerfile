@@ -1,11 +1,6 @@
 FROM node:lts-alpine
 WORKDIR /usr/src/app
 
-COPY package*.json ./
-COPY . .
-COPY tsconfig.json ./
-COPY entrypoint.sh ./
-
 RUN apk --no-cache --virtual .build-deps add \
         python \
         make \
@@ -27,12 +22,20 @@ RUN apk --no-cache --virtual .build-deps add \
         cairo \
         pango \
         giflib \
-        libjpeg
+        libjpeg \ 
+        librsvg-dev
 
 RUN mkdir ~/.fonts
 RUN wget -qO- http://plasmasturm.org/code/vistafonts-installer/vistafonts-installer | bash
 
+COPY package*.json ./
+COPY . .
+COPY tsconfig.json ./
+COPY entrypoint.sh ./
+
 RUN npm i
 RUN chmod 500 entrypoint.sh
+
+RUN sed -i 's/\r//g' entrypoint.sh
 
 CMD [ "./entrypoint.sh" ]
