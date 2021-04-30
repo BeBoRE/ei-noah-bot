@@ -128,7 +128,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
         if (bottom) {
           let bottomText = mentionsToText(bottom);
           if (bottomText === '') bottomText = 'BODEM TEKST';
-          const bottomX = Math.abs(ctx.measureText(bottomText).width - canvas.width) / 2;
+          const bottomX = Math.abs(measureText(ctx, bottomText).width - canvas.width) / 2;
           const bottomY = 540;
 
           await fillTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
@@ -198,7 +198,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
         if (bottom) {
           let bottomText = mentionsToText(bottom);
           if (bottomText === '') bottomText = 'BODEM TEKST';
-          const bottomX = Math.abs(ctx.measureText(bottomText).width - canvas.width) / 2;
+          const bottomX = Math.abs(measureText(ctx, bottomText).width - canvas.width) / 2;
           const bottomY = 540;
 
           await fillTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
