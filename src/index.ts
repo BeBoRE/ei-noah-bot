@@ -8,7 +8,7 @@ import {
   CanvasRenderingContext2D, createCanvas, loadImage,
 } from 'canvas';
 import { Handler } from 'Router';
-import { fillTextWithTwemoji, strokeTextWithTwemoji, measureText } from 'node-canvas-with-twemoji';
+import { fillTextWithTwemoji, strokeTextWithTwemoji, measureText } from 'node-canvas-with-twemoji-and-discord-emoji';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';

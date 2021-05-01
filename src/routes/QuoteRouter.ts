@@ -173,6 +173,7 @@ router.use(null, async ({ msg, em, guildUser }) => {
   if (msg.reference?.messageID) {
     const toQuote = await msg.channel.messages.fetch(msg.reference.messageID).catch(() => null);
     if (!toQuote) return 'Ik heb hard gezocht, maar kon het gegeven bericht is niet vinden';
+    if (!toQuote.content) return 'Bericht heeft geen inhoud';
 
     const quotedUser = await getUserGuildData(em, toQuote.author, msg.guild);
 
