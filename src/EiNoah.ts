@@ -187,10 +187,13 @@ class EiNoah {
           msg.channel.startTyping().catch(() => { });
           const em = orm.em.fork();
 
+          if (process.env.NODE_ENV !== 'production') console.time(`${msg.id}`);
+
           messageParser(msg, em)
             // @ts-ignore
             .then((info) => this.router.handle(info))
             .then((response) => {
+              console.timeEnd(`${msg.id}`);
               if (response) {
                 if (typeof (response) !== 'string') {
                   return msg.channel.send(response).catch(() => { });
@@ -206,6 +209,7 @@ class EiNoah {
               return em.flush();
             })
             .catch((err) => {
+              console.timeEnd(`${msg.id}`);
               // Dit wordt gecallt wanneer de parsing faalt
               if (process.env.NODE_ENV !== 'production') {
                 errorToChannel(msg.channel.id, msg.client, err).catch(() => { console.log('Error could not be send :('); });

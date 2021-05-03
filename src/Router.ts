@@ -91,14 +91,7 @@ export default class Router {
       } else {
         const nameHandler = this.routes[currentRoute.toUpperCase()];
 
-        if (!nameHandler) {
-          info.msg.channel.send(`Ja ik heb toch geen idee wat \`${info.absoluteParams.map((param) => {
-            if (typeof param === 'string') return param;
-            if (param instanceof Role) return `@${param.name}`;
-            if (param instanceof DiscordUser) return `@${param.username}`;
-            return '[UNKNOWN]';
-          }).join(' ')}\` moet betekenen`);
-        } else {
+        if (nameHandler) {
           const newParams = [...info.params];
           newParams.shift();
 
@@ -121,7 +114,12 @@ export default class Router {
           }
         }
       } else {
-        resolve(null);
+        resolve(`Ja ik heb toch geen idee wat \`${info.absoluteParams.map((param) => {
+          if (typeof param === 'string') return param;
+          if (param instanceof Role) return `@${param.name}`;
+          if (param instanceof DiscordUser) return `@${param.username}`;
+          return '[UNKNOWN]';
+        }).join(' ')}\` moet betekenen`);
       }
     });
   }
