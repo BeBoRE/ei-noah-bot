@@ -22,7 +22,7 @@ export default class LazyRouteInfo implements RouteInfo {
   private lazyGuildUser : undefined | null | Promise<GuildUser>;
 
   public get guildUser() {
-    if (this.lazyUser !== null) {
+    if (this.lazyUser) {
       throw new Error('Don\'t use both guildUser and user');
     }
 
@@ -40,7 +40,7 @@ export default class LazyRouteInfo implements RouteInfo {
   private lazyUser : undefined | Promise<User>;
 
   public get user() {
-    if (this.lazyUser !== null) {
+    if (this.lazyGuildUser === null) {
       throw new Error('Don\'t use both guildUser and user');
     }
 

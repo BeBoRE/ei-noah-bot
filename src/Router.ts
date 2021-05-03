@@ -78,7 +78,7 @@ export default class Router {
       const currentRoute = info.params[0];
 
       let handler : Router | Handler | undefined;
-      let newInfo : RouteInfo = info;
+      const newInfo : RouteInfo = info;
 
       if (typeof currentRoute !== 'string') {
         if (currentRoute instanceof DiscordUser) {
@@ -102,7 +102,8 @@ export default class Router {
           const newParams = [...info.params];
           newParams.shift();
 
-          newInfo = { ...info, params: newParams };
+          // eslint-disable-next-line no-param-reassign
+          info.params = newParams;
           handler = nameHandler;
         }
       }
