@@ -19,9 +19,9 @@ export interface RouteInfo {
   absoluteParams: Array<string | DiscordUser | Role | Channel>
   params: Array<string | DiscordUser | Role | Channel>
   flags: Map<string, Array<string | DiscordUser | Role | Channel>>,
-  guildUser: GuildUser | null,
-  user: User,
-  category: Category | null,
+  readonly guildUser: Promise<GuildUser> | null,
+  readonly user: Promise<User>,
+  readonly category: Promise<Category> | null,
   em: EntityManager
 }
 export type HandlerReturn =

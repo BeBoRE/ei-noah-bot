@@ -118,16 +118,16 @@ async function messageParser(msg : Message, em: EntityManager) {
 
   let guildUser;
   if (msg.guild) {
-    guildUser = await getUserGuildData(em, msg.author, msg.guild);
+    guildUser = getUserGuildData(em, msg.author, msg.guild);
   } else guildUser = null;
 
   let category;
-  if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
-    category = await getCategoryData(em, msg.channel.parent);
+  if ((msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) && msg.channel.parent) {
+    category = getCategoryData(em, msg.channel.parent);
   } else category = null;
 
   let user;
-  if (!guildUser) { user = await getUserData(em, msg.author); } else user = guildUser.user;
+  if (!guildUser) { user = getUserData(em, msg.author); } else user = Promise.resolve((await guildUser).user);
 
   const routeInfo : RouteInfo = {
     absoluteParams: nonFlags,

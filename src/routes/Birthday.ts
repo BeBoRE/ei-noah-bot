@@ -18,7 +18,7 @@ const setRouter : Handler = async ({ user, params }) => {
   const rawDate = params[0];
 
   if (typeof (rawDate) !== 'string') {
-    if (!user.birthday) return 'Voeg je verjaardag toe door DD/MM/YYYY als argument te gegeven';
+    if (!(await user).birthday) return 'Voeg je verjaardag toe door DD/MM/YYYY als argument te gegeven';
     return 'Verander je verjaardag door DD/MM/YYYY als argument te geven';
   }
 
@@ -38,9 +38,9 @@ const setRouter : Handler = async ({ user, params }) => {
   }
 
   // eslint-disable-next-line no-param-reassign
-  user.birthday = birth1.toDate();
+  (await user).birthday = birth1.toDate();
 
-  if (user.birthday != null) {
+  if ((await user).birthday != null) {
     return `Je verjaardag is gewijzigd naar: ${birth1.locale('nl').format('D MMMM YYYY')}`;
   }
   return `Je verjaardag is toegevoegd: ${birth1.locale('nl').format('D MMMM YYYY')}`;
@@ -173,7 +173,7 @@ router.use(DiscordUser, async ({ params, em, msg }) => {
 
 router.use('delete', async ({ user }) => {
   // eslint-disable-next-line no-param-reassign
-  user.birthday = undefined;
+  (await user).birthday = undefined;
   return 'Je verjaardag is verwijderd.';
 });
 
@@ -186,7 +186,7 @@ const setChannelHandler : Handler = async ({ guildUser, msg }) => {
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
-  const { guild } = guildUser;
+  const { guild } = await guildUser;
   const { channel } = msg;
 
   if (guild.birthdayChannel === channel.id) {
@@ -216,7 +216,7 @@ const setRoleHandler : Handler = async ({ guildUser, msg, params }) => {
 
   const role = params[0];
 
-  const { guild } = guildUser;
+  const { guild } = await guildUser;
 
   if (role instanceof Role) {
     if (msg.guild && msg.guild.me && msg.guild?.me?.roles.highest.position > role.position) {

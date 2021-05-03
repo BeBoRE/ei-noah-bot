@@ -29,8 +29,8 @@ const addHandler : Handler = async ({
   }
 
   const region = params.filter((param) : param is string => typeof param === 'string').join(' ');
-  await user.coronaRegions.init();
-  const currentRegions = user.coronaRegions.getItems()
+  if (!(await user).coronaRegions.isInitialized()) { await (await user).coronaRegions.init(); }
+  const currentRegions = (await user).coronaRegions.getItems()
     .find((r) => r.region.toLowerCase() === region.toLowerCase());
 
   if (currentRegions) {
@@ -47,7 +47,7 @@ const addHandler : Handler = async ({
   const newRegion = new UserCoronaRegions();
 
   newRegion.region = coronaReport.community;
-  newRegion.user = user;
+  newRegion.user = await user;
 
   em.persist(newRegion);
 
@@ -65,8 +65,8 @@ const removeHandler : Handler = async ({
   }
 
   const region = params.filter((param) : param is string => typeof param === 'string').join(' ');
-  await user.coronaRegions.init();
-  const dbRegion = user.coronaRegions.getItems()
+  if (!(await user).coronaRegions.isInitialized()) { await (await user).coronaRegions.init(); }
+  const dbRegion = (await user).coronaRegions.getItems()
     .find((r) => r.region.toLowerCase() === region.toLowerCase());
 
   if (!dbRegion) {

@@ -67,7 +67,7 @@ const handler : Handler = async ({
   params.shift();
 
   let quotedUser : GuildUser;
-  if (guildUser.user.id === user.id) quotedUser = guildUser;
+  if (msg.author.id === user.id) quotedUser = await guildUser;
   else quotedUser = await getUserGuildData(em, user, msg.guild);
 
   console.log(quotedUser);
@@ -93,7 +93,7 @@ const handler : Handler = async ({
     return null;
   }
 
-  const quote = addQuote(params, quotedUser, guildUser);
+  const quote = addQuote(params, quotedUser, await guildUser);
   if (typeof quote === 'string') return quote;
 
   return getQuoteEmbed(msg.channel, quote, msg.client);
@@ -122,12 +122,12 @@ const removeHandler : Handler = async ({
     return 'Hoe moeilijk is het om daar een mention neer te zetten?';
   }
 
-  const guToRemoveFrom = msg.author.id === params[0].id ? guildUser : await getUserGuildData(em, params[0], msg.guild);
+  const guToRemoveFrom = msg.author.id === params[0].id ? (await guildUser) : await getUserGuildData(em, params[0], msg.guild);
 
   // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
-  const constraint = guToRemoveFrom === guildUser || msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)
-    ? undefined : { where: { creator: guildUser } };
+  const constraint = guToRemoveFrom.user.id === msg.author.id || msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)
+    ? undefined : { where: { creator: await guildUser } };
 
   if (!guToRemoveFrom.quotes.isInitialized()) { await guToRemoveFrom.quotes.init(constraint); }
 
@@ -178,13 +178,13 @@ router.use(null, async ({ msg, em, guildUser }) => {
     if (!toQuote) return 'Ik heb hard gezocht, maar kon het gegeven bericht is niet vinden';
     if (!toQuote.content) return 'Bericht heeft geen inhoud';
 
-    const quotedUser = toQuote.author.id === msg.author.id ? guildUser : await getUserGuildData(em, toQuote.author, msg.guild);
+    const quotedUser = toQuote.author.id === msg.author.id ? await guildUser : await getUserGuildData(em, toQuote.author, msg.guild);
 
     const splitted = toQuote.content.split(' ').filter((param) => param);
 
     const resolved = await parseParams(splitted, msg.client, msg.guild);
 
-    const quote = addQuote(resolved, quotedUser, guildUser);
+    const quote = addQuote(resolved, quotedUser, await guildUser);
     if (typeof quote === 'string') return quote;
 
     return getQuoteEmbed(msg.channel, quote, msg.client);

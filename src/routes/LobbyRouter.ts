@@ -343,7 +343,7 @@ router.use('add', async ({
     return ('Alleen user mention(s) mogelijk als argument');
   }
 
-  const activeChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
+  const activeChannel = await activeTempChannel(msg.client, em, (await guildUser).tempChannel);
 
   if (!activeChannel) {
     return 'Je hebt nog geen lobby aangemaakt\nMaak deze aan met `ei lobby create`';
@@ -353,7 +353,7 @@ router.use('add', async ({
     return 'Je lobby is aanwezig in een andere categorie dan deze';
   }
 
-  return addUsers(userOrRole, activeChannel, guildUser, msg.client);
+  return addUsers(userOrRole, activeChannel, await guildUser, msg.client);
 });
 
 const removeFromLobby = (
@@ -472,9 +472,9 @@ router.use('remove', async ({
     return 'Alleen mention(s) mogelijk als argument';
   }
 
-  const activeChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
+  const activeChannel = await activeTempChannel(msg.client, em, (await guildUser).tempChannel);
 
-  if (!activeChannel || !guildUser.tempChannel) {
+  if (!activeChannel || !(await guildUser).tempChannel) {
     return 'Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`';
   }
 
@@ -525,18 +525,18 @@ router.use('remove', async ({
 
         return false;
       },
-      ['❌', () => {
+      ['❌', async () => {
         removeFromLobby(activeChannel,
           Array.from(selectedUsers),
           Array.from(selectedRoles),
           msg.channel,
           msg.author,
-          guildUser.tempChannel);
+          (await guildUser).tempChannel);
       }]);
     return null;
   }
 
-  removeFromLobby(activeChannel, users, roles, msg.channel, msg.author, guildUser.tempChannel);
+  removeFromLobby(activeChannel, users, roles, msg.channel, msg.author, (await guildUser).tempChannel);
   return null;
 });
 
@@ -546,9 +546,9 @@ const changeTypeHandler : Handler = async ({
   if (msg.channel instanceof DMChannel || msg.guild === null || guildUser === null) {
     return 'Dit commando kan alleen op servers worden gebruikt';
   }
-  const activeChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
+  const activeChannel = await activeTempChannel(msg.client, em, (await guildUser).tempChannel);
 
-  if (!activeChannel || !guildUser.tempChannel) {
+  if (!activeChannel || !(await guildUser).tempChannel) {
     return 'Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`';
   }
 
@@ -606,13 +606,14 @@ const changeTypeHandler : Handler = async ({
       ...newOverwrites,
     ]).catch(console.error);
 
-    activeChannel.setName(generateLobbyName(changeTo, msg.author, guildUser))
-      .then((voice) => {
-        if (guildUser.tempChannel) {
-          activeTempText(msg.client, guildUser.tempChannel)
+    activeChannel.setName(generateLobbyName(changeTo, msg.author, await guildUser))
+      .then(async (voice) => {
+        const gu = (await guildUser);
+        if (gu.tempChannel) {
+          activeTempText(msg.client, gu.tempChannel)
             .then(async (textChannel) => {
               if (textChannel) {
-                await textChannel.setName(generateLobbyName(changeTo, msg.author, guildUser, true));
+                await textChannel.setName(generateLobbyName(changeTo, msg.author, gu, true));
                 updateTextChannel(voice, textChannel);
               }
             });
@@ -638,11 +639,11 @@ const sizeHandler : Handler = async ({
     return 'Je kan dit commando alleen op servers gebruiken';
   }
 
-  if (!category || !category.isLobbyCategory) {
+  if (!category || !(await category).isLobbyCategory) {
     return 'Dit is geen lobby category';
   }
 
-  const activeChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
+  const activeChannel = await activeTempChannel(msg.client, em, (await guildUser).tempChannel);
 
   if (!activeChannel) {
     return 'Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`';
@@ -706,7 +707,7 @@ router.use('category', async ({ params, msg, guildUser }) => {
   }
 
   if (params[0].toLowerCase() === 'none') {
-    guildUser.guild.lobbyCategory = undefined;
+    (await guildUser).guild.lobbyCategory = undefined;
     return 'Server heeft nu geen lobby categorie meer';
   }
 
@@ -715,7 +716,7 @@ router.use('category', async ({ params, msg, guildUser }) => {
 
   if (category.guild !== msg.guild) return 'Gegeven categorie van een andere server';
 
-  guildUser.guild.lobbyCategory = category.id;
+  (await guildUser).guild.lobbyCategory = category.id;
   return `${category.name} is nu de lobby categorie`;
 });
 
@@ -762,9 +763,9 @@ router.use('create-category', async ({
     return `${category.name} is nu een lobby aanmaak categorie`;
   }
 
-  getChannel(msg.client, guildUser.guild.publicVoice).then((channel) => { if (channel) channel.delete(); });
-  getChannel(msg.client, guildUser.guild.privateVoice).then((channel) => { if (channel) channel.delete(); });
-  getChannel(msg.client, guildUser.guild.muteVoice).then((channel) => { if (channel) channel.delete(); });
+  getChannel(msg.client, (await guildUser).guild.publicVoice).then((channel) => { if (channel) channel.delete(); });
+  getChannel(msg.client, (await guildUser).guild.privateVoice).then((channel) => { if (channel) channel.delete(); });
+  getChannel(msg.client, (await guildUser).guild.muteVoice).then((channel) => { if (channel) channel.delete(); });
   return `${category.name} is nu geen lobby aanmaak categorie meer`;
 });
 
@@ -774,7 +775,7 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
   }
 
   if (params.length === 0) {
-    return `Lobby bitrate is ${guildUser.guild.bitrate}`;
+    return `Lobby bitrate is ${(await guildUser).guild.bitrate}`;
   }
 
   if (params.length > 1) {
@@ -804,7 +805,7 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
   }
 
   // eslint-disable-next-line no-param-reassign
-  guildUser.guild.bitrate = newBitrate;
+  (await guildUser).guild.bitrate = newBitrate;
 
   return `Bitrate veranderd naar ${newBitrate}`;
 });
@@ -816,9 +817,10 @@ const nameHandler : Handler = async ({
 
   if (!params.length) return 'Geef een naam in';
 
-  const tempChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
+  const gu = await guildUser;
+  const tempChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
 
-  if (!tempChannel || !guildUser.tempChannel) return 'Je moet een lobby hebben om dit commando te kunnen gebruiken';
+  if (!tempChannel || !gu.tempChannel) return 'Je moet een lobby hebben om dit commando te kunnen gebruiken';
   if ((<VoiceChannel>tempChannel)?.parentID !== (<TextChannel>msg.channel)?.parentID) return 'Lobby is niet in dezelfde categorie';
 
   const nameArray = params.filter((param) : param is string => typeof param === 'string');
@@ -828,11 +830,11 @@ const nameHandler : Handler = async ({
 
   if (name.length > 98) return 'De naam mag niet langer zijn dan 98 tekens';
 
-  guildUser.tempChannel.name = name;
+  gu.tempChannel.name = name;
   const type = getChannelType(tempChannel);
-  tempChannel.setName(generateLobbyName(type, msg.author, guildUser));
-  activeTempText(msg.client, guildUser.tempChannel)
-    .then((tc) => tc?.setName(generateLobbyName(type, msg.author, guildUser, true)));
+  tempChannel.setName(generateLobbyName(type, msg.author, gu));
+  activeTempText(msg.client, gu.tempChannel)
+    .then((tc) => tc?.setName(generateLobbyName(type, msg.author, gu, true)));
 
   return 'Lobby naam is aangepast\n> Bij overmatig gebruik kan het meer dan 10 minuten duren';
 };

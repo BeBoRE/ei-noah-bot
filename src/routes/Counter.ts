@@ -9,7 +9,7 @@ router.use('add', async ({ msg, guildUser }) => {
   if (guildUser == null) {
     return 'Alleen gebruiken in een server';
   }
-  const data = guildUser;
+  const data = await guildUser;
 
   if (!data.user.count) data.user.count = 1;
   else data.user.count += 1;
@@ -17,6 +17,6 @@ router.use('add', async ({ msg, guildUser }) => {
   return `${msg.author.tag} has counted to ${data.user.count}`;
 });
 
-router.use('get', async ({ msg, guildUser }) => `${msg.author.tag} is now on ${guildUser?.user.count}`);
+router.use('get', async ({ msg, guildUser }) => `${msg.author.tag} is now on ${(await guildUser)?.user.count}`);
 
 export default router;
