@@ -5,7 +5,7 @@ import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
 } from '@mikro-orm/core';
 
-import { getCategoryData, getUserData, getUserGuildData } from './data';
+import LazyRouteInfo from './LazyRouteInfo';
 import Router, { Handler, RouteInfo } from './Router';
 
 enum ErrorType {
@@ -92,7 +92,7 @@ async function messageParser(msg : Message, em: EntityManager) {
   const splitted = msg.content.split(' ').filter((param) => param);
 
   const flags = new Map<string, Array<Role | DiscordUser | string | Channel>>();
-  const nonFlags : Array<Role | DiscordUser | string | Channel> = [];
+  const params : Array<Role | DiscordUser | string | Channel> = [];
 
   splitted.shift();
 
@@ -113,32 +113,15 @@ async function messageParser(msg : Message, em: EntityManager) {
       return;
     }
 
-    nonFlags.push(param);
+    params.push(param);
   });
 
-  let guildUser;
-  if (msg.guild) {
-    guildUser = getUserGuildData(em, msg.author, msg.guild);
-  } else guildUser = null;
-
-  let category;
-  if ((msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) && msg.channel.parent) {
-    category = getCategoryData(em, msg.channel.parent);
-  } else category = null;
-
-  let user;
-  if (!guildUser) { user = getUserData(em, msg.author); } else user = Promise.resolve((await guildUser).user);
-
-  const routeInfo : RouteInfo = {
-    absoluteParams: nonFlags,
-    params: nonFlags,
+  const routeInfo : RouteInfo = new LazyRouteInfo({
+    params,
     msg,
     flags,
-    guildUser,
-    user,
-    category,
     em,
-  };
+  });
 
   return routeInfo;
 }
