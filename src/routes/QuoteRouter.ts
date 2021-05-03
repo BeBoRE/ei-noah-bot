@@ -9,7 +9,6 @@ import createMenu from '../createMenu';
 import Quote from '../entity/Quote';
 import { getUserGuildData } from '../data';
 import Router, { Handler } from '../Router';
-import { InitOptions } from '@mikro-orm/core';
 
 const router = new Router();
 
@@ -68,12 +67,11 @@ const handler : Handler = async ({
   params.shift();
 
   let quotedUser : GuildUser;
-  if(guildUser.user.id === user.id) quotedUser = guildUser
+  if (guildUser.user.id === user.id) quotedUser = guildUser;
   else quotedUser = await getUserGuildData(em, user, msg.guild);
 
   console.log(quotedUser);
-  if(!quotedUser.quotes.isInitialized())
-    await quotedUser.quotes.init();
+  if (!quotedUser.quotes.isInitialized()) { await quotedUser.quotes.init(); }
 
   if (params.length === 0) {
     if (quotedUser.quotes.length === 0) {
@@ -128,11 +126,10 @@ const removeHandler : Handler = async ({
 
   // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
-  const constraint = guToRemoveFrom === guildUser || msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR) ? 
-    undefined : {where: {creator: guildUser}};
+  const constraint = guToRemoveFrom === guildUser || msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)
+    ? undefined : { where: { creator: guildUser } };
 
-  if(!guToRemoveFrom.quotes.isInitialized())
-    await guToRemoveFrom.quotes.init(constraint);
+  if (!guToRemoveFrom.quotes.isInitialized()) { await guToRemoveFrom.quotes.init(constraint); }
 
   const quotes = guToRemoveFrom.quotes.getItems();
 
