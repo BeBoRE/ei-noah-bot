@@ -161,7 +161,7 @@ async function activeTempChannel(client : Client, em : EntityManager, tempChanne
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.httpStatus === 404) {
-        await em.remove(tempChannel);
+        em.remove(tempChannel);
         return undefined;
       }
       throw Error('Unknown Discord API Error');
@@ -202,7 +202,7 @@ function getTextPermissionOverwrites(voice : VoiceChannel) : OverwriteData[] {
     }
 
     return {
-      allow: [Permissions.FLAGS.SEND_MESSAGES, Permissions.FLAGS.VIEW_CHANNEL],
+      allow: [Permissions.FLAGS.SEND_MESSAGES, Permissions.FLAGS.VIEW_CHANNEL, Permissions.FLAGS.ADD_REACTIONS, Permissions.FLAGS.READ_MESSAGE_HISTORY],
       id: overwrite.id,
     };
   });

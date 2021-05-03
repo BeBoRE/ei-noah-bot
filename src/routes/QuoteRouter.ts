@@ -12,7 +12,7 @@ import Router, { Handler } from '../Router';
 
 const router = new Router();
 
-const sendQuote = async (channel : TextBasedChannelFields, quote : Quote, client : Client) => {
+const getQuoteEmbed = async (channel : TextBasedChannelFields, quote : Quote, client : Client) : Promise<MessageEmbed> => {
   const quoted = client.users.fetch(quote.guildUser.user.id, true);
   const owner = client.users.fetch(quote.creator.user.id, true);
 
@@ -30,7 +30,7 @@ const sendQuote = async (channel : TextBasedChannelFields, quote : Quote, client
   if (quote.date) embed.setTimestamp(quote.date);
   if (color) embed.setColor(color);
 
-  await channel.send(embed);
+  return embed;
 };
 
 const addQuote = (params : (string | DiscordUser | Channel | Role)[], quotedUser : GuildUser, owner : GuildUser) => {
@@ -66,8 +66,12 @@ const handler : Handler = async ({
   const user = params[0];
   params.shift();
 
-  const quotedUser = await getUserGuildData(em, user, msg.guild);
-  await quotedUser.quotes.init();
+  let quotedUser : GuildUser;
+  if (guildUser.user.id === user.id) quotedUser = guildUser;
+  else quotedUser = await getUserGuildData(em, user, msg.guild);
+
+  console.log(quotedUser);
+  if (!quotedUser.quotes.isInitialized()) { await quotedUser.quotes.init(); }
 
   if (params.length === 0) {
     if (quotedUser.quotes.length === 0) {
@@ -75,8 +79,7 @@ const handler : Handler = async ({
     }
 
     if (quotedUser.quotes.length === 1) {
-      await sendQuote(msg.channel, quotedUser.quotes[0], msg.client);
-      return null;
+      return getQuoteEmbed(msg.channel, quotedUser.quotes[0], msg.client);
     }
 
     createMenu(quotedUser.quotes.getItems(),
@@ -85,7 +88,7 @@ const handler : Handler = async ({
       '**Kiest U Maar**',
       (q) => q.text,
       (q) => {
-        sendQuote(msg.channel, q, msg.client);
+        msg.channel.send(getQuoteEmbed(msg.channel, q, msg.client)).catch(() => { });
       });
     return null;
   }
@@ -93,8 +96,7 @@ const handler : Handler = async ({
   const quote = addQuote(params, quotedUser, guildUser);
   if (typeof quote === 'string') return quote;
 
-  await sendQuote(msg.channel, quote, msg.client);
-  return null;
+  return getQuoteEmbed(msg.channel, quote, msg.client);
 };
 
 router.use(DiscordUser, handler);
@@ -104,7 +106,7 @@ router.use('toevoegen', handler);
 const removeHandler : Handler = async ({
   msg, em, params, guildUser,
 }) => {
-  if (!msg.guild) {
+  if (!msg.guild || !guildUser) {
     return 'Kan alleen in een server';
   }
 
@@ -120,13 +122,14 @@ const removeHandler : Handler = async ({
     return 'Hoe moeilijk is het om daar een mention neer te zetten?';
   }
 
-  const guToRemoveFrom = await getUserGuildData(em, params[0], msg.guild);
+  const guToRemoveFrom = msg.author.id === params[0].id ? guildUser : await getUserGuildData(em, params[0], msg.guild);
 
   // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
-  if (guToRemoveFrom === guildUser || msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
-    await guToRemoveFrom.quotes.init();
-  } else await guToRemoveFrom.quotes.init({ where: { creator: guildUser } });
+  const constraint = guToRemoveFrom === guildUser || msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)
+    ? undefined : { where: { creator: guildUser } };
+
+  if (!guToRemoveFrom.quotes.isInitialized()) { await guToRemoveFrom.quotes.init(constraint); }
 
   const quotes = guToRemoveFrom.quotes.getItems();
 
@@ -173,8 +176,9 @@ router.use(null, async ({ msg, em, guildUser }) => {
   if (msg.reference?.messageID) {
     const toQuote = await msg.channel.messages.fetch(msg.reference.messageID).catch(() => null);
     if (!toQuote) return 'Ik heb hard gezocht, maar kon het gegeven bericht is niet vinden';
+    if (!toQuote.content) return 'Bericht heeft geen inhoud';
 
-    const quotedUser = await getUserGuildData(em, toQuote.author, msg.guild);
+    const quotedUser = toQuote.author.id === msg.author.id ? guildUser : await getUserGuildData(em, toQuote.author, msg.guild);
 
     const splitted = toQuote.content.split(' ').filter((param) => param);
 
@@ -183,8 +187,7 @@ router.use(null, async ({ msg, em, guildUser }) => {
     const quote = addQuote(resolved, quotedUser, guildUser);
     if (typeof quote === 'string') return quote;
 
-    await sendQuote(msg.channel, quote, msg.client);
-    return null;
+    return getQuoteEmbed(msg.channel, quote, msg.client);
   }
 
   const quotes = await em.find(Quote, { guildUser: { guild: { id: msg.guild.id } } });
@@ -192,8 +195,7 @@ router.use(null, async ({ msg, em, guildUser }) => {
   const quote = quotes[Math.floor(Math.random() * quotes.length)];
 
   if (quote) {
-    await sendQuote(msg.channel, quote, msg.client);
-    return null;
+    return getQuoteEmbed(msg.channel, quote, msg.client);
   }
 
   return 'Deze server heeft nog geen quotes';
