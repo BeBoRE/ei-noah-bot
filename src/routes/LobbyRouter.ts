@@ -161,7 +161,7 @@ async function activeTempChannel(client : Client, em : EntityManager, tempChanne
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.httpStatus === 404) {
-        await em.remove(tempChannel);
+        em.remove(tempChannel);
         return undefined;
       }
       throw Error('Unknown Discord API Error');
