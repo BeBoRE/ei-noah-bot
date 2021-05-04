@@ -811,7 +811,7 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
 });
 
 const nameHandler : Handler = async ({
-  params, guildUser, category, msg, em,
+  params, guildUser, msg, em,
 }) => {
   if (!guildUser) return 'Dit commando kan alleen op een server worden gebruikt';
 
