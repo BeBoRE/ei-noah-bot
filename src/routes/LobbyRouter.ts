@@ -343,15 +343,14 @@ router.use('add', async ({
     return ('Alleen user mention(s) mogelijk als argument');
   }
 
+  const gu = await guildUser;
   const activeChannel = await activeTempChannel(msg.client, em, (await guildUser).tempChannel);
 
-  if (!activeChannel) {
+  if (!activeChannel || !gu.tempChannel) {
     return 'Je hebt nog geen lobby aangemaakt\nMaak deze aan met `ei lobby create`';
   }
 
-  if (activeChannel.parentID !== msg.channel.parentID) {
-    return 'Je lobby is aanwezig in een andere categorie dan deze';
-  }
+  if (gu.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
 
   return addUsers(userOrRole, activeChannel, await guildUser, msg.client);
 });
@@ -472,15 +471,14 @@ router.use('remove', async ({
     return 'Alleen mention(s) mogelijk als argument';
   }
 
-  const activeChannel = await activeTempChannel(msg.client, em, (await guildUser).tempChannel);
+  const gu = await guildUser;
+  const activeChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
 
-  if (!activeChannel || !(await guildUser).tempChannel) {
+  if (!activeChannel || !gu.tempChannel) {
     return 'Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`';
   }
 
-  if (activeChannel.parentID !== msg.channel.parentID) {
-    return 'Je lobby is aanwezig in een andere categorie dan deze';
-  }
+  if (gu.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
 
   if (getChannelType(activeChannel) === ChannelType.Public) {
     return 'Wat snap jij niet aan een **public** lobby smeerjoch';
@@ -546,15 +544,14 @@ const changeTypeHandler : Handler = async ({
   if (msg.channel instanceof DMChannel || msg.guild === null || guildUser === null) {
     return 'Dit commando kan alleen op servers worden gebruikt';
   }
-  const activeChannel = await activeTempChannel(msg.client, em, (await guildUser).tempChannel);
+  const lobbyOwner = await guildUser;
+  const activeChannel = await activeTempChannel(msg.client, em, lobbyOwner.tempChannel);
 
-  if (!activeChannel || !(await guildUser).tempChannel) {
+  if (!activeChannel || !lobbyOwner.tempChannel) {
     return 'Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`';
   }
 
-  if (activeChannel.parentID !== msg.channel.parentID) {
-    return 'Je lobby is aanwezig in een andere categorie dan deze';
-  }
+  if (lobbyOwner.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
 
   if (params.length > 1) {
     return 'Ik verwachte niet meer dan **één** argument';
@@ -643,15 +640,14 @@ const sizeHandler : Handler = async ({
     return 'Dit is geen lobby category';
   }
 
-  const activeChannel = await activeTempChannel(msg.client, em, (await guildUser).tempChannel);
+  const gu = await guildUser;
+  const activeChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
 
-  if (!activeChannel) {
+  if (!gu.tempChannel || !activeChannel) {
     return 'Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`';
   }
 
-  if (activeChannel.parentID !== msg.channel.parentID) {
-    return 'Je lobby is aanwezig in een andere categorie dan deze';
-  }
+  if (gu.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
 
   if (params.length === 0) {
     return 'Geen één (1) argument gegeven';
