@@ -282,7 +282,7 @@ const createCreateChannels = async (category : Category, client : Client, em : E
   }
 };
 
-const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChannel, guildUser : GuildUser, client : Client) : string => {
+const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChannel, owner : GuildUser, client : Client) : string => {
   const allowedUsers : Array<DiscordUser | Role> = [];
   const alreadyAllowedUsers : Array<DiscordUser | Role> = [];
 
@@ -308,8 +308,8 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
 
   Promise.all(overwritePromise)
     .then(async () => {
-      if (guildUser.tempChannel) {
-        const textChannel = await activeTempText(client, guildUser.tempChannel);
+      if (owner.tempChannel) {
+        const textChannel = await activeTempText(client, owner.tempChannel);
         if (textChannel) { updateTextChannel(activeChannel, textChannel); }
       }
     })
@@ -1038,7 +1038,7 @@ router.onInit = async (client, orm) => {
     ) {
       const tempChannel = await em.findOne(TempChannel, {
         channelId: channel.id,
-      });
+      }, { populate: ['guildUser', 'guildUser.user'] });
 
       if (tempChannel) {
         const activeChannel = await activeTempChannel(client, em, tempChannel);
