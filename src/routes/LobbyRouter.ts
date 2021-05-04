@@ -813,15 +813,15 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
 const nameHandler : Handler = async ({
   params, guildUser, category, msg, em,
 }) => {
-  if (!guildUser || !category) return 'Dit commando kan alleen op een server worden gebruikt';
-
-  if (!params.length) return 'Geef een naam in';
+  if (!guildUser) return 'Dit commando kan alleen op een server worden gebruikt';
 
   const gu = await guildUser;
   const tempChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
 
   if (!tempChannel || !gu.tempChannel) return 'Je moet een lobby hebben om dit commando te kunnen gebruiken';
-  if ((<VoiceChannel>tempChannel)?.parentID !== (<TextChannel>msg.channel)?.parentID) return 'Lobby is niet in dezelfde categorie';
+  if (gu.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
+
+  if (!params.length) return 'Geef een naam in';
 
   const nameArray = params.filter((param) : param is string => typeof param === 'string');
   if (nameArray.length !== params.length) return 'Je mag alleen tekst gebruiken in de naam';
