@@ -29,7 +29,7 @@ const errorToChannel = async (channelId : string, client : Client, err : Error, 
 
 function mapParams(mention : string,
   client : Client,
-  guild : Guild | null) : Array<Promise<Role | DiscordUser | string | Channel | null>> {
+  guild : Guild | null) : Array<Promise<Role | DiscordUser | string | Channel>> {
   const seperated : string[] = [];
 
   const matches = mention.match(/<(@[!&]?|#)[0-9]+>/g);
@@ -54,9 +54,15 @@ function mapParams(mention : string,
     if (user) return client.users.fetch(user[1], true);
 
     const role = param.match(/<@&([0-9]+)>/);
-    if (role && guild) return guild.roles.fetch(role[1], true);
+    if (role && guild) {
+      return guild.roles.fetch(role[1], true).then((r) => {
+        if (!r) throw new Error('Role not found');
 
-    const channel = param.match(/<@&([0-9]+)>/);
+        return r;
+      });
+    }
+
+    const channel = param.match(/<#([0-9]+)>/);
     if (channel && guild) return client.channels.fetch(channel[1], true);
 
     return Promise.resolve(param);
@@ -98,7 +104,9 @@ async function messageParser(msg : Message, em: EntityManager) {
 
   if (splitted[0] && splitted[0].toLowerCase() === 'noah') splitted.shift();
 
-  const resolved = await parseParams(splitted, msg.client, msg.guild);
+  const resolved = await parseParams(splitted, msg.client, msg.guild).catch(() => null);
+
+  if (!resolved) return null;
 
   let flag : string | null = null;
   resolved.forEach((param) => {
@@ -188,10 +196,15 @@ class EiNoah {
           const em = orm.em.fork();
 
           if (process.env.NODE_ENV !== 'production') console.time(`${msg.id}`);
+          console.log(msg.content);
 
           messageParser(msg, em)
-            // @ts-ignore
-            .then((info) => this.router.handle(info))
+            .then((info) => {
+              if (!info) return 'Ongeldige user(s), role(s) en/of channel(s) gegeven';
+
+              // @ts-ignore
+              return this.router.handle(info);
+            })
             .then((response) => {
               console.timeEnd(`${msg.id}`);
               if (response) {
