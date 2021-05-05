@@ -26,7 +26,7 @@ import TempChannel from '../entity/TempChannel';
 import createMenu from '../createMenu';
 import { getCategoryData, getGuildData, getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
-import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
+import Router, { GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router();
 
