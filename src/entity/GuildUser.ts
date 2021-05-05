@@ -1,5 +1,5 @@
 import {
-  Entity, ManyToOne, OneToMany, Collection, PrimaryKey, Unique, OneToOne,
+  Entity, ManyToOne, OneToMany, Collection, PrimaryKey, Unique, OneToOne, BaseEntity,
 } from '@mikro-orm/core';
 // eslint-disable-next-line import/no-cycle
 import { User } from './User';
@@ -13,7 +13,7 @@ import TempChannel from './TempChannel';
 @Entity()
 @Unique({ properties: ['guild', 'user'] })
 // eslint-disable-next-line import/prefer-default-export
-export class GuildUser {
+export class GuildUser extends BaseEntity<GuildUser, 'id'> {
   @PrimaryKey()
   id!: number;
 
