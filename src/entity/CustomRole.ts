@@ -11,10 +11,10 @@ export default class CustomRole extends BaseEntity<CustomRole, 'id'> {
   @PrimaryKey()
   id!: string;
 
-  @ManyToOne({ eager: true, entity: 'GuildUser' })
+  @ManyToOne({ entity: 'GuildUser' })
   owner!: GuildUser;
 
-  @ManyToOne({ eager: true, entity: 'Guild' })
+  @ManyToOne({ entity: 'Guild' })
   guild!: Guild;
 
   @Property()
