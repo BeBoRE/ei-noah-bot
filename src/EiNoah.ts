@@ -196,7 +196,6 @@ class EiNoah {
           const em = orm.em.fork();
 
           if (process.env.NODE_ENV !== 'production') console.time(`${msg.id}`);
-          console.log(msg.content);
 
           messageParser(msg, em)
             .then((info) => {

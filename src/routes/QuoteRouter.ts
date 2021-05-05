@@ -13,6 +13,16 @@ import Router, { GuildHandler, HandlerType } from '../router/Router';
 const router = new Router();
 
 const getQuoteEmbed = async (channel : TextBasedChannelFields, quote : Quote, client : Client) : Promise<MessageEmbed> => {
+  await Promise.all([(() => {
+    if (!quote.guildUser.isInitialized()) return quote.guildUser.init();
+
+    return quote.guildUser;
+  })(), (() => {
+    if (!quote.creator.isInitialized()) return quote.creator.init();
+
+    return quote.creator;
+  })()]);
+
   const quoted = client.users.fetch(quote.guildUser.user.id, true);
   const owner = client.users.fetch(quote.creator.user.id, true);
 
@@ -26,7 +36,7 @@ const getQuoteEmbed = async (channel : TextBasedChannelFields, quote : Quote, cl
 
   embed.setAuthor((await quoted).username, avatarURL);
   embed.setDescription(text);
-  embed.setFooter(`Door ${(await owner).username}`);
+  embed.setFooter(`Door ${(await owner).username}`, (await owner).avatarURL() || undefined);
   if (quote.date) embed.setTimestamp(quote.date);
   if (color) embed.setColor(color);
 
@@ -66,7 +76,6 @@ const handler : GuildHandler = async ({
   if (msg.author.id === user.id) quotedUser = await guildUser;
   else quotedUser = await getUserGuildData(em, user, msg.guild);
 
-  console.log(quotedUser);
   if (!quotedUser.quotes.isInitialized()) { await quotedUser.quotes.init(); }
 
   if (params.length === 0) {
@@ -83,8 +92,8 @@ const handler : GuildHandler = async ({
       msg.channel,
       '**Kiest U Maar**',
       (q) => q.text,
-      (q) => {
-        msg.channel.send(getQuoteEmbed(msg.channel, q, msg.client)).catch(() => { });
+      async (q) => {
+        msg.channel.send(await getQuoteEmbed(msg.channel, q, msg.client)).catch(() => { });
       });
     return null;
   }
@@ -162,7 +171,7 @@ router.use('manage', removeHandler, HandlerType.GUILD);
 
 router.use(null, async ({ msg, em, guildUser }) => {
   if (msg.reference?.messageID) {
-    const toQuote = await msg.channel.messages.fetch(msg.reference.messageID).catch(() => null);
+    const toQuote = await msg.channel.messages.fetch(msg.reference.messageID, true).catch(() => null);
     if (!toQuote) return 'Ik heb hard gezocht, maar kon het gegeven bericht is niet vinden';
     if (!toQuote.content) return 'Bericht heeft geen inhoud';
 
@@ -175,10 +184,12 @@ router.use(null, async ({ msg, em, guildUser }) => {
     const quote = addQuote(resolved, quotedUser, await guildUser);
     if (typeof quote === 'string') return quote;
 
+    quote.date = new Date(toQuote.createdTimestamp);
+
     return getQuoteEmbed(msg.channel, quote, msg.client);
   }
 
-  const quotes = await em.find(Quote, { guildUser: { guild: { id: msg.guild.id } } });
+  const quotes = await em.find(Quote, { guildUser: { guild: { id: msg.guild.id } } }, { populate: { guildUser: true, creator: true } });
 
   const quote = quotes[Math.floor(Math.random() * quotes.length)];
 

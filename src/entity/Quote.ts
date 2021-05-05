@@ -10,10 +10,10 @@ class Quote extends BaseEntity<Quote, 'id'> {
   @PrimaryKey({ serializedPrimaryKey: true })
   id!: number;
 
-  @ManyToOne({ eager: true, entity: 'GuildUser' })
+  @ManyToOne({ entity: 'GuildUser' })
   guildUser!: GuildUser;
 
-  @ManyToOne({ eager: true, entity: 'GuildUser' })
+  @ManyToOne({ entity: 'GuildUser' })
   creator!: GuildUser;
 
   @Property()

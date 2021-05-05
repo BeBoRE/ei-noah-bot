@@ -18,7 +18,7 @@ class TempChannel extends BaseEntity<TempChannel, 'channelId'> {
   channelId!: string;
 
   @OneToOne({
-    entity: 'GuildUser', unique: true, eager: true, owner: true,
+    entity: 'GuildUser', unique: true, owner: true,
   })
   guildUser!: GuildUser;
 

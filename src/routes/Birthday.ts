@@ -177,16 +177,12 @@ router.use('delete', async ({ user }) => {
   return 'Je verjaardag is verwijderd.';
 });
 
-const setChannelHandler : BothHandler = async ({ guildUser, msg }) => {
-  if (!guildUser) {
-    return 'This can only be used in a server';
-  }
-
+const setChannelHandler : GuildHandler = async ({ guildUser, msg }) => {
   if (!msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
-  const { guild } = await guildUser;
+  const guild = await (await guildUser).guild.init();
   const { channel } = msg;
 
   if (guild.birthdayChannel === channel.id) {
@@ -198,14 +194,10 @@ const setChannelHandler : BothHandler = async ({ guildUser, msg }) => {
   return 'Het huidige kanaal is nu geselecteerd als bday announcement kanaal';
 };
 
-router.use('set-channel', setChannelHandler);
-router.use('channel', setChannelHandler);
+router.use('set-channel', setChannelHandler, HandlerType.GUILD);
+router.use('channel', setChannelHandler, HandlerType.GUILD);
 
 const setRoleHandler : GuildHandler = async ({ guildUser, msg, params }) => {
-  if (!guildUser || !msg.guild) {
-    return 'Dit kan alleen in een server gebruikt worden';
-  }
-
   if (!msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
@@ -216,7 +208,7 @@ const setRoleHandler : GuildHandler = async ({ guildUser, msg, params }) => {
 
   const role = params[0];
 
-  const { guild } = await guildUser;
+  const guild = await (await guildUser).guild.init();
 
   if (role instanceof Role) {
     if (msg.guild && msg.guild.me && msg.guild?.me?.roles.highest.position > role.position) {
@@ -250,7 +242,7 @@ const checkBday = async (client : Client, em : EntityManager) => {
 
       const message = (`Is vandaag ${age} geworden!`);
 
-      await user?.guildUsers.init();
+      await user?.guildUsers.init({ populate: { guild: true } });
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
           const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true).catch(() => {});
@@ -282,7 +274,7 @@ const checkBday = async (client : Client, em : EntityManager) => {
         }
       });
     } else {
-      await user?.guildUsers.init();
+      await user?.guildUsers.init({ populate: { guild: true } });
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
           const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true).catch(() => {});

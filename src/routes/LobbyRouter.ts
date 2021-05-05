@@ -152,6 +152,7 @@ async function createTempChannel(
 
 async function activeTempChannel(client : Client, em : EntityManager, tempChannel ?: TempChannel) {
   if (!tempChannel) return undefined;
+  if (!tempChannel.isInitialized()) await tempChannel.init();
 
   try {
     const activeChannel = await client.channels.fetch(tempChannel.channelId, false);
@@ -340,7 +341,9 @@ router.use('add', async ({
   }
 
   const gu = await guildUser;
-  const activeChannel = await activeTempChannel(msg.client, em, (await guildUser).tempChannel);
+
+  if (!gu.tempChannel?.isInitialized()) await gu.tempChannel?.init();
+  const activeChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
 
   if (!activeChannel || !gu.tempChannel) {
     return 'Je hebt nog geen lobby aangemaakt\nMaak deze aan met `ei lobby create`';
@@ -464,6 +467,8 @@ router.use('remove', async ({
   }
 
   const gu = await guildUser;
+  if (gu.tempChannel?.isInitialized()) await gu.tempChannel.init();
+
   const activeChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
 
   if (!activeChannel || !gu.tempChannel) {
@@ -537,6 +542,8 @@ const changeTypeHandler : GuildHandler = async ({
     return 'Dit commando kan alleen op servers worden gebruikt';
   }
   const lobbyOwner = await guildUser;
+  if (lobbyOwner.tempChannel?.isInitialized()) await lobbyOwner.tempChannel.init();
+
   const activeChannel = await activeTempChannel(msg.client, em, lobbyOwner.tempChannel);
 
   if (!activeChannel || !lobbyOwner.tempChannel) {
@@ -595,7 +602,7 @@ const changeTypeHandler : GuildHandler = async ({
       ...newOverwrites,
     ]).catch(console.error);
 
-    activeChannel.setName(generateLobbyName(changeTo, msg.author, await guildUser))
+    activeChannel.setName(generateLobbyName(changeTo, msg.author, lobbyOwner))
       .then(async (voice) => {
         const gu = (await guildUser);
         if (gu.tempChannel) {
@@ -621,17 +628,9 @@ router.use('change', changeTypeHandler, HandlerType.GUILD);
 router.use('set', changeTypeHandler, HandlerType.GUILD);
 router.use('verander', changeTypeHandler, HandlerType.GUILD);
 
-const sizeHandler : BothHandler = async ({
-  msg, category, guildUser, params, em,
+const sizeHandler : GuildHandler = async ({
+  msg, guildUser, params, em,
 }) => {
-  if (msg.channel instanceof DMChannel || guildUser === null) {
-    return 'Je kan dit commando alleen op servers gebruiken';
-  }
-
-  if (!category || !(await category).isLobbyCategory) {
-    return 'Dit is geen lobby category';
-  }
-
   const gu = await guildUser;
   const activeChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
 
@@ -673,9 +672,9 @@ const sizeHandler : BothHandler = async ({
   if (size === 0) { return 'Limiet is verwijderd'; } return `Limiet veranderd naar ${size}`;
 };
 
-router.use('size', sizeHandler);
-router.use('limit', sizeHandler);
-router.use('userlimit', sizeHandler);
+router.use('size', sizeHandler, HandlerType.GUILD);
+router.use('limit', sizeHandler, HandlerType.GUILD);
+router.use('userlimit', sizeHandler, HandlerType.GUILD);
 
 router.use('category', async ({ params, msg, guildUser }) => {
   if (params.length > 1) {
@@ -689,6 +688,8 @@ router.use('category', async ({ params, msg, guildUser }) => {
   if (!msg.member?.hasPermission('ADMINISTRATOR')) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
+
+  if (!(await guildUser).guild.isInitialized()) await (await guildUser).guild.init();
 
   if (params[0].toLowerCase() === 'none') {
     (await guildUser).guild.lobbyCategory = undefined;
@@ -745,10 +746,21 @@ router.use('create-category', async ({
     return `${category.name} is nu een lobby aanmaak categorie`;
   }
 
-  getChannel(msg.client, (await guildUser).guild.publicVoice).then((channel) => { if (channel) channel.delete(); });
-  getChannel(msg.client, (await guildUser).guild.privateVoice).then((channel) => { if (channel) channel.delete(); });
-  getChannel(msg.client, (await guildUser).guild.muteVoice).then((channel) => { if (channel) channel.delete(); });
-  return `${category.name} is nu geen lobby aanmaak categorie meer`;
+  if (!(await guildUser).guild.isInitialized()) await (await guildUser).guild.init();
+
+  return Promise.all([
+    getChannel(msg.client, (await guildUser).guild.publicVoice).then((channel) => channel?.delete()),
+    getChannel(msg.client, (await guildUser).guild.privateVoice).then((channel) => channel?.delete()),
+    getChannel(msg.client, (await guildUser).guild.muteVoice).then((channel) => channel?.delete()),
+  ])
+    .then(async () => {
+      (await guildUser).guild.publicVoice = undefined;
+      (await guildUser).guild.privateVoice = undefined;
+      (await guildUser).guild.muteVoice = undefined;
+
+      return `${category.name} is nu geen lobby aanmaak categorie meer`;
+    })
+    .catch(() => 'Er is iets fout gegaan');
 }, HandlerType.GUILD);
 
 router.use('bitrate', async ({ msg, guildUser, params }) => {
@@ -757,6 +769,7 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
   }
 
   if (params.length === 0) {
+    if (!(await guildUser).guild.isInitialized()) await (await guildUser).guild.init();
     return `Lobby bitrate is ${(await guildUser).guild.bitrate}`;
   }
 
@@ -786,6 +799,8 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
     return 'Bitrate gaat boven 8000';
   }
 
+  if (!(await guildUser).guild.isInitialized()) await (await guildUser).guild.init();
+
   // eslint-disable-next-line no-param-reassign
   (await guildUser).guild.bitrate = newBitrate;
 
@@ -796,6 +811,8 @@ const nameHandler : GuildHandler = async ({
   params, guildUser, msg, em,
 }) => {
   const gu = await guildUser;
+
+  if (!(await guildUser).tempChannel?.isInitialized()) await (await guildUser).tempChannel?.init();
   const tempChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
 
   if (!tempChannel || !gu.tempChannel) return 'Je moet een lobby hebben om dit commando te kunnen gebruiken';
@@ -853,6 +870,8 @@ const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => 
 };
 
 const createAddMessage = async (tempChannel : TempChannel, guildUser : GuildUser, client : Client, em : EntityManager) => {
+  if (!guildUser.user.isInitialized()) await guildUser.user.init();
+
   const user = await client.users.fetch(guildUser.user.id, true).catch(() => null);
   if (!user) throw new Error('User not found');
   if (!tempChannel.textChannelId) throw new Error('Text channel not defined');
@@ -956,7 +975,7 @@ router.onInit = async (client, orm) => {
   const checkTempLobbies = async () => {
     const em = orm.em.fork();
 
-    const usersWithTemp = await em.getRepository(TempChannel).findAll();
+    const usersWithTemp = await em.getRepository(TempChannel).findAll({ populate: { guildUser: true } });
 
     const tempChecks = usersWithTemp.map((tcs) => checkTempChannel(tcs, em));
 
@@ -971,7 +990,7 @@ router.onInit = async (client, orm) => {
       const em = orm.em.fork();
       const tempChannel = await em.findOne(TempChannel, {
         channelId: oldState.channel.id,
-      });
+      }, { populate: { guildUser: true } });
       if (tempChannel) {
         await checkTempChannel(tempChannel, em, false);
         await em.flush();
@@ -982,6 +1001,7 @@ router.onInit = async (client, orm) => {
 
     const guildData = getGuildData(em, newState.guild);
     const guildUserPromise = newState.member?.user ? getUserGuildData(em, newState.member?.user, newState.guild) : null;
+
     const user = newState.member?.user;
 
     const { channel } = newState;
@@ -994,6 +1014,7 @@ router.onInit = async (client, orm) => {
           channel.id === (await guildData).publicVoice
           || channel.id === (await guildData).muteVoice
           || channel.id === (await guildData).privateVoice)) {
+      if (!(await guildUserPromise)?.tempChannel?.isInitialized()) (await guildUserPromise)?.init();
       const activeChannel = await activeTempChannel(client, em, (await guildUserPromise).tempChannel);
       const guildUser = await guildUserPromise;
 
