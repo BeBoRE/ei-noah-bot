@@ -707,6 +707,8 @@ router.use('category', async ({ params, msg, guildUser }) => {
 router.use('create-category', async ({
   params, msg, em, guildUser,
 }) => {
+  if (!msg.client.user) throw new Error('msg.client.user not set somehow');
+
   if (params.length > 1) {
     return 'Ik verwacht maar één argument';
   }

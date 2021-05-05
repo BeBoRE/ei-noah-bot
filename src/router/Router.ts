@@ -11,7 +11,6 @@ import {
   DMChannel,
   Guild,
   GuildMember,
-  ClientUser,
 } from 'discord.js';
 import {
   EntityManager, MikroORM, IDatabaseDriver, Connection,
@@ -21,11 +20,7 @@ import { GuildUser } from '../entity/GuildUser';
 import { User } from '../entity/User';
 
 export interface RouteInfo {
-  msg: Message & {
-    client: {
-      user: ClientUser
-    }
-  }
+  msg: Message
   absoluteParams: Array<string | DiscordUser | Role | Channel>
   params: Array<string | DiscordUser | Role | Channel>
   flags: Map<string, Array<string | DiscordUser | Role | Channel>>,
@@ -42,9 +37,6 @@ export interface DMRouteInfo extends RouteInfo {
     channel: DMChannel
     guild : null
     member : null
-    client: {
-      user: ClientUser
-    }
   }
   readonly guildUser: null,
   readonly category: null,
@@ -55,9 +47,6 @@ export interface GuildRouteInfo extends RouteInfo {
     channel: TextChannel | NewsChannel
     guild : Guild
     member : GuildMember
-    client: {
-      user: ClientUser
-    }
   }
   readonly guildUser: Promise<GuildUser>,
   readonly category: null | Promise<Category>,
