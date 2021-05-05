@@ -10,7 +10,7 @@ import {
 import { EntityManager } from '@mikro-orm/core';
 import { getUserData } from '../data';
 import { User } from '../entity/User';
-import Router, { BothHandler } from '../router/Router';
+import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router();
 
@@ -201,7 +201,7 @@ const setChannelHandler : BothHandler = async ({ guildUser, msg }) => {
 router.use('set-channel', setChannelHandler);
 router.use('channel', setChannelHandler);
 
-const setRoleHandler : BothHandler = async ({ guildUser, msg, params }) => {
+const setRoleHandler : GuildHandler = async ({ guildUser, msg, params }) => {
   if (!guildUser || !msg.guild) {
     return 'Dit kan alleen in een server gebruikt worden';
   }
@@ -230,8 +230,8 @@ const setRoleHandler : BothHandler = async ({ guildUser, msg, params }) => {
   return 'Mention een role';
 };
 
-router.use('set-role', setRoleHandler);
-router.use('role', setRoleHandler);
+router.use('set-role', setRoleHandler, HandlerType.GUILD);
+router.use('role', setRoleHandler, HandlerType.GUILD);
 
 const checkBday = async (client : Client, em : EntityManager) => {
   const today = moment().startOf('day').locale('nl').format('DD MMMM');
