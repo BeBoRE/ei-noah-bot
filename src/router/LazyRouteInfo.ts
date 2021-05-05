@@ -2,10 +2,10 @@ import { EntityManager } from '@mikro-orm/core';
 import {
   Channel, Message, NewsChannel, Role, TextChannel, User as DiscordUser,
 } from 'discord.js';
-import { getCategoryData, getUserData, getUserGuildData } from './data';
-import { Category } from './entity/Category';
-import { GuildUser } from './entity/GuildUser';
-import { User } from './entity/User';
+import { getCategoryData, getUserData, getUserGuildData } from '../data';
+import { Category } from '../entity/Category';
+import { GuildUser } from '../entity/GuildUser';
+import { User } from '../entity/User';
 import { RouteInfo } from './Router';
 
 export default class LazyRouteInfo implements RouteInfo {

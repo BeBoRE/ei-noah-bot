@@ -10,11 +10,11 @@ import {
 import { EntityManager } from '@mikro-orm/core';
 import { getUserData } from '../data';
 import { User } from '../entity/User';
-import Router, { Handler } from '../Router';
+import Router, { BothHandler } from '../router/Router';
 
 const router = new Router();
 
-const setRouter : Handler = async ({ user, params }) => {
+const setRouter : BothHandler = async ({ user, params }) => {
   const rawDate = params[0];
 
   if (typeof (rawDate) !== 'string') {
@@ -50,7 +50,7 @@ router.use('set', setRouter);
 router.use('add', setRouter);
 router.use('change', setRouter);
 
-const helpHandler : Handler = async () => [
+const helpHandler : BothHandler = async () => [
   '**Krijg elke ochtend een melding als iemand jarig is**',
   '`ei bday set <DD/MM/YYYY>`: Stel je geboortedatum in',
   '`ei bday show-all`: Laat iedereens geboortedatum zien',
@@ -104,7 +104,7 @@ router.use('show-all', async ({ msg, em }) => {
   return embed;
 });
 
-const showAgeHandler : Handler = async ({ msg, em }) => {
+const showAgeHandler : BothHandler = async ({ msg, em }) => {
   const users = await em.find(User, { $not: { birthday: null } });
 
   if (users.length === 0) return 'Geen geboortedatum\'s geregistreerd';
@@ -177,7 +177,7 @@ router.use('delete', async ({ user }) => {
   return 'Je verjaardag is verwijderd.';
 });
 
-const setChannelHandler : Handler = async ({ guildUser, msg }) => {
+const setChannelHandler : BothHandler = async ({ guildUser, msg }) => {
   if (!guildUser) {
     return 'This can only be used in a server';
   }
@@ -201,7 +201,7 @@ const setChannelHandler : Handler = async ({ guildUser, msg }) => {
 router.use('set-channel', setChannelHandler);
 router.use('channel', setChannelHandler);
 
-const setRoleHandler : Handler = async ({ guildUser, msg, params }) => {
+const setRoleHandler : BothHandler = async ({ guildUser, msg, params }) => {
   if (!guildUser || !msg.guild) {
     return 'Dit kan alleen in een server gebruikt worden';
   }

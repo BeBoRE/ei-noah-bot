@@ -26,7 +26,7 @@ import TempChannel from '../entity/TempChannel';
 import createMenu from '../createMenu';
 import { getCategoryData, getGuildData, getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
-import Router, { Handler } from '../Router';
+import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router();
 
@@ -329,10 +329,6 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
 router.use('add', async ({
   params, msg, guildUser, em,
 }) => {
-  if (msg.channel instanceof DMChannel || guildUser === null) {
-    return 'Dit commando kan alleen gebruikt worden op een server';
-  }
-
   const nonUserOrRole = params
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
   const userOrRole = params
@@ -353,7 +349,7 @@ router.use('add', async ({
   if (gu.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
 
   return addUsers(userOrRole, activeChannel, await guildUser, msg.client);
-});
+}, HandlerType.GUILD);
 
 const removeFromLobby = (
   channel : VoiceChannel,
@@ -458,10 +454,6 @@ const removeFromLobby = (
 router.use('remove', async ({
   params, msg, guildUser, em,
 }) => {
-  if (msg.channel instanceof DMChannel || guildUser === null || msg.guild == null) {
-    return 'Dit commando kan alleen gebruikt worden op een server';
-  }
-
   const nonUsersOrRoles = params
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
   const users = params.filter((param): param is DiscordUser => param instanceof DiscordUser);
@@ -536,9 +528,9 @@ router.use('remove', async ({
 
   removeFromLobby(activeChannel, users, roles, msg.channel, msg.author, (await guildUser).tempChannel);
   return null;
-});
+}, HandlerType.GUILD);
 
-const changeTypeHandler : Handler = async ({
+const changeTypeHandler : GuildHandler = async ({
   params, msg, guildUser, em,
 }) => {
   if (msg.channel instanceof DMChannel || msg.guild === null || guildUser === null) {
@@ -624,12 +616,12 @@ const changeTypeHandler : Handler = async ({
   return 'Stuur een berichtje naar een ei-noah dev als je dit bericht ziet';
 };
 
-router.use('type', changeTypeHandler);
-router.use('change', changeTypeHandler);
-router.use('set', changeTypeHandler);
-router.use('verander', changeTypeHandler);
+router.use('type', changeTypeHandler, HandlerType.GUILD);
+router.use('change', changeTypeHandler, HandlerType.GUILD);
+router.use('set', changeTypeHandler, HandlerType.GUILD);
+router.use('verander', changeTypeHandler, HandlerType.GUILD);
 
-const sizeHandler : Handler = async ({
+const sizeHandler : BothHandler = async ({
   msg, category, guildUser, params, em,
 }) => {
   if (msg.channel instanceof DMChannel || guildUser === null) {
@@ -686,10 +678,6 @@ router.use('limit', sizeHandler);
 router.use('userlimit', sizeHandler);
 
 router.use('category', async ({ params, msg, guildUser }) => {
-  if (msg.channel instanceof DMChannel || !guildUser) {
-    return 'Je kan dit commando alleen op servers gebruiken';
-  }
-
   if (params.length > 1) {
     return 'Ik verwacht maar één argument';
   }
@@ -714,15 +702,11 @@ router.use('category', async ({ params, msg, guildUser }) => {
 
   (await guildUser).guild.lobbyCategory = category.id;
   return `${category.name} is nu de lobby categorie`;
-});
+}, HandlerType.GUILD);
 
 router.use('create-category', async ({
   params, msg, em, guildUser,
 }) => {
-  if (msg.channel instanceof DMChannel || !guildUser || !msg.client.user) {
-    return 'Je kan dit commando alleen op servers gebruiken';
-  }
-
   if (params.length > 1) {
     return 'Ik verwacht maar één argument';
   }
@@ -763,7 +747,7 @@ router.use('create-category', async ({
   getChannel(msg.client, (await guildUser).guild.privateVoice).then((channel) => { if (channel) channel.delete(); });
   getChannel(msg.client, (await guildUser).guild.muteVoice).then((channel) => { if (channel) channel.delete(); });
   return `${category.name} is nu geen lobby aanmaak categorie meer`;
-});
+}, HandlerType.GUILD);
 
 router.use('bitrate', async ({ msg, guildUser, params }) => {
   if (msg.channel instanceof DMChannel || guildUser === null) {
@@ -806,11 +790,9 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
   return `Bitrate veranderd naar ${newBitrate}`;
 });
 
-const nameHandler : Handler = async ({
+const nameHandler : GuildHandler = async ({
   params, guildUser, msg, em,
 }) => {
-  if (!guildUser) return 'Dit commando kan alleen op een server worden gebruikt';
-
   const gu = await guildUser;
   const tempChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
 
@@ -835,10 +817,10 @@ const nameHandler : Handler = async ({
   return 'Lobby naam is aangepast\n> Bij overmatig gebruik kan het meer dan 10 minuten duren';
 };
 
-router.use('name', nameHandler);
-router.use('rename', nameHandler);
-router.use('naam', nameHandler);
-router.use('hernoem', nameHandler);
+router.use('name', nameHandler, HandlerType.GUILD);
+router.use('rename', nameHandler, HandlerType.GUILD);
+router.use('naam', nameHandler, HandlerType.GUILD);
+router.use('hernoem', nameHandler, HandlerType.GUILD);
 
 const memberCommandText = [
   '`ei lobby add @mention...`: Laat user(s) toe aan de lobby',

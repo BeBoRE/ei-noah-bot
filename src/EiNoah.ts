@@ -5,8 +5,8 @@ import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
 } from '@mikro-orm/core';
 
-import LazyRouteInfo from './LazyRouteInfo';
-import Router, { Handler, RouteInfo } from './Router';
+import LazyRouteInfo from './router/LazyRouteInfo';
+import Router, { BothHandler, RouteInfo } from './router/Router';
 
 enum ErrorType {
   Uncaught,
@@ -149,10 +149,10 @@ class EiNoah {
   }
 
   // this.use wordt doorgepaast aan de echte router
-  public use(route: typeof DiscordUser, using: Handler) : void
-  public use(route: typeof Role, using: Handler) : void
-  public use(route: null, using: Handler) : void
-  public use(route : string, using: Router | Handler) : void
+  public use(route: typeof DiscordUser, using: BothHandler) : void
+  public use(route: typeof Role, using: BothHandler) : void
+  public use(route: null, using: BothHandler) : void
+  public use(route : string, using: Router | BothHandler) : void
   public use(route : any, using: any) : any {
     this.router.use(route, using);
   }

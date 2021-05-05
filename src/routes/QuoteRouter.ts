@@ -1,14 +1,14 @@
 import {
   Channel,
   Client,
-  DMChannel, MessageEmbed, NewsChannel, Permissions, Role, TextBasedChannelFields, TextChannel, User as DiscordUser, Util,
+  MessageEmbed, NewsChannel, Permissions, Role, TextBasedChannelFields, TextChannel, User as DiscordUser, Util,
 } from 'discord.js';
 import { GuildUser } from 'entity/GuildUser';
 import { parseParams } from '../EiNoah';
 import createMenu from '../createMenu';
 import Quote from '../entity/Quote';
 import { getUserGuildData } from '../data';
-import Router, { Handler } from '../Router';
+import Router, { GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router();
 
@@ -52,13 +52,9 @@ const addQuote = (params : (string | DiscordUser | Channel | Role)[], quotedUser
   return quote;
 };
 
-const handler : Handler = async ({
+const handler : GuildHandler = async ({
   params, msg, em, guildUser,
 }) => {
-  if (msg.channel instanceof DMChannel || !msg.guild || !guildUser) {
-    return 'DM mij niet smeervent';
-  }
-
   if (!(params[0] instanceof DiscordUser)) {
     return 'Ok, dat is niet een persoon, mention iemand';
   }
@@ -99,17 +95,13 @@ const handler : Handler = async ({
   return getQuoteEmbed(msg.channel, quote, msg.client);
 };
 
-router.use(DiscordUser, handler);
-router.use('add', handler);
-router.use('toevoegen', handler);
+router.use(DiscordUser, handler, HandlerType.GUILD);
+router.use('add', handler, HandlerType.GUILD);
+router.use('toevoegen', handler, HandlerType.GUILD);
 
-const removeHandler : Handler = async ({
+const removeHandler : GuildHandler = async ({
   msg, em, params, guildUser,
 }) => {
-  if (!msg.guild || !guildUser) {
-    return 'Kan alleen in een server';
-  }
-
   if (params.length < 1) {
     return 'Verwijder quotes van wie?';
   }
@@ -162,17 +154,13 @@ const removeHandler : Handler = async ({
   return null;
 };
 
-router.use('remove', removeHandler);
-router.use('delete', removeHandler);
-router.use('verwijder', removeHandler);
-router.use('verwijderen', removeHandler);
-router.use('manage', removeHandler);
+router.use('remove', removeHandler, HandlerType.GUILD);
+router.use('delete', removeHandler, HandlerType.GUILD);
+router.use('verwijder', removeHandler, HandlerType.GUILD);
+router.use('verwijderen', removeHandler, HandlerType.GUILD);
+router.use('manage', removeHandler, HandlerType.GUILD);
 
 router.use(null, async ({ msg, em, guildUser }) => {
-  if (!msg.guild || !guildUser) {
-    return 'Dit commando alleen op een server gebruiken';
-  }
-
   if (msg.reference?.messageID) {
     const toQuote = await msg.channel.messages.fetch(msg.reference.messageID).catch(() => null);
     if (!toQuote) return 'Ik heb hard gezocht, maar kon het gegeven bericht is niet vinden';
@@ -199,7 +187,7 @@ router.use(null, async ({ msg, em, guildUser }) => {
   }
 
   return 'Deze server heeft nog geen quotes';
-});
+}, HandlerType.GUILD);
 
 router.use('help', () => [
   '**Hou quotes van je makkermaten bij!**',
