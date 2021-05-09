@@ -9,5 +9,14 @@ export class Category extends BaseEntity<Category, 'id'> {
   id!: string;
 
   @Property()
-  isLobbyCategory: boolean = false;
+  publicVoice?: string;
+
+  @Property()
+  muteVoice?: string;
+
+  @Property()
+  privateVoice?: string;
+
+  @Property()
+  lobbyCategory?: string;
 }

@@ -24,7 +24,7 @@ import emojiRegex from 'emoji-regex';
 import { Category } from '../entity/Category';
 import TempChannel from '../entity/TempChannel';
 import createMenu from '../createMenu';
-import { getCategoryData, getGuildData, getUserGuildData } from '../data';
+import { getCategoryData, getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
 import Router, { GuildHandler, HandlerType } from '../router/Router';
 
@@ -258,28 +258,26 @@ const getChannel = (client : Client, channelId ?: string) => new Promise<null | 
   },
 );
 
-const createCreateChannels = async (category : Category, client : Client, em : EntityManager) => {
+const createCreateChannels = async (category : Category, client : Client) => {
   const actualCategory = await client.channels.fetch(category.id, true);
   if (!(actualCategory instanceof CategoryChannel)) return;
 
-  const guildData = await getGuildData(em, actualCategory.guild);
-
-  let publicVoice = await getChannel(client, guildData.publicVoice);
+  let publicVoice = await getChannel(client, category.publicVoice);
   if (publicVoice === null) {
     publicVoice = await createCreateChannel(ChannelType.Public, actualCategory);
-    guildData.publicVoice = publicVoice.id;
+    category.publicVoice = publicVoice.id;
   }
 
-  let muteVoice = await getChannel(client, guildData.muteVoice);
+  let muteVoice = await getChannel(client, category.muteVoice);
   if (muteVoice === null) {
     muteVoice = await createCreateChannel(ChannelType.Mute, actualCategory);
-    guildData.muteVoice = muteVoice.id;
+    category.muteVoice = muteVoice.id;
   }
 
-  let privateVoice = await getChannel(client, guildData.privateVoice);
+  let privateVoice = await getChannel(client, category.privateVoice);
   if (privateVoice === null) {
     privateVoice = await createCreateChannel(ChannelType.Nojoin, actualCategory);
-    guildData.privateVoice = privateVoice.id;
+    category.privateVoice = privateVoice.id;
   }
 };
 
@@ -676,37 +674,40 @@ router.use('size', sizeHandler, HandlerType.GUILD);
 router.use('limit', sizeHandler, HandlerType.GUILD);
 router.use('userlimit', sizeHandler, HandlerType.GUILD);
 
-router.use('category', async ({ params, msg, guildUser }) => {
-  if (params.length > 1) {
-    return 'Ik verwacht maar één argument';
-  }
-
-  if (typeof params[0] !== 'string') {
-    return 'Ik verwacht een string als argument';
+router.use('category', async ({
+  params, msg, em,
+}) => {
+  if (params.length !== 2 || typeof params[0] !== 'string' || typeof params[1] !== 'string') {
+    return 'Ik verwacht twee argumenten `<lobby-create-categorie id> <nieuwe categorie id om de lobbies in te plaatsen>`';
   }
 
   if (!msg.member?.hasPermission('ADMINISTRATOR')) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
-  if (!(await guildUser).guild.isInitialized()) await (await guildUser).guild.init();
+  const [createCategory, lobbyCategory] = await Promise.all([
+    msg.client.channels.fetch(params[0], true).catch(() => null),
+    msg.client.channels.fetch(params[1], true).catch(() => null),
+  ]);
 
-  if (params[0].toLowerCase() === 'none') {
-    (await guildUser).guild.lobbyCategory = undefined;
-    return 'Server heeft nu geen lobby categorie meer';
+  if (!(createCategory instanceof CategoryChannel)) return 'Gegeven create-category is niet een categorie';
+  if (!(lobbyCategory instanceof CategoryChannel)) return 'Gegeven lobby-category is niet een categorie';
+
+  if (createCategory.guild !== msg.guild) return 'Gegeven create-category van een andere server';
+  if (lobbyCategory.guild !== msg.guild) return 'Gegeven lobby-category van een andere server';
+
+  const createCategoryData = getCategoryData(em, createCategory);
+  if ((await createCategoryData).lobbyCategory === lobbyCategory.id) {
+    (await createCategoryData).lobbyCategory = undefined;
+    return `'${lobbyCategory.name}' is niet meer de lobby categorie`;
   }
+  (await createCategoryData).lobbyCategory = lobbyCategory.id;
 
-  const category = await msg.client.channels.fetch(params[0], true);
-  if (!(category instanceof CategoryChannel)) return 'Gegeven is niet `none` en geen categorie';
-
-  if (category.guild !== msg.guild) return 'Gegeven categorie van een andere server';
-
-  (await guildUser).guild.lobbyCategory = category.id;
-  return `${category.name} is nu de lobby categorie`;
+  return `'${lobbyCategory.name}' is nu de lobby categorie`;
 }, HandlerType.GUILD);
 
 router.use('create-category', async ({
-  params, msg, em, guildUser,
+  params, msg, em,
 }) => {
   if (!msg.client.user) throw new Error('msg.client.user not set somehow');
 
@@ -738,29 +739,25 @@ router.use('create-category', async ({
 
   if (category.guild !== msg.guild) return 'Gegeven categorie van een andere server';
 
-  categoryData.isLobbyCategory = !categoryData.isLobbyCategory;
-
-  if (categoryData.isLobbyCategory) {
-    await createCreateChannels(categoryData, msg.client, em);
+  if (!categoryData.publicVoice || !categoryData.muteVoice || !categoryData.privateVoice) {
+    await createCreateChannels(categoryData, msg.client);
 
     return `${category.name} is nu een lobby aanmaak categorie`;
   }
 
-  if (!(await guildUser).guild.isInitialized()) await (await guildUser).guild.init();
-
   return Promise.all([
-    getChannel(msg.client, (await guildUser).guild.publicVoice).then((channel) => channel?.delete()),
-    getChannel(msg.client, (await guildUser).guild.privateVoice).then((channel) => channel?.delete()),
-    getChannel(msg.client, (await guildUser).guild.muteVoice).then((channel) => channel?.delete()),
+    getChannel(msg.client, categoryData.publicVoice).then((channel) => channel?.delete()),
+    getChannel(msg.client, categoryData.privateVoice).then((channel) => channel?.delete()),
+    getChannel(msg.client, categoryData.muteVoice).then((channel) => channel?.delete()),
   ])
     .then(async () => {
-      (await guildUser).guild.publicVoice = undefined;
-      (await guildUser).guild.privateVoice = undefined;
-      (await guildUser).guild.muteVoice = undefined;
+      categoryData.publicVoice = undefined;
+      categoryData.privateVoice = undefined;
+      categoryData.muteVoice = undefined;
 
       return `${category.name} is nu geen lobby aanmaak categorie meer`;
     })
-    .catch(() => 'Er is iets fout gegaan');
+    .catch(() => 'Er is iets fout gegaan probeer het later opnieuw');
 }, HandlerType.GUILD);
 
 router.use('bitrate', async ({ msg, guildUser, params }) => {
@@ -863,12 +860,6 @@ const helpHandler = () => helpCommandText;
 router.use(null, helpHandler);
 router.use('help', helpHandler);
 
-const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => {
-  const categories = await em.find(Category, { isLobbyCategory: true });
-
-  await Promise.all(categories.map((category) => createCreateChannels(category, client, em).catch(() => {})));
-};
-
 const createAddMessage = async (tempChannel : TempChannel, user : User, client : Client, em : EntityManager) => {
   if (!tempChannel.textChannelId) throw new Error('Text channel not defined');
 
@@ -967,6 +958,18 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel,
   }
 };
 
+const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => {
+  const categories = await em.find(Category, {
+    $or: [
+      { publicVoice: { $ne: null } },
+      { muteVoice: { $ne: null } },
+      { privateVoice: { $ne: null } },
+    ],
+  });
+
+  await Promise.all(categories.map((category) => createCreateChannels(category, client).catch(() => {})));
+};
+
 router.onInit = async (client, orm) => {
   // Check elke tempChannel om de 60 minuten
   const checkTempLobbies = async () => {
@@ -996,10 +999,10 @@ router.onInit = async (client, orm) => {
     }
 
     // Check of iemand een nieuw kanaal is gejoint
-    if (newState.channel && oldState.channelID !== newState.channelID) {
+    if (newState.channel && newState.channel.parent && oldState.channelID !== newState.channelID) {
       const em = orm.em.fork();
 
-      const guildData = getGuildData(em, newState.guild);
+      const categoryData = getCategoryData(em, newState.channel.parent);
       const guildUserPromise = newState.member?.user ? getUserGuildData(em, newState.member.user, newState.guild) : null;
 
       const user = newState.member?.user;
@@ -1012,21 +1015,23 @@ router.onInit = async (client, orm) => {
         && guildUserPromise
         && user
         && (
-          channel.id === (await guildData).publicVoice
-          || channel.id === (await guildData).muteVoice
-          || channel.id === (await guildData).privateVoice)) {
-        if (!(await guildUserPromise)?.tempChannel?.isInitialized()) (await guildUserPromise)?.init();
+          channel.id === (await categoryData).publicVoice
+          || channel.id === (await categoryData).muteVoice
+          || channel.id === (await categoryData).privateVoice)) {
+        if (!(await guildUserPromise)?.tempChannel?.isInitialized()) await (await guildUserPromise)?.init();
         const activeChannel = await activeTempChannel(client, em, (await guildUserPromise).tempChannel);
         const guildUser = await guildUserPromise;
 
         if (activeChannel) {
           newState.setChannel(activeChannel);
-        } else if (channel.parent?.id) {
+        } else if (channel.parent) {
           let type : ChannelType = ChannelType.Public;
-          if (channel.id === (await guildData).privateVoice) type = ChannelType.Nojoin;
-          if (channel.id === (await guildData).muteVoice) type = ChannelType.Mute;
+          if (channel.id === (await categoryData).privateVoice) type = ChannelType.Nojoin;
+          if (channel.id === (await categoryData).muteVoice) type = ChannelType.Mute;
 
-          const createdChannel = await createTempChannel(newState.guild, (await guildData).lobbyCategory || channel.parent.id, [], user, (await guildData).bitrate, type, undefined, await guildUserPromise);
+          if (!guildUser.guild.isInitialized()) await guildUser.guild.init();
+
+          const createdChannel = await createTempChannel(newState.guild, (await categoryData).lobbyCategory || channel.parent.id, [], user, guildUser.guild.bitrate, type, undefined, guildUser);
           guildUser.tempChannel = new TempChannel(createdChannel.id, guildUser);
 
           newState.setChannel(createdChannel);
