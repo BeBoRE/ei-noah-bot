@@ -27,6 +27,7 @@ export class Guild extends BaseEntity<Guild, 'id'> {
   @OneToMany(() => CustomRole, (cr) => cr.guild)
   customRoles = new Collection<CustomRole>(this);
 
+  // TODO: NA CUSTOM ROLE UPDATE DIT WEGHALEN
   @Property()
   publicVoice?: string;
 
@@ -38,6 +39,7 @@ export class Guild extends BaseEntity<Guild, 'id'> {
 
   @Property()
   lobbyCategory?: string;
+  // TOT HIER
 
   @Property()
   roleMenuId?: string;
