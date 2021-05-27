@@ -2,12 +2,14 @@ import moment from 'moment';
 import { CronJob } from 'cron';
 import {
   Client,
+  MessageAttachment,
   MessageEmbed,
   NewsChannel,
   Permissions, Role, TextChannel,
   User as DiscordUser,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/core';
+import { createCanvas, loadImage } from 'canvas';
 import { getUserData } from '../data';
 import { User } from '../entity/User';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
@@ -33,10 +35,6 @@ const setRouter : BothHandler = async ({ user, params }) => {
     return 'Je geboorte kan niet in de toekomst zijn';
   }
 
-  if (moment().subtract(80, 'years').isAfter(birth1)) {
-    return 'Zo oud? 🤔';
-  }
-
   // eslint-disable-next-line no-param-reassign
   (await user).birthday = birth1.toDate();
 
@@ -59,7 +57,7 @@ const helpHandler : BothHandler = async () => [
   '`ei bday delete`: Verwijderd jouw verjaardag',
   '***Admin Commando\'s***',
   '`ei bday channel`: Selecteerd het huidige kanaal voor de dagelijkse update',
-  '`ei bday role <Role Mention>`: Selecteerd de gekozen role voor de jarige-jop',
+  '`ei bday role <Role Mention>`: Selecteerd de rol voor de jarige-jop',
 ].join('\n');
 
 router.use('help', helpHandler);
@@ -225,11 +223,130 @@ const setRoleHandler : GuildHandler = async ({ guildUser, msg, params }) => {
 router.use('set-role', setRoleHandler, HandlerType.GUILD);
 router.use('role', setRoleHandler, HandlerType.GUILD);
 
+const bdayHatPromise = loadImage('./src/images/bday-hat.png');
+const confettiFullPromise = loadImage('./src/images/confetti-full.png');
+const confettiCannon = loadImage('./src/images/confetti-cannon.png');
+const bdayCake = loadImage('./src/images/bday-cake.png');
+
+const colors = ['#C00000', '#229954', '#1F9ADA', '#9B5CB4', '#EC1C61', '#F4C223', '#E97C26'];
+
+const colorFullText = (ctx : CanvasRenderingContext2D, text : string, _x : number, y : number) => {
+  let x = _x;
+
+  ctx.save();
+  text.split('').forEach((letter) => {
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    ctx.fillStyle = color;
+    ctx.fillText(letter, x, y);
+    x += ctx.measureText(letter).width;
+  });
+  ctx.restore();
+};
+
+const generateImage = async (url : string, age : string) : Promise<MessageAttachment> => {
+  const canvas = createCanvas(800, 600);
+  const ctx = canvas.getContext('2d');
+
+  const fontSize = 180;
+
+  ctx.font = `${fontSize}px 'Arial Black'`;
+  ctx.fillStyle = '#FFFFFF';
+  colorFullText(ctx, age, (canvas.width - ctx.measureText(age).width) / 2, fontSize);
+
+  {
+    const avatar = await loadImage(url);
+
+    const width = 256;
+    const height = width;
+
+    const x = Math.abs(width - canvas.width) / 2;
+    const y = Math.abs(height - canvas.height) / 2 + 50;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x + width / 2, y + height / 2, height / 2, 0, Math.PI * 2, true);
+    ctx.closePath();
+    ctx.clip();
+
+    ctx.drawImage(avatar, x, y, width, height);
+    ctx.closePath();
+    ctx.restore();
+  }
+
+  {
+    const hat = await bdayHatPromise;
+
+    const scale = 0.7;
+    const width = hat.width * scale;
+    const height = (hat.height / hat.width) * width;
+
+    ctx.drawImage(hat, 380, 70, width, height);
+  }
+
+  {
+    const cake = await bdayCake;
+
+    const scale = 0.45;
+    const width = cake.width * scale;
+    const height = (cake.height / cake.width) * width;
+
+    ctx.drawImage(cake, (canvas.width - width) / 2, canvas.height - height, width, height);
+  }
+
+  {
+    const cannon = await confettiCannon;
+
+    const scale = 1.1;
+    const width = cannon.width * scale;
+    const height = (cannon.height / cannon.width) * width;
+
+    const x = -210;
+    const y = 200;
+
+    ctx.drawImage(cannon, x, y, width, height);
+
+    ctx.save();
+
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(cannon, x, y, width, height);
+
+    ctx.restore();
+  }
+
+  {
+    const confettiFull = await confettiFullPromise;
+
+    const { width } = canvas;
+    const height = (confettiFull.height / confettiFull.width) * width;
+
+    ctx.drawImage(confettiFull, 0, 0, width, height);
+  }
+
+  return new MessageAttachment(canvas.createPNGStream());
+};
+
+if (process.env.NODE_ENV !== 'production') {
+  router.use('generate', ({ params }) => {
+    const [user] = params;
+
+    if (!(user instanceof DiscordUser)) return 'Not gaming';
+    const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
+    if (!url) return 'Not url';
+    return generateImage(url, '22');
+  });
+}
+
+// TODO: Deze functie aanpakken
+// Bug: Announcement wordt alleen gegeven wanneer de user met ei-noah heeft interact
+// Bug: Announcement wordt alleen gegeven wanneer de server een bday-rol had ingesteld (moet niet verplicht zijn)
+// Refactor: If in if in if in if in if
+// Refactor: Iets meer van async gebruikmaken
 const checkBday = async (client : Client, em : EntityManager) => {
   const today = moment().startOf('day').locale('nl').format('DD MMMM');
   const todayAge = moment().startOf('day').locale('nl').format('YYYY');
 
-  const users = await em.find(User, { $not: { birthday: null } });
+  const users = await em.find(User, { $not: { birthday: null } }, ['guildUsers', 'guildUsers.guild']);
   const discUsers = await Promise.all(users.map((u) => client.users.fetch(u.id, true)));
 
   discUsers.forEach(async (du) => {
@@ -237,12 +354,8 @@ const checkBday = async (client : Client, em : EntityManager) => {
     const discBday = moment(user?.birthday).locale('nl').format('DD MMMM');
     const discBdayAge = moment(user?.birthday).locale('nl').format('YYYY');
     if (today === discBday) {
-      console.log(`${du.tag} is vandaag jarig`);
       const age = parseInt(todayAge, 10) - parseInt(discBdayAge, 10);
 
-      const message = (`Is vandaag ${age} geworden!`);
-
-      await user?.guildUsers.init({ populate: { guild: true } });
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
           const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true).catch(() => {});
@@ -253,28 +366,32 @@ const checkBday = async (client : Client, em : EntityManager) => {
               if (member && !member.roles.cache.has(bdayRole.id)) {
                 member.roles.add(bdayRole).catch(() => console.log('Kon geen rol geven'));
 
-                const embed = new MessageEmbed();
+                const url = du.avatarURL({ size: 256, dynamic: false, format: 'png' });
+                if (!url) {
+                  const embed = new MessageEmbed();
 
-                let color : string | undefined;
-                color = member.guild.me?.displayHexColor;
+                  let color : string | undefined;
+                  color = member.guild.me?.displayHexColor;
 
-                if (!color || color === '#000000') color = '#ffcc5f';
+                  if (!color || color === '#000000') color = '#ffcc5f';
 
-                embed.setColor(color);
+                  embed.setColor(color);
 
-                // eslint-disable-next-line max-len
-                embed.setAuthor(member.nickname || member.user.username, member.user.avatarURL() || undefined);
-                embed.description = message;
-                embed.setThumbnail('http://clipart-library.com/images/kcKnBz4Ai.jpg');
+                  // eslint-disable-next-line max-len
+                  embed.setAuthor(member.nickname || member.user.username, member.user.avatarURL() || undefined);
+                  embed.description = `Is vandaag ${age} geworden!`;
+                  embed.setThumbnail('http://clipart-library.com/images/kcKnBz4Ai.jpg');
 
-                await bdayChannel.send(embed).catch(() => {});
+                  bdayChannel.send(embed).catch(() => {});
+                } else {
+                  bdayChannel.send(`Gefeliciteerd met jouw verjaardag ${du}!`, await generateImage(url, age.toString())).catch(() => {});
+                }
               }
             }
           }
         }
       });
     } else {
-      await user?.guildUsers.init({ populate: { guild: true } });
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
           const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true).catch(() => {});
