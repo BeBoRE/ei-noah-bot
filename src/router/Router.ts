@@ -101,6 +101,13 @@ export default class Router {
 
   private roleRoute ?: BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator;
 
+  private _isInitialized : boolean = false;
+
+  public get isInitialized() {
+    // eslint-disable-next-line no-underscore-dangle
+    return this._isInitialized;
+  }
+
   // Met use geef je aan welk commando waarheen gaat
   public use(route : typeof DiscordUser, using: BothHandler, type ?: HandlerType.BOTH) : void
   public use(route : typeof DiscordUser, using: DMHandler, type : HandlerType.DM) : void
@@ -150,7 +157,7 @@ export default class Router {
 
   // INTERNAL
   // Zorgt dat de commando's op de goede plek terecht komen
-  protected handle(info: GuildRouteInfo | DMRouteInfo) : Promise<HandlerReturn> {
+  public handle(info: RouteInfo) : Promise<HandlerReturn> {
     return new Promise((resolve, reject) => {
       const currentRoute = info.params[0];
 
@@ -197,7 +204,7 @@ export default class Router {
                 handling = handler(<GuildRouteInfo>newInfo);
               }
             } else {
-              handling = handler(newInfo);
+              handling = handler(<BothRouteInfo>newInfo);
             }
 
             if (handling instanceof Promise) handling.then(resolve).catch(reject);
@@ -219,12 +226,16 @@ export default class Router {
 
   protected initialize(client : Client, orm : MikroORM<IDatabaseDriver<Connection>>) {
     Object.entries(this.routes).forEach(([, route]) => {
-      if (route instanceof Router) {
+      if (route instanceof Router && !route.isInitialized) {
         route.initialize(client, orm);
       }
     });
 
-    if (this.onInit) this.onInit(client, orm);
+    if (this.onInit) {
+      this.onInit(client, orm);
+      // eslint-disable-next-line no-underscore-dangle
+      this._isInitialized = true;
+    }
   }
 
   public onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)

@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake,
 } from 'discord.js';
 import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
@@ -51,11 +51,11 @@ function mapParams(mention : string,
 
   return seperated.map((param) => {
     const user = param.match(/<@!?([0-9]+)>/);
-    if (user) return client.users.fetch(user[1], true);
+    if (user) return client.users.fetch(<Snowflake>user[1], true);
 
     const role = param.match(/<@&([0-9]+)>/);
     if (role && guild) {
-      return guild.roles.fetch(role[1], true).then((r) => {
+      return guild.roles.fetch(<Snowflake>role[1], true).then((r) => {
         if (!r) throw new Error('Role not found');
 
         return r;
@@ -63,7 +63,13 @@ function mapParams(mention : string,
     }
 
     const channel = param.match(/<#([0-9]+)>/);
-    if (channel && guild) return client.channels.fetch(channel[1], true);
+    if (channel && guild) {
+      return client.channels.fetch(<Snowflake>channel[1], true).then((c) => {
+        if (!c) throw new Error('Channel not found');
+
+        return c;
+      });
+    }
 
     return Promise.resolve(param);
   });
@@ -135,7 +141,9 @@ async function messageParser(msg : Message, em: EntityManager) {
 }
 
 class EiNoah {
-  public readonly client = new Client();
+  public readonly client = new Client({
+    intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS'],
+  });
 
   private readonly router = new Router();
 
@@ -164,7 +172,7 @@ class EiNoah {
     const { orm } = this;
 
     this.client.on('ready', () => {
-      console.log('client online');
+      console.log('Client online');
     });
 
     this.client.on('message', (msg) => {
@@ -183,7 +191,7 @@ class EiNoah {
 
         if ((splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention)) {
           if (!canSendMessage) {
-            if (msg.member && msg.member.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
+            if (msg.member && msg.member.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
               msg.author.send('Ik kan toch niet in dat kanaal praten, doe je fucking werk of ik steek je neer').catch(() => { });
               return;
             }
@@ -201,7 +209,6 @@ class EiNoah {
             .then((info) => {
               if (!info) return 'Ongeldige user(s), role(s) en/of channel(s) gegeven';
 
-              // @ts-ignore
               return this.router.handle(info);
             })
             .then((response) => {
@@ -246,6 +253,7 @@ class EiNoah {
 
     // @ts-ignore
     this.router.initialize(this.client, orm);
+
     process.on('uncaughtException', async (err) => {
       if (process.env.ERROR_CHANNEL) await errorToChannel(process.env.ERROR_CHANNEL, this.client, err, ErrorType.Uncaught);
     });
