@@ -4,7 +4,6 @@ import {
   Role, Channel,
   Client,
   MessageOptions,
-  StringResolvable,
   MessageAdditions,
   TextChannel,
   NewsChannel,
@@ -53,7 +52,7 @@ export interface GuildRouteInfo extends RouteInfo {
 }
 
 export type HandlerReturn =
-  (MessageOptions & {content: StringResolvable}) | MessageAdditions | string | null;
+  (MessageOptions & {content: string}) | MessageAdditions | string | null;
 
 export enum HandlerType {
   DM = 'dm',
