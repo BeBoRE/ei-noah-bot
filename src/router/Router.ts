@@ -94,11 +94,11 @@ interface RouteList {
 }
 
 export interface IRouter {
-  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: ApplicationCommandOptionData) : void
-  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: ApplicationCommandOptionData) : void
-  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: ApplicationCommandOptionData) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
   use(route : string, using: Router | BothHandler) : void
-  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType, commandData?: ApplicationCommandOptionData) : void
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
 
   onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
   => void | Promise<void>)
@@ -113,8 +113,6 @@ export default class Router implements IRouter {
 
   private routes : RouteList = {};
 
-  private nullRoute ?: BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator;
-
   private _isInitialized : boolean = false;
 
   public get isInitialized() {
@@ -122,14 +120,14 @@ export default class Router implements IRouter {
     return this._isInitialized;
   }
 
-  private commandDataList : ApplicationCommandOptionData[] = [];
+  public commandDataList : Map<string, Omit<ApplicationCommandOptionData, 'name'>> = new Map();
 
   // Met use geef je aan welk commando waarheen gaat
-  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: ApplicationCommandOptionData) : void
-  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: ApplicationCommandOptionData) : void
-  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: ApplicationCommandOptionData) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
   use(route : string, using: Router | BothHandler) : void
-  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type: HandlerType = HandlerType.BOTH, commandData?: Exclude<ApplicationCommandOptionData, 'name'>) : void {
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type: HandlerType = HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void {
     const newUsing = <Router | BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator>using;
     if (typeof route === 'string') {
       if (this.routes[route]) throw new Error('This Route Already Exists');
@@ -139,6 +137,8 @@ export default class Router implements IRouter {
       }
 
       this.routes[route.toUpperCase()] = newUsing;
+
+      if (commandData) this.commandDataList.set(route.toLowerCase(), commandData);
     }
   }
 

@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData,
 } from 'discord.js';
 import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
@@ -188,18 +188,47 @@ class EiNoah implements IRouter {
 
   private readonly orm : MikroORM<IDatabaseDriver<Connection>>;
 
+  private applicationCommandData : ApplicationCommandData[] = [];
+
   constructor(token : string, orm : MikroORM<IDatabaseDriver<Connection>>) {
     this.token = token;
     this.orm = orm;
   }
 
-  use(route : string | null, using: BothHandler, type ?: HandlerType.BOTH) : void
-  use(route : string | null, using: DMHandler, type : HandlerType.DM) : void
-  use(route : string | null, using: GuildHandler, type : HandlerType.GUILD) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandData, 'name'>) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandData, 'name'>) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandData, 'name'>) : void
   use(route : string, using: Router | BothHandler) : void
-  use(route : string | null, using: Router | BothHandler | DMHandler | GuildHandler, type?: HandlerType) : void
-  use(route: any, using: any, type: any = HandlerType.BOTH): void {
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type?: HandlerType, commandData?: Omit<ApplicationCommandData, 'name'>) : void
+  use(route: string, using: any, type: any = HandlerType.BOTH, commandData?: Omit<ApplicationCommandData, 'name'>): void {
     this.router.use(route, using, type);
+
+    if (using instanceof Router) {
+      const commandDataList : ApplicationCommandOptionData[] = [];
+      using.commandDataList.forEach((value, key) => {
+        commandDataList.push({
+          name: key,
+          ...value,
+        });
+      });
+
+      if (commandDataList.length) {
+        this.applicationCommandData.push({
+          name: route,
+          description: using.description,
+          options: commandDataList,
+        });
+      }
+    }
+
+    if (commandData) {
+      if (typeof route === 'string') {
+        this.applicationCommandData.push({
+          name: route,
+          ...commandData,
+        });
+      }
+    }
   }
 
   public onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
@@ -295,6 +324,16 @@ class EiNoah implements IRouter {
 
     this.router.onInit = async (client) => {
       if (this.onInit) await this.onInit(client, orm);
+
+      client.guilds.cache.forEach(async (guild) => {
+        if (!guild.available) {
+          await guild.commands.fetch();
+        }
+
+        await Promise.all(guild.commands.cache.map((command) => command.delete()));
+
+        await guild.commands.set(this.applicationCommandData);
+      });
     };
 
     // @ts-ignore

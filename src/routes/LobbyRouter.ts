@@ -352,7 +352,76 @@ router.use('add', async ({
   if (gu.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
 
   return addUsers(userOrRole, activeChannel, await guildUser, msg.client);
-}, HandlerType.GUILD);
+}, HandlerType.GUILD, {
+  description: 'Voeg een gebruiker of rol toe aan je lobby',
+  type: 'SUB_COMMAND',
+  options: [{
+    name: 'mention',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+    required: true,
+  }, {
+    name: '1',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '2',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '3',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '4',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '5',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '6',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '7',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '8',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '9',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '10',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '11',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '12',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '13',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '14',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '15',
+    description: 'Persoon of rol die je toe wil voegen',
+    type: 'MENTIONABLE',
+  }],
+});
 
 const removeFromLobby = (
   channel : VoiceChannel,
@@ -859,7 +928,10 @@ const helpCommandText = [
 
 const helpHandler = () => helpCommandText;
 
-router.use('help', helpHandler);
+router.use('help', helpHandler, HandlerType.BOTH, {
+  description: 'Get help',
+  type: 'SUB_COMMAND',
+});
 
 const createAddMessage = async (tempChannel : TempChannel, user : User, client : Client, em : EntityManager) => {
   if (!tempChannel.textChannelId) throw new Error('Text channel not defined');

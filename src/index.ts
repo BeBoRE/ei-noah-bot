@@ -7,8 +7,8 @@ import { fork } from 'child_process';
 import {
   CanvasRenderingContext2D, createCanvas, loadImage,
 } from 'canvas';
-import { BothHandler } from 'router/Router';
 import { fillTextWithTwemoji, strokeTextWithTwemoji, measureText } from 'node-canvas-with-twemoji-and-discord-emoji';
+import { BothHandler, HandlerType } from './router/Router';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
@@ -214,18 +214,28 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
   };
 
   eiNoah.use('hug', hugHandler);
-  eiNoah.use('knuffel', hugHandler);
+  eiNoah.use('knuffel', hugHandler, HandlerType.BOTH, {
+    description: 'Geef iemand een knuffel die het verdiend heeft <3',
+    options: [
+      {
+        name: 'persoon',
+        description: 'Persoon die je een knuffel wil geven',
+        required: true,
+        type: 'USER',
+      }, {
+        name: 'tekst',
+        description: 'Zet een leuke tekstje erbij',
+        type: 'STRING',
+      }, {
+        name: 'bottom-tekst',
+        description: 'Zet een leuk tekstje erbij (maar dan aan de onderkant)',
+        type: 'STRING',
+      },
+    ],
+  });
 
   // Voorbeeld hoe je met user data omgaat
   if (process.env.NODE_ENV !== 'production') eiNoah.use('counter', Counter);
-
-  eiNoah.use(null, () => {
-    const watZegtNoah = ['Ja wat jonge', '**Kabaal** ik zit op de fiets', 'Ik steek je neer', 'Hmm wat zegt noah nog meer', 'Ik laat het aan god over'];
-
-    const zeg = watZegtNoah[Math.floor(Math.random() * watZegtNoah.length)];
-
-    return zeg;
-  });
 
   eiNoah.use('quote', QuoteRouter);
   eiNoah.use('qoute', QuoteRouter);
@@ -238,7 +248,9 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
     '`ei quote` Houd quotes van je makkermaten bij',
     '`ei knuffel <@User> [tekst] [-b bodemtekst]`: Geef iemand een knuffel die het verdiend heeft <3',
     '`ei stab <@User> [tekst] [-b bodemtekst]`: Steek iemand met een mes die het verdiend heeft <3',
-  ].join('\n'));
+  ].join('\n'), HandlerType.BOTH, {
+    description: 'Het heerlijke Ei Noah menu, geniet ervan :)',
+  });
 
   eiNoah.onInit = async (client) => {
     const updatePrecense = () => {
@@ -265,53 +277,6 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
 
       setTimeout(updatePrecense, 1000 * 60);
     };
-
-    client.guilds.cache.forEach(async (guild) => {
-      if (!guild.available) {
-        await guild.commands.fetch();
-      }
-
-      await Promise.all(guild.commands.cache.map((command) => command.delete()));
-
-      guild.commands.create({
-        name: 'lobby',
-        description: 'Manage a lobby',
-        options: [
-          {
-            name: 'add',
-            type: 'SUB_COMMAND',
-            description: 'Allow a user or role into the lobby',
-            options: [
-              {
-                name: 'mention',
-                type: 'MENTIONABLE',
-                description: 'User or role to allow',
-              },
-              {
-                name: 'message',
-                type: 'STRING',
-                description: 'Send a message with',
-              },
-            ],
-          }, {
-            name: 'remove',
-            type: 'SUB_COMMAND',
-            description: 'Disallow a user or role from the lobby',
-            options: [
-              {
-                name: 'mention',
-                type: 'MENTIONABLE',
-                description: 'User or role to remove',
-              },
-            ],
-          }, {
-            name: 'gaming',
-            description: 'Lobby that',
-            type: 'USER',
-          },
-        ],
-      });
-    });
 
     updatePrecense();
   };
