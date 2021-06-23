@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment,
 } from 'discord.js';
 import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
@@ -14,14 +14,14 @@ enum ErrorType {
 }
 
 const errorToChannel = async (channelId : string, client : Client, err : Error, type?: ErrorType) => {
-  const errorChannel = await client.channels.fetch(channelId);
+  const errorChannel = await client.channels.fetch(<Snowflake>channelId);
   if (errorChannel instanceof TextChannel
      || errorChannel instanceof NewsChannel
   ) {
     let header = '';
     if (type === ErrorType.Uncaught) header = '**Uncaught**';
     if (type === ErrorType.Unhandled) header = '**Unhandled**';
-    return errorChannel.send(`${header}\n**${err?.name}**\n\`\`\`${err?.stack}\`\`\``, { split: true });
+    return errorChannel.send({ content: `${header}\n**${err?.name}**\n\`\`\`${err?.stack}\`\`\``, split: true });
   }
 
   return null;
@@ -51,11 +51,11 @@ function mapParams(mention : string,
 
   return seperated.map((param) => {
     const user = param.match(/<@!?([0-9]+)>/);
-    if (user) return client.users.fetch(<Snowflake>user[1], true);
+    if (user) return client.users.fetch(<Snowflake>user[1], { cache: true });
 
     const role = param.match(/<@&([0-9]+)>/);
     if (role && guild) {
-      return guild.roles.fetch(<Snowflake>role[1], true).then((r) => {
+      return guild.roles.fetch(<Snowflake>role[1], { cache: true }).then((r) => {
         if (!r) throw new Error('Role not found');
 
         return r;
@@ -64,7 +64,7 @@ function mapParams(mention : string,
 
     const channel = param.match(/<#([0-9]+)>/);
     if (channel && guild) {
-      return client.channels.fetch(<Snowflake>channel[1], true).then((c) => {
+      return client.channels.fetch(<Snowflake>channel[1], { cache: true }).then((c) => {
         if (!c) throw new Error('Channel not found');
 
         return c;
@@ -177,7 +177,7 @@ class EiNoah {
 
     this.client.on('message', (msg) => {
       if (msg.author !== this.client.user && msg.content) {
-        const splitted = msg.content.split(' ').filter((param) => param);
+        const splitted = msg.content.split(' ').filter((param : string) => param);
 
         // Raw mention ziet er anders uit wanneer user een nickname heeft
         const botMention = `<@${this.client.user?.id}>`;
@@ -215,10 +215,32 @@ class EiNoah {
               console.timeEnd(`${msg.id}`);
               if (response) {
                 if (typeof (response) !== 'string') {
-                  return msg.channel.send(response).catch(() => { });
+                  if (response instanceof MessageEmbed) return msg.channel.send({ embeds: [response] }).catch(() => null);
+                  if (response instanceof MessageAttachment) return msg.channel.send({ files: [response] }).catch(() => null);
+                  if (Array.isArray(response)) {
+                    const embeds : MessageEmbed[] = [];
+                    const files : MessageAttachment[] = [];
+
+                    response.forEach((item) => {
+                      if (item instanceof MessageEmbed) {
+                        embeds.push(item);
+                        return;
+                      }
+
+                      files.push(item);
+                    });
+
+                    if (!embeds.length && !embeds.length) return null;
+                    return msg.channel.send({
+                      embeds,
+                      files,
+                    }).catch(() => null);
+                  }
+
+                  return msg.channel.send({ ...response, split: true }).catch(() => null);
                 }
 
-                return msg.channel.send(response, { split: true }).catch(() => { });
+                return msg.channel.send({ split: true, content: response }).catch(() => null);
               }
 
               return null;

@@ -4,12 +4,13 @@ import {
   Role, Channel,
   Client,
   MessageOptions,
-  MessageAdditions,
   TextChannel,
   NewsChannel,
   DMChannel,
   Guild,
   GuildMember,
+  MessageEmbed,
+  MessageAttachment,
 } from 'discord.js';
 import {
   EntityManager, MikroORM, IDatabaseDriver, Connection,
@@ -52,7 +53,7 @@ export interface GuildRouteInfo extends RouteInfo {
 }
 
 export type HandlerReturn =
-  (MessageOptions & {content: string}) | MessageAdditions | string | null;
+  (MessageOptions & {content: string}) | MessageEmbed | MessageAttachment | (MessageEmbed | MessageAttachment)[] | string | null;
 
 export enum HandlerType {
   DM = 'dm',

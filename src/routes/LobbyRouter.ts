@@ -18,6 +18,7 @@ import {
   CollectorFilter,
   MessageReaction,
   User,
+  Snowflake,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/core';
 import emojiRegex from 'emoji-regex';
@@ -97,7 +98,7 @@ function getChannelType(channel : VoiceChannel) {
 }
 
 async function createTempChannel(
-  guild: DiscordGuild, parent: string,
+  guild: DiscordGuild, parent: Snowflake,
   users: Array<DiscordUser | Role>, owner: DiscordUser,
   bitrate: number,
   type: ChannelType,
@@ -156,7 +157,7 @@ async function activeTempChannel(client : Client, em : EntityManager, tempChanne
   if (!tempChannel.isInitialized()) await tempChannel.init();
 
   try {
-    const activeChannel = await client.channels.fetch(tempChannel.channelId, false);
+    const activeChannel = await client.channels.fetch(`${BigInt(tempChannel.channelId)}`, { cache: true });
     if (activeChannel instanceof VoiceChannel) {
       return activeChannel;
     }
@@ -177,7 +178,7 @@ async function activeTempText(client : Client, tempChannel : TempChannel) {
   if (!tempChannel || !tempChannel.textChannelId) return undefined;
 
   try {
-    const activeChannel = await client.channels.fetch(tempChannel.textChannelId, false);
+    const activeChannel = await client.channels.fetch(`${BigInt(tempChannel.channelId)}`, { cache: true });
     if (activeChannel instanceof TextChannel) {
       return activeChannel;
     }
@@ -252,7 +253,7 @@ const createCreateChannel = (type : ChannelType, category : CategoryChannel) => 
 const getChannel = (client : Client, channelId ?: string) => new Promise<null | Channel>(
   (resolve) => {
     if (channelId === undefined) { resolve(null); return; }
-    client.channels.fetch(channelId, true)
+    client.channels.fetch(`${BigInt(channelId)}`, { cache: true })
       .then((channel) => resolve(channel))
       .catch(() => resolve(null))
       .finally(() => resolve(null));
@@ -260,7 +261,7 @@ const getChannel = (client : Client, channelId ?: string) => new Promise<null | 
 );
 
 const createCreateChannels = async (category : Category, client : Client) => {
-  const actualCategory = await client.channels.fetch(category.id, true);
+  const actualCategory = await client.channels.fetch(`${BigInt(category.id)}`, { cache: true });
   if (!(actualCategory instanceof CategoryChannel)) return;
 
   let publicVoice = await getChannel(client, category.publicVoice);
@@ -682,13 +683,13 @@ router.use('category', async ({
     return 'Ik verwacht twee argumenten `<lobby-create-categorie id> <nieuwe categorie id om de lobbies in te plaatsen>`';
   }
 
-  if (!msg.member?.hasPermission('ADMINISTRATOR')) {
+  if (!msg.member?.permissions.has('ADMINISTRATOR')) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
   const [createCategory, lobbyCategory] = await Promise.all([
-    msg.client.channels.fetch(params[0], true).catch(() => null),
-    msg.client.channels.fetch(params[1], true).catch(() => null),
+    msg.client.channels.fetch(`${BigInt(params[0])}`, { cache: true }).catch(() => null),
+    msg.client.channels.fetch(`${BigInt(params[1])}`, { cache: true }).catch(() => null),
   ]);
 
   if (!(createCategory instanceof CategoryChannel)) return 'Gegeven create-category is niet een categorie';
@@ -720,11 +721,11 @@ router.use('create-category', async ({
     return 'Ik verwacht een string als argument';
   }
 
-  if (!msg.member?.hasPermission('ADMINISTRATOR')) {
+  if (!msg.member?.permissions.has('ADMINISTRATOR')) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
-  const category = await msg.client.channels.fetch(params[0], true).catch(() => {});
+  const category = await msg.client.channels.fetch(`${BigInt(params[0])}`, { cache: true }).catch(() => {});
   if (!(category instanceof CategoryChannel)) return 'Gegeven is geen categorie';
 
   if (!category.permissionsFor(msg.client.user)?.has('MANAGE_CHANNELS')) {
@@ -779,7 +780,7 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
     return 'Ik verwacht een string als argument';
   }
 
-  if (!msg.member?.hasPermission('ADMINISTRATOR')) {
+  if (!msg.member?.permissions.has('ADMINISTRATOR')) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
@@ -864,7 +865,7 @@ router.use('help', helpHandler);
 const createAddMessage = async (tempChannel : TempChannel, user : User, client : Client, em : EntityManager) => {
   if (!tempChannel.textChannelId) throw new Error('Text channel not defined');
 
-  const textChannel = await client.channels.fetch(tempChannel.textChannelId, true);
+  const textChannel = await client.channels.fetch(`${BigInt(tempChannel.textChannelId)}`, { cache: true });
   if (!textChannel || !(textChannel instanceof TextChannel)) throw new Error('Text channel not found');
 
   const activeChannel = await activeTempChannel(client, em, tempChannel);

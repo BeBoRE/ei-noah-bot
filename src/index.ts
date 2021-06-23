@@ -252,15 +252,15 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
   eiNoah.onInit = async (client) => {
     const updatePrecense = () => {
       const watDoetNoah : PresenceData[] = [{
-        activity: {
+        activities: [{
           name: 'Probeer Niet Te Steken',
           type: 'PLAYING',
-        },
+        }],
       }, {
-        activity: {
+        activities: [{
           name: 'Steek Geluiden',
           type: 'LISTENING',
-        },
+        }],
       }];
 
       const precense = watDoetNoah[Math.floor(Math.random() * watDoetNoah.length)];
