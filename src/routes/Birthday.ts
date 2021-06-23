@@ -66,7 +66,7 @@ router.use(null, helpHandler);
 router.use('show-all', async ({ msg, em }) => {
   const users = await em.find(User, { $not: { birthday: null } });
 
-  const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(u.id, true)));
+  const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(`${BigInt(u.id)}`, { cache: true })));
   const description = discUsers
     .sort((a, b) => {
       let dayA = moment(users.find((u) => u.id === a.id)?.birthday).dayOfYear();
@@ -97,7 +97,7 @@ router.use('show-all', async ({ msg, em }) => {
     return embed;
   }
 
-  embed.addField('Aankomende eerst', description);
+  embed.addField('Aankomende eerst', description.join('\n'));
 
   return embed;
 });
@@ -107,7 +107,7 @@ const showAgeHandler : BothHandler = async ({ msg, em }) => {
 
   if (users.length === 0) return 'Geen geboortedatum\'s geregistreerd';
 
-  const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(u.id, true)));
+  const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(`${BigInt(u.id)}`, { cache: true })));
   const description = discUsers
     .sort((a, b) => {
       const bdayA = users.find((u) => u.id === a.id)?.birthday;
@@ -176,7 +176,7 @@ router.use('delete', async ({ user }) => {
 });
 
 const setChannelHandler : GuildHandler = async ({ guildUser, msg }) => {
-  if (!msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
+  if (!msg.member?.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
@@ -196,7 +196,7 @@ router.use('set-channel', setChannelHandler, HandlerType.GUILD);
 router.use('channel', setChannelHandler, HandlerType.GUILD);
 
 const setRoleHandler : GuildHandler = async ({ guildUser, msg, params }) => {
-  if (!msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
+  if (!msg.member?.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
@@ -347,7 +347,7 @@ const checkBday = async (client : Client, em : EntityManager) => {
   const todayAge = moment().startOf('day').locale('nl').format('YYYY');
 
   const users = await em.find(User, { $not: { birthday: null } }, ['guildUsers', 'guildUsers.guild']);
-  const discUsers = await Promise.all(users.map((u) => client.users.fetch(u.id, true)));
+  const discUsers = await Promise.all(users.map((u) => client.users.fetch(`${BigInt(u.id)}`, { cache: true })));
 
   discUsers.forEach(async (du) => {
     const user = users.find((u) => u.id === du.id);
@@ -358,9 +358,9 @@ const checkBday = async (client : Client, em : EntityManager) => {
 
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
-          const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true).catch(() => {});
+          const bdayChannel = await client.channels.fetch(`${BigInt(gu.guild.birthdayChannel)}`, { cache: true }).catch(() => {});
           if (bdayChannel instanceof TextChannel) {
-            const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true).catch(() => {});
+            const bdayRole = await bdayChannel.guild.roles.fetch(`${BigInt(gu.guild.birthdayChannel)}`, { cache: true }).catch(() => {});
             if (bdayRole instanceof Role) {
               const member = await bdayChannel.guild.members.fetch({ user: du, cache: true }).catch(() => {});
               if (member && !member.roles.cache.has(bdayRole.id)) {
@@ -382,9 +382,9 @@ const checkBday = async (client : Client, em : EntityManager) => {
                   embed.description = `Is vandaag ${age} geworden!`;
                   embed.setThumbnail('http://clipart-library.com/images/kcKnBz4Ai.jpg');
 
-                  bdayChannel.send(embed).catch(() => {});
+                  bdayChannel.send({ embeds: [embed] }).catch(() => {});
                 } else {
-                  bdayChannel.send(`Gefeliciteerd met jouw verjaardag ${du}!`, await generateImage(url, age.toString())).catch(() => {});
+                  bdayChannel.send({ content: `Gefeliciteerd met jouw verjaardag ${du}!`, files: [await generateImage(url, age.toString())] }).catch(() => {});
                 }
               }
             }
@@ -394,9 +394,9 @@ const checkBday = async (client : Client, em : EntityManager) => {
     } else {
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
-          const bdayChannel = await client.channels.fetch(gu.guild.birthdayChannel, true).catch(() => {});
+          const bdayChannel = await client.channels.fetch(`${BigInt(gu.guild.birthdayChannel)}`, { cache: true }).catch(() => {});
           if (bdayChannel instanceof TextChannel) {
-            const bdayRole = await bdayChannel.guild.roles.fetch(gu.guild.birthdayRole, true).catch(() => {});
+            const bdayRole = await bdayChannel.guild.roles.fetch(`${BigInt(gu.guild.birthdayChannel)}`, { cache: true }).catch(() => {});
             if (bdayRole instanceof Role) {
               const member = await bdayChannel.guild.members.fetch({ user: du, cache: true }).catch(() => {});
               if (member && member.roles.cache.has(bdayRole.id)) member.roles.remove(bdayRole).catch(() => console.log('Kon rol niet verwijderen'));

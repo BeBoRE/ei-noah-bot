@@ -92,7 +92,27 @@ interface RouteList {
   [path : string]: Router | BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator;
 }
 
-export default class Router {
+export interface IRouter {
+  use(route : typeof DiscordUser, using: BothHandler, type ?: HandlerType.BOTH) : void
+  use(route : typeof DiscordUser, using: DMHandler, type : HandlerType.DM) : void
+  use(route : typeof DiscordUser, using: GuildHandler, type : HandlerType.GUILD) : void
+  use(route : typeof Role, using: BothHandler, type ?: HandlerType.BOTH) : void
+  use(route : typeof Role, using: DMHandler, type : HandlerType.DM) : void
+  use(route : typeof Role, using: GuildHandler, type : HandlerType.GUILD) : void
+  use(route : string, using: Router | BothHandler) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD) : void
+  use(route : null, using : BothHandler, type ?: HandlerType.BOTH) : void
+  use(route : null, using : DMHandler, type : HandlerType.DM) : void
+  use(route : null, using : GuildHandler, type : HandlerType.GUILD) : void
+  use(route : typeof DiscordUser | typeof Role | string | null, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType) : void
+
+  onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
+  => void | Promise<void>)
+}
+
+export default class Router implements IRouter {
   private routes : RouteList = {};
 
   private userRoute ?: BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator;

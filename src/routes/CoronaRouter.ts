@@ -90,7 +90,7 @@ const listRegionsHandler : BothHandler = async ({ msg, em }) => {
 
   if (regions.length === 0) return 'Regio\'s zijn nog niet geladen (dit kan nog 10 minuten duren)';
 
-  msg.author.send(`Regio's:\n${regions.join('\n')}`, { split: true });
+  msg.author.send({ content: `Regio's:\n${regions.join('\n')}`, split: true });
   return null;
 };
 
@@ -239,8 +239,8 @@ const coronaRefresher = async (client : Client, orm : MikroORM<IDatabaseDriver<C
       });
 
       const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}`;
-      client.users.fetch(groupedUsers[key][0].user.id, true)
-        .then((user) => user.send(report, { split: true }))
+      client.users.fetch(`${BigInt(groupedUsers[key][0].user.id)}`, { cache: true })
+        .then((user) => user.send({ content: report, split: true }))
         .catch(() => {});
     });
   };

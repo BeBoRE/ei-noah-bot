@@ -59,7 +59,7 @@ async function createMenu<T>(
   })).catch(() => { });
 
   // eslint-disable-next-line max-len
-  const filter : CollectorFilter = (r : MessageReaction, u : DiscordUser) => (emotes.some((e) => e === r.emoji.name) || extraButtons.some((b) => b[0] === r.emoji.name) || r.emoji.name === pageLeft || r.emoji.name === pageRight) && u.id === owner.id;
+  const filter : CollectorFilter<[MessageReaction, DiscordUser]> = (r, u) => (emotes.some((e) => e === r.emoji.name) || extraButtons.some((b) => b[0] === r.emoji.name) || r.emoji.name === pageLeft || r.emoji.name === pageRight) && u.id === owner.id;
   const collector = message.createReactionCollector(filter);
 
   const timeout = (() => {

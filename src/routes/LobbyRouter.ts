@@ -872,7 +872,7 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
   if (!activeChannel) throw new Error('No active temp channel');
 
   textChannel.send(`Laat ${user.username} toe in de lobby?`).then((msg) => {
-    const filter : CollectorFilter = (reaction : MessageReaction, reactor : User) => reactor.id === tempChannel.guildUser.user.id && reaction.emoji.name === '✅';
+    const filter : CollectorFilter<[MessageReaction, User]> = (reaction : MessageReaction, reactor : User) => reactor.id === tempChannel.guildUser.user.id && reaction.emoji.name === '✅';
 
     const collector = msg.createReactionCollector(filter);
     collector.on('collect', () => {
@@ -901,7 +901,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel,
       if (activeTextChannel) await activeTextChannel.delete();
       console.log('Verwijderd: Niemand in lobby');
       em.remove(tempChannel);
-    } else if (!activeChannel.members.has(tempChannel.guildUser.user.id)) {
+    } else if (!activeChannel.members.has(`${BigInt(tempChannel.guildUser.user.id)}`)) {
       const guildUsers = await Promise.all(activeChannel.members
         .map((member) => getUserGuildData(em, member.user, activeChannel.guild)));
 
@@ -945,7 +945,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel,
         console.log('Ownership is overgedragen');
       } else { console.log('Owner is weggegaan, maar niemand kwam in aanmerking om de nieuwe leider te worden'); }
     } else {
-      const discordUser = await client.users.fetch(tempChannel.guildUser.user.id);
+      const discordUser = await client.users.fetch(`${BigInt(tempChannel.guildUser.user.id)}`);
       const lobbyType = getChannelType(activeChannel);
 
       const correctName = generateLobbyName(lobbyType, discordUser, tempChannel.guildUser);
@@ -1033,7 +1033,7 @@ router.onInit = async (client, orm) => {
 
           if (!guildUser.guild.isInitialized()) await guildUser.guild.init();
 
-          const createdChannel = await createTempChannel(newState.guild, (await categoryData).lobbyCategory || channel.parent.id, [], user, guildUser.guild.bitrate, type, undefined, guildUser);
+          const createdChannel = await createTempChannel(newState.guild, `${BigInt((await categoryData).lobbyCategory || channel.parent.id)}`, [], user, guildUser.guild.bitrate, type, undefined, guildUser);
           guildUser.tempChannel = new TempChannel(createdChannel.id, guildUser);
 
           newState.setChannel(createdChannel);

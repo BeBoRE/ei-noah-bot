@@ -6,7 +6,9 @@ import {
 } from '@mikro-orm/core';
 
 import LazyRouteInfo from './router/LazyRouteInfo';
-import Router, { BothHandler, RouteInfo } from './router/Router';
+import Router, {
+  BothHandler, DMHandler, GuildHandler, HandlerType, IRouter, RouteInfo,
+} from './router/Router';
 
 enum ErrorType {
   Uncaught,
@@ -140,9 +142,9 @@ async function messageParser(msg : Message, em: EntityManager) {
   return routeInfo;
 }
 
-class EiNoah {
+class EiNoah implements IRouter {
   public readonly client = new Client({
-    intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS'],
+    intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILDS'],
   });
 
   private readonly router = new Router();
@@ -156,13 +158,22 @@ class EiNoah {
     this.orm = orm;
   }
 
-  // this.use wordt doorgepaast aan de echte router
-  public use(route: typeof DiscordUser, using: BothHandler) : void
-  public use(route: typeof Role, using: BothHandler) : void
-  public use(route: null, using: BothHandler) : void
-  public use(route : string, using: Router | BothHandler) : void
-  public use(route : any, using: any) : any {
-    this.router.use(route, using);
+  use(route: typeof DiscordUser, using: BothHandler, type?: HandlerType.BOTH): void;
+  use(route: typeof DiscordUser, using: DMHandler, type: HandlerType.DM): void;
+  use(route: typeof DiscordUser, using: GuildHandler, type: HandlerType.GUILD): void;
+  use(route: typeof Role, using: BothHandler, type?: HandlerType.BOTH): void;
+  use(route: typeof Role, using: DMHandler, type: HandlerType.DM): void;
+  use(route: typeof Role, using: GuildHandler, type: HandlerType.GUILD): void;
+  use(route: string, using: Router | BothHandler): void;
+  use(route: string, using: BothHandler, type?: HandlerType.BOTH): void;
+  use(route: string, using: DMHandler, type: HandlerType.DM): void;
+  use(route: string, using: GuildHandler, type: HandlerType.GUILD): void;
+  use(route: null, using: BothHandler, type?: HandlerType.BOTH): void;
+  use(route: null, using: DMHandler, type: HandlerType.DM): void;
+  use(route: null, using: GuildHandler, type: HandlerType.GUILD): void;
+  use(route: string | typeof DiscordUser | typeof Role | null, using: Router | BothHandler | DMHandler | GuildHandler, type?: HandlerType): void;
+  use(route: any, using: any, type?: any): void {
+    this.router.use(route, using, type);
   }
 
   public onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
@@ -186,7 +197,7 @@ class EiNoah {
         let canSendMessage = true;
 
         if ((msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) && msg.client.user) {
-          if (!msg.channel.permissionsFor(msg.client.user)?.has(Permissions.FLAGS.SEND_MESSAGES)) canSendMessage = false;
+          if (!msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.SEND_MESSAGES)) canSendMessage = false;
         }
 
         if ((splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention)) {
@@ -211,7 +222,7 @@ class EiNoah {
 
               return this.router.handle(info);
             })
-            .then((response) => {
+            .then((response) : Promise<Message | Message[] | null> => {
               console.timeEnd(`${msg.id}`);
               if (response) {
                 if (typeof (response) !== 'string') {
@@ -230,7 +241,7 @@ class EiNoah {
                       files.push(item);
                     });
 
-                    if (!embeds.length && !embeds.length) return null;
+                    if (!embeds.length && !embeds.length) return Promise.resolve(null);
                     return msg.channel.send({
                       embeds,
                       files,
@@ -243,11 +254,11 @@ class EiNoah {
                 return msg.channel.send({ split: true, content: response }).catch(() => null);
               }
 
-              return null;
+              return Promise.resolve(null);
             })
+            .then(() => em.flush())
             .finally(() => {
               msg.channel.stopTyping();
-              return em.flush();
             })
             .catch((err) => {
               console.timeEnd(`${msg.id}`);

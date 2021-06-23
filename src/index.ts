@@ -261,13 +261,18 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
           name: 'Steek Geluiden',
           type: 'LISTENING',
         }],
+      }, {
+        activities: [{
+          name: 'Slash Commands :-0',
+          type: 'LISTENING',
+        }],
       }];
 
       const precense = watDoetNoah[Math.floor(Math.random() * watDoetNoah.length)];
 
-    client.user?.setPresence(precense);
+      client.user?.setPresence(precense);
 
-    setTimeout(updatePrecense, 1000 * 60);
+      setTimeout(updatePrecense, 1000 * 60);
     };
 
     updatePrecense();

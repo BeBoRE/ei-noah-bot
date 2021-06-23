@@ -23,8 +23,8 @@ const getQuoteEmbed = async (channel : TextBasedChannelFields, quote : Quote, cl
     return quote.creator;
   })()]);
 
-  const quoted = client.users.fetch(quote.guildUser.user.id, true);
-  const owner = client.users.fetch(quote.creator.user.id, true);
+  const quoted = client.users.fetch(`${BigInt(quote.guildUser.user.id)}`, { cache: true });
+  const owner = client.users.fetch(`${BigInt(quote.creator.user.id)}`, { cache: true });
 
   const text = quote.text.replace('`', '\\`');
 
@@ -93,7 +93,7 @@ const handler : GuildHandler = async ({
       '**Kiest U Maar**',
       (q) => q.text,
       async (q) => {
-        msg.channel.send(await getQuoteEmbed(msg.channel, q, msg.client)).catch(() => { });
+        msg.channel.send({ embeds: [await getQuoteEmbed(msg.channel, q, msg.client)] }).catch(() => { });
       });
     return null;
   }
@@ -127,7 +127,7 @@ const removeHandler : GuildHandler = async ({
 
   // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
-  const constraint = guToRemoveFrom.user.id === msg.author.id || msg.member?.hasPermission(Permissions.FLAGS.ADMINISTRATOR)
+  const constraint = guToRemoveFrom.user.id === msg.author.id || msg.member?.permissions.has(Permissions.FLAGS.ADMINISTRATOR)
     ? undefined : { where: { creator: await guildUser } };
 
   if (!guToRemoveFrom.quotes.isInitialized()) { await guToRemoveFrom.quotes.init(constraint); }
@@ -171,7 +171,7 @@ router.use('manage', removeHandler, HandlerType.GUILD);
 
 router.use(null, async ({ msg, em, guildUser }) => {
   if (msg.reference?.messageID) {
-    const toQuote = await msg.channel.messages.fetch(msg.reference.messageID, true).catch(() => null);
+    const toQuote = await msg.channel.messages.fetch(`${BigInt(msg.reference.messageID)}`, { cache: true }).catch(() => null);
     if (!toQuote) return 'Ik heb hard gezocht, maar kon het gegeven bericht is niet vinden';
     if (!toQuote.content) return 'Bericht heeft geen inhoud';
 
