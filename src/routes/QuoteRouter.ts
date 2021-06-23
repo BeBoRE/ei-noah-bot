@@ -10,7 +10,7 @@ import Quote from '../entity/Quote';
 import { getUserGuildData } from '../data';
 import Router, { GuildHandler, HandlerType } from '../router/Router';
 
-const router = new Router();
+const router = new Router('Onthoud al');
 
 const getQuoteEmbed = async (channel : TextBasedChannelFields, quote : Quote, client : Client) : Promise<MessageEmbed> => {
   await Promise.all([(() => {
@@ -104,7 +104,8 @@ const handler : GuildHandler = async ({
   return getQuoteEmbed(msg.channel, quote, msg.client);
 };
 
-router.use(DiscordUser, handler, HandlerType.GUILD);
+router.use('user', handler, HandlerType.GUILD);
+router.use('get', handler, HandlerType.GUILD);
 router.use('add', handler, HandlerType.GUILD);
 router.use('toevoegen', handler, HandlerType.GUILD);
 
@@ -169,7 +170,7 @@ router.use('verwijder', removeHandler, HandlerType.GUILD);
 router.use('verwijderen', removeHandler, HandlerType.GUILD);
 router.use('manage', removeHandler, HandlerType.GUILD);
 
-router.use(null, async ({ msg, em, guildUser }) => {
+router.use('random', async ({ msg, em, guildUser }) => {
   if (msg.reference?.messageID) {
     const toQuote = await msg.channel.messages.fetch(`${BigInt(msg.reference.messageID)}`, { cache: true }).catch(() => null);
     if (!toQuote) return 'Ik heb hard gezocht, maar kon het gegeven bericht is niet vinden';

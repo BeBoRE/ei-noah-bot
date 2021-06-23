@@ -30,7 +30,7 @@ import { GuildUser } from '../entity/GuildUser';
 import { Guild } from '../entity/Guild';
 import Router, { GuildHandler, HandlerType } from '../router/Router';
 
-const router = new Router();
+const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');
 
 enum ChannelType {
   Mute = 'mute',
@@ -859,7 +859,6 @@ const helpCommandText = [
 
 const helpHandler = () => helpCommandText;
 
-router.use(null, helpHandler);
 router.use('help', helpHandler);
 
 const createAddMessage = async (tempChannel : TempChannel, user : User, client : Client, em : EntityManager) => {

@@ -1,13 +1,14 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions,
 } from 'discord.js';
 import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
 } from '@mikro-orm/core';
 
+import console from 'console';
 import LazyRouteInfo from './router/LazyRouteInfo';
 import Router, {
-  BothHandler, DMHandler, GuildHandler, HandlerType, IRouter, RouteInfo,
+  BothHandler, DMHandler, GuildHandler, HandlerReturn, HandlerType, IRouter, RouteInfo,
 } from './router/Router';
 
 enum ErrorType {
@@ -142,12 +143,46 @@ async function messageParser(msg : Message, em: EntityManager) {
   return routeInfo;
 }
 
+const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : MessageOptions | null => {
+  if (handlerReturn) {
+    if (typeof (handlerReturn) !== 'string') {
+      if (handlerReturn instanceof MessageEmbed) return { embeds: [handlerReturn] };
+      if (handlerReturn instanceof MessageAttachment) return { files: [handlerReturn] };
+      if (Array.isArray(handlerReturn)) {
+        const embeds : MessageEmbed[] = [];
+        const files : MessageAttachment[] = [];
+
+        handlerReturn.forEach((item) => {
+          if (item instanceof MessageEmbed) {
+            embeds.push(item);
+            return;
+          }
+
+          files.push(item);
+        });
+
+        if (!embeds.length && !files.length) return null;
+        return {
+          embeds,
+          files,
+        };
+      }
+
+      return { ...handlerReturn, split: true };
+    }
+
+    return { split: true, content: handlerReturn };
+  }
+
+  return null;
+};
+
 class EiNoah implements IRouter {
   public readonly client = new Client({
     intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILDS'],
   });
 
-  private readonly router = new Router();
+  private readonly router = new Router('Ei Noah');
 
   private readonly token : string;
 
@@ -158,21 +193,12 @@ class EiNoah implements IRouter {
     this.orm = orm;
   }
 
-  use(route: typeof DiscordUser, using: BothHandler, type?: HandlerType.BOTH): void;
-  use(route: typeof DiscordUser, using: DMHandler, type: HandlerType.DM): void;
-  use(route: typeof DiscordUser, using: GuildHandler, type: HandlerType.GUILD): void;
-  use(route: typeof Role, using: BothHandler, type?: HandlerType.BOTH): void;
-  use(route: typeof Role, using: DMHandler, type: HandlerType.DM): void;
-  use(route: typeof Role, using: GuildHandler, type: HandlerType.GUILD): void;
-  use(route: string, using: Router | BothHandler): void;
-  use(route: string, using: BothHandler, type?: HandlerType.BOTH): void;
-  use(route: string, using: DMHandler, type: HandlerType.DM): void;
-  use(route: string, using: GuildHandler, type: HandlerType.GUILD): void;
-  use(route: null, using: BothHandler, type?: HandlerType.BOTH): void;
-  use(route: null, using: DMHandler, type: HandlerType.DM): void;
-  use(route: null, using: GuildHandler, type: HandlerType.GUILD): void;
-  use(route: string | typeof DiscordUser | typeof Role | null, using: Router | BothHandler | DMHandler | GuildHandler, type?: HandlerType): void;
-  use(route: any, using: any, type?: any): void {
+  use(route : string | null, using: BothHandler, type ?: HandlerType.BOTH) : void
+  use(route : string | null, using: DMHandler, type : HandlerType.DM) : void
+  use(route : string | null, using: GuildHandler, type : HandlerType.GUILD) : void
+  use(route : string, using: Router | BothHandler) : void
+  use(route : string | null, using: Router | BothHandler | DMHandler | GuildHandler, type?: HandlerType) : void
+  use(route: any, using: any, type: any = HandlerType.BOTH): void {
     this.router.use(route, using, type);
   }
 
@@ -184,6 +210,13 @@ class EiNoah implements IRouter {
 
     this.client.on('ready', () => {
       console.log('Client online');
+    });
+
+    this.client.on('interaction', (interaction) => {
+      if (interaction.isCommand()) {
+        console.log(interaction);
+        interaction.defer();
+      }
     });
 
     this.client.on('message', (msg) => {
@@ -222,41 +255,19 @@ class EiNoah implements IRouter {
 
               return this.router.handle(info);
             })
-            .then((response) : Promise<Message | Message[] | null> => {
+            .then(handlerReturnToMessageOptions)
+            .then((options) => Promise.all([options, em.flush()]))
+            .then(([options]) => {
               console.timeEnd(`${msg.id}`);
-              if (response) {
-                if (typeof (response) !== 'string') {
-                  if (response instanceof MessageEmbed) return msg.channel.send({ embeds: [response] }).catch(() => null);
-                  if (response instanceof MessageAttachment) return msg.channel.send({ files: [response] }).catch(() => null);
-                  if (Array.isArray(response)) {
-                    const embeds : MessageEmbed[] = [];
-                    const files : MessageAttachment[] = [];
-
-                    response.forEach((item) => {
-                      if (item instanceof MessageEmbed) {
-                        embeds.push(item);
-                        return;
-                      }
-
-                      files.push(item);
-                    });
-
-                    if (!embeds.length && !embeds.length) return Promise.resolve(null);
-                    return msg.channel.send({
-                      embeds,
-                      files,
-                    }).catch(() => null);
-                  }
-
-                  return msg.channel.send({ ...response, split: true }).catch(() => null);
-                }
-
-                return msg.channel.send({ split: true, content: response }).catch(() => null);
+              return options;
+            })
+            .then((options) : Promise<Message | Message[] | null> => {
+              if (options) {
+                if (options.split === true) return msg.channel.send({ ...options, split: true });
+                return msg.channel.send({ ...options, split: false });
               }
-
               return Promise.resolve(null);
             })
-            .then(() => em.flush())
             .finally(() => {
               msg.channel.stopTyping();
             })
@@ -282,7 +293,9 @@ class EiNoah implements IRouter {
 
     await this.client.login(this.token);
 
-    this.router.onInit = this.onInit;
+    this.router.onInit = async (client) => {
+      if (this.onInit) await this.onInit(client, orm);
+    };
 
     // @ts-ignore
     this.router.initialize(this.client, orm);

@@ -8,7 +8,7 @@ import UserCoronaRegions from '../entity/UserCoronaRegions';
 import Router, { BothHandler } from '../router/Router';
 import CoronaData, { CoronaInfo } from '../entity/CoronaData';
 
-const router = new Router();
+const router = new Router('Krijg iedere morgen een rapportage over de locale corona situatie');
 
 const helpHandler : BothHandler = () => [
   '**Krijg iedere morgen een rapportage over de locale corona situatie**',
@@ -18,7 +18,6 @@ const helpHandler : BothHandler = () => [
   '`ei corona remove <regio>`: Verwijder een regio van je dagelijkse rapportage',
 ].join('\n');
 
-router.use(null, helpHandler);
 router.use('help', helpHandler);
 
 const addHandler : BothHandler = async ({

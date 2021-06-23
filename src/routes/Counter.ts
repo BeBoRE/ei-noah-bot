@@ -1,6 +1,6 @@
 import Router, { HandlerType } from '../router/Router';
 
-const router = new Router();
+const router = new Router('Development only');
 
 router.use('add', async ({ msg, guildUser }) => {
   // NOOIT parameters direct aanpassen

@@ -216,15 +216,6 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
   eiNoah.use('hug', hugHandler);
   eiNoah.use('knuffel', hugHandler);
 
-  eiNoah.use(Role, ({ params }) => `${params[0]}s zijn gamers`);
-
-  // Als een mention als parameter is gebruikt wordt deze functie aangeroepen,
-  // je kan hiervoor geen Router gebruiken
-  eiNoah.use(User, (routeInfo) => {
-    if (routeInfo.params[0] instanceof User) return `What about ${routeInfo.params[0]}`;
-    return null;
-  });
-
   // Voorbeeld hoe je met user data omgaat
   if (process.env.NODE_ENV !== 'production') eiNoah.use('counter', Counter);
 
@@ -268,12 +259,59 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
         }],
       }];
 
-      const precense = watDoetNoah[Math.floor(Math.random() * watDoetNoah.length)];
+      const presence = watDoetNoah[Math.floor(Math.random() * watDoetNoah.length)];
 
-      client.user?.setPresence(precense);
+      client.user?.setPresence(presence);
 
       setTimeout(updatePrecense, 1000 * 60);
     };
+
+    client.guilds.cache.forEach(async (guild) => {
+      if (!guild.available) {
+        await guild.commands.fetch();
+      }
+
+      await Promise.all(guild.commands.cache.map((command) => command.delete()));
+
+      guild.commands.create({
+        name: 'lobby',
+        description: 'Manage a lobby',
+        options: [
+          {
+            name: 'add',
+            type: 'SUB_COMMAND',
+            description: 'Allow a user or role into the lobby',
+            options: [
+              {
+                name: 'mention',
+                type: 'MENTIONABLE',
+                description: 'User or role to allow',
+              },
+              {
+                name: 'message',
+                type: 'STRING',
+                description: 'Send a message with',
+              },
+            ],
+          }, {
+            name: 'remove',
+            type: 'SUB_COMMAND',
+            description: 'Disallow a user or role from the lobby',
+            options: [
+              {
+                name: 'mention',
+                type: 'MENTIONABLE',
+                description: 'User or role to remove',
+              },
+            ],
+          }, {
+            name: 'gaming',
+            description: 'Lobby that',
+            type: 'USER',
+          },
+        ],
+      });
+    });
 
     updatePrecense();
   };

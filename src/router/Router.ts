@@ -11,6 +11,7 @@ import {
   GuildMember,
   MessageEmbed,
   MessageAttachment,
+  ApplicationCommandOptionData,
 } from 'discord.js';
 import {
   EntityManager, MikroORM, IDatabaseDriver, Connection,
@@ -93,33 +94,26 @@ interface RouteList {
 }
 
 export interface IRouter {
-  use(route : typeof DiscordUser, using: BothHandler, type ?: HandlerType.BOTH) : void
-  use(route : typeof DiscordUser, using: DMHandler, type : HandlerType.DM) : void
-  use(route : typeof DiscordUser, using: GuildHandler, type : HandlerType.GUILD) : void
-  use(route : typeof Role, using: BothHandler, type ?: HandlerType.BOTH) : void
-  use(route : typeof Role, using: DMHandler, type : HandlerType.DM) : void
-  use(route : typeof Role, using: GuildHandler, type : HandlerType.GUILD) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: ApplicationCommandOptionData) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: ApplicationCommandOptionData) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: ApplicationCommandOptionData) : void
   use(route : string, using: Router | BothHandler) : void
-  use(route : string, using: BothHandler, type ?: HandlerType.BOTH) : void
-  use(route : string, using: DMHandler, type : HandlerType.DM) : void
-  use(route : string, using: GuildHandler, type : HandlerType.GUILD) : void
-  use(route : null, using : BothHandler, type ?: HandlerType.BOTH) : void
-  use(route : null, using : DMHandler, type : HandlerType.DM) : void
-  use(route : null, using : GuildHandler, type : HandlerType.GUILD) : void
-  use(route : typeof DiscordUser | typeof Role | string | null, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType) : void
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType, commandData?: ApplicationCommandOptionData) : void
 
   onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
   => void | Promise<void>)
 }
 
 export default class Router implements IRouter {
+  public readonly description : string;
+
+  constructor(description : string) {
+    this.description = description;
+  }
+
   private routes : RouteList = {};
 
-  private userRoute ?: BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator;
-
   private nullRoute ?: BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator;
-
-  private roleRoute ?: BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator;
 
   private _isInitialized : boolean = false;
 
@@ -128,37 +122,16 @@ export default class Router implements IRouter {
     return this._isInitialized;
   }
 
+  private commandDataList : ApplicationCommandOptionData[] = [];
+
   // Met use geef je aan welk commando waarheen gaat
-  public use(route : typeof DiscordUser, using: BothHandler, type ?: HandlerType.BOTH) : void
-  public use(route : typeof DiscordUser, using: DMHandler, type : HandlerType.DM) : void
-  public use(route : typeof DiscordUser, using: GuildHandler, type : HandlerType.GUILD) : void
-  public use(route : typeof Role, using: BothHandler, type ?: HandlerType.BOTH) : void
-  public use(route : typeof Role, using: DMHandler, type : HandlerType.DM) : void
-  public use(route : typeof Role, using: GuildHandler, type : HandlerType.GUILD) : void
-  public use(route : string, using: Router | BothHandler) : void
-  public use(route : string, using: BothHandler, type ?: HandlerType.BOTH) : void
-  public use(route : string, using: DMHandler, type : HandlerType.DM) : void
-  public use(route : string, using: GuildHandler, type : HandlerType.GUILD) : void
-  public use(route : null, using : BothHandler, type ?: HandlerType.BOTH) : void
-  public use(route : null, using : DMHandler, type : HandlerType.DM) : void
-  public use(route : null, using : GuildHandler, type : HandlerType.GUILD) : void
-  public use(route : typeof DiscordUser | typeof Role | string | null, using: Router | BothHandler | DMHandler | GuildHandler, type : HandlerType = HandlerType.BOTH) : void {
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: ApplicationCommandOptionData) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: ApplicationCommandOptionData) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: ApplicationCommandOptionData) : void
+  use(route : string, using: Router | BothHandler) : void
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type: HandlerType = HandlerType.BOTH, commandData?: Exclude<ApplicationCommandOptionData, 'name'>) : void {
     const newUsing = <Router | BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator>using;
-    if (route === DiscordUser) {
-      if (this.userRoute) throw new Error('User route already exists');
-
-      if (newUsing instanceof Router) throw new Error('Can\'t use Router on mention routing');
-
-      newUsing.type = type;
-      this.userRoute = newUsing;
-    } else if (route === Role) {
-      if (this.roleRoute) throw new Error('Role route already exists');
-
-      if (newUsing instanceof Router) throw new Error('Can\'t use Router on mention routing');
-
-      newUsing.type = type;
-      this.roleRoute = newUsing;
-    } else if (typeof route === 'string') {
+    if (typeof route === 'string') {
       if (this.routes[route]) throw new Error('This Route Already Exists');
 
       if (!(newUsing instanceof Router)) {
@@ -166,12 +139,6 @@ export default class Router implements IRouter {
       }
 
       this.routes[route.toUpperCase()] = newUsing;
-      this.routes[route.toUpperCase()] = newUsing;
-    } else if (route === null) {
-      if (this.nullRoute) throw new Error('Role route already exists');
-      if (newUsing instanceof Router) throw new Error('Can\'t use Router on null routing');
-      newUsing.type = type;
-      this.nullRoute = newUsing;
     }
   }
 
@@ -184,15 +151,7 @@ export default class Router implements IRouter {
       let handler : Router | BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator | undefined;
       const newInfo = info;
 
-      if (typeof currentRoute !== 'string') {
-        if (currentRoute instanceof DiscordUser) {
-          handler = this.userRoute;
-        } else if (typeof currentRoute === 'undefined') {
-          handler = this.nullRoute;
-        } else if (currentRoute instanceof Role) {
-          handler = this.roleRoute;
-        }
-      } else {
+      if (typeof currentRoute === 'string') {
         const nameHandler = this.routes[currentRoute.toUpperCase()];
 
         if (nameHandler) {

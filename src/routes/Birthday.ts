@@ -14,7 +14,7 @@ import { getUserData } from '../data';
 import { User } from '../entity/User';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 
-const router = new Router();
+const router = new Router('Laat Ei-Noah je verjaardag bijhouden of vraag die van iemand anders op');
 
 const setRouter : BothHandler = async ({ user, params }) => {
   const rawDate = params[0];
@@ -61,7 +61,6 @@ const helpHandler : BothHandler = async () => [
 ].join('\n');
 
 router.use('help', helpHandler);
-router.use(null, helpHandler);
 
 router.use('show-all', async ({ msg, em }) => {
   const users = await em.find(User, { $not: { birthday: null } });
@@ -142,11 +141,11 @@ const showAgeHandler : BothHandler = async ({ msg, em }) => {
 router.use('show-age', showAgeHandler);
 router.use('ages', showAgeHandler);
 
-router.use(DiscordUser, async ({ params, em, msg }) => {
+router.use('get', async ({ params, em, msg }) => {
   const user = params[0];
 
   if (!(user instanceof DiscordUser)) {
-    return 'Onmogelijk pad, gefeliciteerd';
+    return 'Geef een gebruiker als argument';
   }
 
   const dbUser = await getUserData(em, user);
