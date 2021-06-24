@@ -12,6 +12,7 @@ const options : Options = {
   type: 'postgresql', // one of `mongo` | `mysql` | `mariadb` | `postgresql` | `sqlite`
   host: process.env.HOST || 'localhost',
   password: process.env.PASSWORD || undefined,
+  port: process.env.PORT ? +process.env.PORT : 5432,
   user: process.env.DBUSER || 'ei-noah',
   migrations: {
     tableName: 'mikro_orm_migrations',
