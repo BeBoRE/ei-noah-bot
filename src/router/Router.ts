@@ -12,6 +12,7 @@ import {
   MessageEmbed,
   MessageAttachment,
   ApplicationCommandOptionData,
+  CommandInteraction,
 } from 'discord.js';
 import {
   EntityManager, MikroORM, IDatabaseDriver, Connection,
@@ -21,7 +22,7 @@ import { GuildUser } from '../entity/GuildUser';
 import { User } from '../entity/User';
 
 export interface RouteInfo {
-  msg: Message
+  msg: Message | CommandInteraction
   absoluteParams: Array<string | DiscordUser | Role | Channel>
   params: Array<string | DiscordUser | Role | Channel>
   flags: Map<string, Array<string | DiscordUser | Role | Channel>>,

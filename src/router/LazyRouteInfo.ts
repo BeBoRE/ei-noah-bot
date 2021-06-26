@@ -1,6 +1,6 @@
 import { EntityManager } from '@mikro-orm/core';
 import {
-  Channel, Message, NewsChannel, Role, TextChannel, User as DiscordUser,
+  Channel, CommandInteraction, Message, NewsChannel, Role, TextChannel, User as DiscordUser,
 } from 'discord.js';
 import { getCategoryData, getUserData, getUserGuildData } from '../data';
 import { Category } from '../entity/Category';
@@ -13,7 +13,7 @@ export default class LazyRouteInfo implements RouteInfo {
 
   public params : (string | Channel | DiscordUser | Role)[];
 
-  public msg : Message;
+  public msg : Message | CommandInteraction;
 
   public flags : Map<string, (string | Channel | DiscordUser | Role)[]>;
 
@@ -26,11 +26,16 @@ export default class LazyRouteInfo implements RouteInfo {
       throw new Error('Don\'t use both guildUser and user');
     }
 
+    let user : DiscordUser;
+    if (this.msg instanceof Message) {
+      user = this.msg.author;
+    } else user = this.msg.user;
+
     if (this.lazyGuildUser === undefined) {
       if (!this.msg.guild) {
         this.lazyGuildUser = null;
       } else {
-        this.lazyGuildUser = getUserGuildData(this.em, this.msg.author, this.msg.guild);
+        this.lazyGuildUser = getUserGuildData(this.em, user, this.msg.guild);
       }
     }
 
@@ -44,7 +49,12 @@ export default class LazyRouteInfo implements RouteInfo {
       throw new Error('Don\'t use both guildUser and user');
     }
 
-    if (!this.lazyUser) this.lazyUser = getUserData(this.em, this.msg.author);
+    let user : DiscordUser;
+    if (this.msg instanceof Message) {
+      user = this.msg.author;
+    } else user = this.msg.user;
+
+    if (!this.lazyUser) this.lazyUser = getUserData(this.em, user);
     return this.lazyUser;
   }
 
@@ -69,7 +79,7 @@ export default class LazyRouteInfo implements RouteInfo {
     em,
   } : {
     params : (string | Channel | DiscordUser | Role)[],
-    msg : Message,
+    msg : Message | CommandInteraction,
     flags : Map<string, (string | Channel | DiscordUser | Role)[]>
     em : EntityManager
   }) {

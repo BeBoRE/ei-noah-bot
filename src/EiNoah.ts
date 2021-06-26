@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction,
 } from 'discord.js';
 import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
@@ -101,37 +101,41 @@ function isFlag(argument: string) {
   return argument[0] === '-' && argument.length > 1;
 }
 
-async function messageParser(msg : Message, em: EntityManager) {
-  if (!msg.content) throw new Error('Message heeft geen content');
-
-  const splitted = msg.content.split(' ').filter((param) => param);
-
+async function messageParser(msg : Message | CommandInteraction, em: EntityManager) {
   const flags = new Map<string, Array<Role | DiscordUser | string | Channel>>();
   const params : Array<Role | DiscordUser | string | Channel> = [];
 
-  splitted.shift();
+  if (msg instanceof Message) {
+    if (!msg.content) throw new Error('Message heeft geen content');
 
-  if (splitted[0] && splitted[0].toLowerCase() === 'noah') splitted.shift();
+    const splitted = msg.content.split(' ').filter((param) => param);
 
-  const resolved = await parseParams(splitted, msg.client, msg.guild).catch(() => null);
+    splitted.shift();
 
-  if (!resolved) return null;
+    if (splitted[0] && splitted[0].toLowerCase() === 'noah') splitted.shift();
 
-  let flag : string | null = null;
-  resolved.forEach((param) => {
-    if (typeof param === 'string' && isFlag(param)) {
-      flag = param.substr(1, param.length - 1).toLowerCase();
-      flags.set(flag, []);
-      return;
-    }
+    const resolved = await parseParams(splitted, msg.client, msg.guild).catch(() => null);
 
-    if (flag) {
-      flags.get(flag)?.push(param);
-      return;
-    }
+    if (!resolved) return null;
 
-    params.push(param);
-  });
+    let flag : string | null = null;
+    resolved.forEach((param) => {
+      if (typeof param === 'string' && isFlag(param)) {
+        flag = param.substr(1, param.length - 1).toLowerCase();
+        flags.set(flag, []);
+        return;
+      }
+
+      if (flag) {
+        flags.get(flag)?.push(param);
+        return;
+      }
+
+      params.push(param);
+    });
+  } else {
+    params.push(msg.commandName);
+  }
 
   const routeInfo : RouteInfo = new LazyRouteInfo({
     params,
@@ -175,6 +179,14 @@ const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : MessageO
   }
 
   return null;
+};
+
+const messageSender = (options : MessageOptions | null, msg : Message | CommandInteraction) : Promise<Message | Message[] | null> => {
+  if (options) {
+    if (options.split === true) return msg.channel.send({ ...options, split: true });
+    return msg.channel.send({ ...options, split: false });
+  }
+  return Promise.resolve(null);
 };
 
 class EiNoah implements IRouter {
@@ -241,10 +253,37 @@ class EiNoah implements IRouter {
       console.log('Client online');
     });
 
-    this.client.on('interaction', (interaction) => {
+    this.client.on('interaction', async (interaction) => {
       if (interaction.isCommand()) {
         console.log(interaction);
-        interaction.defer();
+
+        const em = orm.em.fork();
+
+        await interaction.defer();
+        messageParser(interaction, em)
+          .then((info) => {
+            if (info) { return this.router.handle(info); }
+            return 'Er is iets misgegaan, volgende keer beter';
+          })
+          .then(handlerReturnToMessageOptions)
+          .then((options) => Promise.all([options, em.flush()]))
+          .then(([options]) => {
+            if (options) {
+              return interaction.followUp(options);
+            }
+            return null;
+          })
+          .catch((err) => {
+            // Dit wordt gecallt wanneer de parsing faalt
+            if (process.env.NODE_ENV !== 'production') {
+              errorToChannel(interaction.channel.id, interaction.client, err).catch(() => { console.log('Error could not be send :('); });
+            } else if (process.env.ERROR_CHANNEL) {
+              interaction.channel.send('Er is iets misgegaan').catch(() => {});
+              errorToChannel(process.env.ERROR_CHANNEL, interaction.client, err).catch(() => { console.log('Stel error kanaal in'); });
+            }
+
+            console.error(err);
+          });
       }
     });
 
@@ -290,13 +329,7 @@ class EiNoah implements IRouter {
               console.timeEnd(`${msg.id}`);
               return options;
             })
-            .then((options) : Promise<Message | Message[] | null> => {
-              if (options) {
-                if (options.split === true) return msg.channel.send({ ...options, split: true });
-                return msg.channel.send({ ...options, split: false });
-              }
-              return Promise.resolve(null);
-            })
+            .then((options) => messageSender(options, msg))
             .finally(() => {
               msg.channel.stopTyping();
             })
@@ -306,7 +339,7 @@ class EiNoah implements IRouter {
               if (process.env.NODE_ENV !== 'production') {
                 errorToChannel(msg.channel.id, msg.client, err).catch(() => { console.log('Error could not be send :('); });
               } else if (process.env.ERROR_CHANNEL) {
-                msg.channel.send('Even normaal doen!').catch(() => {});
+                msg.channel.send('Er is iets misgegaan').catch(() => {});
                 errorToChannel(process.env.ERROR_CHANNEL, msg.client, err).catch(() => { console.log('Stel error kanaal in'); });
               }
 
