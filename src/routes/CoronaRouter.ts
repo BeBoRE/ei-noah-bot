@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import moment from 'moment';
 import { CronJob } from 'cron';
 import parse from 'csv-parse/lib/sync';
-import { Client } from 'discord.js';
+import { Client, Message } from 'discord.js';
 import { Connection, IDatabaseDriver, MikroORM } from '@mikro-orm/core';
 import UserCoronaRegions from '../entity/UserCoronaRegions';
 import Router, { BothHandler } from '../router/Router';
@@ -82,6 +82,7 @@ router.use('verwijder', removeHandler);
 router.use('delete', removeHandler);
 
 const listRegionsHandler : BothHandler = async ({ msg, em }) => {
+  const requestingUser = msg instanceof Message ? msg.author : msg.user;
   const coronaData = await em.getRepository(CoronaData).findAll({ limit: 500 });
 
   const regions = Array.from(new Set<string>(coronaData.map((data) => data.community)))
@@ -89,7 +90,7 @@ const listRegionsHandler : BothHandler = async ({ msg, em }) => {
 
   if (regions.length === 0) return 'Regio\'s zijn nog niet geladen (dit kan nog 10 minuten duren)';
 
-  msg.author.send({ content: `Regio's:\n${regions.join('\n')}`, split: true });
+  requestingUser.send({ content: `Regio's:\n${regions.join('\n')}`, split: true });
   return null;
 };
 

@@ -208,7 +208,7 @@ const messageSender = (options : MessageOptions | null, msg : Message | CommandI
 
 class EiNoah implements IRouter {
   public readonly client = new Client({
-    intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILDS', 'GUILD_VOICE_STATES'],
+    intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_TYPING', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILDS', 'GUILD_VOICE_STATES'],
   });
 
   private readonly router = new Router('Ei Noah');
