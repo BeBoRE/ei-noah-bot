@@ -16,8 +16,8 @@ import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router
 
 const router = new Router('Laat Ei-Noah je verjaardag bijhouden of vraag die van iemand anders op');
 
-const setRouter : BothHandler = async ({ user, params }) => {
-  const rawDate = params[0];
+const setRouter : BothHandler = async ({ user, params, flags }) => {
+  const [rawDate] = flags.get('date') || params;
 
   if (typeof (rawDate) !== 'string') {
     if (!(await user).birthday) return 'Voeg je verjaardag toe door DD/MM/YYYY als argument te gegeven';
@@ -63,7 +63,7 @@ const helpHandler : BothHandler = async () => [
   '`ei bday set <DD/MM/YYYY>`: Stel je geboortedatum in',
   '`ei bday show-all`: Laat iedereens geboortedatum zien',
   '`ei bday show-age`: Laat iedereens leeftijd zien',
-  '`ei bday <@user>`: Laat de geboortedatum en leeftijd van een user zien',
+  '`ei bday get <@user>`: Laat de geboortedatum en leeftijd van een user zien',
   '`ei bday delete`: Verwijderd jouw verjaardag',
   '***Admin Commando\'s***',
   '`ei bday channel`: Selecteerd het huidige kanaal voor de dagelijkse update',
@@ -158,8 +158,10 @@ router.use('ages', showAgeHandler, HandlerType.BOTH, {
   description: 'Laat alle leeftijden zien',
 });
 
-router.use('get', async ({ params, em, msg }) => {
-  const user = params[0];
+router.use('get', async ({
+  params, em, msg, flags,
+}) => {
+  const [user] = flags.get('user') || params;
 
   if (!(user instanceof DiscordUser)) {
     return 'Geef een gebruiker als argument';
@@ -183,12 +185,22 @@ router.use('get', async ({ params, em, msg }) => {
   embed.description = `Geboren op ${moment(dbUser.birthday).format('D MMMM YYYY')} en is ${moment().diff(moment(dbUser.birthday), 'year')} jaar oud`;
 
   return embed;
+}, HandlerType.BOTH, {
+  description: 'Vraag de verjaardag en leeftijd van iemand op',
+  options: [{
+    name: 'user',
+    description: 'Degene waarvan je de verjaardag opvraagt',
+    type: 'USER',
+    required: true,
+  }],
 });
 
 router.use('delete', async ({ user }) => {
   // eslint-disable-next-line no-param-reassign
   (await user).birthday = undefined;
   return 'Je verjaardag is verwijderd.';
+}, HandlerType.BOTH, {
+  description: 'Geef Ei-Noah geheugen verlies',
 });
 
 const setChannelHandler : GuildHandler = async ({ guildUser, msg }) => {

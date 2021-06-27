@@ -119,11 +119,24 @@ router.use('get', handler, HandlerType.GUILD, {
     },
   ],
 });
-router.use('add', handler, HandlerType.GUILD);
+router.use('add', handler, HandlerType.GUILD, {
+  description: 'Sla een quote op van iemand',
+  options: [
+    {
+      name: 'user',
+      description: 'Degene waarvoor je een quote wil toevoegen',
+      type: 'USER',
+    }, {
+      name: 'quote',
+      description: 'Quote die je wil toevoegen',
+      type: 'STRING',
+    },
+  ],
+});
 router.use('toevoegen', handler, HandlerType.GUILD);
 
 const removeHandler : GuildHandler = async ({
-  msg, em, params, guildUser,
+  msg, em, params, guildUser, flags,
 }) => {
   if (params.length < 1) {
     return 'Verwijder quotes van wie?';
@@ -133,13 +146,15 @@ const removeHandler : GuildHandler = async ({
     return 'Alleen de gebruiker graag';
   }
 
-  if (!(params[0] instanceof DiscordUser)) {
+  const [user] = flags.get('user') || params;
+
+  if (!(user instanceof DiscordUser)) {
     return 'Hoe moeilijk is het om daar een mention neer te zetten?';
   }
 
   const requestingUser = msg instanceof Message ? msg.author : msg.user;
 
-  const guToRemoveFrom = requestingUser.id === params[0].id ? (await guildUser) : await getUserGuildData(em, params[0], msg.guild);
+  const guToRemoveFrom = requestingUser.id === user.id ? (await guildUser) : await getUserGuildData(em, user, msg.guild);
 
   // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
@@ -179,7 +194,17 @@ const removeHandler : GuildHandler = async ({
   return null;
 };
 
-router.use('remove', removeHandler, HandlerType.GUILD);
+router.use('remove', removeHandler, HandlerType.GUILD, {
+  description: 'Verwijder een quote van iemand',
+  options: [
+    {
+      name: 'user',
+      description: 'Gebruiker waarvan je een quote wil verwijderen',
+      type: 'USER',
+      required: true,
+    },
+  ],
+});
 router.use('delete', removeHandler, HandlerType.GUILD);
 router.use('verwijder', removeHandler, HandlerType.GUILD);
 router.use('verwijderen', removeHandler, HandlerType.GUILD);
@@ -224,12 +249,14 @@ router.use('random', async ({ msg, em, guildUser }) => {
 router.use('help', () => [
   '**Hou quotes van je makkermaten bij!**',
   'Mogelijke Commandos:',
-  '`ei quote`: Verstuur een random quote',
-  '`ei quote <@member>`: Verstuur een quote van dat persoon',
-  '`ei quote <@member> <quote>`: Sla een nieuwe quote op van dat persoon',
+  '`ei quote random`: Verstuur een random quote van de server',
+  '`ei quote get <@member>`: Verstuur een quote van dat persoon',
+  '`ei quote add <@member> <quote>`: Sla een nieuwe quote op van dat persoon',
   '`ei quote remove <@member>`: Verwijder een selectie aan quotes van dat persoon',
   '> Je kan alleen de quotes verwijderen die je voor dat persoon geschreven hebt',
   '> Alleen quotes van jezelf kan je volledig beheren',
-].join('\n'));
+].join('\n'), HandlerType.BOTH, {
+  description: 'Hulp menu voor quote\'s',
+});
 
 export default router;

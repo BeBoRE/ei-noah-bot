@@ -5,7 +5,7 @@ import parse from 'csv-parse/lib/sync';
 import { Client, Message } from 'discord.js';
 import { Connection, IDatabaseDriver, MikroORM } from '@mikro-orm/core';
 import UserCoronaRegions from '../entity/UserCoronaRegions';
-import Router, { BothHandler } from '../router/Router';
+import Router, { BothHandler, HandlerType } from '../router/Router';
 import CoronaData, { CoronaInfo } from '../entity/CoronaData';
 
 const router = new Router('Krijg iedere morgen een rapportage over de locale corona situatie');
@@ -21,13 +21,15 @@ const helpHandler : BothHandler = () => [
 router.use('help', helpHandler);
 
 const addHandler : BothHandler = async ({
-  user, params, em,
+  user, params, em, flags,
 }) => {
-  if (!params.every((param) : param is string => typeof param === 'string')) {
+  const regionRaw = flags.get('region') || params;
+
+  if (!regionRaw.every((param) : param is string => typeof param === 'string')) {
     return 'Jij denkt dat een persoon een regio is?';
   }
 
-  const region = params.filter((param) : param is string => typeof param === 'string').join(' ');
+  const region = regionRaw.filter((param) : param is string => typeof param === 'string').join(' ');
   if (!(await user).coronaRegions.isInitialized()) { await (await user).coronaRegions.init(); }
   const currentRegions = (await user).coronaRegions.getItems()
     .find((r) => r.region.toLowerCase() === region.toLowerCase());
@@ -53,17 +55,27 @@ const addHandler : BothHandler = async ({
   return `${coronaReport.community} is toegevoegd aan je dagelijkse rapport`;
 };
 
-router.use('add', addHandler);
+router.use('add', addHandler, HandlerType.BOTH, {
+  description: 'Voeg een regio/gemeente toe',
+  options: [{
+    name: 'region',
+    description: 'Regio die je wil toevoegen',
+    type: 'STRING',
+    required: true,
+  }],
+});
 router.use('toevoegen', addHandler);
 
 const removeHandler : BothHandler = async ({
-  user, params, em,
+  user, params, em, flags,
 }) => {
-  if (!params.every((param) : param is string => typeof param === 'string')) {
+  const regionRaw = flags.get('region') || params;
+
+  if (!regionRaw.every((param) : param is string => typeof param === 'string')) {
     return 'Jij denkt dat een persoon een regio is?';
   }
 
-  const region = params.filter((param) : param is string => typeof param === 'string').join(' ');
+  const region = regionRaw.filter((param) : param is string => typeof param === 'string').join(' ');
   if (!(await user).coronaRegions.isInitialized()) { await (await user).coronaRegions.init(); }
   const dbRegion = (await user).coronaRegions.getItems()
     .find((r) => r.region.toLowerCase() === region.toLowerCase());
@@ -77,7 +89,15 @@ const removeHandler : BothHandler = async ({
   return `${dbRegion.region} is verwijderd van je dagelijkse rapport`;
 };
 
-router.use('remove', removeHandler);
+router.use('remove', removeHandler, HandlerType.BOTH, {
+  description: 'Verwijder een regio/gemeente',
+  options: [{
+    name: 'region',
+    description: 'Regio/gemeente die je wil verwijderen',
+    type: 'STRING',
+    required: true,
+  }],
+});
 router.use('verwijder', removeHandler);
 router.use('delete', removeHandler);
 
@@ -94,7 +114,9 @@ const listRegionsHandler : BothHandler = async ({ msg, em }) => {
   return null;
 };
 
-router.use('gemeentes', listRegionsHandler);
+router.use('gemeentes', listRegionsHandler, HandlerType.BOTH, {
+  description: 'Geeft een lijst met regio\'s die je kan toevoegen',
+});
 router.use('regions', listRegionsHandler);
 router.use('steden', listRegionsHandler);
 router.use('communities', listRegionsHandler);

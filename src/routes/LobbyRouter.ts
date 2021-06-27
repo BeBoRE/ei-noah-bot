@@ -530,13 +530,23 @@ const removeFromLobby = (
 };
 
 router.use('remove', async ({
-  params, msg, guildUser, em,
+  params, msg, guildUser, em, flags,
 }) => {
   const nonUsersOrRoles = params
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
   const users = params.filter((param): param is DiscordUser => param instanceof DiscordUser);
   const roles = params.filter((param): param is Role => param instanceof Role);
   const requestingUser = msg instanceof Message ? msg.author : msg.user;
+
+  flags.forEach((value) => {
+    const [user] = value;
+
+    if (user instanceof User) {
+      users.push(user);
+    } else if (user instanceof Role) {
+      roles.push(user);
+    }
+  });
 
   if (nonUsersOrRoles.length > 0) {
     return 'Alleen mention(s) mogelijk als argument';
@@ -609,10 +619,78 @@ router.use('remove', async ({
 
   removeFromLobby(activeChannel, users, roles, msg.channel, requestingUser, (await guildUser).tempChannel);
   return null;
-}, HandlerType.GUILD);
+}, HandlerType.GUILD, {
+  description: 'Verwijder een gebruiker of rol van de lobby',
+  options: [{
+    name: 'mention',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+    required: true,
+  }, {
+    name: '1',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '2',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '3',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '4',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '5',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '6',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '7',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '8',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '9',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '10',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '11',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '12',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '13',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '14',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }, {
+    name: '15',
+    description: 'Persoon of rol die je wilt verwijderen',
+    type: 'MENTIONABLE',
+  }],
+});
 
 const changeTypeHandler : GuildHandler = async ({
-  params, msg, guildUser, em,
+  params, msg, guildUser, em, flags,
 }) => {
   const requestingUser = msg instanceof Message ? msg.author : msg.user;
   if (msg.channel instanceof DMChannel || msg.guild === null || guildUser === null) {
@@ -635,19 +713,21 @@ const changeTypeHandler : GuildHandler = async ({
 
   const type = getChannelType(activeChannel);
 
-  if (params.length !== 1) {
+  const [typeGiven] = flags.get('type') || params;
+
+  if (!typeGiven) {
     if (type === ChannelType.Mute) return `Type van lobby is \`${ChannelType.Mute}\` andere types zijn \`${ChannelType.Public}\` en \`${ChannelType.Nojoin}\``;
     if (type === ChannelType.Nojoin) return `Type van lobby is \`${ChannelType.Nojoin}\` andere types zijn \`${ChannelType.Public}\` en \`${ChannelType.Mute}\``;
     return `Type van lobby is \`${ChannelType.Public}\` andere types zijn \`${ChannelType.Mute}\` en \`${ChannelType.Nojoin}\``;
-  } if (params.length === 1) {
-    if (typeof params[0] !== 'string') {
+  } if (typeGiven) {
+    if (typeof typeGiven !== 'string') {
       return 'Ik verwachte hier geen **mention**';
     }
 
-    const [changeTo] = <ChannelType[]>params;
+    const changeTo = <ChannelType>typeGiven;
 
     if (!Object.values(ChannelType).includes(changeTo)) {
-      return `*${params[0]}* is niet een lobby type`;
+      return `*${typeGiven}* is niet een lobby type`;
     }
 
     if (changeTo === type) {
@@ -700,13 +780,35 @@ const changeTypeHandler : GuildHandler = async ({
   return 'Stuur een berichtje naar een ei-noah dev als je dit bericht ziet';
 };
 
-router.use('type', changeTypeHandler, HandlerType.GUILD);
+router.use('type', changeTypeHandler, HandlerType.GUILD, {
+  description: 'Verander de type van de lobby',
+  options: [
+    {
+      name: 'type',
+      description: 'Type waarin je de lobby wil veranderen',
+      choices: [
+        {
+          name: ChannelType.Mute.toUpperCase(),
+          value: ChannelType.Mute,
+        }, {
+          name: ChannelType.Nojoin.toUpperCase(),
+          value: ChannelType.Nojoin,
+        }, {
+          name: ChannelType.Public.toUpperCase(),
+          value: ChannelType.Public,
+        },
+      ],
+      type: 'STRING',
+      required: true,
+    },
+  ],
+});
 router.use('change', changeTypeHandler, HandlerType.GUILD);
 router.use('set', changeTypeHandler, HandlerType.GUILD);
 router.use('verander', changeTypeHandler, HandlerType.GUILD);
 
 const sizeHandler : GuildHandler = async ({
-  msg, guildUser, params, em,
+  msg, guildUser, params, em, flags,
 }) => {
   const gu = await guildUser;
   const activeChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
@@ -717,23 +819,15 @@ const sizeHandler : GuildHandler = async ({
 
   if (gu.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
 
-  if (params.length === 0) {
-    return 'Geen één (1) argument gegeven';
+  const [sizeParam] = flags.get('size') || params;
+
+  if (typeof sizeParam !== 'string' && typeof sizeParam !== 'number') {
+    return 'Geef een nummer dickhead';
   }
 
-  if (params.length > 1) {
-    return 'Ik verwachte maar één (1) argument';
-  }
+  let size = typeof sizeParam === 'number' ? sizeParam : Number.parseInt(sizeParam, 10);
 
-  const sizeParam = params[0];
-
-  if (typeof sizeParam !== 'string') {
-    return 'Lijkt dat op een nummer??';
-  }
-
-  let size = Number.parseInt(sizeParam, 10);
-
-  if (sizeParam.toLowerCase() === 'none' || sizeParam.toLowerCase() === 'remove') {
+  if (sizeParam.toString().toLowerCase() === 'none' || sizeParam.toString().toLowerCase() === 'remove') {
     size = 0;
   }
 
@@ -750,7 +844,15 @@ const sizeHandler : GuildHandler = async ({
 };
 
 router.use('size', sizeHandler, HandlerType.GUILD);
-router.use('limit', sizeHandler, HandlerType.GUILD);
+router.use('limit', sizeHandler, HandlerType.GUILD, {
+  description: 'Limiteer de lobby grootte',
+  options: [{
+    name: 'size',
+    description: 'Limiet die je wil instellen',
+    type: 'INTEGER',
+    required: true,
+  }],
+});
 router.use('userlimit', sizeHandler, HandlerType.GUILD);
 
 router.use('category', async ({
@@ -839,7 +941,9 @@ router.use('create-category', async ({
     .catch(() => 'Er is iets fout gegaan probeer het later opnieuw');
 }, HandlerType.GUILD);
 
-router.use('bitrate', async ({ msg, guildUser, params }) => {
+router.use('bitrate', async ({
+  msg, guildUser, params, flags,
+}) => {
   if (msg.channel instanceof DMChannel || guildUser === null) {
     return 'Je kan dit commando alleen op servers gebruiken';
   }
@@ -861,7 +965,7 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
-  const newBitrate = Number(params[0]);
+  const newBitrate = Number(flags.get('bitrate')?.pop() || params[0]);
 
   if (Number.isNaN(newBitrate)) {
     return `${params[0]} is niet een nummer`;
@@ -881,13 +985,25 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
   (await guildUser).guild.bitrate = newBitrate;
 
   return `Bitrate veranderd naar ${newBitrate}`;
+}, HandlerType.GUILD, {
+  description: 'Stel de bitrate van de lobbies in',
+  options: [
+    {
+      name: 'bitrate',
+      description: 'Bitrate waarnaar je de lobbies wil veranderen',
+      required: true,
+      type: 'INTEGER',
+    },
+  ],
 });
 
 const nameHandler : GuildHandler = async ({
-  params, guildUser, msg, em,
+  params, guildUser, msg, em, flags,
 }) => {
   const requestingUser = msg instanceof Message ? msg.author : msg.user;
   const gu = await guildUser;
+
+  const rawNameArray = flags.get('name') || params;
 
   if (!(await guildUser).tempChannel?.isInitialized()) await (await guildUser).tempChannel?.init();
   const tempChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
@@ -895,10 +1011,10 @@ const nameHandler : GuildHandler = async ({
   if (!tempChannel || !gu.tempChannel) return 'Je moet een lobby hebben om dit commando te kunnen gebruiken';
   if (gu.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
 
-  if (!params.length) return 'Geef een naam in';
+  if (!rawNameArray.length) return 'Geef een naam in';
 
-  const nameArray = params.filter((param) : param is string => typeof param === 'string');
-  if (nameArray.length !== params.length) return 'Je mag alleen tekst gebruiken in de naam';
+  const nameArray = rawNameArray.filter((param) : param is string => typeof param === 'string');
+  if (nameArray.length !== rawNameArray.length) return 'Je mag alleen tekst gebruiken in de naam';
 
   const name = nameArray.join(' ');
 
@@ -913,7 +1029,15 @@ const nameHandler : GuildHandler = async ({
   return 'Lobby naam is aangepast\n> Bij overmatig gebruik kan het meer dan 10 minuten duren';
 };
 
-router.use('name', nameHandler, HandlerType.GUILD);
+router.use('name', nameHandler, HandlerType.GUILD, {
+  description: 'Verander de naam van je lobby',
+  options: [{
+    name: 'name',
+    description: 'De naam waarin je de lobby naam wil veranderen',
+    type: 'STRING',
+    required: true,
+  }],
+});
 router.use('rename', nameHandler, HandlerType.GUILD);
 router.use('naam', nameHandler, HandlerType.GUILD);
 router.use('hernoem', nameHandler, HandlerType.GUILD);
@@ -930,7 +1054,7 @@ const helpCommandText = [
   '**Maak een tijdelijke voice kanaal aan**',
   'Mogelijke Commandos:',
   memberCommandText,
-  '`*Admin* ei lobby category none/<category id>`: Verander de categorie waar de lobbies worden neergezet',
+  '`*Admin* ei lobby category <category id>`: Verander de categorie waar de lobbies worden neergezet',
   '`*Admin* ei lobby create-category <category id>`: Maak in gegeven categorie lobby-aanmaak-kanalen aan, verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
   '`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
 ].join('\n');
