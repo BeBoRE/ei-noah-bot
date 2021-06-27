@@ -18,7 +18,7 @@ import CoronaRouter from './routes/CoronaRouter';
 
 dotenv.config();
 
-const mentionsToText = (params : Array<string | User | Role | Channel>, startAt = 0) : string => {
+const mentionsToText = (params : Array<string | User | Role | Channel | number | boolean>, startAt = 0) : string => {
   const messageArray : string[] = [];
   for (let i = startAt; i < params.length; i += 1) {
     const item = params[i];
@@ -80,10 +80,13 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
   // Hier is een 'Handler' als argument in principe is dit een eindpunt van de routing.
   // Dit is waar berichten worden afgehandeld
   const stabHandler : BothHandler = async ({ params, msg, flags }) => {
-    const [user] = params;
+    const persoon = flags.get('persoon');
+    const [user] = persoon || params;
+
     if (user instanceof User) {
       const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
-      const messageArray : string = mentionsToText(params, 1);
+      params.shift();
+      const message : string = mentionsToText(flags.get('top') || params);
 
       if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
         const canvas = createCanvas(800, 600);
@@ -114,7 +117,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
         ctx.font = `${fontSize}px Calibri`;
         ctx.fillStyle = '#FFFFFF';
 
-        const lines = getLines(ctx, messageArray, 800);
+        const lines = getLines(ctx, message, 800);
 
         await Promise.all(lines.map((line, index) => {
           const { width } = measureText(ctx, line);
@@ -143,16 +146,37 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
     return 'Lekker';
   };
 
-  eiNoah.use('steek', stabHandler);
+  eiNoah.use('steek', stabHandler, HandlerType.BOTH, {
+    description: 'Steek iemand die het verdiend heeft <3',
+    options: [
+      {
+        name: 'persoon',
+        description: 'Persoon die je wilt steken',
+        type: 'USER',
+        required: true,
+      }, {
+        name: 'top',
+        description: 'De tekst die je erbij wil zetten',
+        type: 'STRING',
+      }, {
+        name: 'bottom',
+        description: 'De tekst die je erbij wil zetten',
+        type: 'STRING',
+      },
+    ],
+  });
   eiNoah.use('stab', stabHandler);
 
   const hugImg = loadImage('./src/images/hug.png');
 
   const hugHandler : BothHandler = async ({ params, msg, flags }) => {
-    const [user] = params;
+    const persoon = flags.get('persoon');
+    const [user] = persoon || params;
+
     if (user instanceof User) {
       const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
-      const message : string = mentionsToText(params, 1);
+      params.shift();
+      const message : string = mentionsToText(flags.get('top') || params);
 
       if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
         const canvas = createCanvas(800, 600);
@@ -223,11 +247,11 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
         required: true,
         type: 'USER',
       }, {
-        name: 'tekst',
+        name: 'top',
         description: 'Zet een leuke tekstje erbij',
         type: 'STRING',
       }, {
-        name: 'bottom-tekst',
+        name: 'bottom',
         description: 'Zet een leuk tekstje erbij (maar dan aan de onderkant)',
         type: 'STRING',
       },

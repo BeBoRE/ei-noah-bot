@@ -25,7 +25,7 @@ export interface RouteInfo {
   msg: Message | CommandInteraction
   absoluteParams: Array<string | DiscordUser | Role | Channel>
   params: Array<string | DiscordUser | Role | Channel>
-  flags: Map<string, Array<string | DiscordUser | Role | Channel>>,
+  flags: Map<string, Array<string | DiscordUser | Role | Channel | boolean | number>>,
   readonly guildUser: Promise<GuildUser> | null,
   readonly user: Promise<User>,
   readonly category: Promise<Category> | null,

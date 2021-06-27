@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User,
 } from 'discord.js';
 import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
@@ -102,7 +102,7 @@ function isFlag(argument: string) {
 }
 
 async function messageParser(msg : Message | CommandInteraction, em: EntityManager) {
-  const flags = new Map<string, Array<Role | DiscordUser | string | Channel>>();
+  const flags = new Map<string, Array<Role | DiscordUser | string | Channel | boolean | number>>();
   const params : Array<Role | DiscordUser | string | Channel> = [];
 
   if (msg instanceof Message) {
@@ -134,7 +134,24 @@ async function messageParser(msg : Message | CommandInteraction, em: EntityManag
       params.push(param);
     });
   } else {
-    params.push(msg.commandName);
+    let command : CommandInteractionOption | CommandInteraction = msg;
+    while (command instanceof CommandInteraction || command.type === 'SUB_COMMAND' || command.type === 'SUB_COMMAND_GROUP') {
+      if (command instanceof CommandInteraction) { params.push(command.commandName); } else params.push(command.name);
+      const nextCommand : CommandInteractionOption | undefined = command.options?.first();
+      if (!nextCommand || !(nextCommand.type === 'SUB_COMMAND' || nextCommand.type === 'SUB_COMMAND_GROUP')) break;
+      command = nextCommand;
+    }
+
+    command?.options?.forEach((option) => {
+      if (option.type === 'STRING' || option.type === 'BOOLEAN' || option.type === 'INTEGER') {
+        if (typeof option.value === 'string') flags.set(option.name, option.value.split(' '));
+        if (option.value !== undefined) flags.set(option.name, [option.value]);
+      }
+
+      if (option.channel instanceof Channel) flags.set(option.name, [option.channel]);
+      if (option.user instanceof User) flags.set(option.name, [option.user]);
+      if (option.role instanceof Role) flags.set(option.name, [option.role]);
+    });
   }
 
   const routeInfo : RouteInfo = new LazyRouteInfo({
@@ -191,7 +208,7 @@ const messageSender = (options : MessageOptions | null, msg : Message | CommandI
 
 class EiNoah implements IRouter {
   public readonly client = new Client({
-    intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILDS'],
+    intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILDS', 'GUILD_VOICE_STATES'],
   });
 
   private readonly router = new Router('Ei Noah');

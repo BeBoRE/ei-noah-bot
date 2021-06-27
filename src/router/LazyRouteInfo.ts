@@ -15,7 +15,7 @@ export default class LazyRouteInfo implements RouteInfo {
 
   public msg : Message | CommandInteraction;
 
-  public flags : Map<string, (string | Channel | DiscordUser | Role)[]>;
+  public flags : Map<string, (string | Channel | DiscordUser | Role | boolean | number)[]>;
 
   public em : EntityManager;
 
@@ -80,7 +80,7 @@ export default class LazyRouteInfo implements RouteInfo {
   } : {
     params : (string | Channel | DiscordUser | Role)[],
     msg : Message | CommandInteraction,
-    flags : Map<string, (string | Channel | DiscordUser | Role)[]>
+    flags : Map<string, (string | Channel | DiscordUser | Role | boolean | number)[]>
     em : EntityManager
   }) {
     this.absoluteParams = params;

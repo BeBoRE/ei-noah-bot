@@ -178,7 +178,7 @@ async function activeTempText(client : Client, tempChannel : TempChannel) {
   if (!tempChannel || !tempChannel.textChannelId) return undefined;
 
   try {
-    const activeChannel = await client.channels.fetch(`${BigInt(tempChannel.channelId)}`, { cache: true });
+    const activeChannel = await client.channels.fetch(`${BigInt(tempChannel.textChannelId)}`, { cache: true });
     if (activeChannel instanceof TextChannel) {
       return activeChannel;
     }
@@ -252,7 +252,7 @@ const createCreateChannel = (type : ChannelType, category : CategoryChannel) => 
 
 const getChannel = (client : Client, channelId ?: string) => new Promise<null | Channel>(
   (resolve) => {
-    if (channelId === undefined) { resolve(null); return; }
+    if (!channelId) { resolve(null); return; }
     client.channels.fetch(`${BigInt(channelId)}`, { cache: true })
       .then((channel) => resolve(channel))
       .catch(() => resolve(null))
@@ -328,13 +328,19 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
 };
 
 router.use('add', async ({
-  params, msg, guildUser, em,
+  params, msg, guildUser, em, flags,
 }) => {
   const nonUserOrRole = params
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
   const userOrRole = params
     // eslint-disable-next-line max-len
     .filter((param): param is DiscordUser | Role => param instanceof DiscordUser || param instanceof Role);
+
+  flags.forEach((value) => {
+    const [user] = value;
+
+    if (user instanceof User || user instanceof Role) userOrRole.push(user);
+  });
 
   if (nonUserOrRole.length > 0) {
     return ('Alleen user mention(s) mogelijk als argument');
