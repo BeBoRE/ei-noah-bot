@@ -35,7 +35,7 @@ export interface RouteInfo {
 type BothRouteInfo = (DMRouteInfo | GuildRouteInfo);
 
 export interface DMRouteInfo extends RouteInfo {
-  msg: Message & {
+  msg: (Message | CommandInteraction) & {
     channel: DMChannel
     guild : null
     member : null
@@ -45,7 +45,7 @@ export interface DMRouteInfo extends RouteInfo {
 }
 
 export interface GuildRouteInfo extends RouteInfo {
-  msg: Message & {
+  msg: (Message | CommandInteraction) & {
     channel: TextChannel | NewsChannel
     guild : Guild
     member : GuildMember
@@ -95,11 +95,11 @@ interface RouteList {
 }
 
 export interface IRouter {
-  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
-  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
-  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
   use(route : string, using: Router | BothHandler) : void
-  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
 
   onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
   => void | Promise<void>)
@@ -124,11 +124,11 @@ export default class Router implements IRouter {
   public commandDataList : Map<string, Omit<ApplicationCommandOptionData, 'name'>> = new Map();
 
   // Met use geef je aan welk commando waarheen gaat
-  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
-  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
-  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
   use(route : string, using: Router | BothHandler) : void
-  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type: HandlerType = HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name'>) : void {
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type: HandlerType = HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void {
     const newUsing = <Router | BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator>using;
     if (typeof route === 'string') {
       if (this.routes[route]) throw new Error('This Route Already Exists');
@@ -139,7 +139,7 @@ export default class Router implements IRouter {
 
       this.routes[route.toUpperCase()] = newUsing;
 
-      if (commandData) this.commandDataList.set(route.toLowerCase(), commandData);
+      if (commandData) this.commandDataList.set(route.toLowerCase(), { ...commandData, type: 'SUB_COMMAND' });
     }
   }
 

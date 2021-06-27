@@ -1,6 +1,7 @@
 import {
   Channel,
   Client,
+  Message,
   MessageEmbed, NewsChannel, Permissions, Role, TextBasedChannelFields, TextChannel, User as DiscordUser, Util,
 } from 'discord.js';
 import { GuildUser } from 'entity/GuildUser';
@@ -63,17 +64,19 @@ const addQuote = (params : (string | DiscordUser | Channel | Role)[], quotedUser
 };
 
 const handler : GuildHandler = async ({
-  params, msg, em, guildUser,
+  params, msg, em, guildUser, flags,
 }) => {
-  if (!(params[0] instanceof DiscordUser)) {
+  const [user] = flags.get('persoon') || params;
+  params.shift();
+
+  if (!(user instanceof DiscordUser)) {
     return 'Ok, dat is niet een persoon, mention iemand';
   }
 
-  const user = params[0];
-  params.shift();
+  const requestingUser = msg instanceof Message ? msg.author : msg.user;
 
   let quotedUser : GuildUser;
-  if (msg.author.id === user.id) quotedUser = await guildUser;
+  if (requestingUser.id === user.id) quotedUser = await guildUser;
   else quotedUser = await getUserGuildData(em, user, msg.guild);
 
   if (!quotedUser.quotes.isInitialized()) { await quotedUser.quotes.init(); }
@@ -88,7 +91,7 @@ const handler : GuildHandler = async ({
     }
 
     createMenu(quotedUser.quotes.getItems(),
-      msg.author,
+      requestingUser,
       msg.channel,
       '**Kiest U Maar**',
       (q) => q.text,
@@ -105,7 +108,17 @@ const handler : GuildHandler = async ({
 };
 
 router.use('user', handler, HandlerType.GUILD);
-router.use('get', handler, HandlerType.GUILD);
+router.use('get', handler, HandlerType.GUILD, {
+  description: 'Laat een quote van iemand zien',
+  options: [
+    {
+      name: 'persoon',
+      description: 'Persoon waarvan je een quote wil zien',
+      type: 'USER',
+      required: true,
+    },
+  ],
+});
 router.use('add', handler, HandlerType.GUILD);
 router.use('toevoegen', handler, HandlerType.GUILD);
 
@@ -124,11 +137,13 @@ const removeHandler : GuildHandler = async ({
     return 'Hoe moeilijk is het om daar een mention neer te zetten?';
   }
 
-  const guToRemoveFrom = msg.author.id === params[0].id ? (await guildUser) : await getUserGuildData(em, params[0], msg.guild);
+  const requestingUser = msg instanceof Message ? msg.author : msg.user;
+
+  const guToRemoveFrom = requestingUser.id === params[0].id ? (await guildUser) : await getUserGuildData(em, params[0], msg.guild);
 
   // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
-  const constraint = guToRemoveFrom.user.id === msg.author.id || msg.member?.permissions.has(Permissions.FLAGS.ADMINISTRATOR)
+  const constraint = guToRemoveFrom.user.id === requestingUser.id || msg.member?.permissions.has(Permissions.FLAGS.ADMINISTRATOR)
     ? undefined : { where: { creator: await guildUser } };
 
   if (!guToRemoveFrom.quotes.isInitialized()) { await guToRemoveFrom.quotes.init(constraint); }
@@ -144,7 +159,7 @@ const removeHandler : GuildHandler = async ({
   const menuEm = em.fork();
 
   createMenu(quotes,
-    msg.author,
+    requestingUser,
     msg.channel,
     '**Selecteer welke quote(s) je wil verwijderen**',
     (q) => `${quotesToRemove.has(q) ? '✅' : ''}${q.text}`,
@@ -171,12 +186,15 @@ router.use('verwijderen', removeHandler, HandlerType.GUILD);
 router.use('manage', removeHandler, HandlerType.GUILD);
 
 router.use('random', async ({ msg, em, guildUser }) => {
-  if (msg.reference?.messageID) {
-    const toQuote = await msg.channel.messages.fetch(`${BigInt(msg.reference.messageID)}`, { cache: true }).catch(() => null);
+  const reference = msg instanceof Message ? msg.reference : undefined;
+  const requestingUser = msg instanceof Message ? msg.author : msg.user;
+
+  if (reference?.messageID) {
+    const toQuote = await msg.channel.messages.fetch(`${BigInt(reference.messageID)}`, { cache: true }).catch(() => null);
     if (!toQuote) return 'Ik heb hard gezocht, maar kon het gegeven bericht is niet vinden';
     if (!toQuote.content) return 'Bericht heeft geen inhoud';
 
-    const quotedUser = toQuote.author.id === msg.author.id ? await guildUser : await getUserGuildData(em, toQuote.author, msg.guild);
+    const quotedUser = toQuote.author.id === requestingUser.id ? await guildUser : await getUserGuildData(em, toQuote.author, msg.guild);
 
     const splitted = toQuote.content.split(' ').filter((param) => param);
 
@@ -199,7 +217,9 @@ router.use('random', async ({ msg, em, guildUser }) => {
   }
 
   return 'Deze server heeft nog geen quotes';
-}, HandlerType.GUILD);
+}, HandlerType.GUILD, {
+  description: 'Krijg een random quote van de server',
+});
 
 router.use('help', () => [
   '**Hou quotes van je makkermaten bij!**',

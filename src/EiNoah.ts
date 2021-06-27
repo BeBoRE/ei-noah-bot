@@ -224,12 +224,12 @@ class EiNoah implements IRouter {
     this.orm = orm;
   }
 
-  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandData, 'name'>) : void
-  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandData, 'name'>) : void
-  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandData, 'name'>) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
   use(route : string, using: Router | BothHandler) : void
-  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type?: HandlerType, commandData?: Omit<ApplicationCommandData, 'name'>) : void
-  use(route: string, using: any, type: any = HandlerType.BOTH, commandData?: Omit<ApplicationCommandData, 'name'>): void {
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type?: HandlerType, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route: string, using: any, type: any = HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>): void {
     this.router.use(route, using, type);
 
     if (using instanceof Router) {
@@ -263,6 +263,12 @@ class EiNoah implements IRouter {
   public onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
   => void | Promise<void>);
 
+  public readonly updateSlashCommands = () => Promise.all([
+    this.client.guilds.cache.array().map((guild) => guild.commands.fetch()
+      .then(() => Promise.all(guild.commands.cache.map((command) => command.delete())))
+      .then(() => guild.commands.set(this.applicationCommandData))
+      .then((commands) => commands))]);
+
   public async start() {
     const { orm } = this;
 
@@ -272,8 +278,6 @@ class EiNoah implements IRouter {
 
     this.client.on('interaction', async (interaction) => {
       if (interaction.isCommand()) {
-        console.log(interaction);
-
         const em = orm.em.fork();
 
         await interaction.defer();
@@ -284,11 +288,11 @@ class EiNoah implements IRouter {
           })
           .then(handlerReturnToMessageOptions)
           .then((options) => Promise.all([options, em.flush()]))
-          .then(([options]) => {
+          .then(([options]) : any => {
             if (options) {
               return interaction.followUp(options);
             }
-            return null;
+            return interaction.deleteReply().then(() => null);
           })
           .catch((err) => {
             // Dit wordt gecallt wanneer de parsing faalt
@@ -374,16 +378,6 @@ class EiNoah implements IRouter {
 
     this.router.onInit = async (client) => {
       if (this.onInit) await this.onInit(client, orm);
-
-      client.guilds.cache.forEach(async (guild) => {
-        if (!guild.available) {
-          await guild.commands.fetch();
-        }
-
-        await Promise.all(guild.commands.cache.map((command) => command.delete()));
-
-        await guild.commands.set(this.applicationCommandData);
-      });
     };
 
     // @ts-ignore

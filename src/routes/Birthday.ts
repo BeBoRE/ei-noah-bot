@@ -44,7 +44,17 @@ const setRouter : BothHandler = async ({ user, params }) => {
   return `Je verjaardag is toegevoegd: ${birth1.locale('nl').format('D MMMM YYYY')}`;
 };
 
-router.use('set', setRouter);
+router.use('set', setRouter, HandlerType.BOTH, {
+  description: 'Stel je geboortedatum in',
+  options: [
+    {
+      name: 'date',
+      description: 'Je geboorte datum (DD/MM/YYYY)',
+      type: 'STRING',
+      required: true,
+    },
+  ],
+});
 router.use('add', setRouter);
 router.use('change', setRouter);
 
@@ -62,7 +72,7 @@ const helpHandler : BothHandler = async () => [
 
 router.use('help', helpHandler);
 
-router.use('show-all', async ({ msg, em }) => {
+const showAll : BothHandler = async ({ msg, em }) => {
   const users = await em.find(User, { $not: { birthday: null } });
 
   const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(`${BigInt(u.id)}`, { cache: true })));
@@ -99,6 +109,11 @@ router.use('show-all', async ({ msg, em }) => {
   embed.addField('Aankomende eerst', description.join('\n'));
 
   return embed;
+};
+
+router.use('show-all', showAll);
+router.use('all', showAll, HandlerType.BOTH, {
+  description: 'Laat alle geboortedatums zien',
 });
 
 const showAgeHandler : BothHandler = async ({ msg, em }) => {
@@ -139,7 +154,9 @@ const showAgeHandler : BothHandler = async ({ msg, em }) => {
 };
 
 router.use('show-age', showAgeHandler);
-router.use('ages', showAgeHandler);
+router.use('ages', showAgeHandler, HandlerType.BOTH, {
+  description: 'Laat alle leeftijden zien',
+});
 
 router.use('get', async ({ params, em, msg }) => {
   const user = params[0];

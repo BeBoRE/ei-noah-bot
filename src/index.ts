@@ -258,8 +258,25 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
     ],
   });
 
-  // Voorbeeld hoe je met user data omgaat
-  if (process.env.NODE_ENV !== 'production') eiNoah.use('counter', Counter);
+  if (process.env.NODE_ENV !== 'production') {
+    // Voorbeeld hoe je met user data omgaat
+    eiNoah.use('counter', Counter);
+
+    const hasUpdated = false;
+    // Update alle slash commands voor development
+    eiNoah.use('slash', () => {
+      if (hasUpdated) return 'Je hebt de slash commands al geupdate';
+      return eiNoah.updateSlashCommands()
+        .then((promises) => Promise.all(promises))
+        .then(() => 'Slash commands geupdate')
+        .catch((err) => {
+          console.error(err);
+          return 'Er is iets fout gegaan';
+        });
+    }, HandlerType.BOTH, {
+      description: 'Update alle slash commands',
+    });
+  }
 
   eiNoah.use('quote', QuoteRouter);
   eiNoah.use('qoute', QuoteRouter);
@@ -273,7 +290,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
     '`ei knuffel <@User> [tekst] [-b bodemtekst]`: Geef iemand een knuffel die het verdiend heeft <3',
     '`ei stab <@User> [tekst] [-b bodemtekst]`: Steek iemand met een mes die het verdiend heeft <3',
   ].join('\n'), HandlerType.BOTH, {
-    description: 'Het heerlijke Ei Noah menu, geniet ervan :)',
+    description: 'Het heerlijke Ei Noah menu, geniet ervan :P)',
   });
 
   eiNoah.onInit = async (client) => {

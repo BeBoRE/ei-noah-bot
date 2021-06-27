@@ -6,7 +6,9 @@ import { coronaRefresher } from './routes/CoronaRouter';
 dotenv.config();
 
 (async () => {
-  const client = new Client();
+  const client = new Client({
+    intents: ['DIRECT_MESSAGES'],
+  });
 
   const orm = await MikroORM.init().catch((err) => { console.error(err); process.exit(-1); });
   await client.login(process.env.CLIENT_TOKEN);

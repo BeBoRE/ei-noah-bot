@@ -19,6 +19,7 @@ import {
   MessageReaction,
   User,
   Snowflake,
+  Message,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/core';
 import emojiRegex from 'emoji-regex';
@@ -360,7 +361,6 @@ router.use('add', async ({
   return addUsers(userOrRole, activeChannel, await guildUser, msg.client);
 }, HandlerType.GUILD, {
   description: 'Voeg een gebruiker of rol toe aan je lobby',
-  type: 'SUB_COMMAND',
   options: [{
     name: 'mention',
     description: 'Persoon of rol die je toe wil voegen',
@@ -536,6 +536,7 @@ router.use('remove', async ({
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
   const users = params.filter((param): param is DiscordUser => param instanceof DiscordUser);
   const roles = params.filter((param): param is Role => param instanceof Role);
+  const requestingUser = msg instanceof Message ? msg.author : msg.user;
 
   if (nonUsersOrRoles.length > 0) {
     return 'Alleen mention(s) mogelijk als argument';
@@ -563,7 +564,7 @@ router.use('remove', async ({
 
     const removeAbleUsers = msg.guild.members.cache.array()
       .filter((member) => {
-        if (member.id === msg.author.id) return false;
+        if (member.id === requestingUser.id) return false;
         if (member.id === msg.client.user?.id) return false;
         if (activeChannel.permissionOverwrites.has(member.id)) return true;
         if (activeChannel.members.has(member.id)) return true;
@@ -578,7 +579,7 @@ router.use('remove', async ({
     const selectedUsers = new Set<DiscordUser>();
     const selectedRoles = new Set<Role>();
 
-    createMenu([...removeAbleRoles, ...removeAbleUsers], msg.author, msg.channel, 'Welke user(s) of role(s) wil je verwijderen',
+    createMenu([...removeAbleRoles, ...removeAbleUsers], requestingUser, msg.channel, 'Welke user(s) of role(s) wil je verwijderen',
       (item) => {
         if (item instanceof DiscordUser) {
           return `${selectedUsers.has(item) ? '✅' : ''}User: ${item.username}`;
@@ -600,19 +601,20 @@ router.use('remove', async ({
           Array.from(selectedUsers),
           Array.from(selectedRoles),
           msg.channel,
-          msg.author,
+          requestingUser,
           (await guildUser).tempChannel);
       }]);
     return null;
   }
 
-  removeFromLobby(activeChannel, users, roles, msg.channel, msg.author, (await guildUser).tempChannel);
+  removeFromLobby(activeChannel, users, roles, msg.channel, requestingUser, (await guildUser).tempChannel);
   return null;
 }, HandlerType.GUILD);
 
 const changeTypeHandler : GuildHandler = async ({
   params, msg, guildUser, em,
 }) => {
+  const requestingUser = msg instanceof Message ? msg.author : msg.user;
   if (msg.channel instanceof DMChannel || msg.guild === null || guildUser === null) {
     return 'Dit commando kan alleen op servers worden gebruikt';
   }
@@ -667,7 +669,7 @@ const changeTypeHandler : GuildHandler = async ({
         .filter((member) => !activeChannel.permissionOverwrites.has(member.id))
         .forEach((member) => {
           member.voice.setChannel(null);
-          member.send(`Je bent verwijderd uit *${msg.author.username}'s*, omdat de lobby was veranderd naar ${changeTo} en jij nog geen toestemming had gekregen`);
+          member.send(`Je bent verwijderd uit *${requestingUser.username}'s*, omdat de lobby was veranderd naar ${changeTo} en jij nog geen toestemming had gekregen`);
         });
     }
 
@@ -677,14 +679,14 @@ const changeTypeHandler : GuildHandler = async ({
       ...newOverwrites,
     ]).catch(console.error);
 
-    activeChannel.setName(generateLobbyName(changeTo, msg.author, lobbyOwner))
+    activeChannel.setName(generateLobbyName(changeTo, requestingUser, lobbyOwner))
       .then(async (voice) => {
         const gu = (await guildUser);
         if (gu.tempChannel) {
           activeTempText(msg.client, gu.tempChannel)
             .then(async (textChannel) => {
               if (textChannel) {
-                await textChannel.setName(generateLobbyName(changeTo, msg.author, gu, true));
+                await textChannel.setName(generateLobbyName(changeTo, requestingUser, gu, true));
                 updateTextChannel(voice, textChannel);
               }
             });
@@ -884,6 +886,7 @@ router.use('bitrate', async ({ msg, guildUser, params }) => {
 const nameHandler : GuildHandler = async ({
   params, guildUser, msg, em,
 }) => {
+  const requestingUser = msg instanceof Message ? msg.author : msg.user;
   const gu = await guildUser;
 
   if (!(await guildUser).tempChannel?.isInitialized()) await (await guildUser).tempChannel?.init();
@@ -903,9 +906,9 @@ const nameHandler : GuildHandler = async ({
 
   gu.tempChannel.name = name;
   const type = getChannelType(tempChannel);
-  tempChannel.setName(generateLobbyName(type, msg.author, gu));
+  tempChannel.setName(generateLobbyName(type, requestingUser, gu));
   activeTempText(msg.client, gu.tempChannel)
-    .then((tc) => tc?.setName(generateLobbyName(type, msg.author, gu, true)));
+    .then((tc) => tc?.setName(generateLobbyName(type, requestingUser, gu, true)));
 
   return 'Lobby naam is aangepast\n> Bij overmatig gebruik kan het meer dan 10 minuten duren';
 };
@@ -936,7 +939,6 @@ const helpHandler = () => helpCommandText;
 
 router.use('help', helpHandler, HandlerType.BOTH, {
   description: 'Get help',
-  type: 'SUB_COMMAND',
 });
 
 const createAddMessage = async (tempChannel : TempChannel, user : User, client : Client, em : EntityManager) => {
