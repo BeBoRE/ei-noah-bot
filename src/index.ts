@@ -237,8 +237,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
     return 'Knuffel wie?';
   };
 
-  eiNoah.use('hug', hugHandler);
-  eiNoah.use('knuffel', hugHandler, HandlerType.BOTH, {
+  eiNoah.use('hug', hugHandler, HandlerType.BOTH, {
     description: 'Geef iemand een knuffel die het verdiend heeft <3',
     options: [
       {
@@ -257,6 +256,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
       },
     ],
   });
+  eiNoah.use('knuffel', hugHandler, HandlerType.BOTH);
 
   if (process.env.NODE_ENV !== 'production') {
     // Voorbeeld hoe je met user data omgaat
@@ -279,7 +279,6 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
   }
 
   eiNoah.use('quote', QuoteRouter);
-  eiNoah.use('qoute', QuoteRouter);
 
   eiNoah.use('help', () => [
     '**Alle Commando\'s**',
