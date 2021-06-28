@@ -323,17 +323,5 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
 
   eiNoah.use('corona', CoronaRouter);
 
-  eiNoah.use('reply', async ({ msg }) => {
-    if (msg instanceof Message) {
-      msg.reply('Gaming');
-    } else {
-      console.log(await msg.fetchReply());
-    }
-
-    return null;
-  }, HandlerType.BOTH, {
-    description: 'Ei replies',
-  });
-
   await eiNoah.start();
 })();
