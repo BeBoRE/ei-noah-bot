@@ -139,7 +139,7 @@ export default class Router implements IRouter {
 
       this.routes[route.toUpperCase()] = newUsing;
 
-      if (commandData) this.commandDataList.set(route.toLowerCase(), { ...commandData, type: 'SubCommand' });
+      if (commandData) this.commandDataList.set(route.toLowerCase(), { ...commandData, type: 'SUB_COMMAND' });
     }
   }
 

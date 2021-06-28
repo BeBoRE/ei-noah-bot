@@ -200,7 +200,7 @@ router.use('remove', removeHandler, HandlerType.GUILD, {
     {
       name: 'user',
       description: 'Gebruiker waarvan je een quote wil verwijderen',
-      type: 'User',
+      type: 'USER',
       required: true,
     },
   ],

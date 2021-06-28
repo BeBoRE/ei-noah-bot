@@ -530,23 +530,13 @@ const removeFromLobby = (
 };
 
 router.use('remove', async ({
-  params, msg, guildUser, em, flags,
+  params, msg, guildUser, em,
 }) => {
   const nonUsersOrRoles = params
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
   const users = params.filter((param): param is DiscordUser => param instanceof DiscordUser);
   const roles = params.filter((param): param is Role => param instanceof Role);
   const requestingUser = msg instanceof Message ? msg.author : msg.user;
-
-  flags.forEach((value) => {
-    const [user] = value;
-
-    if (user instanceof User) {
-      users.push(user);
-    } else if (user instanceof Role) {
-      roles.push(user);
-    }
-  });
 
   if (nonUsersOrRoles.length > 0) {
     return 'Alleen mention(s) mogelijk als argument';
@@ -566,6 +556,8 @@ router.use('remove', async ({
   if (getChannelType(activeChannel) === ChannelType.Public) {
     return 'Wat snap jij niet aan een **public** lobby smeerjoch';
   }
+
+  await msg.guild.members.fetch();
 
   if (params.length === 0) {
     const removeAbleRoles = msg.guild.roles.cache.array()
@@ -621,72 +613,6 @@ router.use('remove', async ({
   return null;
 }, HandlerType.GUILD, {
   description: 'Verwijder een gebruiker of rol van de lobby',
-  options: [{
-    name: 'mention',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-    required: true,
-  }, {
-    name: '1',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '2',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '3',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '4',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '5',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '6',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '7',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '8',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '9',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '10',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '11',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '12',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '13',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '14',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }, {
-    name: '15',
-    description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
-  }],
 });
 
 const changeTypeHandler : GuildHandler = async ({
@@ -788,13 +714,13 @@ router.use('type', changeTypeHandler, HandlerType.GUILD, {
       description: 'Type waarin je de lobby wil veranderen',
       choices: [
         {
-          name: ChannelType.Mute.toUpperCase(),
+          name: `${ChannelType.Mute[0].toUpperCase()}${ChannelType.Mute.substring(1)}`,
           value: ChannelType.Mute,
         }, {
-          name: ChannelType.Nojoin.toUpperCase(),
+          name: `${ChannelType.Nojoin[0].toUpperCase()}${ChannelType.Nojoin.substring(1)}`,
           value: ChannelType.Nojoin,
         }, {
-          name: ChannelType.Public.toUpperCase(),
+          name: `${ChannelType.Public[0].toUpperCase()}${ChannelType.Public.substring(1)}`,
           value: ChannelType.Public,
         },
       ],
@@ -1034,7 +960,7 @@ router.use('name', nameHandler, HandlerType.GUILD, {
   options: [{
     name: 'name',
     description: 'De naam waarin je de lobby naam wil veranderen',
-    type: 'String',
+    type: 'STRING',
     required: true,
   }],
 });
