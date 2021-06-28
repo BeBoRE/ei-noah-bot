@@ -1,12 +1,15 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User,
 } from 'discord.js';
 import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
 } from '@mikro-orm/core';
 
-import { getCategoryData, getUserData, getUserGuildData } from './data';
-import Router, { Handler, RouteInfo } from './Router';
+import console from 'console';
+import LazyRouteInfo from './router/LazyRouteInfo';
+import Router, {
+  BothHandler, DMHandler, GuildHandler, HandlerReturn, HandlerType, IRouter, RouteInfo,
+} from './router/Router';
 
 enum ErrorType {
   Uncaught,
@@ -14,14 +17,14 @@ enum ErrorType {
 }
 
 const errorToChannel = async (channelId : string, client : Client, err : Error, type?: ErrorType) => {
-  const errorChannel = await client.channels.fetch(channelId);
+  const errorChannel = await client.channels.fetch(<Snowflake>channelId);
   if (errorChannel instanceof TextChannel
      || errorChannel instanceof NewsChannel
   ) {
     let header = '';
     if (type === ErrorType.Uncaught) header = '**Uncaught**';
     if (type === ErrorType.Unhandled) header = '**Unhandled**';
-    return errorChannel.send(`${header}\n**${err?.name}**\n\`\`\`${err?.stack}\`\`\``, { split: true });
+    return errorChannel.send({ content: `${header}\n**${err?.name}**\n\`\`\`${err?.stack}\`\`\`` });
   }
 
   return null;
@@ -29,7 +32,7 @@ const errorToChannel = async (channelId : string, client : Client, err : Error, 
 
 function mapParams(mention : string,
   client : Client,
-  guild : Guild | null) : Array<Promise<Role | DiscordUser | string | Channel | null>> {
+  guild : Guild | null) : Array<Promise<Role | DiscordUser | string | Channel>> {
   const seperated : string[] = [];
 
   const matches = mention.match(/<(@[!&]?|#)[0-9]+>/g);
@@ -51,13 +54,25 @@ function mapParams(mention : string,
 
   return seperated.map((param) => {
     const user = param.match(/<@!?([0-9]+)>/);
-    if (user) return client.users.fetch(user[1], true);
+    if (user) return client.users.fetch(<Snowflake>user[1], { cache: true });
 
     const role = param.match(/<@&([0-9]+)>/);
-    if (role && guild) return guild.roles.fetch(role[1], true);
+    if (role && guild) {
+      return guild.roles.fetch(<Snowflake>role[1], { cache: true }).then((r) => {
+        if (!r) throw new Error('Role not found');
 
-    const channel = param.match(/<@&([0-9]+)>/);
-    if (channel && guild) return client.channels.fetch(channel[1], true);
+        return r;
+      });
+    }
+
+    const channel = param.match(/<#([0-9]+)>/);
+    if (channel && guild) {
+      return client.channels.fetch(<Snowflake>channel[1], { cache: true }).then((c) => {
+        if (!c) throw new Error('Channel not found');
+
+        return c;
+      });
+    }
 
     return Promise.resolve(param);
   });
@@ -86,99 +101,214 @@ function isFlag(argument: string) {
   return argument[0] === '-' && argument.length > 1;
 }
 
-async function messageParser(msg : Message, em: EntityManager) {
-  if (!msg.content) throw new Error('Message heeft geen content');
+async function messageParser(msg : Message | CommandInteraction, em: EntityManager) {
+  const flags = new Map<string, Array<Role | DiscordUser | string | Channel | boolean | number>>();
+  const params : Array<Role | DiscordUser | string | Channel> = [];
 
-  const splitted = msg.content.split(' ').filter((param) => param);
+  if (msg instanceof Message) {
+    if (!msg.content) throw new Error('Message heeft geen content');
 
-  const flags = new Map<string, Array<Role | DiscordUser | string | Channel>>();
-  const nonFlags : Array<Role | DiscordUser | string | Channel> = [];
+    const splitted = msg.content.split(' ').filter((param) => param);
 
-  splitted.shift();
+    splitted.shift();
 
-  if (splitted[0] && splitted[0].toLowerCase() === 'noah') splitted.shift();
+    if (splitted[0] && splitted[0].toLowerCase() === 'noah') splitted.shift();
 
-  const resolved = await parseParams(splitted, msg.client, msg.guild);
+    const resolved = await parseParams(splitted, msg.client, msg.guild).catch(() => null);
 
-  let flag : string | null = null;
-  resolved.forEach((param) => {
-    if (typeof param === 'string' && isFlag(param)) {
-      flag = param.substr(1, param.length - 1).toLowerCase();
-      flags.set(flag, []);
-      return;
+    if (!resolved) return null;
+
+    let flag : string | null = null;
+    resolved.forEach((param) => {
+      if (typeof param === 'string' && isFlag(param)) {
+        flag = param.substr(1, param.length - 1).toLowerCase();
+        flags.set(flag, []);
+        return;
+      }
+
+      if (flag) {
+        flags.get(flag)?.push(param);
+        return;
+      }
+
+      params.push(param);
+    });
+  } else {
+    let command : CommandInteractionOption | CommandInteraction = msg;
+    while (command instanceof CommandInteraction || command.type === 'SUB_COMMAND' || command.type === 'SUB_COMMAND_GROUP') {
+      if (command instanceof CommandInteraction) { params.push(command.commandName); } else params.push(command.name);
+      const nextCommand : CommandInteractionOption | undefined = command.options?.first();
+      if (!nextCommand || !(nextCommand.type === 'SUB_COMMAND' || nextCommand.type === 'SUB_COMMAND_GROUP')) break;
+      command = nextCommand;
     }
 
-    if (flag) {
-      flags.get(flag)?.push(param);
-      return;
-    }
+    command?.options?.forEach((option) => {
+      if (option.type === 'STRING' || option.type === 'BOOLEAN' || option.type === 'INTEGER') {
+        if (typeof option.value === 'string') flags.set(option.name, option.value.split(' '));
+        if (option.value !== undefined) flags.set(option.name, [option.value]);
+      }
 
-    nonFlags.push(param);
-  });
+      if (option.channel instanceof Channel) flags.set(option.name, [option.channel]);
+      if (option.user instanceof User) flags.set(option.name, [option.user]);
+      if (option.role instanceof Role) flags.set(option.name, [option.role]);
+    });
+  }
 
-  let guildUser;
-  if (msg.guild) {
-    guildUser = await getUserGuildData(em, msg.author, msg.guild);
-  } else guildUser = null;
-
-  let category;
-  if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
-    category = await getCategoryData(em, msg.channel.parent);
-  } else category = null;
-
-  let user;
-  if (!guildUser) { user = await getUserData(em, msg.author); } else user = guildUser.user;
-
-  const routeInfo : RouteInfo = {
-    absoluteParams: nonFlags,
-    params: nonFlags,
+  const routeInfo : RouteInfo = new LazyRouteInfo({
+    params,
     msg,
     flags,
-    guildUser,
-    user,
-    category,
     em,
-  };
+  });
 
   return routeInfo;
 }
 
-class EiNoah {
-  public readonly client = new Client();
+const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : MessageOptions | null => {
+  if (handlerReturn) {
+    if (typeof (handlerReturn) !== 'string') {
+      if (handlerReturn instanceof MessageEmbed) return { embeds: [handlerReturn] };
+      if (handlerReturn instanceof MessageAttachment) return { files: [handlerReturn] };
+      if (Array.isArray(handlerReturn)) {
+        const embeds : MessageEmbed[] = [];
+        const files : MessageAttachment[] = [];
 
-  private readonly router = new Router();
+        handlerReturn.forEach((item) => {
+          if (item instanceof MessageEmbed) {
+            embeds.push(item);
+            return;
+          }
+
+          files.push(item);
+        });
+
+        if (!embeds.length && !files.length) return null;
+        return {
+          embeds,
+          files,
+        };
+      }
+
+      return handlerReturn;
+    }
+
+    return { content: handlerReturn };
+  }
+
+  return null;
+};
+
+const messageSender = (options : MessageOptions | null, msg : Message | CommandInteraction) : Promise<Message | Message[] | null> => {
+  if (options && msg.channel) {
+    return msg.channel.send({ ...options });
+  }
+  return Promise.resolve(null);
+};
+
+class EiNoah implements IRouter {
+  public readonly client = new Client({
+    intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_TYPING', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MEMBERS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILDS', 'GUILD_VOICE_STATES'],
+  });
+
+  private readonly router = new Router('Ei Noah');
 
   private readonly token : string;
 
   private readonly orm : MikroORM<IDatabaseDriver<Connection>>;
+
+  private applicationCommandData : ApplicationCommandData[] = [];
 
   constructor(token : string, orm : MikroORM<IDatabaseDriver<Connection>>) {
     this.token = token;
     this.orm = orm;
   }
 
-  // this.use wordt doorgepaast aan de echte router
-  public use(route: typeof DiscordUser, using: Handler) : void
-  public use(route: typeof Role, using: Handler) : void
-  public use(route: null, using: Handler) : void
-  public use(route : string, using: Router | Handler) : void
-  public use(route : any, using: any) : any {
-    this.router.use(route, using);
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route : string, using: Router | BothHandler) : void
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type?: HandlerType, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route: string, using: any, type: any = HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>): void {
+    this.router.use(route, using, type);
+
+    if (using instanceof Router) {
+      const commandDataList : ApplicationCommandOptionData[] = [];
+      using.commandDataList.forEach((value, key) => {
+        commandDataList.push({
+          name: key,
+          ...value,
+        });
+      });
+
+      if (commandDataList.length) {
+        this.applicationCommandData.push({
+          name: route,
+          description: using.description,
+          options: commandDataList,
+        });
+      }
+    }
+
+    if (commandData) {
+      if (typeof route === 'string') {
+        this.applicationCommandData.push({
+          name: route,
+          ...commandData,
+        });
+      }
+    }
   }
 
   public onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
   => void | Promise<void>);
 
+  public readonly updateSlashCommands = () => Promise.all([
+    this.client.guilds.cache.array().map((guild) => guild.commands.fetch()
+      .then(() => guild.commands.set(this.applicationCommandData))
+      .then((commands) => commands))]);
+
   public async start() {
     const { orm } = this;
 
     this.client.on('ready', () => {
-      console.log('client online');
+      console.log('Client online');
+    });
+
+    this.client.on('interaction', async (interaction) => {
+      if (interaction.isCommand()) {
+        const em = orm.em.fork();
+
+        await interaction.defer();
+        messageParser(interaction, em)
+          .then((info) => {
+            if (info) { return this.router.handle(info); }
+            return 'Er is iets misgegaan, volgende keer beter';
+          })
+          .then(handlerReturnToMessageOptions)
+          .then((options) => Promise.all([options, em.flush()]))
+          .then(([options]) : any => {
+            if (options) {
+              return interaction.followUp(options);
+            }
+            return null;
+          })
+          .catch((err) => {
+            // Dit wordt gecallt wanneer de parsing faalt
+            if (process.env.NODE_ENV !== 'production' && interaction.channel) {
+              errorToChannel(interaction.channel.id, interaction.client, err).catch(() => { console.log('Error could not be send :('); });
+            } else if (process.env.ERROR_CHANNEL && interaction.channel) {
+              interaction.channel.send('Er is iets misgegaan').catch(() => {});
+              errorToChannel(process.env.ERROR_CHANNEL, interaction.client, err).catch(() => { console.log('Stel error kanaal in'); });
+            }
+
+            console.error(err);
+          });
+      }
     });
 
     this.client.on('message', (msg) => {
       if (msg.author !== this.client.user && msg.content) {
-        const splitted = msg.content.split(' ').filter((param) => param);
+        const splitted = msg.content.split(' ').filter((param : string) => param);
 
         // Raw mention ziet er anders uit wanneer user een nickname heeft
         const botMention = `<@${this.client.user?.id}>`;
@@ -187,12 +317,12 @@ class EiNoah {
         let canSendMessage = true;
 
         if ((msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) && msg.client.user) {
-          if (!msg.channel.permissionsFor(msg.client.user)?.has(Permissions.FLAGS.SEND_MESSAGES)) canSendMessage = false;
+          if (!msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.SEND_MESSAGES)) canSendMessage = false;
         }
 
         if ((splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention)) {
           if (!canSendMessage) {
-            if (msg.member && msg.member.hasPermission(Permissions.FLAGS.ADMINISTRATOR)) {
+            if (msg.member && msg.member.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
               msg.author.send('Ik kan toch niet in dat kanaal praten, doe je fucking werk of ik steek je neer').catch(() => { });
               return;
             }
@@ -204,30 +334,31 @@ class EiNoah {
           msg.channel.startTyping().catch(() => { });
           const em = orm.em.fork();
 
+          if (process.env.NODE_ENV !== 'production') console.time(`${msg.id}`);
+
           messageParser(msg, em)
-            // @ts-ignore
-            .then((info) => this.router.handle(info))
-            .then((response) => {
-              if (response) {
-                if (typeof (response) !== 'string') {
-                  return msg.channel.send(response).catch(() => { });
-                }
+            .then((info) => {
+              if (!info) return 'Ongeldige user(s), role(s) en/of channel(s) gegeven';
 
-                return msg.channel.send(response, { split: true }).catch(() => { });
-              }
-
-              return null;
+              return this.router.handle(info);
             })
+            .then(handlerReturnToMessageOptions)
+            .then((options) => Promise.all([options, em.flush()]))
+            .then(([options]) => {
+              console.timeEnd(`${msg.id}`);
+              return options;
+            })
+            .then((options) => messageSender(options, msg))
             .finally(() => {
               msg.channel.stopTyping();
-              return em.flush();
             })
             .catch((err) => {
+              console.timeEnd(`${msg.id}`);
               // Dit wordt gecallt wanneer de parsing faalt
               if (process.env.NODE_ENV !== 'production') {
                 errorToChannel(msg.channel.id, msg.client, err).catch(() => { console.log('Error could not be send :('); });
               } else if (process.env.ERROR_CHANNEL) {
-                msg.channel.send('Even normaal doen!').catch(() => {});
+                msg.channel.send('Er is iets misgegaan').catch(() => {});
                 errorToChannel(process.env.ERROR_CHANNEL, msg.client, err).catch(() => { console.log('Stel error kanaal in'); });
               }
 
@@ -243,10 +374,16 @@ class EiNoah {
 
     await this.client.login(this.token);
 
-    this.router.onInit = this.onInit;
+    this.router.onInit = async (client) => {
+      if (this.onInit) await this.onInit(client, orm);
+      if (process.env.NODE_ENV === 'production') {
+        await client.application?.commands.set(this.applicationCommandData);
+      }
+    };
 
     // @ts-ignore
     this.router.initialize(this.client, orm);
+
     process.on('uncaughtException', async (err) => {
       if (process.env.ERROR_CHANNEL) await errorToChannel(process.env.ERROR_CHANNEL, this.client, err, ErrorType.Uncaught);
     });

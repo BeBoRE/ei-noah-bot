@@ -1,14 +1,14 @@
 import dotenv from 'dotenv';
 import {
-  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel, NewsChannel, Channel,
+  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel, NewsChannel, Channel, Message,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { fork } from 'child_process';
 import {
   CanvasRenderingContext2D, createCanvas, loadImage,
 } from 'canvas';
-import { Handler } from 'Router';
 import { fillTextWithTwemoji, strokeTextWithTwemoji, measureText } from 'node-canvas-with-twemoji-and-discord-emoji';
+import { BothHandler, HandlerType } from './router/Router';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
@@ -18,7 +18,7 @@ import CoronaRouter from './routes/CoronaRouter';
 
 dotenv.config();
 
-const mentionsToText = (params : Array<string | User | Role | Channel>, startAt = 0) : string => {
+const mentionsToText = (params : Array<string | User | Role | Channel | number | boolean>, startAt = 0) : string => {
   const messageArray : string[] = [];
   for (let i = startAt; i < params.length; i += 1) {
     const item = params[i];
@@ -79,11 +79,14 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
 
   // Hier is een 'Handler' als argument in principe is dit een eindpunt van de routing.
   // Dit is waar berichten worden afgehandeld
-  const stabHandler : Handler = async ({ params, msg, flags }) => {
-    const [user] = params;
+  const stabHandler : BothHandler = async ({ params, msg, flags }) => {
+    const persoon = flags.get('persoon');
+    const [user] = persoon || params;
+
     if (user instanceof User) {
       const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
-      const messageArray : string = mentionsToText(params, 1);
+      params.shift();
+      const message : string = mentionsToText(flags.get('top') || params);
 
       if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
         const canvas = createCanvas(800, 600);
@@ -114,7 +117,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
         ctx.font = `${fontSize}px Calibri`;
         ctx.fillStyle = '#FFFFFF';
 
-        const lines = getLines(ctx, messageArray, 800);
+        const lines = getLines(ctx, message, 800);
 
         await Promise.all(lines.map((line, index) => {
           const { width } = measureText(ctx, line);
@@ -143,16 +146,37 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
     return 'Lekker';
   };
 
-  eiNoah.use('steek', stabHandler);
+  eiNoah.use('steek', stabHandler, HandlerType.BOTH, {
+    description: 'Steek iemand die het verdiend heeft <3',
+    options: [
+      {
+        name: 'persoon',
+        description: 'Persoon die je wilt steken',
+        type: 'USER',
+        required: true,
+      }, {
+        name: 'top',
+        description: 'De tekst die je erbij wil zetten',
+        type: 'STRING',
+      }, {
+        name: 'bottom',
+        description: 'De tekst die je erbij wil zetten',
+        type: 'STRING',
+      },
+    ],
+  });
   eiNoah.use('stab', stabHandler);
 
   const hugImg = loadImage('./src/images/hug.png');
 
-  const hugHandler : Handler = async ({ params, msg, flags }) => {
-    const [user] = params;
+  const hugHandler : BothHandler = async ({ params, msg, flags }) => {
+    const persoon = flags.get('persoon');
+    const [user] = persoon || params;
+
     if (user instanceof User) {
       const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
-      const message : string = mentionsToText(params, 1);
+      params.shift();
+      const message : string = mentionsToText(flags.get('top') || params);
 
       if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
         const canvas = createCanvas(800, 600);
@@ -213,31 +237,48 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
     return 'Knuffel wie?';
   };
 
-  eiNoah.use('hug', hugHandler);
-  eiNoah.use('knuffel', hugHandler);
-
-  eiNoah.use(Role, ({ params }) => `${params[0]}s zijn gamers`);
-
-  // Als een mention als parameter is gebruikt wordt deze functie aangeroepen,
-  // je kan hiervoor geen Router gebruiken
-  eiNoah.use(User, (routeInfo) => {
-    if (routeInfo.params[0] instanceof User) return `What about ${routeInfo.params[0]}`;
-    return null;
+  eiNoah.use('hug', hugHandler, HandlerType.BOTH, {
+    description: 'Geef iemand een knuffel die het verdiend heeft <3',
+    options: [
+      {
+        name: 'persoon',
+        description: 'Persoon die je een knuffel wil geven',
+        required: true,
+        type: 'USER',
+      }, {
+        name: 'top',
+        description: 'Zet een leuke tekstje erbij',
+        type: 'STRING',
+      }, {
+        name: 'bottom',
+        description: 'Zet een leuk tekstje erbij (maar dan aan de onderkant)',
+        type: 'STRING',
+      },
+    ],
   });
+  eiNoah.use('knuffel', hugHandler, HandlerType.BOTH);
 
-  // Voorbeeld hoe je met user data omgaat
-  if (process.env.NODE_ENV !== 'production') eiNoah.use('counter', Counter);
+  if (process.env.NODE_ENV !== 'production') {
+    // Voorbeeld hoe je met user data omgaat
+    eiNoah.use('counter', Counter);
 
-  eiNoah.use(null, () => {
-    const watZegtNoah = ['Ja wat jonge', '**Kabaal** ik zit op de fiets', 'Ik steek je neer', 'Hmm wat zegt noah nog meer', 'Ik laat het aan god over'];
-
-    const zeg = watZegtNoah[Math.floor(Math.random() * watZegtNoah.length)];
-
-    return zeg;
-  });
+    const hasUpdated = false;
+    // Update alle slash commands voor development
+    eiNoah.use('slash', () => {
+      if (hasUpdated) return 'Je hebt de slash commands al geupdate';
+      return eiNoah.updateSlashCommands()
+        .then((promises) => Promise.all(promises))
+        .then(() => 'Slash commands geupdate')
+        .catch((err) => {
+          console.error(err);
+          return 'Er is iets fout gegaan';
+        });
+    }, HandlerType.BOTH, {
+      description: 'Update alle slash commands',
+    });
+  }
 
   eiNoah.use('quote', QuoteRouter);
-  eiNoah.use('qoute', QuoteRouter);
 
   eiNoah.use('help', () => [
     '**Alle Commando\'s**',
@@ -247,33 +288,52 @@ const mentionsToText = (params : Array<string | User | Role | Channel>, startAt 
     '`ei quote` Houd quotes van je makkermaten bij',
     '`ei knuffel <@User> [tekst] [-b bodemtekst]`: Geef iemand een knuffel die het verdiend heeft <3',
     '`ei stab <@User> [tekst] [-b bodemtekst]`: Steek iemand met een mes die het verdiend heeft <3',
-  ].join('\n'));
+  ].join('\n'), HandlerType.BOTH, {
+    description: 'Het heerlijke Ei Noah menu, geniet ervan :P)',
+  });
 
   eiNoah.onInit = async (client) => {
     const updatePrecense = () => {
       const watDoetNoah : PresenceData[] = [{
-        activity: {
+        activities: [{
           name: 'Probeer Niet Te Steken',
           type: 'PLAYING',
-        },
+        }],
       }, {
-        activity: {
+        activities: [{
           name: 'Steek Geluiden',
           type: 'LISTENING',
-        },
+        }],
+      }, {
+        activities: [{
+          name: 'Slash Commands :-0',
+          type: 'LISTENING',
+        }],
       }];
 
-      const precense = watDoetNoah[Math.floor(Math.random() * watDoetNoah.length)];
+      const presence = watDoetNoah[Math.floor(Math.random() * watDoetNoah.length)];
 
-    client.user?.setPresence(precense);
+      client.user?.setPresence(presence);
 
-    setTimeout(updatePrecense, 1000 * 60);
+      setTimeout(updatePrecense, 1000 * 60);
     };
 
     updatePrecense();
   };
 
   eiNoah.use('corona', CoronaRouter);
+
+  eiNoah.use('reply', async ({ msg }) => {
+    if (msg instanceof Message) {
+      msg.reply('Gaming');
+    } else {
+      console.log(await msg.fetchReply());
+    }
+
+    return null;
+  }, HandlerType.BOTH, {
+    description: 'Ei replies',
+  });
 
   await eiNoah.start();
 })();
