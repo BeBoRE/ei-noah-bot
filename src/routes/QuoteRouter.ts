@@ -114,7 +114,7 @@ router.use('get', handler, HandlerType.GUILD, {
     {
       name: 'persoon',
       description: 'Persoon waarvan je een quote wil zien',
-      type: 'User',
+      type: 'USER',
       required: true,
     },
   ],
@@ -125,11 +125,11 @@ router.use('add', handler, HandlerType.GUILD, {
     {
       name: 'user',
       description: 'Degene waarvoor je een quote wil toevoegen',
-      type: 'User',
+      type: 'USER',
     }, {
       name: 'quote',
       description: 'Quote die je wil toevoegen',
-      type: 'String',
+      type: 'STRING',
     },
   ],
 });

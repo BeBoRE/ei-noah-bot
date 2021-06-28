@@ -135,15 +135,15 @@ async function messageParser(msg : Message | CommandInteraction, em: EntityManag
     });
   } else {
     let command : CommandInteractionOption | CommandInteraction = msg;
-    while (command instanceof CommandInteraction || command.type === 'SubCommand' || command.type === 'SubCommandGroup') {
+    while (command instanceof CommandInteraction || command.type === 'SUB_COMMAND' || command.type === 'SUB_COMMAND_GROUP') {
       if (command instanceof CommandInteraction) { params.push(command.commandName); } else params.push(command.name);
       const nextCommand : CommandInteractionOption | undefined = command.options?.first();
-      if (!nextCommand || !(nextCommand.type === 'SubCommand' || nextCommand.type === 'SubCommandGroup')) break;
+      if (!nextCommand || !(nextCommand.type === 'SUB_COMMAND' || nextCommand.type === 'SUB_COMMAND_GROUP')) break;
       command = nextCommand;
     }
 
     command?.options?.forEach((option) => {
-      if (option.type === 'String' || option.type === 'Boolean' || option.type === 'Integer') {
+      if (option.type === 'STRING' || option.type === 'BOOLEAN' || option.type === 'INTEGER') {
         if (typeof option.value === 'string') flags.set(option.name, option.value.split(' '));
         if (option.value !== undefined) flags.set(option.name, [option.value]);
       }

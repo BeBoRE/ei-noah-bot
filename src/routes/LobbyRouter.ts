@@ -364,68 +364,68 @@ router.use('add', async ({
   options: [{
     name: 'mention',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
     required: true,
   }, {
     name: '1',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '2',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '3',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '4',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '5',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '6',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '7',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '8',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '9',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '10',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '11',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '12',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '13',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '14',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '15',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }],
 });
 
@@ -624,68 +624,68 @@ router.use('remove', async ({
   options: [{
     name: 'mention',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
     required: true,
   }, {
     name: '1',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '2',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '3',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '4',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '5',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '6',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '7',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '8',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '9',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '10',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '11',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '12',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '13',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '14',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }, {
     name: '15',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'Mentionable',
+    type: 'MENTIONABLE',
   }],
 });
 
@@ -798,7 +798,7 @@ router.use('type', changeTypeHandler, HandlerType.GUILD, {
           value: ChannelType.Public,
         },
       ],
-      type: 'String',
+      type: 'STRING',
       required: true,
     },
   ],
@@ -849,7 +849,7 @@ router.use('limit', sizeHandler, HandlerType.GUILD, {
   options: [{
     name: 'size',
     description: 'Limiet die je wil instellen',
-    type: 'Integer',
+    type: 'INTEGER',
     required: true,
   }],
 });
@@ -992,7 +992,7 @@ router.use('bitrate', async ({
       name: 'bitrate',
       description: 'Bitrate waarnaar je de lobbies wil veranderen',
       required: true,
-      type: 'Integer',
+      type: 'INTEGER',
     },
   ],
 });

@@ -60,7 +60,7 @@ router.use('add', addHandler, HandlerType.BOTH, {
   options: [{
     name: 'region',
     description: 'Regio die je wil toevoegen',
-    type: 'String',
+    type: 'STRING',
     required: true,
   }],
 });
@@ -94,7 +94,7 @@ router.use('remove', removeHandler, HandlerType.BOTH, {
   options: [{
     name: 'region',
     description: 'Regio/gemeente die je wil verwijderen',
-    type: 'String',
+    type: 'STRING',
     required: true,
   }],
 });

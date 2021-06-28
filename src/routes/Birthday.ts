@@ -50,7 +50,7 @@ router.use('set', setRouter, HandlerType.BOTH, {
     {
       name: 'date',
       description: 'Je geboorte datum (DD/MM/YYYY)',
-      type: 'String',
+      type: 'STRING',
       required: true,
     },
   ],
@@ -190,7 +190,7 @@ router.use('get', async ({
   options: [{
     name: 'user',
     description: 'Degene waarvan je de verjaardag opvraagt',
-    type: 'User',
+    type: 'USER',
     required: true,
   }],
 });
