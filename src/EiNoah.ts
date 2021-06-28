@@ -24,7 +24,7 @@ const errorToChannel = async (channelId : string, client : Client, err : Error, 
     let header = '';
     if (type === ErrorType.Uncaught) header = '**Uncaught**';
     if (type === ErrorType.Unhandled) header = '**Unhandled**';
-    return errorChannel.send({ content: `${header}\n**${err?.name}**\n\`\`\`${err?.stack}\`\`\``, split: true });
+    return errorChannel.send({ content: `${header}\n**${err?.name}**\n\`\`\`${err?.stack}\`\`\`` });
   }
 
   return null;
@@ -135,15 +135,15 @@ async function messageParser(msg : Message | CommandInteraction, em: EntityManag
     });
   } else {
     let command : CommandInteractionOption | CommandInteraction = msg;
-    while (command instanceof CommandInteraction || command.type === 'SUB_COMMAND' || command.type === 'SUB_COMMAND_GROUP') {
+    while (command instanceof CommandInteraction || command.type === 'SubCommand' || command.type === 'SubCommandGroup') {
       if (command instanceof CommandInteraction) { params.push(command.commandName); } else params.push(command.name);
       const nextCommand : CommandInteractionOption | undefined = command.options?.first();
-      if (!nextCommand || !(nextCommand.type === 'SUB_COMMAND' || nextCommand.type === 'SUB_COMMAND_GROUP')) break;
+      if (!nextCommand || !(nextCommand.type === 'SubCommand' || nextCommand.type === 'SubCommandGroup')) break;
       command = nextCommand;
     }
 
     command?.options?.forEach((option) => {
-      if (option.type === 'STRING' || option.type === 'BOOLEAN' || option.type === 'INTEGER') {
+      if (option.type === 'String' || option.type === 'Boolean' || option.type === 'Integer') {
         if (typeof option.value === 'string') flags.set(option.name, option.value.split(' '));
         if (option.value !== undefined) flags.set(option.name, [option.value]);
       }
@@ -189,19 +189,18 @@ const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : MessageO
         };
       }
 
-      return { ...handlerReturn, split: true };
+      return handlerReturn;
     }
 
-    return { split: true, content: handlerReturn };
+    return { content: handlerReturn };
   }
 
   return null;
 };
 
 const messageSender = (options : MessageOptions | null, msg : Message | CommandInteraction) : Promise<Message | Message[] | null> => {
-  if (options) {
-    if (options.split === true) return msg.channel.send({ ...options, split: true });
-    return msg.channel.send({ ...options, split: false });
+  if (options && msg.channel) {
+    return msg.channel.send({ ...options });
   }
   return Promise.resolve(null);
 };
@@ -296,9 +295,9 @@ class EiNoah implements IRouter {
           })
           .catch((err) => {
             // Dit wordt gecallt wanneer de parsing faalt
-            if (process.env.NODE_ENV !== 'production') {
+            if (process.env.NODE_ENV !== 'production' && interaction.channel) {
               errorToChannel(interaction.channel.id, interaction.client, err).catch(() => { console.log('Error could not be send :('); });
-            } else if (process.env.ERROR_CHANNEL) {
+            } else if (process.env.ERROR_CHANNEL && interaction.channel) {
               interaction.channel.send('Er is iets misgegaan').catch(() => {});
               errorToChannel(process.env.ERROR_CHANNEL, interaction.client, err).catch(() => { console.log('Stel error kanaal in'); });
             }
@@ -378,6 +377,9 @@ class EiNoah implements IRouter {
 
     this.router.onInit = async (client) => {
       if (this.onInit) await this.onInit(client, orm);
+      if (process.env.NODE_ENV === 'production') {
+        await client.application?.commands.set(this.applicationCommandData);
+      }
     };
 
     // @ts-ignore

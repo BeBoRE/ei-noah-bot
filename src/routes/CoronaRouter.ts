@@ -60,7 +60,7 @@ router.use('add', addHandler, HandlerType.BOTH, {
   options: [{
     name: 'region',
     description: 'Regio die je wil toevoegen',
-    type: 'STRING',
+    type: 'String',
     required: true,
   }],
 });
@@ -94,7 +94,7 @@ router.use('remove', removeHandler, HandlerType.BOTH, {
   options: [{
     name: 'region',
     description: 'Regio/gemeente die je wil verwijderen',
-    type: 'STRING',
+    type: 'String',
     required: true,
   }],
 });
@@ -110,7 +110,7 @@ const listRegionsHandler : BothHandler = async ({ msg, em }) => {
 
   if (regions.length === 0) return 'Regio\'s zijn nog niet geladen (dit kan nog 10 minuten duren)';
 
-  requestingUser.send({ content: `Regio's:\n${regions.join('\n')}`, split: true });
+  requestingUser.send({ content: `Regio's:\n${regions.join('\n')}` });
   return null;
 };
 
@@ -262,7 +262,7 @@ const coronaRefresher = async (client : Client, orm : MikroORM<IDatabaseDriver<C
 
       const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}`;
       client.users.fetch(`${BigInt(groupedUsers[key][0].user.id)}`, { cache: true })
-        .then((user) => user.send({ content: report, split: true }))
+        .then((user) => user.send({ content: report }))
         .catch(() => {});
     });
   };

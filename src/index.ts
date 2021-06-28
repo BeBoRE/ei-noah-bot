@@ -152,16 +152,16 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
       {
         name: 'persoon',
         description: 'Persoon die je wilt steken',
-        type: 'USER',
+        type: 'User',
         required: true,
       }, {
         name: 'top',
         description: 'De tekst die je erbij wil zetten',
-        type: 'STRING',
+        type: 'String',
       }, {
         name: 'bottom',
         description: 'De tekst die je erbij wil zetten',
-        type: 'STRING',
+        type: 'String',
       },
     ],
   });
@@ -244,15 +244,15 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
         name: 'persoon',
         description: 'Persoon die je een knuffel wil geven',
         required: true,
-        type: 'USER',
+        type: 'User',
       }, {
         name: 'top',
         description: 'Zet een leuke tekstje erbij',
-        type: 'STRING',
+        type: 'String',
       }, {
         name: 'bottom',
         description: 'Zet een leuk tekstje erbij (maar dan aan de onderkant)',
-        type: 'STRING',
+        type: 'String',
       },
     ],
   });

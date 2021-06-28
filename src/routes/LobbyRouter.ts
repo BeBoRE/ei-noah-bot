@@ -15,11 +15,11 @@ import {
   TextChannel,
   CategoryChannel,
   Channel,
-  CollectorFilter,
   MessageReaction,
   User,
   Snowflake,
   Message,
+  ReactionCollectorOptions,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/core';
 import emojiRegex from 'emoji-regex';
@@ -364,68 +364,68 @@ router.use('add', async ({
   options: [{
     name: 'mention',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
     required: true,
   }, {
     name: '1',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '2',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '3',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '4',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '5',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '6',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '7',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '8',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '9',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '10',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '11',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '12',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '13',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '14',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '15',
     description: 'Persoon of rol die je toe wil voegen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }],
 });
 
@@ -624,68 +624,68 @@ router.use('remove', async ({
   options: [{
     name: 'mention',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
     required: true,
   }, {
     name: '1',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '2',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '3',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '4',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '5',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '6',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '7',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '8',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '9',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '10',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '11',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '12',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '13',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '14',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }, {
     name: '15',
     description: 'Persoon of rol die je wilt verwijderen',
-    type: 'MENTIONABLE',
+    type: 'Mentionable',
   }],
 });
 
@@ -798,7 +798,7 @@ router.use('type', changeTypeHandler, HandlerType.GUILD, {
           value: ChannelType.Public,
         },
       ],
-      type: 'STRING',
+      type: 'String',
       required: true,
     },
   ],
@@ -849,7 +849,7 @@ router.use('limit', sizeHandler, HandlerType.GUILD, {
   options: [{
     name: 'size',
     description: 'Limiet die je wil instellen',
-    type: 'INTEGER',
+    type: 'Integer',
     required: true,
   }],
 });
@@ -992,7 +992,7 @@ router.use('bitrate', async ({
       name: 'bitrate',
       description: 'Bitrate waarnaar je de lobbies wil veranderen',
       required: true,
-      type: 'INTEGER',
+      type: 'Integer',
     },
   ],
 });
@@ -1034,7 +1034,7 @@ router.use('name', nameHandler, HandlerType.GUILD, {
   options: [{
     name: 'name',
     description: 'De naam waarin je de lobby naam wil veranderen',
-    type: 'STRING',
+    type: 'String',
     required: true,
   }],
 });
@@ -1075,7 +1075,7 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
   if (!activeChannel) throw new Error('No active temp channel');
 
   textChannel.send(`Laat ${user.username} toe in de lobby?`).then((msg) => {
-    const filter : CollectorFilter<[MessageReaction, User]> = (reaction : MessageReaction, reactor : User) => reactor.id === tempChannel.guildUser.user.id && reaction.emoji.name === '✅';
+    const filter : ReactionCollectorOptions = { filter: (reaction : MessageReaction, reactor : User) => reactor.id === tempChannel.guildUser.user.id && reaction.emoji.name === '✅' };
 
     const collector = msg.createReactionCollector(filter);
     collector.on('collect', () => {
