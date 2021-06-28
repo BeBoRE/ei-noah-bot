@@ -290,7 +290,7 @@ class EiNoah implements IRouter {
             if (options) {
               return interaction.followUp(options);
             }
-            return interaction.deleteReply().then(() => null);
+            return null;
           })
           .catch((err) => {
             // Dit wordt gecallt wanneer de parsing faalt

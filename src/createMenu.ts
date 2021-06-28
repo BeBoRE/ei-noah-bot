@@ -1,5 +1,7 @@
 import {
-  ReactionCollectorOptions, TextBasedChannelFields, User as DiscordUser,
+  CommandInteraction,
+  Message,
+  ReactionCollectorOptions, User as DiscordUser,
 } from 'discord.js';
 
 export type ButtonReturn = boolean | Promise<boolean>
@@ -11,7 +13,7 @@ export type ExtraButton = [string, () => ButtonReturn];
 async function createMenu<T>(
   list : T[],
   owner : DiscordUser,
-  channel : TextBasedChannelFields,
+  msg : Message | CommandInteraction,
   title : string,
   mapper : (item : T) => string | Promise<string>,
   selectCallback : (selected : T) => ButtonReturn,
@@ -42,7 +44,14 @@ async function createMenu<T>(
     return text + pageText;
   };
 
-  const message = await channel.send(await generateText());
+  let message : Message;
+  if (msg instanceof Message) {
+    message = await msg.reply(await generateText());
+  } else {
+    const followup = await msg.followUp(await generateText());
+    if (!(followup instanceof Message)) throw new TypeError('Follow up is not of type message');
+    message = followup;
+  }
 
   if (list.length > emotes.length) {
     await Promise.all([message.react(pageLeft), message.react(pageRight)]).catch(() => { });

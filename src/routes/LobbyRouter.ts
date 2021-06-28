@@ -581,7 +581,7 @@ router.use('remove', async ({
     const selectedUsers = new Set<DiscordUser>();
     const selectedRoles = new Set<Role>();
 
-    createMenu([...removeAbleRoles, ...removeAbleUsers], requestingUser, msg.channel, 'Welke user(s) of role(s) wil je verwijderen',
+    createMenu([...removeAbleRoles, ...removeAbleUsers], requestingUser, msg, 'Welke user(s) of role(s) wil je verwijderen',
       (item) => {
         if (item instanceof DiscordUser) {
           return `${selectedUsers.has(item) ? '✅' : ''}User: ${item.username}`;

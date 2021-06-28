@@ -92,7 +92,7 @@ const handler : GuildHandler = async ({
 
     createMenu(quotedUser.quotes.getItems(),
       requestingUser,
-      msg.channel,
+      msg,
       '**Kiest U Maar**',
       (q) => q.text,
       async (q) => {
@@ -175,7 +175,7 @@ const removeHandler : GuildHandler = async ({
 
   createMenu(quotes,
     requestingUser,
-    msg.channel,
+    msg,
     '**Selecteer welke quote(s) je wil verwijderen**',
     (q) => `${quotesToRemove.has(q) ? '✅' : ''}${q.text}`,
     (q) => {
