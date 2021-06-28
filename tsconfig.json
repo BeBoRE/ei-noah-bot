@@ -12,6 +12,10 @@
       "experimentalDecorators": true,
       "sourceMap": true,
       "strict": true,
-      "rootDir": "src"
-  }
+      "rootDir": "src",
+      "outDir": "dist",
+      "skipLibCheck": true,
+      "skipDefaultLibCheck": true,
+  },
+  "exclude": ["node_modules/**"]
 }
