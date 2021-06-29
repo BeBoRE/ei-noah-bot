@@ -192,6 +192,16 @@ const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : MessageO
       return handlerReturn;
     }
 
+    if (handlerReturn.length > 2000) {
+      const attachment = new MessageAttachment(Buffer.from(handlerReturn));
+      attachment.contentType = 'txt';
+      attachment.name = 'text.txt';
+
+      return {
+        files: [attachment],
+      };
+    }
+
     return { content: handlerReturn };
   }
 

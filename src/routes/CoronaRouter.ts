@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import moment from 'moment';
 import { CronJob } from 'cron';
 import parse from 'csv-parse/lib/sync';
-import { Client, Message } from 'discord.js';
+import { Client } from 'discord.js';
 import { Connection, IDatabaseDriver, MikroORM } from '@mikro-orm/core';
 import UserCoronaRegions from '../entity/UserCoronaRegions';
 import Router, { BothHandler, HandlerType } from '../router/Router';
@@ -101,8 +101,7 @@ router.use('remove', removeHandler, HandlerType.BOTH, {
 router.use('verwijder', removeHandler);
 router.use('delete', removeHandler);
 
-const listRegionsHandler : BothHandler = async ({ msg, em }) => {
-  const requestingUser = msg instanceof Message ? msg.author : msg.user;
+const listRegionsHandler : BothHandler = async ({ em }) => {
   const coronaData = await em.getRepository(CoronaData).findAll({ limit: 500 });
 
   const regions = Array.from(new Set<string>(coronaData.map((data) => data.community)))
@@ -110,14 +109,13 @@ const listRegionsHandler : BothHandler = async ({ msg, em }) => {
 
   if (regions.length === 0) return 'Regio\'s zijn nog niet geladen (dit kan nog 10 minuten duren)';
 
-  requestingUser.send({ content: `Regio's:\n${regions.join('\n')}` });
-  return null;
+  return `Regio's:\n${regions.join('\n')}`;
 };
 
-router.use('gemeentes', listRegionsHandler, HandlerType.BOTH, {
+router.use('gemeentes', listRegionsHandler, HandlerType.BOTH);
+router.use('regions', listRegionsHandler, HandlerType.BOTH, {
   description: 'Geeft een lijst met regio\'s die je kan toevoegen',
 });
-router.use('regions', listRegionsHandler);
 router.use('steden', listRegionsHandler);
 router.use('communities', listRegionsHandler);
 
@@ -171,13 +169,13 @@ const coronaRefresher = async (client : Client, orm : MikroORM<IDatabaseDriver<C
     });
 
     if (duplicatesRemoved.length > 0) {
-      console.log(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows`);
+      console.log(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows discovered`);
+      em.persist(duplicatesRemoved);
+      await em.flush();
+      console.log(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows added to db`);
     } else {
       console.log(`${moment().format('HH:mm')}: no new data`);
     }
-    em.persist(duplicatesRemoved);
-
-    await em.flush();
 
     setTimeout(refreshData, 1000 * 60 * 60 * 3);
   };

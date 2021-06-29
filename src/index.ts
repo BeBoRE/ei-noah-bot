@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import {
-  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel, NewsChannel, Channel, Message,
+  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel, NewsChannel, Channel,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { fork } from 'child_process';
