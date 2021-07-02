@@ -218,6 +218,7 @@ const messageSender = (options : MessageOptions | null, msg : Message | CommandI
 class EiNoah implements IRouter {
   public readonly client = new Client({
     intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_TYPING', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MEMBERS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILDS', 'GUILD_VOICE_STATES'],
+    partials: ['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 'REACTION'],
   });
 
   private readonly router = new Router('Ei Noah');
@@ -349,13 +350,14 @@ class EiNoah implements IRouter {
           messageParser(msg, em)
             .then((info) => {
               if (!info) return 'Ongeldige user(s), role(s) en/of channel(s) gegeven';
+              if (process.env.NODE_ENV !== 'production') console.time(`${msg.id}`);
 
               return this.router.handle(info);
             })
             .then(handlerReturnToMessageOptions)
             .then((options) => Promise.all([options, em.flush()]))
             .then(([options]) => {
-              console.timeEnd(`${msg.id}`);
+              if (process.env.NODE_ENV !== 'production') console.timeEnd(`${msg.id}`);
               return options;
             })
             .then((options) => messageSender(options, msg))
@@ -363,7 +365,7 @@ class EiNoah implements IRouter {
               msg.channel.stopTyping();
             })
             .catch((err) => {
-              console.timeEnd(`${msg.id}`);
+              if (process.env.NODE_ENV !== 'production') console.timeEnd(`${msg.id}`);
               // Dit wordt gecallt wanneer de parsing faalt
               if (process.env.NODE_ENV !== 'production') {
                 errorToChannel(msg.channel.id, msg.client, err).catch(() => { console.log('Error could not be send :('); });
