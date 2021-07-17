@@ -264,8 +264,13 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
 
     const hasUpdated = false;
     // Update alle slash commands voor development
-    eiNoah.use('slash', () => {
+    eiNoah.use('slash', async () => {
       if (hasUpdated) return 'Je hebt de slash commands al geupdate';
+
+      // Check if global commands are already set and if so deletes them
+      const hasGlobalCommands = !!(await eiNoah.client.application?.commands.fetch())?.size;
+      if (hasGlobalCommands) eiNoah.client.application?.commands.set([]);
+
       return eiNoah.updateSlashCommands()
         .then((promises) => Promise.all(promises))
         .then(() => 'Slash commands geupdate')

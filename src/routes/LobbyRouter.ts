@@ -20,6 +20,7 @@ import {
   Snowflake,
   Message,
   ReactionCollectorOptions,
+  MessageButton,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/core';
 import emojiRegex from 'emoji-regex';
@@ -581,15 +582,19 @@ router.use('remove', async ({
     const selectedUsers = new Set<DiscordUser>();
     const selectedRoles = new Set<Role>();
 
-    createMenu([...removeAbleRoles, ...removeAbleUsers], requestingUser, msg, 'Welke user(s) of role(s) wil je verwijderen',
-      (item) => {
+    createMenu({
+      list: [...removeAbleRoles, ...removeAbleUsers],
+      owner: requestingUser,
+      msg,
+      title: 'Welke user(s) of role(s) wil je verwijderen',
+      mapper: (item) => {
         if (item instanceof DiscordUser) {
           return `${selectedUsers.has(item) ? '✅' : ''}User: ${item.username}`;
         }
 
         return `${selectedRoles.has(item) ? '✅' : ''}Role: ${item.name}`;
       },
-      (selected) => {
+      selectCallback: (selected) => {
         if (selected instanceof DiscordUser) {
           if (selectedUsers.has(selected)) selectedUsers.delete(selected);
           else selectedUsers.add(selected);
@@ -598,14 +603,22 @@ router.use('remove', async ({
 
         return false;
       },
-      ['❌', async () => {
-        removeFromLobby(activeChannel,
-          Array.from(selectedUsers),
-          Array.from(selectedRoles),
-          msg.channel,
-          requestingUser,
-          (await guildUser).tempChannel);
-      }]);
+      extraButtons: [
+        [new MessageButton({
+          label: '❌',
+          customID: 'delete',
+          style: 'DANGER',
+        }), async () => {
+          removeFromLobby(activeChannel,
+            Array.from(selectedUsers),
+            Array.from(selectedRoles),
+            msg.channel,
+            requestingUser,
+            (await guildUser).tempChannel);
+        }],
+      ],
+    });
+
     return null;
   }
 

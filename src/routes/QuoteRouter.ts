@@ -2,6 +2,7 @@ import {
   Channel,
   Client,
   Message,
+  MessageButton,
   MessageEmbed, NewsChannel, Permissions, Role, TextBasedChannelFields, TextChannel, User as DiscordUser, Util,
 } from 'discord.js';
 import { GuildUser } from 'entity/GuildUser';
@@ -44,7 +45,7 @@ const getQuoteEmbed = async (channel : TextBasedChannelFields, quote : Quote, cl
   return embed;
 };
 
-const addQuote = (params : (string | DiscordUser | Channel | Role)[], quotedUser : GuildUser, owner : GuildUser) => {
+const addQuote = (params : (string | DiscordUser | Channel | Role | number | boolean)[], quotedUser : GuildUser, owner : GuildUser) => {
   const text = Util.removeMentions(params.map((param) => {
     if (typeof param === 'string') return param;
     if (param instanceof DiscordUser) return param.username;
@@ -68,6 +69,7 @@ const handler : GuildHandler = async ({
 }) => {
   const [user] = flags.get('persoon') || params;
   params.shift();
+  const quoteToAdd = params.length ? params : flags.get('quote');
 
   if (!(user instanceof DiscordUser)) {
     return 'Ok, dat is niet een persoon, mention iemand';
@@ -81,7 +83,7 @@ const handler : GuildHandler = async ({
 
   if (!quotedUser.quotes.isInitialized()) { await quotedUser.quotes.init(); }
 
-  if (params.length === 0) {
+  if (!quoteToAdd || quoteToAdd.length === 0) {
     if (quotedUser.quotes.length === 0) {
       return `${user.username} is niet populair en heeft nog geen quotes`;
     }
@@ -90,18 +92,20 @@ const handler : GuildHandler = async ({
       return getQuoteEmbed(msg.channel, quotedUser.quotes[0], msg.client);
     }
 
-    createMenu(quotedUser.quotes.getItems(),
-      requestingUser,
+    createMenu({
+      list: quotedUser.quotes.getItems(),
+      owner: requestingUser,
       msg,
-      '**Kiest U Maar**',
-      (q) => q.text,
-      async (q) => {
+      title: '**Kiest U Maar**',
+      mapper: (q) => q.text,
+      selectCallback: async (q) => {
         msg.channel.send({ embeds: [await getQuoteEmbed(msg.channel, q, msg.client)] }).catch(() => { });
-      });
+      },
+    });
     return null;
   }
 
-  const quote = addQuote(params, quotedUser, await guildUser);
+  const quote = addQuote(quoteToAdd, quotedUser, await guildUser);
   if (typeof quote === 'string') return quote;
 
   return getQuoteEmbed(msg.channel, quote, msg.client);
@@ -123,13 +127,15 @@ router.use('add', handler, HandlerType.GUILD, {
   description: 'Sla een quote op van iemand',
   options: [
     {
-      name: 'user',
+      name: 'persoon',
       description: 'Degene waarvoor je een quote wil toevoegen',
       type: 'USER',
+      required: true,
     }, {
       name: 'quote',
       description: 'Quote die je wil toevoegen',
       type: 'STRING',
+      required: true,
     },
   ],
 });
@@ -138,18 +144,13 @@ router.use('toevoegen', handler, HandlerType.GUILD);
 const removeHandler : GuildHandler = async ({
   msg, em, params, guildUser, flags,
 }) => {
-  if (params.length < 1) {
-    return 'Verwijder quotes van wie?';
+  const [user] = flags.get('user') || params;
+  if (!(user instanceof DiscordUser)) {
+    return 'Hoe moeilijk is het om daar een mention neer te zetten?';
   }
 
   if (params.length > 1) {
     return 'Alleen de gebruiker graag';
-  }
-
-  const [user] = flags.get('user') || params;
-
-  if (!(user instanceof DiscordUser)) {
-    return 'Hoe moeilijk is het om daar een mention neer te zetten?';
   }
 
   const requestingUser = msg instanceof Message ? msg.author : msg.user;
@@ -173,23 +174,34 @@ const removeHandler : GuildHandler = async ({
 
   const menuEm = em.fork();
 
-  createMenu(quotes,
-    requestingUser,
+  createMenu({
+    list: quotes,
+    owner: requestingUser,
     msg,
-    '**Selecteer welke quote(s) je wil verwijderen**',
-    (q) => `${quotesToRemove.has(q) ? '✅' : ''}${q.text}`,
-    (q) => {
+    title: '**Selecteer welke quote(s) je wil verwijderen**',
+    mapper: (q) => `${quotesToRemove.has(q) ? '✅' : ''}${q.text}`,
+    selectCallback: (q) => {
       if (quotesToRemove.has(q)) quotesToRemove.delete(q);
       else quotesToRemove.add(q);
       return false;
     },
-    ['❌', () => {
-      quotesToRemove.forEach((q) => { menuEm.remove(q); });
-      if (quotesToRemove.size > 0) msg.channel.send(`${quotesToRemove.size} quote${quotesToRemove.size !== 1 ? 's' : ''} verwijderd`);
-      else msg.channel.send('Geen quote(s) verwijderd');
-      menuEm.flush();
-      return true;
-    }]);
+    extraButtons: [
+      [
+        new MessageButton({
+          label: '❌',
+          customID: 'delete',
+          style: 'DANGER',
+        }),
+        () => {
+          quotesToRemove.forEach((q) => { menuEm.remove(q); });
+          if (quotesToRemove.size > 0) msg.channel.send(`${quotesToRemove.size} quote${quotesToRemove.size !== 1 ? 's' : ''} verwijderd`);
+          else msg.channel.send('Geen quote(s) verwijderd');
+          menuEm.flush();
+          return true;
+        },
+      ],
+    ],
+  });
 
   return null;
 };
