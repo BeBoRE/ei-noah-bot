@@ -15,11 +15,10 @@ import {
   TextChannel,
   CategoryChannel,
   Channel,
-  MessageReaction,
   User,
   Snowflake,
   Message,
-  ReactionCollectorOptions,
+  MessageActionRow,
   MessageButton,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/core';
@@ -523,21 +522,24 @@ const removeFromLobby = (
     }
   });
 
-  if (message === '') {
-    textChannel.send('Geen users of roles gegeven');
-  } else {
-    textChannel.send(message);
-  }
+  return message;
 };
 
 router.use('remove', async ({
-  params, msg, guildUser, em,
+  params, msg, guildUser, em, flags,
 }) => {
   const nonUsersOrRoles = params
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
   const users = params.filter((param): param is DiscordUser => param instanceof DiscordUser);
   const roles = params.filter((param): param is Role => param instanceof Role);
   const requestingUser = msg instanceof Message ? msg.author : msg.user;
+
+  flags.forEach((value) => {
+    const [user] = value;
+
+    if (user instanceof User) users.push(user);
+    if (user instanceof Role) roles.push(user);
+  });
 
   if (nonUsersOrRoles.length > 0) {
     return 'Alleen mention(s) mogelijk als argument';
@@ -560,7 +562,7 @@ router.use('remove', async ({
 
   await msg.guild.members.fetch();
 
-  if (params.length === 0) {
+  if (!users.length && !roles.length) {
     const removeAbleRoles = msg.guild.roles.cache.array()
       .filter((role) => activeChannel.permissionOverwrites.has(role.id))
       .filter((role) => role.id !== msg.guild?.id);
@@ -621,11 +623,76 @@ router.use('remove', async ({
 
     return null;
   }
-
-  removeFromLobby(activeChannel, users, roles, msg.channel, requestingUser, (await guildUser).tempChannel);
-  return null;
+  return removeFromLobby(activeChannel, users, roles, msg.channel, requestingUser, (await guildUser).tempChannel);
 }, HandlerType.GUILD, {
   description: 'Verwijder een gebruiker of rol van de lobby',
+  options: [
+    {
+      name: 'mention',
+      type: 'MENTIONABLE',
+      description: 'Persoon of rol die je wil verwijderen',
+    }, {
+      name: '1',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '2',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '3',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '4',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '5',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '6',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '7',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '8',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '9',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '10',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '11',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '12',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '13',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '14',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    }, {
+      name: '15',
+      description: 'Persoon of rol die je wil verwijderen',
+      type: 'MENTIONABLE',
+    },
+  ],
 });
 
 const changeTypeHandler : GuildHandler = async ({
@@ -1013,15 +1080,32 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
   const activeChannel = await activeTempChannel(client, em, tempChannel);
   if (!activeChannel) throw new Error('No active temp channel');
 
-  textChannel.send(`Laat ${user.username} toe in de lobby?`).then((msg) => {
-    const filter : ReactionCollectorOptions = { filter: (reaction : MessageReaction, reactor : User) => reactor.id === tempChannel.guildUser.user.id && reaction.emoji.name === '✅' };
+  const actionRow = new MessageActionRow();
+  actionRow.addComponents(new MessageButton({
+    customID: 'add',
+    label: 'Voeg toe',
+    style: 'SUCCESS',
+  }));
 
-    const collector = msg.createReactionCollector(filter);
-    collector.on('collect', () => {
-      msg.delete();
-      textChannel.send(addUsers([user], activeChannel, tempChannel.guildUser, client));
+  textChannel.send({ content: `Voeg ${user.username} toe aan de lobby?`, components: [actionRow] }).then((msg) => {
+    const collector = msg.createMessageComponentInteractionCollector();
+    collector.on('collect', async (interaction) => {
+      if (interaction.user.id === tempChannel.guildUser.user.id && interaction.customID === 'add') {
+        interaction.update({ content: addUsers([user], activeChannel, tempChannel.guildUser, client), components: [] });
+        return;
+      }
+
+      const owner = await interaction.guild?.members.fetch({ cache: true, user: `${BigInt(tempChannel.guildUser.user.id)}` }).catch(() => undefined);
+
+      let message;
+      if (!owner) {
+        message = 'Alleen de owner van de lobby kan iemand binnenlaten';
+      } else {
+        message = `Alleen ${owner.displayName} kan iemand binnenlaten`;
+      }
+
+      interaction.reply({ content: message, ephemeral: true }).catch(() => { });
     });
-    msg.react('✅');
   });
 };
 
