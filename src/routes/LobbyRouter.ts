@@ -48,31 +48,29 @@ function getIcon(type : ChannelType) {
 function generateLobbyName(
   type : ChannelType,
   owner : DiscordUser,
-  guildUser : GuildUser,
+  tempChannel ?: TempChannel,
   textChat?: boolean,
 ) : string {
   const icon = getIcon(type);
 
-  if (type === ChannelType.Public) {
-    if (guildUser.tempChannel?.name) {
-      const result = emojiRegex().exec(guildUser.tempChannel.name);
-      if (result && result[0] === guildUser.tempChannel.name.substr(0, result[0].length)) {
-        const [customIcon] = result;
+  if (tempChannel?.name) {
+    const result = emojiRegex().exec(tempChannel.name);
+    if (result && result[0] === tempChannel.name.substr(0, result[0].length)) {
+      const [customIcon] = result;
 
-        if (customIcon !== '🔐' && customIcon !== '🙊') {
-          const name = guildUser.tempChannel.name
-            .substring(result[0].length, guildUser.tempChannel.name.length)
-            .trim();
+      if (customIcon !== '🔐' && customIcon !== '🙊') {
+        const name = tempChannel.name
+          .substring(result[0].length, tempChannel.name.length)
+          .trim();
 
-          if (textChat) return `${customIcon}${name} chat`;
-          return `${customIcon} ${name}`;
-        }
+        if (textChat) return `${customIcon}${name} chat`;
+        return `${customIcon} ${name}`;
       }
     }
   }
 
-  if (textChat) return `📝${guildUser.tempChannel?.name || `${owner.username}`} chat`;
-  return `${icon} ${guildUser.tempChannel?.name || `${owner.username}'s Lobby`}`;
+  if (textChat) return `📝${tempChannel?.name || `${owner.username}`} chat`;
+  return `${icon} ${tempChannel?.name || `${owner.username}'s Lobby`}`;
 }
 
 function toDeny(type : ChannelType) {
@@ -104,7 +102,6 @@ async function createTempChannel(
   bitrate: number,
   type: ChannelType,
   userLimit = 0,
-  guildUser : GuildUser,
 ) {
   const userSnowflakes = [...new Set([...users.map((user) => user.id), owner.id])];
 
@@ -144,7 +141,7 @@ async function createTempChannel(
     deny,
   });
 
-  return guild.channels.create(generateLobbyName(type, owner, guildUser), {
+  return guild.channels.create(generateLobbyName(type, owner), {
     type: 'voice',
     permissionOverwrites,
     parent,
@@ -229,7 +226,7 @@ async function createTextChannel(
     }];
 
   return voiceChannel.guild.channels.create(
-    generateLobbyName(getChannelType(voiceChannel), owner, tempChannel.guildUser, true),
+    generateLobbyName(getChannelType(voiceChannel), owner, tempChannel, true),
     {
       type: 'text',
       parent: voiceChannel.parent || undefined,
@@ -765,14 +762,14 @@ const changeTypeHandler : GuildHandler = async ({
       ...newOverwrites,
     ]).catch(console.error);
 
-    activeChannel.setName(generateLobbyName(changeTo, requestingUser, lobbyOwner))
+    activeChannel.setName(generateLobbyName(changeTo, requestingUser, lobbyOwner.tempChannel))
       .then(async (voice) => {
         const gu = (await guildUser);
         if (gu.tempChannel) {
           activeTempText(msg.client, gu.tempChannel)
             .then(async (textChannel) => {
-              if (textChannel) {
-                await textChannel.setName(generateLobbyName(changeTo, requestingUser, gu, true));
+              if (textChannel && gu.tempChannel) {
+                await textChannel.setName(generateLobbyName(changeTo, requestingUser, gu.tempChannel, true));
                 updateTextChannel(voice, textChannel);
               }
             });
@@ -1028,9 +1025,12 @@ const nameHandler : GuildHandler = async ({
 
   gu.tempChannel.name = name;
   const type = getChannelType(tempChannel);
-  tempChannel.setName(generateLobbyName(type, requestingUser, gu));
+  tempChannel.setName(generateLobbyName(type, requestingUser, gu.tempChannel));
   activeTempText(msg.client, gu.tempChannel)
-    .then((tc) => tc?.setName(generateLobbyName(type, requestingUser, gu, true)));
+    .then((tc) => {
+      if (gu.tempChannel) { return tc?.setName(generateLobbyName(type, requestingUser, gu.tempChannel, true)); }
+      return null;
+    });
 
   return 'Lobby naam is aangepast\n> Bij overmatig gebruik kan het meer dan 10 minuten duren';
 };
@@ -1160,9 +1160,9 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel,
           .catch(console.error);
 
         await Promise.all([
-          activeChannel.setName(generateLobbyName(type, newOwner.user, newOwnerGuildUser)),
+          activeChannel.setName(generateLobbyName(type, newOwner.user, tempChannel)),
           activeTextChannel?.setName(
-            generateLobbyName(type, newOwner.user, newOwnerGuildUser, true)
+            generateLobbyName(type, newOwner.user, tempChannel, true)
           ),
           newOwner.voice.setMute(false),
           activeTextChannel?.send(`De lobby is overgedragen aan ${newOwner.displayName}`),
@@ -1174,12 +1174,12 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel,
       const discordUser = await client.users.fetch(`${BigInt(tempChannel.guildUser.user.id)}`);
       const lobbyType = getChannelType(activeChannel);
 
-      const correctName = generateLobbyName(lobbyType, discordUser, tempChannel.guildUser);
+      const correctName = generateLobbyName(lobbyType, discordUser, tempChannel);
 
       if (activeChannel.name !== correctName) {
         await Promise.all([
           activeChannel.setName(correctName),
-          activeTextChannel?.setName(generateLobbyName(lobbyType, discordUser, tempChannel.guildUser, true)),
+          activeTextChannel?.setName(generateLobbyName(lobbyType, discordUser, tempChannel, true)),
         ]);
       }
     }
@@ -1259,7 +1259,7 @@ router.onInit = async (client, orm) => {
 
           if (!guildUser.guild.isInitialized()) await guildUser.guild.init();
 
-          const createdChannel = await createTempChannel(newState.guild, `${BigInt((await categoryData).lobbyCategory || channel.parent.id)}`, [], user, guildUser.guild.bitrate, type, undefined, guildUser);
+          const createdChannel = await createTempChannel(newState.guild, `${BigInt((await categoryData).lobbyCategory || channel.parent.id)}`, [], user, guildUser.guild.bitrate, type);
           guildUser.tempChannel = new TempChannel(createdChannel.id, guildUser);
 
           newState.setChannel(createdChannel);
