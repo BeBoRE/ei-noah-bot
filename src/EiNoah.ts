@@ -17,14 +17,14 @@ enum ErrorType {
 }
 
 const errorToChannel = async (channelId : string, client : Client, err : Error, type?: ErrorType) => {
-  const errorChannel = await client.channels.fetch(<Snowflake>channelId);
+  const errorChannel = await client.channels.fetch(<Snowflake>channelId, { cache: true });
   if (errorChannel instanceof TextChannel
      || errorChannel instanceof NewsChannel
   ) {
     let header = '';
     if (type === ErrorType.Uncaught) header = '**Uncaught**';
     if (type === ErrorType.Unhandled) header = '**Unhandled**';
-    return errorChannel.send({ content: `${header}\n**${err?.name}**\n\`\`\`${err?.stack}\`\`\`` });
+    return errorChannel.send({ content: `${header}\n**${err?.name}**\n\`\`\`${err?.stack}\`\`\`` }).catch(() => { console.error(`${header}\n**${err?.name}**\n\`\`\`${err?.stack}\`\`\``); });
   }
 
   return null;

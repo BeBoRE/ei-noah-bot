@@ -21,7 +21,7 @@ import {
   MessageActionRow,
   MessageButton,
 } from 'discord.js';
-import { EntityManager } from '@mikro-orm/core';
+import { EntityManager, UniqueConstraintViolationException } from '@mikro-orm/core';
 import emojiRegex from 'emoji-regex';
 import { Category } from '../entity/Category';
 import TempChannel from '../entity/TempChannel';
@@ -1253,6 +1253,9 @@ router.onInit = async (client, orm) => {
 
       const { channel } = newState;
 
+      let createdChannel : VoiceChannel;
+      let textChannel : TextChannel;
+
       // Check of iemand een create-lobby channel is gejoint
       if (
         channel
@@ -1275,12 +1278,12 @@ router.onInit = async (client, orm) => {
 
           if (!guildUser.guild.isInitialized()) await guildUser.guild.init();
 
-          const createdChannel = await createTempChannel(newState.guild, `${BigInt((await categoryData).lobbyCategory || channel.parent.id)}`, [], user, guildUser.guild.bitrate, type);
+          createdChannel = await createTempChannel(newState.guild, `${BigInt((await categoryData).lobbyCategory || channel.parent.id)}`, [], user, guildUser.guild.bitrate, type);
           guildUser.tempChannel = new TempChannel(createdChannel.id, guildUser);
 
           newState.setChannel(createdChannel);
 
-          const textChannel = await createTextChannel(client, em, guildUser.tempChannel, user);
+          textChannel = await createTextChannel(client, em, guildUser.tempChannel, user);
           guildUser.tempChannel.textChannelId = textChannel.id;
 
           textChannel.send(['**Beheer je lobby met deze commands:**', memberCommandText].join('\n'));
@@ -1302,7 +1305,14 @@ router.onInit = async (client, orm) => {
         }
       }
 
-      await em.flush();
+      await em.flush().catch((err) => {
+        if (err instanceof UniqueConstraintViolationException) {
+          if (createdChannel.deletable) createdChannel.delete('Error bij het opslaan in database');
+          if (textChannel.deletable) textChannel.delete('Error bij het opslaan in database');
+        } else {
+          throw err;
+        }
+      });
     }
   });
 
