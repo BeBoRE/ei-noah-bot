@@ -261,10 +261,10 @@ router.use('random', async ({ msg, em, guildUser }) => {
 router.use('help', () => [
   '**Hou quotes van je makkermaten bij!**',
   'Mogelijke Commandos:',
-  '`ei quote random`: Verstuur een random quote van de server',
-  '`ei quote get <@member>`: Verstuur een quote van dat persoon',
-  '`ei quote add <@member> <quote>`: Sla een nieuwe quote op van dat persoon',
-  '`ei quote remove <@member>`: Verwijder een selectie aan quotes van dat persoon',
+  '`/quote random`: Verstuur een random quote van de server',
+  '`/quote get <@member>`: Verstuur een quote van dat persoon',
+  '`/quote add <@member> <quote>`: Sla een nieuwe quote op van dat persoon',
+  '`/quote remove <@member>`: Verwijder een selectie aan quotes van dat persoon',
   '> Je kan alleen de quotes verwijderen die je voor dat persoon geschreven hebt',
   '> Alleen quotes van jezelf kan je volledig beheren',
 ].join('\n'), HandlerType.BOTH, {

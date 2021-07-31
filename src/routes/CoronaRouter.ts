@@ -13,12 +13,14 @@ const router = new Router('Krijg iedere morgen een rapportage over de locale cor
 const helpHandler : BothHandler = () => [
   '**Krijg iedere morgen een rapportage over de locale corona situatie**',
   'Mogelijke Commandos:',
-  '`ei corona regions`: Vraag alle mogelijke regio\'s op',
-  '`ei corona add <regio>`: Voeg een regio toe aan je dagelijkse rapportage',
-  '`ei corona remove <regio>`: Verwijder een regio van je dagelijkse rapportage',
+  '`/corona regions`: Vraag alle mogelijke regio\'s op',
+  '`/corona add <regio>`: Voeg een regio toe aan je dagelijkse rapportage',
+  '`/corona remove <regio>`: Verwijder een regio van je dagelijkse rapportage',
 ].join('\n');
 
-router.use('help', helpHandler);
+router.use('help', helpHandler, HandlerType.BOTH, {
+  description: 'Krijg een help menu',
+});
 
 const addHandler : BothHandler = async ({
   user, params, em, flags,

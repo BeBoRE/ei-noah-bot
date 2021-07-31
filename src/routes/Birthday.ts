@@ -60,17 +60,19 @@ router.use('change', setRouter);
 
 const helpHandler : BothHandler = async () => [
   '**Krijg elke ochtend een melding als iemand jarig is**',
-  '`ei bday set <DD/MM/YYYY>`: Stel je geboortedatum in',
-  '`ei bday show-all`: Laat iedereens geboortedatum zien',
-  '`ei bday show-age`: Laat iedereens leeftijd zien',
-  '`ei bday get <@user>`: Laat de geboortedatum en leeftijd van een user zien',
-  '`ei bday delete`: Verwijderd jouw verjaardag',
+  '`/bday set <DD/MM/YYYY>`: Stel je geboortedatum in',
+  '`/bday all`: Laat iedereens geboortedatum zien',
+  '`/bday ages`: Laat iedereens leeftijd zien',
+  '`/bday get <@user>`: Laat de geboortedatum en leeftijd van een user zien',
+  '`/bday delete`: Verwijderd jouw verjaardag',
   '***Admin Commando\'s***',
-  '`ei bday channel`: Selecteerd het huidige kanaal voor de dagelijkse update',
-  '`ei bday role <Role Mention>`: Selecteerd de rol voor de jarige-jop',
+  '`/bday channel`: Selecteerd het huidige kanaal voor de dagelijkse update',
+  '`/bday role <Role Mention>`: Selecteerd de rol voor de jarige-jop',
 ].join('\n');
 
-router.use('help', helpHandler);
+router.use('help', helpHandler, HandlerType.BOTH, {
+  description: 'Krijg een help menu',
+});
 
 const showAll : BothHandler = async ({ msg, em }) => {
   const users = await em.find(User, { $not: { birthday: null } });
@@ -221,9 +223,13 @@ const setChannelHandler : GuildHandler = async ({ guildUser, msg }) => {
 };
 
 router.use('set-channel', setChannelHandler, HandlerType.GUILD);
-router.use('channel', setChannelHandler, HandlerType.GUILD);
+router.use('channel', setChannelHandler, HandlerType.GUILD, {
+  description: 'Selecteer dit kanaal als bday announcment kanaal',
+});
 
-const setRoleHandler : GuildHandler = async ({ guildUser, msg, params }) => {
+const setRoleHandler : GuildHandler = async ({
+  guildUser, msg, params, flags,
+}) => {
   if (!msg.member?.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
@@ -232,7 +238,7 @@ const setRoleHandler : GuildHandler = async ({ guildUser, msg, params }) => {
     return 'Ik heb geen permissions om iemand een rol te geven';
   }
 
-  const role = params[0];
+  const [role] = flags.get('role') || params;
 
   const guild = await (await guildUser).guild.init();
 
@@ -249,7 +255,15 @@ const setRoleHandler : GuildHandler = async ({ guildUser, msg, params }) => {
 };
 
 router.use('set-role', setRoleHandler, HandlerType.GUILD);
-router.use('role', setRoleHandler, HandlerType.GUILD);
+router.use('role', setRoleHandler, HandlerType.GUILD, {
+  description: 'Selecteerd de rol voor de jarige-jop',
+  options: [{
+    name: 'role',
+    type: 'ROLE',
+    description: 'Rol voor de jarige-jop',
+    required: true,
+  }],
+});
 
 const bdayHatPromise = loadImage('./src/images/bday-hat.png');
 const confettiFullPromise = loadImage('./src/images/confetti-full.png');

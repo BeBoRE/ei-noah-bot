@@ -859,20 +859,20 @@ router.use('limit', sizeHandler, HandlerType.GUILD, {
 router.use('userlimit', sizeHandler, HandlerType.GUILD);
 
 router.use('category', async ({
-  params, msg, em,
+  params, msg, em, flags,
 }) => {
-  if (params.length !== 2 || typeof params[0] !== 'string' || typeof params[1] !== 'string') {
-    return 'Ik verwacht twee argumenten `<lobby-create-categorie id> <nieuwe categorie id om de lobbies in te plaatsen>`';
-  }
-
   if (!msg.member?.permissions.has('ADMINISTRATOR')) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
-  const [createCategory, lobbyCategory] = await Promise.all([
-    msg.client.channels.fetch(`${BigInt(params[0])}`, { cache: true }).catch(() => null),
-    msg.client.channels.fetch(`${BigInt(params[1])}`, { cache: true }).catch(() => null),
-  ]);
+  let [createCategory] = flags.get('create-category') || [null];
+  let [lobbyCategory] = flags.get('lobby-category') || [null];
+
+  if (!createCategory) [createCategory] = params;
+  if (!lobbyCategory) [,lobbyCategory] = params;
+
+  if (typeof createCategory === 'string') createCategory = await msg.client.channels.fetch(`${BigInt(createCategory)}`, { cache: true }).catch(() => null);
+  if (typeof lobbyCategory === 'string') lobbyCategory = await msg.client.channels.fetch(`${BigInt(lobbyCategory)}`, { cache: true }).catch(() => null);
 
   if (!(createCategory instanceof CategoryChannel)) return 'Gegeven create-category is niet een categorie';
   if (!(lobbyCategory instanceof CategoryChannel)) return 'Gegeven lobby-category is niet een categorie';
@@ -888,26 +888,34 @@ router.use('category', async ({
   (await createCategoryData).lobbyCategory = lobbyCategory.id;
 
   return `'${lobbyCategory.name}' is nu de lobby categorie`;
-}, HandlerType.GUILD);
+}, HandlerType.GUILD, {
+  description: 'Selecteer waar de gemaakte lobbies worden neergezet',
+  options: [{
+    name: 'create-category',
+    description: 'De category waar de create-kanalen staan',
+    type: 'CHANNEL',
+    required: true,
+  }, {
+    name: 'lobby-category',
+    description: 'De category waar de lobby\'s naartoe moeten',
+    type: 'CHANNEL',
+    required: true,
+  }],
+});
 
 router.use('create-category', async ({
-  params, msg, em,
+  params, msg, em, flags,
 }) => {
   if (!msg.client.user) throw new Error('msg.client.user not set somehow');
 
-  if (params.length > 1) {
-    return 'Ik verwacht maar één argument';
-  }
-
-  if (typeof params[0] !== 'string') {
-    return 'Ik verwacht een string als argument';
-  }
+  let [category] = flags.get('category') || [null];
 
   if (!msg.member?.permissions.has('ADMINISTRATOR')) {
     return 'Alleen een Edwin mag dit aanpassen';
   }
 
-  const category = await msg.client.channels.fetch(`${BigInt(params[0])}`, { cache: true }).catch(() => {});
+  if (!category && typeof params[0] === 'string') category = await msg.client.channels.fetch(`${BigInt(params[0])}`, { cache: true }).catch(() => null);
+
   if (!(category instanceof CategoryChannel)) return 'Gegeven is geen categorie';
 
   if (!category.permissionsFor(msg.client.user)?.has('MANAGE_CHANNELS')) {
@@ -939,10 +947,19 @@ router.use('create-category', async ({
       categoryData.privateVoice = undefined;
       categoryData.muteVoice = undefined;
 
-      return `${category.name} is nu geen lobby aanmaak categorie meer`;
+      if (category instanceof CategoryChannel) return `${category.name} is nu geen lobby aanmaak categorie meer`;
+      return 'Categorie is nu geen lobby aanmaak categorie meer';
     })
     .catch(() => 'Er is iets fout gegaan probeer het later opnieuw');
-}, HandlerType.GUILD);
+}, HandlerType.GUILD, {
+  description: 'Stel de lobby aanmaak categorie in',
+  options: [{
+    name: 'category',
+    description: 'De categorie waar de aanmaak kanalen worden neergezet',
+    type: 'CHANNEL',
+    required: true,
+  }],
+});
 
 router.use('bitrate', async ({
   msg, guildUser, params, flags,
@@ -1049,20 +1066,20 @@ router.use('naam', nameHandler, HandlerType.GUILD);
 router.use('hernoem', nameHandler, HandlerType.GUILD);
 
 const memberCommandText = [
-  '`ei lobby add @mention...`: Laat user(s) toe aan de lobby',
-  '`ei lobby remove @mention...`: Verwijder user(s)/ role(s) uit de lobby',
-  '`ei lobby type [mute / private / public]`: Verander het type van de lobby',
-  '`ei lobby limit <nummer>`: Verander de lobby user limit',
-  '`ei lobby name <lobby naam>`: Geef de lobby een naam',
+  '`/lobby add @mention...`: Laat user(s) toe aan de lobby',
+  '`/lobby remove @mention...`: Verwijder user(s)/ role(s) uit de lobby',
+  '`/lobby type [mute / private / public]`: Verander het type van de lobby',
+  '`/lobby limit <nummer>`: Verander de lobby user limit',
+  '`/lobby name <lobby naam>`: Geef de lobby een naam',
 ].join('\n');
 
 const helpCommandText = [
   '**Maak een tijdelijke voice kanaal aan**',
   'Mogelijke Commandos:',
   memberCommandText,
-  '`*Admin* ei lobby category <category id>`: Verander de categorie waar de lobbies worden neergezet',
-  '`*Admin* ei lobby create-category <category id>`: Maak in gegeven categorie lobby-aanmaak-kanalen aan, verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
-  '`*Admin* ei lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
+  '`*Admin* /lobby create-category <category>`: Maak in gegeven categorie lobby-aanmaak-kanalen aan, verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
+  '`*Admin* /lobby category <create-category> <lobby-category>`: Verander de categorie waar de lobbies worden neergezet',
+  '`*Admin* /lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
 ].join('\n');
 
 const helpHandler = () => helpCommandText;

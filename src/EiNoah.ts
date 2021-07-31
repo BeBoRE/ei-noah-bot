@@ -350,7 +350,6 @@ class EiNoah implements IRouter {
           messageParser(msg, em)
             .then((info) => {
               if (!info) return 'Ongeldige user(s), role(s) en/of channel(s) gegeven';
-              if (process.env.NODE_ENV !== 'production') console.time(`${msg.id}`);
 
               return this.router.handle(info);
             })

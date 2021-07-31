@@ -287,12 +287,12 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
 
   eiNoah.use('help', () => [
     '**Alle Commando\'s**',
-    '`ei bday`: Laat Ei je verjaardag bijhouden, of vraag die van anderen op',
-    '`ei corona`: Krijg iedere morgen een rapportage over de locale corona situatie',
-    '`ei lobby`: Maak en beheer een lobby (tijdelijk kanaal)',
-    '`ei quote` Houd quotes van je makkermaten bij',
-    '`ei knuffel <@User> [tekst] [-b bodemtekst]`: Geef iemand een knuffel die het verdiend heeft <3',
-    '`ei stab <@User> [tekst] [-b bodemtekst]`: Steek iemand met een mes die het verdiend heeft <3',
+    '`/bday`: Laat Ei je verjaardag bijhouden, of vraag die van anderen op',
+    '`/corona`: Krijg iedere morgen een rapportage over de locale corona situatie',
+    '`/lobby`: Maak en beheer een lobby (tijdelijk kanaal)',
+    '`/quote` Houd quotes van je makkermaten bij',
+    '`/knuffel <@User> [tekst] [-b bodemtekst]`: Geef iemand een knuffel die het verdiend heeft <3',
+    '`/steek <@User> [tekst] [-b bodemtekst]`: Steek iemand met een mes die het verdiend heeft <3',
   ].join('\n'), HandlerType.BOTH, {
     description: 'Het heerlijke Ei Noah menu, geniet ervan :P)',
   });
