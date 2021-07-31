@@ -28,7 +28,6 @@ import TempChannel from '../entity/TempChannel';
 import createMenu from '../createMenu';
 import { getCategoryData, getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
-import { Guild } from '../entity/Guild';
 import Router, { GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');
@@ -1308,38 +1307,6 @@ router.onInit = async (client, orm) => {
   });
 
   checkTempLobbies();
-
-  // LOBBY-CREATE-CATEGORY MIRGRATION
-  // TODO DIT WEGHALEN NA DE CUSTOM ROLE UPDATE
-  {
-    const em = orm.em.fork();
-
-    const guildWithCreateLobbyCategory = await em.find(Guild, {
-      $or: [
-        { publicVoice: { $ne: null } },
-        { muteVoice: { $ne: null } },
-        { privateVoice: { $ne: null } },
-      ],
-    });
-
-    await Promise.all(guildWithCreateLobbyCategory.map(async (guild) => {
-      const channelId = guild.publicVoice || guild.muteVoice || guild.privateVoice;
-
-      const channel = await getChannel(client, channelId);
-
-      if (channel instanceof VoiceChannel && channel.parent) {
-        const category = await getCategoryData(em, channel.parent);
-
-        category.publicVoice = guild.publicVoice;
-        category.muteVoice = guild.muteVoice;
-        category.privateVoice = guild.privateVoice;
-
-        category.lobbyCategory = guild.lobbyCategory;
-      }
-    })).catch(() => {});
-
-    await em.flush();
-  }
 
   const em = orm.em.fork();
   await checkVoiceCreateChannels(em, client);
