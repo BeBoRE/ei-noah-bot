@@ -1136,6 +1136,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel,
 
     if (!activeChannel) {
       em.remove(tempChannel);
+      if (activeTextChannel?.deletable) await activeTextChannel.delete().catch(() => { });
       console.log('Lobby bestond niet meer');
     } else if (!activeChannel.members.filter((member) => !member.user.bot).size) {
       await activeChannel.delete();
