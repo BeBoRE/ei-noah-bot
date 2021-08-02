@@ -27,20 +27,6 @@ export class Guild extends BaseEntity<Guild, 'id'> {
   @OneToMany(() => CustomRole, (cr) => cr.guild)
   customRoles = new Collection<CustomRole>(this);
 
-  // TODO: NA CUSTOM ROLE UPDATE DIT WEGHALEN
-  @Property()
-  publicVoice?: string;
-
-  @Property()
-  muteVoice?: string;
-
-  @Property()
-  privateVoice?: string;
-
-  @Property()
-  lobbyCategory?: string;
-  // TOT HIER
-
   @Property()
   roleMenuId?: string;
 

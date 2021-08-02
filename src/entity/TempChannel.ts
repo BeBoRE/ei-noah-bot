@@ -30,6 +30,9 @@ class TempChannel extends BaseEntity<TempChannel, 'channelId'> {
 
   @Property({ length: 24 })
   textChannelId?: string;
+
+  @Property({ length: 24 })
+  controlDashboardId?: string;
 }
 
 export default TempChannel;

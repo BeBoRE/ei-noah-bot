@@ -379,8 +379,16 @@ class EiNoah implements IRouter {
       }
     });
 
-    this.client.on('rateLimit', () => {
-      console.log('We are getting rate limited');
+    this.client.on('rateLimit', ({
+      timeout, limit, method, path, global,
+    }) => {
+      console.log([
+        '**Rate Limit**',
+        `Global: ${global}`,
+        `Method: ${method}`,
+        `Path: ${path}`,
+        `Limit: ${limit}`,
+        `Timeout: ${timeout}`].join('\n'));
     });
 
     await this.client.login(this.token);

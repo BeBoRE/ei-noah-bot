@@ -20,9 +20,15 @@ import {
   Message,
   MessageActionRow,
   MessageButton,
+  Guild,
+  MessageComponentInteractionCollector,
+  MessageComponentInteraction,
 } from 'discord.js';
-import { EntityManager, UniqueConstraintViolationException } from '@mikro-orm/core';
+import {
+  EntityManager, UniqueConstraintViolationException,
+} from '@mikro-orm/core';
 import emojiRegex from 'emoji-regex';
+import moment, { Duration } from 'moment';
 import { Category } from '../entity/Category';
 import TempChannel from '../entity/TempChannel';
 import createMenu from '../createMenu';
@@ -33,8 +39,8 @@ import Router, { GuildHandler, HandlerType } from '../router/Router';
 const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');
 
 enum ChannelType {
-  Mute = 'mute',
   Public = 'public',
+  Mute = 'mute',
   Nojoin = 'private'
 }
 
@@ -691,6 +697,198 @@ router.use('remove', async ({
   ],
 });
 
+const memberCommandText = [
+  '`/lobby add @mention...`: Laat user(s) toe aan de lobby',
+  '`/lobby remove @mention...`: Verwijder user(s)/ role(s) uit de lobby',
+  '`/lobby type [mute / private / public]`: Verander het type van de lobby',
+  '`/lobby limit <nummer>`: Verander de lobby user limit',
+  '`/lobby name <lobby naam>`: Geef de lobby een naam',
+].join('\n');
+
+const helpCommandText = [
+  '**Maak een tijdelijke voice kanaal aan**',
+  'Mogelijke Commandos:',
+  memberCommandText,
+  '`*Admin* /lobby create-category <category>`: Maak in gegeven categorie lobby-aanmaak-kanalen aan, verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
+  '`*Admin* /lobby category <create-category> <lobby-category>`: Verander de categorie waar de lobbies worden neergezet',
+  '`*Admin* /lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
+].join('\n');
+
+const dashBoardText = ['**Beheer je lobby met deze commands:**', memberCommandText].join('\n');
+
+const generateButtons = (voiceChannel : VoiceChannel) => {
+  const currentType = getChannelType(voiceChannel);
+
+  const limitRow = new MessageActionRow({
+    components: [new MessageButton({
+      customID: '0',
+      label: 'Geen',
+      style: voiceChannel.userLimit === 0 ? 'SUCCESS' : 'SECONDARY',
+      disabled: voiceChannel.userLimit === 0,
+    })],
+  });
+
+  for (let i = 2; i <= 5; i += 1) {
+    limitRow.addComponents(new MessageButton({
+      customID: `${i}`,
+      label: `${i}`,
+      style: voiceChannel.userLimit === i ? 'SUCCESS' : 'SECONDARY',
+      disabled: voiceChannel.userLimit === i,
+    }));
+  }
+
+  const highLimitButtons = new MessageActionRow({
+    components: [10, 12, 15, 20, 25].map((n) => new MessageButton({
+      customID: `${n}`,
+      label: `${n}`,
+      style: voiceChannel.userLimit === n ? 'SUCCESS' : 'SECONDARY',
+      disabled: voiceChannel.userLimit === n,
+    })),
+  });
+
+  return [
+    new MessageActionRow({
+      components: Object.entries(ChannelType).map(([,type]) => new MessageButton({
+        customID: type,
+        emoji: getIcon(type),
+        label: `${type[0].toUpperCase()}${type.substring(1)}`,
+        style: currentType === type ? 'SUCCESS' : 'SECONDARY',
+        disabled: currentType === type,
+      })),
+    }),
+    limitRow,
+    highLimitButtons,
+  ];
+};
+
+interface NameChangeTimeout {
+  changes : Date[],
+  timeout ?: NodeJS.Timeout
+}
+
+const changeLobby = (() => {
+  const timeouts = new Map<`${bigint}`, NameChangeTimeout>();
+
+  return async (
+    changeTo : ChannelType,
+    activeChannel : VoiceChannel,
+    requestingUser : DiscordUser,
+    guild : Guild,
+    tempChannel : TempChannel,
+    limit: number,
+    forcePermissionUpdate = false,
+    interaction?: MessageComponentInteraction,
+  ) => {
+    const deny = toDeny(changeTo);
+    const currentType = getChannelType(activeChannel);
+    const textChannel = activeTempText(guild.client, tempChannel);
+
+    if (changeTo !== currentType || forcePermissionUpdate) {
+      const newOverwrites = currentType === ChannelType.Public ? activeChannel.members
+        .filter((member) => !activeChannel.permissionOverwrites.has(member.id))
+        .map((member) : OverwriteResolvable => ({ id: member.id, allow: ['SPEAK', 'CONNECT'] })) : [];
+
+      if (currentType === ChannelType.Mute && changeTo === ChannelType.Public) {
+        activeChannel.members
+          .filter((member) => !activeChannel.permissionOverwrites.has(member.id))
+          .forEach((member) => member.voice.setMute(false));
+      } else if (currentType === ChannelType.Mute && changeTo === ChannelType.Nojoin) {
+        activeChannel.members
+          .filter((member) => !activeChannel.permissionOverwrites.has(member.id))
+          .forEach((member) => {
+            member.voice.setChannel(null);
+            member.send(`Je bent verwijderd uit *${requestingUser.username}'s*, omdat de lobby was veranderd naar ${changeTo} en jij nog geen toestemming had gekregen`);
+          });
+      }
+
+      await activeChannel.overwritePermissions([
+        ...activeChannel.permissionOverwrites.array(),
+        { id: guild.id, deny },
+        ...newOverwrites,
+      ])
+        .then(async (voice) => {
+          const tc = await textChannel;
+          if (tc) { return updateTextChannel(voice, tc); }
+          return null;
+        })
+        .catch(console.error);
+    }
+
+    const newName = generateLobbyName(changeTo, requestingUser, tempChannel);
+    const currentName = await activeChannel.fetch(false).then((vc) => (vc instanceof VoiceChannel && vc.name) || null).catch(() => null);
+    let timeTillNameChange : Duration | undefined;
+
+    if (newName !== currentName) {
+      const timeout = timeouts.get(activeChannel.id);
+      const execute = async () => {
+        await Promise.all([activeChannel.fetch(false).catch(() => null), (await textChannel)?.fetch().catch(() => null)])
+          .then(([vc, tc]) => {
+            if (vc && vc instanceof VoiceChannel) {
+              const type = getChannelType(vc);
+              vc.setName(generateLobbyName(type, requestingUser, tempChannel))
+                .then(() => {
+                  timeout?.changes.push(new Date());
+                })
+                .catch(() => {});
+
+              if (tc && tc instanceof TextChannel) {
+                tc.setName(generateLobbyName(type, requestingUser, tempChannel, true))
+                  .then((updatedTc) => {
+                    if (tempChannel.controlDashboardId) return updatedTc.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true });
+
+                    return null;
+                  })
+                  .then((msg) => msg?.edit({ content: dashBoardText, components: generateButtons(vc) }))
+                  .catch(() => { });
+              }
+            } else {
+              timeouts.delete(activeChannel.id);
+            }
+          });
+      };
+
+      if (!timeout) {
+        await execute();
+
+        timeouts.set(activeChannel.id, {
+          changes: [new Date()],
+        });
+      } else {
+        timeout.changes = timeout.changes.filter((date) => date.getTime() > (new Date()).getTime() - 1000 * 60 * 10);
+
+        if (timeout.changes.length < 2) {
+          await execute();
+
+          timeout.changes.push(new Date());
+        } else {
+          const date = timeout.changes.sort()[0];
+          const timeTo = (date.getTime() + 1000 * 60 * 10) - (new Date()).getTime();
+          timeTillNameChange = moment.duration(timeTo, 'milliseconds');
+
+          if (timeout.timeout) clearTimeout(timeout.timeout);
+          timeout.timeout = setTimeout(execute, timeTo);
+        }
+      }
+    } else {
+      const timeout = timeouts.get(activeChannel.id);
+      if (timeout?.timeout) clearTimeout(timeout.timeout);
+    }
+
+    if (activeChannel.userLimit !== limit) {
+      await activeChannel.setUserLimit(limit);
+    }
+
+    const content = `${dashBoardText}${timeTillNameChange ? `\n\nDe naam van de lobby wordt ${timeTillNameChange.locale('nl').humanize(true)} veranderd naar \`${newName}\`` : ''}`;
+
+    if (interaction) {
+      interaction.update({ content, components: generateButtons(activeChannel) }).catch(() => {});
+    } else if (tempChannel.controlDashboardId) {
+      const msg = await (await textChannel)?.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => null);
+      if (msg) msg.edit({ content, components: generateButtons(activeChannel) }).catch(() => {});
+    }
+  };
+})();
+
 const changeTypeHandler : GuildHandler = async ({
   params, msg, guildUser, em, flags,
 }) => {
@@ -721,65 +919,25 @@ const changeTypeHandler : GuildHandler = async ({
     if (type === ChannelType.Mute) return `Type van lobby is \`${ChannelType.Mute}\` andere types zijn \`${ChannelType.Public}\` en \`${ChannelType.Nojoin}\``;
     if (type === ChannelType.Nojoin) return `Type van lobby is \`${ChannelType.Nojoin}\` andere types zijn \`${ChannelType.Public}\` en \`${ChannelType.Mute}\``;
     return `Type van lobby is \`${ChannelType.Public}\` andere types zijn \`${ChannelType.Mute}\` en \`${ChannelType.Nojoin}\``;
-  } if (typeGiven) {
-    if (typeof typeGiven !== 'string') {
-      return 'Ik verwachte hier geen **mention**';
-    }
-
-    const changeTo = <ChannelType>typeGiven;
-
-    if (!Object.values(ChannelType).includes(changeTo)) {
-      return `*${typeGiven}* is niet een lobby type`;
-    }
-
-    if (changeTo === type) {
-      return `Je lobby was al een **${type}** lobby`;
-    }
-
-    const deny = toDeny(changeTo);
-
-    const newOverwrites = type === ChannelType.Public ? activeChannel.members
-      .filter((member) => !activeChannel.permissionOverwrites.has(member.id))
-      .map((member) : OverwriteResolvable => ({ id: member.id, allow: ['SPEAK', 'CONNECT'] })) : [];
-
-    if (type === ChannelType.Mute && changeTo === ChannelType.Public) {
-      activeChannel.members
-        .filter((member) => !activeChannel.permissionOverwrites.has(member.id))
-        .forEach((member) => member.voice.setMute(false));
-    } else if (type === ChannelType.Mute && changeTo === ChannelType.Nojoin) {
-      activeChannel.members
-        .filter((member) => !activeChannel.permissionOverwrites.has(member.id))
-        .forEach((member) => {
-          member.voice.setChannel(null);
-          member.send(`Je bent verwijderd uit *${requestingUser.username}'s*, omdat de lobby was veranderd naar ${changeTo} en jij nog geen toestemming had gekregen`);
-        });
-    }
-
-    activeChannel.overwritePermissions([
-      ...activeChannel.permissionOverwrites.array(),
-      { id: msg.guild.id, deny },
-      ...newOverwrites,
-    ]).catch(console.error);
-
-    activeChannel.setName(generateLobbyName(changeTo, requestingUser, lobbyOwner.tempChannel))
-      .then(async (voice) => {
-        const gu = (await guildUser);
-        if (gu.tempChannel) {
-          activeTempText(msg.client, gu.tempChannel)
-            .then(async (textChannel) => {
-              if (textChannel && gu.tempChannel) {
-                await textChannel.setName(generateLobbyName(changeTo, requestingUser, gu.tempChannel, true));
-                updateTextChannel(voice, textChannel);
-              }
-            });
-        }
-      })
-      .catch((err) => console.error('Change name error', err));
-
-    return `Lobby type is veranderd naar *${changeTo}*`;
   }
 
-  return 'Stuur een berichtje naar een ei-noah dev als je dit bericht ziet';
+  if (typeof typeGiven !== 'string') {
+    return 'Ik verwachte hier geen **mention**';
+  }
+
+  const changeTo = <ChannelType>typeGiven;
+
+  if (!Object.values(ChannelType).includes(changeTo)) {
+    return `*${typeGiven}* is niet een lobby type`;
+  }
+
+  if (changeTo === type) {
+    return `Je lobby was al een **${type}** lobby`;
+  }
+
+  changeLobby(changeTo, activeChannel, requestingUser, msg.guild, lobbyOwner.tempChannel, activeChannel.userLimit);
+
+  return `Lobby type is veranderd naar *${changeTo}*`;
 };
 
 router.use('type', changeTypeHandler, HandlerType.GUILD, {
@@ -814,6 +972,7 @@ const sizeHandler : GuildHandler = async ({
 }) => {
   const gu = await guildUser;
   const activeChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
+  const requestingUser = msg instanceof Message ? msg.author : msg.user;
 
   if (!gu.tempChannel || !activeChannel) {
     return 'Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`';
@@ -840,9 +999,11 @@ const sizeHandler : GuildHandler = async ({
   if (size > 99) { size = 99; }
   size = Math.abs(size);
 
-  await activeChannel.setUserLimit(size);
+  const type = getChannelType(activeChannel);
 
-  if (size === 0) { return 'Limiet is verwijderd'; } return `Limiet veranderd naar ${size}`;
+  await changeLobby(type, activeChannel, requestingUser, msg.guild, gu.tempChannel, size);
+
+  if (size === 0) { return 'Limiet is verwijderd'; } return `Limiet veranderd naar ${size}${size === 1 && activeChannel.members.size === 1 ? '???\nWaarom zit je in discord als je in je eentje in een kanaal gaat zitten? Heb je niks beters te doen?' : ''}`;
 };
 
 router.use('size', sizeHandler, HandlerType.GUILD);
@@ -1041,12 +1202,7 @@ const nameHandler : GuildHandler = async ({
 
   gu.tempChannel.name = name;
   const type = getChannelType(tempChannel);
-  tempChannel.setName(generateLobbyName(type, requestingUser, gu.tempChannel));
-  activeTempText(msg.client, gu.tempChannel)
-    .then((tc) => {
-      if (gu.tempChannel) { return tc?.setName(generateLobbyName(type, requestingUser, gu.tempChannel, true)); }
-      return null;
-    });
+  await changeLobby(type, tempChannel, requestingUser, msg.guild, gu.tempChannel, tempChannel.userLimit);
 
   return 'Lobby naam is aangepast\n> Bij overmatig gebruik kan het meer dan 10 minuten duren';
 };
@@ -1063,23 +1219,6 @@ router.use('name', nameHandler, HandlerType.GUILD, {
 router.use('rename', nameHandler, HandlerType.GUILD);
 router.use('naam', nameHandler, HandlerType.GUILD);
 router.use('hernoem', nameHandler, HandlerType.GUILD);
-
-const memberCommandText = [
-  '`/lobby add @mention...`: Laat user(s) toe aan de lobby',
-  '`/lobby remove @mention...`: Verwijder user(s)/ role(s) uit de lobby',
-  '`/lobby type [mute / private / public]`: Verander het type van de lobby',
-  '`/lobby limit <nummer>`: Verander de lobby user limit',
-  '`/lobby name <lobby naam>`: Geef de lobby een naam',
-].join('\n');
-
-const helpCommandText = [
-  '**Maak een tijdelijke voice kanaal aan**',
-  'Mogelijke Commandos:',
-  memberCommandText,
-  '`*Admin* /lobby create-category <category>`: Maak in gegeven categorie lobby-aanmaak-kanalen aan, verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
-  '`*Admin* /lobby category <create-category> <lobby-category>`: Verander de categorie waar de lobbies worden neergezet',
-  '`*Admin* /lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
-].join('\n');
 
 const helpHandler = () => helpCommandText;
 
@@ -1125,81 +1264,117 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
   });
 };
 
+const msgCollectors = new Map<`${bigint}`, MessageComponentInteractionCollector>();
+
+const createDashBoardCollector = async (client : Client, voiceChannel : VoiceChannel, tempChannel : TempChannel, em : EntityManager) => {
+  const textChannel = await activeTempText(client, tempChannel);
+
+  if (textChannel) {
+    let msg = tempChannel.controlDashboardId ? await textChannel.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => undefined) : undefined;
+    if (!msg) {
+      msg = await textChannel.send({ content: dashBoardText, components: generateButtons(voiceChannel) }).catch(() => undefined);
+      if (msg) tempChannel.controlDashboardId = msg.id;
+    }
+
+    if (msg && !msgCollectors.has(msg.id)) {
+      msgCollectors.set(msg.id, msg.createMessageComponentInteractionCollector().on('collect', async (interaction) => {
+        const currentTempChannel = await em.fork().findOne(TempChannel, { channelId: voiceChannel.id }, { populate: ['guildUser.user'] });
+
+        if (interaction.isButton() && currentTempChannel) {
+          if (interaction.user.id !== currentTempChannel.guildUser.user.id) {
+            interaction.reply({ content: 'Alleen de lobby leider kan dit doen', ephemeral: true });
+            return;
+          }
+
+          const limit = Number.parseInt(interaction.customID, 10);
+          const currentType = getChannelType(voiceChannel);
+
+          if (Number.isSafeInteger(limit)) {
+            if (limit >= 0 && limit < 100 && interaction.guild) {
+              await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, limit, false, interaction);
+            }
+          } else {
+            const changeTo = <ChannelType>interaction.customID;
+
+            if (Object.values(ChannelType).includes(changeTo) && changeTo !== currentType && interaction.guild) {
+              await changeLobby(changeTo, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, interaction);
+            }
+          }
+        }
+      }));
+    }
+  }
+};
+
 const checkTempChannel = async (client : Client, tempChannel: TempChannel,
-  em : EntityManager, respectTimeLimit = true) => {
-  const now = new Date();
+  em : EntityManager) => {
+  const activeChannel = await activeTempChannel(client, em, tempChannel);
+  const activeTextChannel = await activeTempText(client, tempChannel);
 
-  const difference = Math.abs(now.getMinutes() - tempChannel.createdAt.getMinutes());
-  if (!respectTimeLimit || difference >= 2) {
-    const activeChannel = await activeTempChannel(client, em, tempChannel);
-    const activeTextChannel = await activeTempText(client, tempChannel);
+  if (!activeChannel) {
+    em.remove(tempChannel);
+    if (activeTextChannel?.deletable) await activeTextChannel.delete().catch(() => { });
+    console.log('Lobby bestond niet meer');
+  } else if (!activeChannel.members.filter((member) => !member.user.bot).size) {
+    await activeChannel.delete();
 
-    if (!activeChannel) {
-      em.remove(tempChannel);
-      if (activeTextChannel?.deletable) await activeTextChannel.delete().catch(() => { });
-      console.log('Lobby bestond niet meer');
-    } else if (!activeChannel.members.filter((member) => !member.user.bot).size) {
-      await activeChannel.delete();
+    if (activeTextChannel) await activeTextChannel.delete();
+    console.log('Verwijderd: Niemand in lobby');
+    em.remove(tempChannel);
+  } else if (!activeChannel.members.has(`${BigInt(tempChannel.guildUser.user.id)}`)) {
+    const guildUsers = await Promise.all(activeChannel.members
+      .map((member) => getUserGuildData(em, member.user, activeChannel.guild)));
 
-      if (activeTextChannel) await activeTextChannel.delete();
-      console.log('Verwijderd: Niemand in lobby');
-      em.remove(tempChannel);
-    } else if (!activeChannel.members.has(`${BigInt(tempChannel.guildUser.user.id)}`)) {
-      const guildUsers = await Promise.all(activeChannel.members
-        .map((member) => getUserGuildData(em, member.user, activeChannel.guild)));
-
-      const newOwner = activeChannel.members
-        .sort(
-          (member1, member2) => (member1.joinedTimestamp || 0) - (member2.joinedTimestamp || 0),
-        )
-        .filter((member) => !guildUsers.find((gu) => gu.user.id === member.id)?.tempChannel)
-        .filter((member) => {
-          const isPublic = getChannelType(activeChannel) === ChannelType.Public;
-          const isAllowedUser = activeChannel.permissionOverwrites.has(member.id);
-          const hasAllowedRole = activeChannel.permissionOverwrites
-            .some((overwrite) => overwrite.id !== activeChannel.guild.id
+    const newOwner = activeChannel.members
+      .sort(
+        (member1, member2) => (member1.joinedTimestamp || 0) - (member2.joinedTimestamp || 0),
+      )
+      .filter((member) => !guildUsers.find((gu) => gu.user.id === member.id)?.tempChannel)
+      .filter((member) => {
+        const isPublic = getChannelType(activeChannel) === ChannelType.Public;
+        const isAllowedUser = activeChannel.permissionOverwrites.has(member.id);
+        const hasAllowedRole = activeChannel.permissionOverwrites
+          .some((overwrite) => overwrite.id !== activeChannel.guild.id
             && member.roles.cache.has(overwrite.id));
 
-          return (isPublic || isAllowedUser || hasAllowedRole) && !member.user.bot;
-        })
-        .first();
+        return (isPublic || isAllowedUser || hasAllowedRole) && !member.user.bot;
+      })
+      .first() || activeChannel.members
+      .sort(
+        (member1, member2) => (member1.joinedTimestamp || 0) - (member2.joinedTimestamp || 0),
+      )
+      .filter((member) => !guildUsers.find((gu) => gu.user.id === member.id)?.tempChannel)
+      .filter((member) => !member.user.bot)
+      .first();
 
-      if (newOwner) {
-        const newOwnerGuildUser = guildUsers.find((gu) => gu.user.id === newOwner.id);
+    if (newOwner) {
+      const newOwnerGuildUser = guildUsers.find((gu) => gu.user.id === newOwner.id);
 
-        if (!newOwnerGuildUser) throw new Error('Guild User Not Found In Array');
+      if (!newOwnerGuildUser) throw new Error('Guild User Not Found In Array');
 
-        tempChannel.guildUser = newOwnerGuildUser;
+      tempChannel.guildUser = newOwnerGuildUser;
 
-        const type = getChannelType(activeChannel);
+      const type = getChannelType(activeChannel);
 
-        await activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true })
-          .catch(console.error);
+      await activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true })
+        .catch(console.error);
 
-        await Promise.all([
-          activeChannel.setName(generateLobbyName(type, newOwner.user, tempChannel)),
-          activeTextChannel?.setName(
-            generateLobbyName(type, newOwner.user, tempChannel, true)
-          ),
-          newOwner.voice.setMute(false),
+      if (newOwner.voice.suppress) { newOwner.voice.setMute(false).catch(() => { }); }
+
+      await Promise.all([
+        changeLobby(type, activeChannel, newOwner.user, newOwner.guild, tempChannel, activeChannel.userLimit, true),
           activeTextChannel?.send(`De lobby is overgedragen aan ${newOwner.displayName}`),
-        ]).catch(console.error);
+      ]).catch(console.error);
 
-        console.log('Ownership is overgedragen');
-      } else { console.log('Owner is weggegaan, maar niemand kwam in aanmerking om de nieuwe leider te worden'); }
-    } else {
-      const discordUser = await client.users.fetch(`${BigInt(tempChannel.guildUser.user.id)}`);
-      const lobbyType = getChannelType(activeChannel);
+      console.log('Ownership is overgedragen');
+    } else { console.log('Owner is weggegaan, maar niemand kwam in aanmerking om de nieuwe leider te worden'); }
+  } else {
+    const discordUser = await client.users.fetch(`${BigInt(tempChannel.guildUser.user.id)}`);
+    const lobbyType = getChannelType(activeChannel);
 
-      const correctName = generateLobbyName(lobbyType, discordUser, tempChannel);
+    await createDashBoardCollector(client, activeChannel, tempChannel, em);
 
-      if (activeChannel.name !== correctName) {
-        await Promise.all([
-          activeChannel.setName(correctName),
-          activeTextChannel?.setName(generateLobbyName(lobbyType, discordUser, tempChannel, true)),
-        ]);
-      }
-    }
+    await changeLobby(lobbyType, activeChannel, discordUser, activeChannel.guild, tempChannel, activeChannel.userLimit);
   }
 };
 
@@ -1238,13 +1413,10 @@ router.onInit = async (client, orm) => {
         channelId: oldState.channel.id,
       }, { populate: { guildUser: true } });
       if (tempChannel) {
-        await checkTempChannel(client, tempChannel, em, false);
+        await checkTempChannel(client, tempChannel, em);
         await em.flush();
       }
-    }
-
-    // Check of iemand een nieuw kanaal is gejoint
-    if (newState.channel && newState.channel.parent && oldState.channelID !== newState.channelID) {
+    } else if (newState.channel && newState.channel.parent && oldState.channelID !== newState.channelID) { // Check of iemand een nieuw kanaal is gejoint
       const em = orm.em.fork();
 
       const categoryData = getCategoryData(em, newState.channel.parent);
@@ -1287,7 +1459,15 @@ router.onInit = async (client, orm) => {
           textChannel = await createTextChannel(client, em, guildUser.tempChannel, user);
           guildUser.tempChannel.textChannelId = textChannel.id;
 
-          textChannel.send(['**Beheer je lobby met deze commands:**', memberCommandText].join('\n'));
+          await textChannel.send({
+            content: dashBoardText,
+            components: generateButtons(createdChannel),
+          }).then(async (msg) => {
+            if (guildUser.tempChannel) {
+              guildUser.tempChannel.controlDashboardId = msg.id;
+              await createDashBoardCollector(client, createdChannel, guildUser.tempChannel, orm.em.fork());
+            }
+          });
         }
       } else if ( // Check of iemand een tempChannel is gejoint
         user
