@@ -88,7 +88,7 @@ function toDeny(type : ChannelType) {
 
 function toDenyText(type : ChannelType) {
   if (type === ChannelType.Mute) return [Permissions.FLAGS.SEND_MESSAGES];
-  if (type === ChannelType.Nojoin) return [Permissions.FLAGS.SEND_MESSAGES, Permissions.FLAGS.READ_MESSAGE_HISTORY];
+  if (type === ChannelType.Nojoin) return [Permissions.FLAGS.VIEW_CHANNEL];
   if (type === ChannelType.Public) return [];
 
   return [];
@@ -880,9 +880,7 @@ const changeLobby = (() => {
 
     const content = `${dashBoardText}${timeTillNameChange ? `\n\nDe naam van de lobby wordt ${timeTillNameChange.locale('nl').humanize(true)} veranderd naar \`${newName}\`` : ''}`;
 
-    if (interaction) {
-      interaction.update({ content, components: generateButtons(activeChannel) }).catch(() => {});
-    } else if (tempChannel.controlDashboardId) {
+    if (!(interaction && interaction.update({ content, components: generateButtons(activeChannel) }).then(() => true).catch(() => false)) && tempChannel.controlDashboardId) {
       const msg = await (await textChannel)?.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => null);
       if (msg) msg.edit({ content, components: generateButtons(activeChannel) }).catch(() => {});
     }
@@ -1273,6 +1271,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
     let msg = tempChannel.controlDashboardId ? await textChannel.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => undefined) : undefined;
     if (!msg) {
       msg = await textChannel.send({ content: dashBoardText, components: generateButtons(voiceChannel) }).catch(() => undefined);
+      if (!msg?.pinned && msg?.pinnable) await msg.pin();
       if (msg) tempChannel.controlDashboardId = msg.id;
     }
 
