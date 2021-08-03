@@ -91,7 +91,7 @@ export interface GuildHandlerWithIndicator {
 }
 
 interface RouteList {
-  [path : string]: Router | BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator;
+  [path : string]: Router | BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator | undefined;
 }
 
 export interface IRouter {
@@ -162,6 +162,10 @@ export default class Router implements IRouter {
           newInfo.params = newParams;
           handler = nameHandler;
         }
+      }
+
+      if (!handler) {
+        handler = this.routes.HELP;
       }
 
       if (handler) {
