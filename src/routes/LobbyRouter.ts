@@ -1415,7 +1415,9 @@ router.onInit = async (client, orm) => {
         await checkTempChannel(client, tempChannel, em);
         await em.flush();
       }
-    } else if (newState.channel && newState.channel.parent && oldState.channelID !== newState.channelID) { // Check of iemand een nieuw kanaal is gejoint
+    }
+
+    if (newState.channel && newState.channel.parent && oldState.channelID !== newState.channelID) { // Check of iemand een nieuw kanaal is gejoint
       const em = orm.em.fork();
 
       const categoryData = getCategoryData(em, newState.channel.parent);
