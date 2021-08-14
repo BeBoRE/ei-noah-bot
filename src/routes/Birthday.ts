@@ -387,9 +387,11 @@ if (process.env.NODE_ENV !== 'production') {
 const checkBday = async (client : Client, em : EntityManager) => {
   const today = moment().startOf('day').locale('nl').format('DD MMMM');
   const todayAge = moment().startOf('day').locale('nl').format('YYYY');
+  console.log('Checking bday\'s');
 
   const users = await em.find(User, { $not: { birthday: null } }, ['guildUsers', 'guildUsers.guild']);
-  const discUsers = await Promise.all(users.map((u) => client.users.fetch(`${BigInt(u.id)}`, { cache: true })));
+  const discUsers = (await Promise.all(users.map((u) => client.users.fetch(`${BigInt(u.id)}`, { cache: true }).catch(() => null))))
+    .filter((user) : user is DiscordUser => !!user);
 
   discUsers.forEach(async (du) => {
     const user = users.find((u) => u.id === du.id);
@@ -397,6 +399,7 @@ const checkBday = async (client : Client, em : EntityManager) => {
     const discBdayAge = moment(user?.birthday).locale('nl').format('YYYY');
     if (today === discBday) {
       const age = parseInt(todayAge, 10) - parseInt(discBdayAge, 10);
+      console.log(`${du.username} is vandaag jarig`);
 
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
@@ -424,7 +427,7 @@ const checkBday = async (client : Client, em : EntityManager) => {
                   embed.description = `Is vandaag ${age} geworden!`;
                   embed.setThumbnail('http://clipart-library.com/images/kcKnBz4Ai.jpg');
 
-                  bdayChannel.send({ embeds: [embed] }).catch(() => {});
+                  bdayChannel.send({ embeds: [embed] }).catch((err) => { console.log(err); });
                 } else {
                   bdayChannel.send({ content: `Gefeliciteerd met jouw verjaardag ${du}!`, files: [await generateImage(url, age.toString())] }).catch(() => {});
                 }
@@ -454,7 +457,8 @@ router.onInit = async (client, orm) => {
   const offset = new Date().getTimezoneOffset();
   console.log(`Offset in minutes: ${offset}`);
 
-  const reportCron = new CronJob('5 0 0 * * *', () => { checkBday(client, orm.em.fork()); });
+  await checkBday(client, orm.em);
+  const reportCron = new CronJob('5 0 0 * * *', async () => { await checkBday(client, orm.em.fork()); });
 
   if (process.env.NODE_ENV !== 'production') {
     checkBday(client, orm.em.fork());
