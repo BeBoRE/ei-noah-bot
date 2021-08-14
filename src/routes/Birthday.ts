@@ -403,11 +403,11 @@ const checkBday = async (client : Client, em : EntityManager) => {
 
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
-          const bdayChannel = await client.channels.fetch(`${BigInt(gu.guild.birthdayChannel)}`, { cache: true }).catch(() => {});
-          if (bdayChannel instanceof TextChannel) {
-            const bdayRole = await bdayChannel.guild.roles.fetch(`${BigInt(gu.guild.birthdayChannel)}`, { cache: true }).catch(() => {});
+          const bdayChannel = await client.channels.fetch(`${BigInt(gu.guild.birthdayChannel)}`, { cache: true }).catch(() => null);
+          if (bdayChannel instanceof TextChannel && gu.guild.birthdayRole) {
+            const bdayRole = await bdayChannel.guild.roles.fetch(`${BigInt(gu.guild.birthdayRole)}`, { cache: true }).catch(() => null);
             if (bdayRole instanceof Role) {
-              const member = await bdayChannel.guild.members.fetch({ user: du, cache: true }).catch(() => {});
+              const member = await bdayChannel.guild.members.fetch({ user: du, cache: true }).catch(() => null);
               if (member && !member.roles.cache.has(bdayRole.id)) {
                 member.roles.add(bdayRole).catch(() => console.log('Kon geen rol geven'));
 
@@ -429,7 +429,7 @@ const checkBday = async (client : Client, em : EntityManager) => {
 
                   bdayChannel.send({ embeds: [embed] }).catch((err) => { console.log(err); });
                 } else {
-                  bdayChannel.send({ content: `Gefeliciteerd met jouw verjaardag ${du}!`, files: [await generateImage(url, age.toString())] }).catch(() => {});
+                  bdayChannel.send({ content: `Gefeliciteerd met jouw verjaardag ${du}!`, files: [await generateImage(url, age.toString())] }).catch((err) => { console.log(err); });
                 }
               }
             }
