@@ -440,8 +440,8 @@ const checkBday = async (client : Client, em : EntityManager) => {
       user?.guildUsers.getItems().forEach(async (gu) => {
         if (gu.guild.birthdayChannel) {
           const bdayChannel = await client.channels.fetch(`${BigInt(gu.guild.birthdayChannel)}`, { cache: true }).catch(() => {});
-          if (bdayChannel instanceof TextChannel) {
-            const bdayRole = await bdayChannel.guild.roles.fetch(`${BigInt(gu.guild.birthdayChannel)}`, { cache: true }).catch(() => {});
+          if (bdayChannel instanceof TextChannel && gu.guild.birthdayRole) {
+            const bdayRole = await bdayChannel.guild.roles.fetch(`${BigInt(gu.guild.birthdayRole)}`, { cache: true }).catch(() => {});
             if (bdayRole instanceof Role) {
               const member = await bdayChannel.guild.members.fetch({ user: du, cache: true }).catch(() => {});
               if (member && member.roles.cache.has(bdayRole.id)) member.roles.remove(bdayRole).catch(() => console.log('Kon rol niet verwijderen'));
