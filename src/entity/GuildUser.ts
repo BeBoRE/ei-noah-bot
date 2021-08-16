@@ -1,5 +1,5 @@
 import {
-  Entity, ManyToOne, OneToMany, Collection, PrimaryKey, Unique, OneToOne, BaseEntity,
+  Entity, ManyToOne, OneToMany, Collection, PrimaryKey, Unique, OneToOne, BaseEntity, Property,
 } from '@mikro-orm/core';
 // eslint-disable-next-line import/no-cycle
 import { User } from './User';
@@ -33,4 +33,7 @@ export class GuildUser extends BaseEntity<GuildUser, 'id'> {
 
   @OneToMany({ entity: () => Quote, mappedBy: 'creator' })
   createdQuotes = new Collection<Quote>(this);
+
+  @Property({ length: 20 })
+  birthdayMsg?: string;
 }
