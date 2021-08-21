@@ -142,18 +142,18 @@ async function messageParser(msg : Message | CommandInteraction, em: EntityManag
       command = nextCommand;
     }
 
-    if (Array.isArray(command.options)) {
-      command?.options?.forEach((option) => {
-        if (option.type === 'STRING' || option.type === 'BOOLEAN' || option.type === 'INTEGER') {
-          if (typeof option.value === 'string') flags.set(option.name, option.value.split(' '));
-          if (option.value !== undefined) flags.set(option.name, [option.value]);
-        }
+    const options = Array.isArray(command.options) ? command.options : command.options?.data;
 
-        if (option.channel instanceof Channel) flags.set(option.name, [option.channel]);
-        if (option.user instanceof User) flags.set(option.name, [option.user]);
-        if (option.role instanceof Role) flags.set(option.name, [option.role]);
-      });
-    }
+    options?.forEach((option) => {
+      if (option.type === 'STRING' || option.type === 'BOOLEAN' || option.type === 'INTEGER') {
+        if (typeof option.value === 'string') flags.set(option.name, option.value.split(' '));
+        if (option.value !== undefined) flags.set(option.name, [option.value]);
+      }
+
+      if (option.channel instanceof Channel) flags.set(option.name, [option.channel]);
+      if (option.user instanceof User) flags.set(option.name, [option.user]);
+      if (option.role instanceof Role) flags.set(option.name, [option.role]);
+    });
   }
 
   const routeInfo : RouteInfo = new LazyRouteInfo({
