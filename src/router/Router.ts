@@ -11,8 +11,8 @@ import {
   GuildMember,
   MessageEmbed,
   MessageAttachment,
-  ApplicationCommandOptionData,
   CommandInteraction,
+  ApplicationCommandSubCommandData,
 } from 'discord.js';
 import {
   EntityManager, MikroORM, IDatabaseDriver, Connection,
@@ -95,11 +95,11 @@ interface RouteList {
 }
 
 export interface IRouter {
-  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
-  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
-  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
   use(route : string, using: Router | BothHandler) : void
-  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
 
   onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
   => void | Promise<void>)
@@ -121,14 +121,14 @@ export default class Router implements IRouter {
     return this._isInitialized;
   }
 
-  public commandDataList : Map<string, Omit<ApplicationCommandOptionData, 'name'>> = new Map();
+  public commandDataList : Map<string, Omit<ApplicationCommandSubCommandData, 'name'>> = new Map();
 
   // Met use geef je aan welk commando waarheen gaat
-  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
-  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
-  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
   use(route : string, using: Router | BothHandler) : void
-  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type: HandlerType = HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void {
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type: HandlerType = HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void {
     const newUsing = <Router | BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator>using;
     if (typeof route === 'string') {
       if (this.routes[route]) throw new Error('This Route Already Exists');

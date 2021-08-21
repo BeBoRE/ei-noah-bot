@@ -21,8 +21,8 @@ import {
   MessageActionRow,
   MessageButton,
   Guild,
-  MessageComponentInteractionCollector,
   MessageComponentInteraction,
+  InteractionCollector,
 } from 'discord.js';
 import {
   EntityManager, UniqueConstraintViolationException,
@@ -95,8 +95,8 @@ function toDenyText(type : ChannelType) {
 }
 
 function getChannelType(channel : VoiceChannel) {
-  if (!channel.permissionOverwrites.get(channel.guild.id)?.deny.has('CONNECT')) {
-    if (!channel.permissionOverwrites.get(channel.guild.id)?.deny.has('SPEAK')) return ChannelType.Public;
+  if (!channel.permissionOverwrites.resolve(channel.guild.id)?.deny.has('CONNECT')) {
+    if (!channel.permissionOverwrites.resolve(channel.guild.id)?.deny.has('SPEAK')) return ChannelType.Public;
     return ChannelType.Mute;
   } return ChannelType.Nojoin;
 }
@@ -147,7 +147,7 @@ async function createTempChannel(
   });
 
   return guild.channels.create(generateLobbyName(type, owner), {
-    type: 'voice',
+    type: 'GUILD_VOICE',
     permissionOverwrites,
     parent,
     bitrate,
@@ -199,7 +199,7 @@ async function activeTempText(client : Client, tempChannel : TempChannel) {
 }
 
 function getTextPermissionOverwrites(voice : VoiceChannel) : OverwriteData[] {
-  return voice.permissionOverwrites.map((overwrite) : OverwriteData => {
+  return voice.permissionOverwrites.cache.map((overwrite) : OverwriteData => {
     if (overwrite.id === voice.guild.id) {
       return {
         id: overwrite.id,
@@ -233,7 +233,7 @@ async function createTextChannel(
   return voiceChannel.guild.channels.create(
     generateLobbyName(getChannelType(voiceChannel), owner, tempChannel, true),
     {
-      type: 'text',
+      type: 'GUILD_TEXT',
       parent: voiceChannel.parent || undefined,
       permissionOverwrites,
       position: voiceChannel.calculatedPosition + 1,
@@ -248,7 +248,7 @@ function updateTextChannel(voice : VoiceChannel, text : TextChannel) {
 const createCreateChannel = (type : ChannelType, category : CategoryChannel) => {
   const typeName = `${type[0].toUpperCase()}${type.substring(1, type.length)}`;
   return category.guild.channels.create(`${getIcon(type)} Maak ${typeName} Lobby`, {
-    type: 'voice',
+    type: 'GUILD_VOICE',
     parent: category,
   });
 };
@@ -291,7 +291,7 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
   const alreadyAllowedUsers : Array<DiscordUser | Role> = [];
 
   const overwritePromise = toAllow.map((uOrR) => {
-    if (activeChannel.permissionOverwrites.some((o) => uOrR.id === o.id)) {
+    if (activeChannel.permissionOverwrites.cache.some((o) => uOrR.id === o.id)) {
       alreadyAllowedUsers.push(uOrR);
       return null;
     }
@@ -304,7 +304,7 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
         .each((member) => { if (uOrR.members.has(member.id)) member.voice.setMute(false); });
     }
 
-    return activeChannel.updateOverwrite(uOrR, {
+    return activeChannel.permissionOverwrites.edit(uOrR, {
       CONNECT: true,
       SPEAK: true,
     });
@@ -447,15 +447,15 @@ const removeFromLobby = (
   const deletePromises : Array<Promise<unknown> | undefined> = [];
 
   toRemoveRoles.forEach((role) => {
-    const roleOverwrite = channel.permissionOverwrites.get(role.id);
+    const roleOverwrite = channel.permissionOverwrites.resolve(role.id);
 
     if (roleOverwrite) {
       role.members.forEach((member) => {
         // eslint-disable-next-line max-len
-        if (!channel.permissionOverwrites.has(member.id)
+        if (!channel.permissionOverwrites.cache.has(member.id)
         && channel.members.has(member.id)
         && !toRemoveUsers.some((user) => user.id === member.id)) {
-          deletePromises.push(channel.updateOverwrite(member.id, { CONNECT: true, SPEAK: true }));
+          deletePromises.push(channel.permissionOverwrites.edit(member.id, { CONNECT: true, SPEAK: true }));
           usersGivenPermissions.push(member);
         }
       });
@@ -476,13 +476,13 @@ const removeFromLobby = (
     else if (user.id === channelOwner.client.user?.id) triedRemoveEi = true;
     else {
       const member = channel.members.get(user.id);
-      if (member && member.voice.channelID === channel.id) {
+      if (member && member.voice.channelId === channel.id) {
         member.voice.setChannel(null);
         removed = true;
       }
 
-      if (channel.permissionOverwrites.has(user.id)) {
-        deletePromises.push(channel.permissionOverwrites.get(user.id)?.delete());
+      if (channel.permissionOverwrites.cache.has(user.id)) {
+        deletePromises.push(channel.permissionOverwrites.resolve(user.id)?.delete());
         removed = true;
       }
 
@@ -565,15 +565,16 @@ router.use('remove', async ({
   await msg.guild.members.fetch();
 
   if (!users.length && !roles.length) {
-    const removeAbleRoles = msg.guild.roles.cache.array()
-      .filter((role) => activeChannel.permissionOverwrites.has(role.id))
-      .filter((role) => role.id !== msg.guild?.id);
+    const removeAbleRoles = msg.guild.roles.cache
+      .filter((role) => activeChannel.permissionOverwrites.cache.has(role.id))
+      .filter((role) => role.id !== msg.guild?.id)
+      .map((role) => role);
 
-    const removeAbleUsers = msg.guild.members.cache.array()
+    const removeAbleUsers = msg.guild.members.cache
       .filter((member) => {
         if (member.id === requestingUser.id) return false;
         if (member.id === msg.client.user?.id) return false;
-        if (activeChannel.permissionOverwrites.has(member.id)) return true;
+        if (activeChannel.permissionOverwrites.cache.has(member.id)) return true;
         if (activeChannel.members.has(member.id)) return true;
         return false;
       })
@@ -610,7 +611,7 @@ router.use('remove', async ({
       extraButtons: [
         [new MessageButton({
           label: '❌',
-          customID: 'delete',
+          customId: 'delete',
           style: 'DANGER',
         }), async () => {
           removeFromLobby(activeChannel,
@@ -721,7 +722,7 @@ const generateButtons = (voiceChannel : VoiceChannel) => {
 
   const limitRow = new MessageActionRow({
     components: [new MessageButton({
-      customID: '0',
+      customId: '0',
       label: 'Geen',
       style: voiceChannel.userLimit === 0 ? 'SUCCESS' : 'SECONDARY',
       disabled: voiceChannel.userLimit === 0,
@@ -730,7 +731,7 @@ const generateButtons = (voiceChannel : VoiceChannel) => {
 
   for (let i = 2; i <= 5; i += 1) {
     limitRow.addComponents(new MessageButton({
-      customID: `${i}`,
+      customId: `${i}`,
       label: `${i}`,
       style: voiceChannel.userLimit === i ? 'SUCCESS' : 'SECONDARY',
       disabled: voiceChannel.userLimit === i,
@@ -739,7 +740,7 @@ const generateButtons = (voiceChannel : VoiceChannel) => {
 
   const highLimitButtons = new MessageActionRow({
     components: [10, 12, 15, 20, 25].map((n) => new MessageButton({
-      customID: `${n}`,
+      customId: `${n}`,
       label: `${n}`,
       style: voiceChannel.userLimit === n ? 'SUCCESS' : 'SECONDARY',
       disabled: voiceChannel.userLimit === n,
@@ -749,7 +750,7 @@ const generateButtons = (voiceChannel : VoiceChannel) => {
   return [
     new MessageActionRow({
       components: Object.entries(ChannelType).map(([,type]) => new MessageButton({
-        customID: type,
+        customId: type,
         emoji: getIcon(type),
         label: `${type[0].toUpperCase()}${type.substring(1)}`,
         style: currentType === type ? 'SUCCESS' : 'SECONDARY',
@@ -767,7 +768,7 @@ interface NameChangeTimeout {
 }
 
 const changeLobby = (() => {
-  const timeouts = new Map<`${bigint}`, NameChangeTimeout>();
+  const timeouts = new Map<Snowflake, NameChangeTimeout>();
 
   return async (
     changeTo : ChannelType,
@@ -785,30 +786,30 @@ const changeLobby = (() => {
 
     if (changeTo !== currentType || forcePermissionUpdate) {
       const newOverwrites = currentType === ChannelType.Public ? activeChannel.members
-        .filter((member) => !activeChannel.permissionOverwrites.has(member.id))
+        .filter((member) => !activeChannel.permissionOverwrites.cache.has(member.id))
         .map((member) : OverwriteResolvable => ({ id: member.id, allow: ['SPEAK', 'CONNECT'] })) : [];
 
       if (currentType === ChannelType.Mute && changeTo === ChannelType.Public) {
         activeChannel.members
-          .filter((member) => !activeChannel.permissionOverwrites.has(member.id))
+          .filter((member) => !activeChannel.permissionOverwrites.cache.has(member.id))
           .forEach((member) => member.voice.setMute(false));
       } else if (currentType === ChannelType.Mute && changeTo === ChannelType.Nojoin) {
         activeChannel.members
-          .filter((member) => !activeChannel.permissionOverwrites.has(member.id))
+          .filter((member) => !activeChannel.permissionOverwrites.cache.has(member.id))
           .forEach((member) => {
             member.voice.setChannel(null);
             member.send(`Je bent verwijderd uit *${requestingUser.username}'s*, omdat de lobby was veranderd naar ${changeTo} en jij nog geen toestemming had gekregen`);
           });
       }
 
-      await activeChannel.overwritePermissions([
-        ...activeChannel.permissionOverwrites.array(),
+      await activeChannel.permissionOverwrites.set([
+        ...activeChannel.permissionOverwrites.cache.values(),
         { id: guild.id, deny },
         ...newOverwrites,
       ])
         .then(async (voice) => {
           const tc = await textChannel;
-          if (tc) { return updateTextChannel(voice, tc); }
+          if (tc && voice instanceof VoiceChannel) { return updateTextChannel(voice, tc); }
           return null;
         })
         .catch(console.error);
@@ -1235,15 +1236,15 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
 
   const actionRow = new MessageActionRow();
   actionRow.addComponents(new MessageButton({
-    customID: 'add',
+    customId: 'add',
     label: 'Voeg toe',
     style: 'SUCCESS',
   }));
 
   textChannel.send({ content: `Voeg ${user.username} toe aan de lobby?`, components: [actionRow] }).then((msg) => {
-    const collector = msg.createMessageComponentInteractionCollector();
+    const collector = msg.createMessageComponentCollector();
     collector.on('collect', async (interaction) => {
-      if (interaction.user.id === tempChannel.guildUser.user.id && interaction.customID === 'add') {
+      if (interaction.user.id === tempChannel.guildUser.user.id && interaction.customId === 'add') {
         interaction.update({ content: addUsers([user], activeChannel, tempChannel.guildUser, client), components: [] });
         return;
       }
@@ -1262,7 +1263,7 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
   });
 };
 
-const msgCollectors = new Map<`${bigint}`, MessageComponentInteractionCollector>();
+const msgCollectors = new Map<Snowflake, InteractionCollector<MessageComponentInteraction>>();
 
 const createDashBoardCollector = async (client : Client, voiceChannel : VoiceChannel, tempChannel : TempChannel, em : EntityManager) => {
   const textChannel = await activeTempText(client, tempChannel);
@@ -1276,7 +1277,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
     }
 
     if (msg && !msgCollectors.has(msg.id)) {
-      msgCollectors.set(msg.id, msg.createMessageComponentInteractionCollector().on('collect', async (interaction) => {
+      msgCollectors.set(msg.id, msg.createMessageComponentCollector().on('collect', async (interaction) => {
         const currentTempChannel = await em.fork().findOne(TempChannel, { channelId: voiceChannel.id }, { populate: ['guildUser.user'] });
 
         if (interaction.isButton() && currentTempChannel) {
@@ -1285,7 +1286,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
             return;
           }
 
-          const limit = Number.parseInt(interaction.customID, 10);
+          const limit = Number.parseInt(interaction.customId, 10);
           const currentType = getChannelType(voiceChannel);
 
           if (Number.isSafeInteger(limit)) {
@@ -1293,7 +1294,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
               await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, limit, false, interaction);
             }
           } else {
-            const changeTo = <ChannelType>interaction.customID;
+            const changeTo = <ChannelType>interaction.customId;
 
             if (Object.values(ChannelType).includes(changeTo) && changeTo !== currentType && interaction.guild) {
               await changeLobby(changeTo, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, interaction);
@@ -1331,8 +1332,8 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel,
       .filter((member) => !guildUsers.find((gu) => gu.user.id === member.id)?.tempChannel)
       .filter((member) => {
         const isPublic = getChannelType(activeChannel) === ChannelType.Public;
-        const isAllowedUser = activeChannel.permissionOverwrites.has(member.id);
-        const hasAllowedRole = activeChannel.permissionOverwrites
+        const isAllowedUser = activeChannel.permissionOverwrites.cache.has(member.id);
+        const hasAllowedRole = activeChannel.permissionOverwrites.cache
           .some((overwrite) => overwrite.id !== activeChannel.guild.id
             && member.roles.cache.has(overwrite.id));
 
@@ -1355,7 +1356,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel,
 
       const type = getChannelType(activeChannel);
 
-      await activeChannel.updateOverwrite(newOwner, { SPEAK: true, CONNECT: true })
+      await activeChannel.permissionOverwrites.edit(newOwner, { SPEAK: true, CONNECT: true })
         .catch(console.error);
 
       if (newOwner.voice.suppress) { newOwner.voice.setMute(false).catch(() => { }); }
@@ -1417,7 +1418,7 @@ router.onInit = async (client, orm) => {
       }
     }
 
-    if (newState.channel && newState.channel.parent && oldState.channelID !== newState.channelID) { // Check of iemand een nieuw kanaal is gejoint
+    if (newState.channel && newState.channel.parent && oldState.channelId !== newState.channelId) { // Check of iemand een nieuw kanaal is gejoint
       const em = orm.em.fork();
 
       const categoryData = getCategoryData(em, newState.channel.parent);
@@ -1472,7 +1473,7 @@ router.onInit = async (client, orm) => {
         }
       } else if ( // Check of iemand een tempChannel is gejoint
         user
-      && newState.channelID !== oldState.channelID
+      && newState.channelId !== oldState.channelId
       ) {
         const tempChannel = await em.findOne(TempChannel, {
           channelId: channel.id,
@@ -1489,8 +1490,8 @@ router.onInit = async (client, orm) => {
 
       await em.flush().catch((err) => {
         if (err instanceof UniqueConstraintViolationException) {
-          if (createdChannel.deletable) createdChannel.delete('Error bij het opslaan in database');
-          if (textChannel.deletable) textChannel.delete('Error bij het opslaan in database');
+          if (createdChannel.deletable) createdChannel.delete();
+          if (textChannel.deletable) textChannel.delete();
         } else {
           throw err;
         }

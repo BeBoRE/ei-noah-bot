@@ -188,9 +188,9 @@ const removeHandler : GuildHandler = async ({
     extraButtons: [
       [
         new MessageButton({
-          label: '❌',
-          customID: 'delete',
           style: 'DANGER',
+          label: '❌',
+          customId: 'delete',
         }),
         () => {
           quotesToRemove.forEach((q) => { menuEm.remove(q); });
@@ -226,8 +226,8 @@ router.use('random', async ({ msg, em, guildUser }) => {
   const reference = msg instanceof Message ? msg.reference : undefined;
   const requestingUser = msg instanceof Message ? msg.author : msg.user;
 
-  if (reference?.messageID) {
-    const toQuote = await msg.channel.messages.fetch(`${BigInt(reference.messageID)}`, { cache: true }).catch(() => null);
+  if (reference?.messageId) {
+    const toQuote = await msg.channel.messages.fetch(`${BigInt(reference.messageId)}`, { cache: true }).catch(() => null);
     if (!toQuote) return 'Ik heb hard gezocht, maar kon het gegeven bericht is niet vinden';
     if (!toQuote.content) return 'Bericht heeft geen inhoud';
 

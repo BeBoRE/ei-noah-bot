@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandSubCommandData,
 } from 'discord.js';
 import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
@@ -137,21 +137,23 @@ async function messageParser(msg : Message | CommandInteraction, em: EntityManag
     let command : CommandInteractionOption | CommandInteraction = msg;
     while (command instanceof CommandInteraction || command.type === 'SUB_COMMAND' || command.type === 'SUB_COMMAND_GROUP') {
       if (command instanceof CommandInteraction) { params.push(command.commandName); } else params.push(command.name);
-      const nextCommand : CommandInteractionOption | undefined = command.options?.first();
+      const nextCommand : CommandInteractionOption | undefined = Array.isArray(command.options) && command.options ? command.options[0] : undefined;
       if (!nextCommand || !(nextCommand.type === 'SUB_COMMAND' || nextCommand.type === 'SUB_COMMAND_GROUP')) break;
       command = nextCommand;
     }
 
-    command?.options?.forEach((option) => {
-      if (option.type === 'STRING' || option.type === 'BOOLEAN' || option.type === 'INTEGER') {
-        if (typeof option.value === 'string') flags.set(option.name, option.value.split(' '));
-        if (option.value !== undefined) flags.set(option.name, [option.value]);
-      }
+    if (Array.isArray(command.options)) {
+      command?.options?.forEach((option) => {
+        if (option.type === 'STRING' || option.type === 'BOOLEAN' || option.type === 'INTEGER') {
+          if (typeof option.value === 'string') flags.set(option.name, option.value.split(' '));
+          if (option.value !== undefined) flags.set(option.name, [option.value]);
+        }
 
-      if (option.channel instanceof Channel) flags.set(option.name, [option.channel]);
-      if (option.user instanceof User) flags.set(option.name, [option.user]);
-      if (option.role instanceof Role) flags.set(option.name, [option.role]);
-    });
+        if (option.channel instanceof Channel) flags.set(option.name, [option.channel]);
+        if (option.user instanceof User) flags.set(option.name, [option.user]);
+        if (option.role instanceof Role) flags.set(option.name, [option.role]);
+      });
+    }
   }
 
   const routeInfo : RouteInfo = new LazyRouteInfo({
@@ -234,12 +236,12 @@ class EiNoah implements IRouter {
     this.orm = orm;
   }
 
-  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
-  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
-  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
   use(route : string, using: Router | BothHandler) : void
-  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type?: HandlerType, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>) : void
-  use(route: string, using: any, type: any = HandlerType.BOTH, commandData?: Omit<ApplicationCommandOptionData, 'name' | 'type'>): void {
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type?: HandlerType, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
+  use(route: string, using: any, type: any = HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>): void {
     this.router.use(route, using, type);
 
     if (using instanceof Router) {
@@ -274,7 +276,7 @@ class EiNoah implements IRouter {
   => void | Promise<void>);
 
   public readonly updateSlashCommands = () => Promise.all([
-    this.client.guilds.cache.array().map((guild) => guild.commands.fetch()
+    this.client.guilds.cache.map((guild) => guild.commands.fetch()
       .then(() => guild.commands.set(this.applicationCommandData))
       .then((commands) => commands))]);
 
@@ -289,7 +291,7 @@ class EiNoah implements IRouter {
       if (interaction.isCommand()) {
         const em = orm.em.fork();
 
-        await interaction.defer();
+        const defer = interaction.deferReply();
         messageParser(interaction, em)
           .then((info) => {
             if (info) { return this.router.handle(info); }
@@ -297,8 +299,9 @@ class EiNoah implements IRouter {
           })
           .then(handlerReturnToMessageOptions)
           .then((options) => Promise.all([options, em.flush()]))
-          .then(([options]) : any => {
+          .then(async ([options]) => {
             if (options) {
+              await defer;
               return interaction.followUp(options);
             }
             return null;
@@ -342,7 +345,8 @@ class EiNoah implements IRouter {
             return;
           }
 
-          msg.channel.startTyping().catch(() => { });
+          msg.channel.sendTyping().catch(() => { });
+
           const em = orm.em.fork();
 
           if (process.env.NODE_ENV !== 'production') console.time(`${msg.id}`);
@@ -360,9 +364,6 @@ class EiNoah implements IRouter {
               return options;
             })
             .then((options) => messageSender(options, msg))
-            .finally(() => {
-              msg.channel.stopTyping();
-            })
             .catch((err) => {
               if (process.env.NODE_ENV !== 'production') console.timeEnd(`${msg.id}`);
               // Dit wordt gecallt wanneer de parsing faalt

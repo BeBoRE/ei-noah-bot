@@ -1,9 +1,10 @@
 import {
+  CollectorOptions,
   CommandInteraction,
   Message,
   MessageActionRow,
   MessageButton,
-  MessageComponentInteractionCollectorOptions,
+  MessageComponentInteraction,
   User as DiscordUser,
 } from 'discord.js';
 
@@ -34,27 +35,27 @@ async function createMenu<T>(
 ) {
   const navigationButtons : MessageButton[] = [
     new MessageButton({
-      customID: '1',
+      customId: '1',
       label: '1',
       style: 'PRIMARY',
       disabled: true,
     }), new MessageButton({
-      customID: '2',
+      customId: '2',
       label: '2',
       style: 'PRIMARY',
       disabled: true,
     }), new MessageButton({
-      customID: '3',
+      customId: '3',
       label: '3',
       style: 'PRIMARY',
       disabled: true,
     }), new MessageButton({
-      customID: '4',
+      customId: '4',
       label: '4',
       style: 'PRIMARY',
       disabled: true,
     }), new MessageButton({
-      customID: '5',
+      customId: '5',
       label: '5',
       style: 'PRIMARY',
       disabled: true,
@@ -62,12 +63,12 @@ async function createMenu<T>(
   ];
 
   const pageLeft = new MessageButton({
-    customID: 'left',
+    customId: 'left',
     label: '◀️',
     style: 'SECONDARY',
   });
   const pageRight = new MessageButton({
-    customID: 'right',
+    customId: 'right',
     label: '▶️',
     style: 'SECONDARY',
   });
@@ -140,8 +141,8 @@ async function createMenu<T>(
   }
 
   // eslint-disable-next-line max-len
-  const filter : MessageComponentInteractionCollectorOptions = { filter: (i) => (navigationButtons.some((e) => e.customID === i.customID) || extraButtons.some((b) => b[0].customID === i.customID) || i.customID === pageLeft.customID || i.customID === pageRight.customID) && i.user.id === owner.id };
-  const collector = message.createMessageComponentInteractionCollector(filter);
+  const filter : CollectorOptions<[MessageComponentInteraction]> = { filter: (i) => (navigationButtons.some((e) => e.customId === i.customId) || extraButtons.some((b) => b[0].customId === i.customId) || i.customId === pageLeft.customId || i.customId === pageRight.customId) && i.user.id === owner.id };
+  const collector = message.createMessageComponentCollector(filter);
 
   const timeout = (() => {
     let to : NodeJS.Timeout;
@@ -159,7 +160,7 @@ async function createMenu<T>(
   timeout('reset');
 
   collector.on('collect', async (interaction) => {
-    const i = navigationButtons.findIndex((e) => interaction.customID === e.customID);
+    const i = navigationButtons.findIndex((e) => interaction.customId === e.customId);
     const item = list[i + page * navigationButtons.length];
 
     if (item && i !== -1) {
@@ -175,7 +176,7 @@ async function createMenu<T>(
       }
     }
 
-    const extraButton = extraButtons.find((eb) => eb[0].customID === interaction.customID);
+    const extraButton = extraButtons.find((eb) => eb[0].customId === interaction.customId);
 
     if (extraButton) {
       const destroyMessage = await extraButton[1]();
@@ -190,9 +191,9 @@ async function createMenu<T>(
       }
     }
 
-    if (interaction.customID === pageLeft.customID || interaction.customID === pageRight.customID) {
-      if (interaction.customID === pageLeft.customID && page > 0) page -= 1;
-      if (interaction.customID === pageRight.customID && page < pages - 1) {
+    if (interaction.customId === pageLeft.customId || interaction.customId === pageRight.customId) {
+      if (interaction.customId === pageLeft.customId && page > 0) page -= 1;
+      if (interaction.customId === pageRight.customId && page < pages - 1) {
         page += 1;
       }
 

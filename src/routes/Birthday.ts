@@ -92,7 +92,7 @@ const showAll : BothHandler = async ({ msg, em }) => {
     })
     .map((du) => `\n${du.username} is geboren op ${moment(users.find((u) => u.id === du.id)?.birthday).locale('nl').format('D MMMM YYYY')}`);
 
-  let color : string | undefined;
+  let color : `#${string}` | undefined;
   if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
     color = msg.channel.guild.me?.displayHexColor;
   }
@@ -134,7 +134,7 @@ const showAgeHandler : BothHandler = async ({ msg, em }) => {
     .map((du) => `\n${du.username} is ${-moment(users.find((u) => u.id === du.id)?.birthday).diff(moment(), 'years')}`)
     .join('\n');
 
-  let color : string | undefined;
+  let color : `#${string}` | undefined;
   if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
     color = msg.channel.guild.me?.displayHexColor;
   }
@@ -175,7 +175,7 @@ router.use('get', async ({
 
   const embed = new MessageEmbed();
 
-  let color : string | undefined;
+  let color : `#${string}` | undefined;
   if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
     color = msg.channel.guild.me?.displayHexColor;
   }
@@ -419,7 +419,7 @@ const checkBday = async (client : Client, em : EntityManager) => {
                   if (!url) {
                     const embed = new MessageEmbed();
 
-                    let color : string | undefined;
+                    let color : `#${string}` | undefined;
                     color = member.guild.me?.displayHexColor;
 
                     if (!color || color === '#000000') color = '#ffcc5f';
@@ -442,7 +442,7 @@ const checkBday = async (client : Client, em : EntityManager) => {
                   gu.birthdayMsg = await msgPromise
                     .then((msg) => {
                       if (msg) {
-                        msg.startThread('Felicitaties', 1440).catch(() => {});
+                        msg.startThread({ name: 'Felicitaties', autoArchiveDuration: 1440 }).catch(() => {});
                         return msg.id;
                       }
 

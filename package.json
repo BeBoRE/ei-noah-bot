@@ -37,7 +37,7 @@
     "cron": "^1.8.2",
     "csv-parse": "^4.12.0",
     "d": "^1.0.1",
-    "discord.js": "^13.0.0-dev.e37ef3af2151e556527ccd8e98ec531bdcc0ed70",
+    "discord.js": "^13.1.0",
     "dotenv": "^8.2.0",
     "emoji-regex": "^9.2.1",
     "moment": "^2.29.0",
@@ -46,6 +46,7 @@
     "pg": "^8.3.3",
     "source-map-support": "^0.5.19",
     "ts-node": "^9.0.0",
+    "tsc": "^2.0.3",
     "typescript": "^4.3.4"
   },
   "devDependencies": {

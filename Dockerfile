@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM node:current-alpine
 WORKDIR /usr/src/app
 
 RUN apk --no-cache --virtual .build-deps add \
