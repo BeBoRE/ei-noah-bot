@@ -2,7 +2,7 @@ FROM node:current-alpine
 WORKDIR /usr/src/app
 
 RUN apk --no-cache --virtual .build-deps add \
-        python \
+        python3 \
         make \
         g++ \
     && apk --no-cache --virtual .canvas-build-deps add \
