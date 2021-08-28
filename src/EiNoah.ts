@@ -137,7 +137,7 @@ async function messageParser(msg : Message | CommandInteraction, em: EntityManag
     let command : CommandInteractionOption | CommandInteraction = msg;
     while (command instanceof CommandInteraction || command.type === 'SUB_COMMAND' || command.type === 'SUB_COMMAND_GROUP') {
       if (command instanceof CommandInteraction) { params.push(command.commandName); } else params.push(command.name);
-      const nextCommand : CommandInteractionOption | undefined = Array.isArray(command.options) && command.options ? command.options[0] : undefined;
+      const nextCommand : CommandInteractionOption | undefined = Array.isArray(command.options) ? command.options[0] : command.options?.data[0];
       if (!nextCommand || !(nextCommand.type === 'SUB_COMMAND' || nextCommand.type === 'SUB_COMMAND_GROUP')) break;
       command = nextCommand;
     }
