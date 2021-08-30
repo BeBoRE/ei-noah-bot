@@ -380,7 +380,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // TODO: Deze functie aanpakken
-// Bug: Announcement wordt alleen gegeven wanneer de user met ei-noah heeft interact
+// Bug: Announcement wordt alleen gegeven wanneer de user met ei-noah heeft interact (in die guild)
 // Bug: Announcement wordt alleen gegeven wanneer de server een bday-rol had ingesteld (moet niet verplicht zijn)
 // Refactor: If in if in if in if in if
 // Refactor: Iets meer van async gebruikmaken
@@ -397,9 +397,10 @@ const checkBday = async (client : Client, em : EntityManager) => {
     const user = users.find((u) => u.id === du.id);
     const discBday = moment(user?.birthday).locale('nl').format('DD MMMM');
     const discBdayAge = moment(user?.birthday).locale('nl').format('YYYY');
+    const isBirthday = today === discBday;
 
     if (user) {
-      if (today === discBday) {
+      if (isBirthday) {
         const age = parseInt(todayAge, 10) - parseInt(discBdayAge, 10);
         console.log(`${du.username} is vandaag jarig`);
 
@@ -456,24 +457,28 @@ const checkBday = async (client : Client, em : EntityManager) => {
         }));
       } else {
         await Promise.all(user.guildUsers.getItems().map(async (gu) => {
-          if (gu.guild.birthdayChannel) {
-            const bdayChannel = await client.channels.fetch(`${BigInt(gu.guild.birthdayChannel)}`, { cache: true }).catch(() => {});
-            if (bdayChannel instanceof TextChannel && gu.guild.birthdayRole) {
-              const bdayRole = await bdayChannel.guild.roles.fetch(`${BigInt(gu.guild.birthdayRole)}`, { cache: true }).catch(() => {});
-              if (bdayRole instanceof Role) {
-                const member = await bdayChannel.guild.members.fetch({ user: du, cache: true }).catch(() => {});
+          const [guild, channel] = await Promise.all([
+            client.guilds.fetch(gu.guild.id).catch(() => null),
+            gu.guild.birthdayChannel ? client.channels.fetch(gu.guild.birthdayChannel).catch(() => null) : Promise.resolve(null),
+          ]);
 
-                if (gu.birthdayMsg) {
-                  const bdayMsg = await bdayChannel.messages.fetch(`${BigInt(gu.birthdayMsg)}`).catch(() => null);
+          if (guild) {
+            const [member, role] = await Promise.all([
+              guild.members.fetch({ user: gu.user.id, cache: true }).catch(() => null),
+              gu.guild.birthdayRole ? guild.roles.fetch(gu.guild.birthdayRole, { cache: true }).catch(() => null) : Promise.resolve(null),
+            ]);
 
-                  if (bdayMsg && bdayMsg.deletable) bdayMsg.delete().catch(() => {});
-                  // eslint-disable-next-line no-param-reassign
-                  gu.birthdayMsg = undefined;
-                }
-
-                if (member && member.roles.cache.has(bdayRole.id)) member.roles.remove(bdayRole).catch(() => console.log('Kon rol niet verwijderen'));
-              }
+            if (member && role && member.roles.resolve(role)) {
+              member.roles.remove(role).catch(console.error);
             }
+          }
+
+          if (channel && channel.isText() && gu.birthdayMsg) {
+            const bdayMsg = await channel.messages.fetch(gu.birthdayMsg, { cache: true }).catch(() => null);
+
+            if (bdayMsg && bdayMsg.deletable) bdayMsg.delete().catch(() => {});
+            // eslint-disable-next-line no-param-reassign
+            gu.birthdayMsg = undefined;
           }
         }));
       }
