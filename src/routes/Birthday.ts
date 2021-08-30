@@ -1,9 +1,12 @@
 import moment from 'moment';
 import { CronJob } from 'cron';
 import {
+  BaseGuildTextChannel,
   Client,
+  GuildMember,
   MessageAttachment,
   MessageEmbed,
+  MessageOptions,
   NewsChannel,
   Permissions, Role, TextChannel,
   User as DiscordUser,
@@ -17,31 +20,30 @@ import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router
 const router = new Router('Laat Ei-Noah je verjaardag bijhouden of vraag die van iemand anders op');
 
 const setRouter : BothHandler = async ({ user, params, flags }) => {
-  const [rawDate] = flags.get('date') || params;
+  const input = (flags.get('date') || params)
+    .filter((item) : item is string => typeof (item) === 'string')
+    .join(' ');
 
-  if (typeof (rawDate) !== 'string') {
-    if (!(await user).birthday) return 'Voeg je verjaardag toe door DD/MM/YYYY als argument te gegeven';
-    return 'Verander je verjaardag door DD/MM/YYYY als argument te geven';
+  if (!input.length) {
+    if (!(await user).birthday) return 'Voeg je verjaardag toe door een datum (zoals 18 november 1999) als argument te gegeven';
+    return 'Verander je verjaardag door een datum (zoals 18 november 1999) als argument te geven';
   }
 
-  const args = rawDate.split('/');
+  const birthday = moment(input, ['DD MM YYYY', 'DD MMMM YYYY'], 'nl');
 
-  const birth = new Date(parseInt(args[2], 10), parseInt(args[1], 10) - 1, parseInt(args[0], 10));
-  const birth1 = moment(birth);
+  if (!birthday.isValid()) { return 'Leuk geprobeerd'; }
 
-  if (!birth1.isValid()) { return 'Leuk geprobeerd'; }
-
-  if (birth1.isAfter(new Date())) {
+  if (birthday.isAfter(new Date())) {
     return 'Je geboorte kan niet in de toekomst zijn';
   }
 
   // eslint-disable-next-line no-param-reassign
-  (await user).birthday = birth1.toDate();
+  (await user).birthday = birthday.toDate();
 
   if ((await user).birthday != null) {
-    return `Je verjaardag is gewijzigd naar: ${birth1.locale('nl').format('D MMMM YYYY')}`;
+    return `Je verjaardag is gewijzigd naar: ${birthday.locale('nl').format('D MMMM YYYY')}`;
   }
-  return `Je verjaardag is toegevoegd: ${birth1.locale('nl').format('D MMMM YYYY')}`;
+  return `Je verjaardag is toegevoegd: ${birthday.locale('nl').format('D MMMM YYYY')}`;
 };
 
 router.use('set', setRouter, HandlerType.BOTH, {
@@ -49,7 +51,7 @@ router.use('set', setRouter, HandlerType.BOTH, {
   options: [
     {
       name: 'date',
-      description: 'Je geboorte datum (DD/MM/YYYY)',
+      description: 'Je geboorte datum',
       type: 'STRING',
       required: true,
     },
@@ -60,7 +62,7 @@ router.use('change', setRouter);
 
 const helpHandler : BothHandler = async () => [
   '**Krijg elke ochtend een melding als iemand jarig is**',
-  '`/bday set <DD/MM/YYYY>`: Stel je geboortedatum in',
+  '`/bday set <datum>`: Stel je geboortedatum in',
   '`/bday all`: Laat iedereens geboortedatum zien',
   '`/bday ages`: Laat iedereens leeftijd zien',
   '`/bday get <@user>`: Laat de geboortedatum en leeftijd van een user zien',
@@ -379,6 +381,44 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChannel, age : number) : Promise<MessageOptions | null> => {
+  const url = member.user.avatarURL({ size: 256, dynamic: false, format: 'png' });
+  const permissionMissingText = "Voor een uniek verjaardag's plaatje, sta mij toe om in dit kanaal afbeeldingen weer te geven";
+
+  const permissions = member.client.user ? channel.permissionsFor(member.client.user) : null;
+
+  if (!member.client.user || !permissions || !permissions.has('SEND_MESSAGES', true)) { return null; }
+
+  if (url && permissions.has('ATTACH_FILES', true)) {
+    return {
+      content: member.client.user?.id !== member.user.id ? `Gefeliciteerd met jouw verjaardag ${member.user}!` : '@everyone @everyone @everyone Vier mijn verjaardag mijn onderlingen',
+      files: [await generateImage(url, age.toString())],
+    };
+  }
+
+  if (permissions.has('EMBED_LINKS', true)) {
+    const embed = new MessageEmbed();
+
+    let color : `#${string}` | undefined;
+    color = member.guild.me?.displayHexColor;
+
+    if (!color || color === '#000000') color = '#ffcc5f';
+
+    embed.setColor(color);
+
+    // eslint-disable-next-line max-len
+    embed.setAuthor(member.nickname || member.user.username, member.user.avatarURL() || undefined);
+    embed.description = `Is vandaag ${age} geworden! Gefeliciteerd`;
+    embed.setThumbnail('http://clipart-library.com/images/kcKnBz4Ai.jpg');
+
+    embed.setFooter(permissionMissingText);
+
+    return { embeds: [embed] };
+  }
+
+  return { content: `${member.displayName} is vandaag ${age} geworden! Gefeliciteerd!!\n> ${permissionMissingText}` };
+};
+
 // TODO: Deze functie aanpakken
 // Bug: Announcement wordt alleen gegeven wanneer de user met ei-noah heeft interact (in die guild)
 // Bug: Announcement wordt alleen gegeven wanneer de server een bday-rol had ingesteld (moet niet verplicht zijn)
@@ -386,8 +426,7 @@ if (process.env.NODE_ENV !== 'production') {
 // Refactor: Iets meer van async gebruikmaken
 const checkBday = async (client : Client, em : EntityManager) => {
   const today = moment().startOf('day').locale('nl').format('DD MMMM');
-  const todayAge = moment().startOf('day').locale('nl').format('YYYY');
-  console.log('Checking bday\'s');
+  const currentYear = (new Date()).getFullYear();
 
   const users = await em.find(User, { $not: { birthday: null } }, ['guildUsers', 'guildUsers.guild']);
   const discUsers = (await Promise.all(users.map((u) => client.users.fetch(`${BigInt(u.id)}`, { cache: true }).catch(() => null))))
@@ -395,105 +434,101 @@ const checkBday = async (client : Client, em : EntityManager) => {
 
   await Promise.all(discUsers.map(async (du) => {
     const user = users.find((u) => u.id === du.id);
-    const discBday = moment(user?.birthday).locale('nl').format('DD MMMM');
-    const discBdayAge = moment(user?.birthday).locale('nl').format('YYYY');
-    const isBirthday = today === discBday;
-
     if (user) {
-      if (isBirthday) {
-        const age = parseInt(todayAge, 10) - parseInt(discBdayAge, 10);
-        console.log(`${du.username} is vandaag jarig`);
+      const discBday = moment(user?.birthday).locale('nl').format('DD MMMM');
+      const birthYear = user?.birthday?.getFullYear();
+      const isBirthday = today === discBday;
+      const age = birthYear ? currentYear - birthYear : 0;
 
-        await Promise.all(user.guildUsers.getItems().map(async (gu) => {
-          if (gu.guild.birthdayChannel) {
-            const bdayChannel = await client.channels.fetch(`${BigInt(gu.guild.birthdayChannel)}`, { cache: true }).catch(() => null);
-            if (bdayChannel instanceof TextChannel && gu.guild.birthdayRole) {
-              const bdayRole = await bdayChannel.guild.roles.fetch(`${BigInt(gu.guild.birthdayRole)}`, { cache: true }).catch(() => null);
-              if (bdayRole instanceof Role) {
-                const member = await bdayChannel.guild.members.fetch({ user: du, cache: true }).catch(() => null);
-                if (member && !member.roles.cache.has(bdayRole.id)) {
-                  member.roles.add(bdayRole).catch(() => console.log('Kon geen rol geven'));
+      await Promise.all(user.guildUsers.getItems().map(async (gu) => {
+        const [guild, channel] = await Promise.all([
+          client.guilds.fetch({ guild: gu.guild.id, cache: true }).catch(() => null),
+          gu.guild.birthdayChannel ? client.channels.fetch(gu.guild.birthdayChannel, { cache: true }).catch(() => null) : Promise.resolve(null),
+        ]);
 
-                  const url = du.avatarURL({ size: 256, dynamic: false, format: 'png' });
-                  let msgPromise;
-
-                  if (!url) {
-                    const embed = new MessageEmbed();
-
-                    let color : `#${string}` | undefined;
-                    color = member.guild.me?.displayHexColor;
-
-                    if (!color || color === '#000000') color = '#ffcc5f';
-
-                    embed.setColor(color);
-
-                    // eslint-disable-next-line max-len
-                    embed.setAuthor(member.nickname || member.user.username, member.user.avatarURL() || undefined);
-                    embed.description = `Is vandaag ${age} geworden!`;
-                    embed.setThumbnail('http://clipart-library.com/images/kcKnBz4Ai.jpg');
-
-                    msgPromise = bdayChannel.send({ embeds: [embed] });
-                  } else {
-                    const content = client.user?.id !== user.id ? `Gefeliciteerd met jouw verjaardag ${du}!` : '@everyone @everyone @everyone Vier mijn verjaardag mijn onderlingen';
-
-                    msgPromise = bdayChannel.send({ content, files: [await generateImage(url, age.toString())] });
-                  }
-
-                  // eslint-disable-next-line no-param-reassign
-                  gu.birthdayMsg = await msgPromise
-                    .then((msg) => {
-                      if (msg) {
-                        msg.startThread({ name: 'Felicitaties', autoArchiveDuration: 1440 }).catch(() => {});
-                        return msg.id;
-                      }
-
-                      return undefined;
-                    })
-                    .catch(() => undefined);
-                }
-              }
-            }
-          }
-        }));
-      } else {
-        await Promise.all(user.guildUsers.getItems().map(async (gu) => {
-          const [guild, channel] = await Promise.all([
-            client.guilds.fetch(gu.guild.id).catch(() => null),
-            gu.guild.birthdayChannel ? client.channels.fetch(gu.guild.birthdayChannel).catch(() => null) : Promise.resolve(null),
+        if (guild) {
+          const [member, role] = await Promise.all([
+            guild.members.fetch({ user: gu.user.id, cache: true }).catch(() => null),
+            gu.guild.birthdayRole ? guild.roles.fetch(gu.guild.birthdayRole, { cache: true }).catch(() => null) : Promise.resolve(null),
           ]);
 
-          if (guild) {
-            const [member, role] = await Promise.all([
-              guild.members.fetch({ user: gu.user.id, cache: true }).catch(() => null),
-              gu.guild.birthdayRole ? guild.roles.fetch(gu.guild.birthdayRole, { cache: true }).catch(() => null) : Promise.resolve(null),
-            ]);
-
-            if (member && role && member.roles.resolve(role)) {
+          // Give or remove birthday role
+          if (member && role) {
+            if (isBirthday && !member.roles.cache.has(role.id)) {
+              member.roles.add(role).catch(console.error);
+            } else if (!isBirthday && member.roles.cache.has(role.id)) {
               member.roles.remove(role).catch(console.error);
             }
           }
 
-          if (channel && channel.isText() && gu.birthdayMsg) {
-            const bdayMsg = await channel.messages.fetch(gu.birthdayMsg, { cache: true }).catch(() => null);
+          if (channel && (channel instanceof TextChannel || channel instanceof NewsChannel)) {
+            const birthdayMessage = gu.birthdayMsg ? await channel.messages.fetch(gu.birthdayMsg, { cache: true }).catch(() => null) : null;
 
-            if (bdayMsg && bdayMsg.deletable) bdayMsg.delete().catch(() => {});
-            // eslint-disable-next-line no-param-reassign
-            gu.birthdayMsg = undefined;
+            // Post the birthday message when it's a member's birthday,
+            // when there is already a birthday message only post a new message if the last one can't be deleted
+            if (member && isBirthday && !birthdayMessage) {
+              const options = await getMsgOptions(member, channel, age);
+
+              if (options) {
+                // eslint-disable-next-line no-param-reassign
+                gu.birthdayMsg = await channel.send(options)
+                  .then((msg) => {
+                    if (msg) {
+                      const overwrites = client.user && channel.permissionsFor(client.user);
+
+                      if (overwrites && (overwrites.has('USE_PUBLIC_THREADS') || overwrites.has('USE_PRIVATE_THREADS'))) {
+                        msg.startThread({ name: 'Felicitaties', autoArchiveDuration: 1440 }).catch(() => {});
+                      }
+                      return msg.id;
+                    }
+
+                    return undefined;
+                  })
+                  .catch(() => undefined);
+              } else {
+                const owner = await guild.fetchOwner({ cache: true });
+                const url = member.user.avatarURL({ dynamic: false, size: 256, format: 'png' });
+
+                owner.send({
+                  content: `Om een verjaardag announcement te sturen in ${channel} moet ik de *Send Messages* permission hebben\n> Voor een uniek verjaardag's plaatje kan je ook *Attach Files* aanzetten${url ? ', die ziet er zo uit' : ''}`,
+                  files: url ? [await generateImage(url, age.toString())] : undefined,
+                }).catch(() => {});
+              }
+            // If there is a birthday message delete it if the message is deletable and when it's not the members birthday or if the member left the server
+            } else if (birthdayMessage && !(isBirthday && member)) {
+              birthdayMessage.delete().catch(() => {});
+              // eslint-disable-next-line no-param-reassign
+              gu.birthdayMsg = undefined;
+            }
           }
-        }));
-      }
+        }
+      }));
     }
   }));
-
-  await em.flush();
 };
+
+if (process.env.NODE_ENV !== 'production') {
+  router.use('check', async ({ em, msg }) => {
+    const { client } = msg;
+    await checkBday(client, em);
+
+    return 'Ohko';
+  },
+  HandlerType.BOTH, {
+    description: 'Check all birthdays',
+  });
+}
 
 router.onInit = async (client, orm) => {
   const offset = new Date().getTimezoneOffset();
   console.log(`Offset in minutes: ${offset}`);
 
   await checkBday(client, orm.em);
-  const reportCron = new CronJob('5 0 0 * * *', async () => { await checkBday(client, orm.em.fork()); });
+  const reportCron = new CronJob('5 0 0 * * *', async () => {
+    const em = orm.em.fork();
+    await checkBday(client, em);
+    await em.flush();
+  });
 
   reportCron.start();
 };

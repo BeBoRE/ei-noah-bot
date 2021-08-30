@@ -287,7 +287,7 @@ class EiNoah implements IRouter {
       console.log('Client online');
     });
 
-    this.client.on('interaction', async (interaction) => {
+    this.client.on('interactionCreate', async (interaction) => {
       if (interaction.isCommand()) {
         const em = orm.em.fork();
 
@@ -320,7 +320,7 @@ class EiNoah implements IRouter {
       }
     });
 
-    this.client.on('message', (msg) => {
+    this.client.on('messageCreate', (msg) => {
       if (msg.author !== this.client.user && msg.content) {
         const splitted = msg.content.split(' ').filter((param : string) => param);
 
