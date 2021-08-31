@@ -15,6 +15,7 @@ import Counter from './routes/Counter';
 import Birthday from './routes/Birthday';
 import QuoteRouter from './routes/QuoteRouter';
 import CoronaRouter from './routes/CoronaRouter';
+import SimulatorRouter from './routes/Simulator';
 
 dotenv.config();
 
@@ -331,6 +332,8 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
   }
 
   eiNoah.use('quote', QuoteRouter);
+
+  eiNoah.use('simulate', SimulatorRouter);
 
   eiNoah.use('help', () => [
     '**Alle Commando\'s**',
