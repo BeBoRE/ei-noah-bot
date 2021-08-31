@@ -13,6 +13,8 @@ import {
   MessageAttachment,
   CommandInteraction,
   ApplicationCommandSubCommandData,
+  InteractionReplyOptions,
+  ApplicationCommandType,
 } from 'discord.js';
 import {
   EntityManager, MikroORM, IDatabaseDriver, Connection,
@@ -20,6 +22,7 @@ import {
 import { Category } from '../entity/Category';
 import { GuildUser } from '../entity/GuildUser';
 import { User } from '../entity/User';
+import ContextMenuInfo from './ContextMenuInfo';
 
 export interface RouteInfo {
   msg: Message | CommandInteraction
@@ -105,6 +108,12 @@ export interface IRouter {
   => void | Promise<void>)
 }
 
+export type ContextMenuHandler = (info : ContextMenuInfo) => InteractionReplyOptions | string | Promise<InteractionReplyOptions | string>;
+export interface ContextMenuHandlerInfo {
+  type: Exclude<ApplicationCommandType, 'CHAT_INPUT'>
+  handler : ContextMenuHandler
+}
+
 export default class Router implements IRouter {
   public readonly description : string;
 
@@ -123,6 +132,8 @@ export default class Router implements IRouter {
 
   public commandDataList : Map<string, Omit<ApplicationCommandSubCommandData, 'name'>> = new Map();
 
+  public contextHandlers : Map<string, ContextMenuHandlerInfo> = new Map();
+
   // Met use geef je aan welk commando waarheen gaat
   use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
   use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
@@ -130,17 +141,25 @@ export default class Router implements IRouter {
   use(route : string, using: Router | BothHandler) : void
   use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type: HandlerType = HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void {
     const newUsing = <Router | BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator>using;
-    if (typeof route === 'string') {
-      if (this.routes[route]) throw new Error('This Route Already Exists');
 
-      if (!(newUsing instanceof Router)) {
-        newUsing.type = type;
-      }
+    if (this.routes[route]) throw new Error('This Route Already Exists');
 
-      this.routes[route.toUpperCase()] = newUsing;
-
-      if (commandData) this.commandDataList.set(route.toLowerCase(), { ...commandData, type: 'SUB_COMMAND' });
+    if (!(newUsing instanceof Router)) {
+      newUsing.type = type;
     }
+
+    this.routes[route.toUpperCase()] = newUsing;
+
+    if (commandData) this.commandDataList.set(route.toLowerCase(), { ...commandData, type: 'SUB_COMMAND' });
+  }
+
+  public useContext(name : string, type : Exclude<ApplicationCommandType, 'CHAT_INPUT'>, handler : ContextMenuHandler) : void {
+    if (this.contextHandlers.has(name)) throw new Error('There is already a context menu handler with that name');
+
+    this.contextHandlers.set(name, {
+      type,
+      handler,
+    });
   }
 
   // INTERNAL

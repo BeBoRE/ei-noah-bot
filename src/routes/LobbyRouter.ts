@@ -204,12 +204,14 @@ function getTextPermissionOverwrites(voice : VoiceChannel) : OverwriteData[] {
       return {
         id: overwrite.id,
         deny: toDenyText(getChannelType(voice)),
+        type: overwrite.type,
       };
     }
 
     return {
       allow: [Permissions.FLAGS.SEND_MESSAGES, Permissions.FLAGS.VIEW_CHANNEL, Permissions.FLAGS.ADD_REACTIONS, Permissions.FLAGS.READ_MESSAGE_HISTORY],
       id: overwrite.id,
+      type: overwrite.type,
     };
   });
 }
@@ -242,7 +244,7 @@ async function createTextChannel(
 }
 
 function updateTextChannel(voice : VoiceChannel, text : TextChannel) {
-  return text.edit({ permissionOverwrites: getTextPermissionOverwrites(voice) });
+  return text.permissionOverwrites.set(getTextPermissionOverwrites(voice));
 }
 
 const createCreateChannel = (type : ChannelType, category : CategoryChannel) => {
@@ -286,14 +288,21 @@ const createCreateChannels = async (category : Category, client : Client) => {
   }
 };
 
-const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChannel, owner : GuildUser, client : Client) : string => {
+interface AddUsersResponse {
+  allowedUsersOrRoles : Array<DiscordUser | Role>,
+  alreadyAllowed : Array<DiscordUser | Role>,
+  alreadyAllowedMessage: string,
+  alreadyInMessage: string,
+  text: string
+}
+const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChannel, owner : GuildUser, client : Client) : AddUsersResponse => {
   const allowedUsers : Array<DiscordUser | Role> = [];
   const alreadyAllowedUsers : Array<DiscordUser | Role> = [];
 
-  const overwritePromise = toAllow.map((uOrR) => {
+  toAllow.forEach((uOrR) => {
     if (activeChannel.permissionOverwrites.cache.some((o) => uOrR.id === o.id)) {
       alreadyAllowedUsers.push(uOrR);
-      return null;
+      return;
     }
     allowedUsers.push(uOrR);
 
@@ -303,18 +312,22 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
       activeChannel.members
         .each((member) => { if (uOrR.members.has(member.id)) member.voice.setMute(false); });
     }
+  });
 
-    return activeChannel.permissionOverwrites.edit(uOrR, {
-      CONNECT: true,
-      SPEAK: true,
-    });
-  }).filter((value) : value is Promise<VoiceChannel> => !!value);
+  const newOverwrites : OverwriteResolvable[] = [...activeChannel.permissionOverwrites.cache.values(), ...allowedUsers.map((userOrRole) : OverwriteResolvable => ({
+    id: userOrRole.id,
+    allow: [
+      'SPEAK',
+      'CONNECT',
+      'VIEW_CHANNEL',
+    ],
+  }))];
 
-  Promise.all(overwritePromise)
-    .then(async () => {
+  activeChannel.permissionOverwrites.set(newOverwrites)
+    .then(async (newChannel) => {
       if (owner.tempChannel) {
         const textChannel = await activeTempText(client, owner.tempChannel);
-        if (textChannel) { updateTextChannel(activeChannel, textChannel); }
+        if (textChannel && newChannel instanceof VoiceChannel) { updateTextChannel(newChannel, textChannel); }
       }
     })
     .catch(() => console.log('Overwrite permission error'));
@@ -327,7 +340,13 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
   if (!alreadyAllowedUsers.length) alreadyInMessage = '';
   else alreadyInMessage = `${alreadyAllowedUsers.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} ${alreadyAllowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? 'konden' : 'kon'} al naar binnen`;
 
-  return `${allowedUsersMessage}\n${alreadyInMessage}`;
+  return {
+    allowedUsersOrRoles: allowedUsers,
+    alreadyAllowed: alreadyAllowedUsers,
+    alreadyAllowedMessage: allowedUsersMessage,
+    alreadyInMessage,
+    text: `${allowedUsersMessage}\n${alreadyInMessage}`,
+  };
 };
 
 router.use('add', async ({
@@ -360,7 +379,7 @@ router.use('add', async ({
 
   if (gu.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
 
-  return addUsers(userOrRole, activeChannel, await guildUser, msg.client);
+  return addUsers(userOrRole, activeChannel, await guildUser, msg.client).text;
 }, HandlerType.GUILD, {
   description: 'Voeg een gebruiker of rol toe aan je lobby',
   options: [{
@@ -429,6 +448,30 @@ router.use('add', async ({
     description: 'Persoon of rol die je toe wil voegen',
     type: 'MENTIONABLE',
   }],
+});
+
+router.useContext('Toevoegen aan lobby', 'USER', async ({ interaction, guildUser, em }) => {
+  const gu = await guildUser;
+  if (!gu) return 'Commando kan alleen op een server gebruikt worden';
+
+  const activeChannel = gu.tempChannel && await activeTempChannel(interaction.client, em, gu.tempChannel);
+  if (!gu.tempChannel || !activeChannel) return 'Dit kan alleen als je lobby hebt';
+
+  const userToAdd = interaction.options.getUser('user', true);
+
+  const addResponse = addUsers([userToAdd], activeChannel, gu, interaction.client);
+
+  if (interaction.channel?.id !== gu.tempChannel.textChannelId) {
+    const textChannel = await activeTempText(interaction.client, gu.tempChannel);
+
+    if (addResponse.allowedUsersOrRoles.length && interaction.channel?.id !== textChannel?.id && interaction.client.user && textChannel?.permissionsFor(interaction.client.user)?.has('SEND_MESSAGES')) {
+      textChannel.send(addResponse.alreadyAllowedMessage).catch(() => {});
+    }
+
+    return { ephemeral: true, content: addResponse.text };
+  }
+
+  return { ephemeral: !addResponse.allowedUsersOrRoles.length, content: addResponse.text };
 });
 
 const removeFromLobby = (
@@ -1245,7 +1288,7 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
     const collector = msg.createMessageComponentCollector();
     collector.on('collect', async (interaction) => {
       if (interaction.user.id === tempChannel.guildUser.user.id && interaction.customId === 'add') {
-        interaction.update({ content: addUsers([user], activeChannel, tempChannel.guildUser, client), components: [] });
+        interaction.update({ content: addUsers([user], activeChannel, tempChannel.guildUser, client).text, components: [] });
         return;
       }
 

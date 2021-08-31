@@ -3,6 +3,7 @@ import { CronJob } from 'cron';
 import {
   BaseGuildTextChannel,
   Client,
+  Guild,
   GuildMember,
   MessageAttachment,
   MessageEmbed,
@@ -162,6 +163,21 @@ router.use('ages', showAgeHandler, HandlerType.BOTH, {
   description: 'Laat alle leeftijden zien',
 });
 
+const getBdayEmbed = (user : DiscordUser, dbUser : User, guild : Guild | null) => {
+  const embed = new MessageEmbed();
+
+  let color : `#${string}` | undefined = guild?.me?.displayHexColor;
+
+  if (!color || color === '#000000') color = '#ffcc5f';
+
+  embed.setColor(color);
+  embed.setAuthor(user.username, user.avatarURL() || undefined);
+
+  embed.description = dbUser.birthday ? `Geboren op ${moment(dbUser.birthday).format('D MMMM YYYY')} en is ${moment().diff(moment(dbUser.birthday), 'year')} jaar oud` : `${user.username} heeft geen verjaardag, dit is zo zielig`;
+
+  return embed;
+};
+
 router.use('get', async ({
   params, em, msg, flags,
 }) => {
@@ -173,22 +189,7 @@ router.use('get', async ({
 
   const dbUser = await getUserData(em, user);
 
-  if (!dbUser.birthday) { return `${user.username} heeft geen verjaardag, dit is zo zielig`; }
-
-  const embed = new MessageEmbed();
-
-  let color : `#${string}` | undefined;
-  if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
-    color = msg.channel.guild.me?.displayHexColor;
-  }
-
-  if (!color || color === '#000000') color = '#ffcc5f';
-
-  embed.setColor(color);
-  embed.setAuthor(user.username, user.avatarURL() || undefined);
-  embed.description = `Geboren op ${moment(dbUser.birthday).format('D MMMM YYYY')} en is ${moment().diff(moment(dbUser.birthday), 'year')} jaar oud`;
-
-  return embed;
+  return getBdayEmbed(user, dbUser, msg.guild);
 }, HandlerType.BOTH, {
   description: 'Vraag de verjaardag en leeftijd van iemand op',
   options: [{
@@ -197,6 +198,18 @@ router.use('get', async ({
     type: 'USER',
     required: true,
   }],
+});
+
+router.useContext('Zie Verjaardag', 'USER', async ({ interaction, em }) => {
+  const user = interaction.options.getUser('user', true);
+
+  if (!(user instanceof DiscordUser)) {
+    return 'Geef een gebruiker als argument';
+  }
+
+  const dbUser = await getUserData(em, user);
+
+  return { embeds: [getBdayEmbed(user, dbUser, interaction.guild)], ephemeral: true };
 });
 
 router.use('delete', async ({ user }) => {

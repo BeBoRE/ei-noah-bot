@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import {
-  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel, NewsChannel, Channel,
+  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel, NewsChannel, Channel, ThreadChannel,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { fork } from 'child_process';
@@ -77,6 +77,60 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
   const knife = loadImage('./src/images/knife.png');
   const blood = loadImage('./src/images/blood.png');
 
+  const generateStab = async (url : string, top ?: string, bottom ?: string) => {
+    const canvas = createCanvas(800, 600);
+    const ctx = canvas.getContext('2d');
+
+    const avatar = await loadImage(url);
+    const avatarWidth = 256;
+    const avatarHeight = avatarWidth;
+
+    ctx.drawImage(await eiImage, 0, Math.abs((await eiImage).height - canvas.height) / 2);
+
+    const x = 500;
+    const y = Math.abs(avatarWidth - canvas.height) / 2;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x + avatarWidth / 2, y + avatarHeight / 2, avatarHeight / 2, 0, Math.PI * 2, true);
+    ctx.closePath();
+    ctx.clip();
+
+    ctx.drawImage(avatar, x + 0, y + 0, avatarWidth, avatarHeight);
+    ctx.closePath();
+    ctx.restore();
+
+    ctx.drawImage(await knife, 0, 0, 600, 760, 200, 70, 400, 500);
+    ctx.drawImage(await blood, 450, 220, 300, 300);
+
+    const fontSize = 70;
+
+    ctx.font = `${fontSize}px Calibri`;
+    ctx.fillStyle = '#FFFFFF';
+
+    if (top) {
+      const lines = getLines(ctx, top, 800);
+
+      await Promise.all(lines.map((line, index) => {
+        const { width } = measureText(ctx, line);
+        return Promise.all([
+          fillTextWithTwemoji(ctx, line, Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (index * fontSize)),
+          strokeTextWithTwemoji(ctx, line, Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (index * fontSize)),
+        ]);
+      }));
+    }
+
+    if (bottom) {
+      const bottomX = Math.abs(measureText(ctx, bottom).width - canvas.width) / 2;
+      const bottomY = 540;
+
+      await fillTextWithTwemoji(ctx, bottom, bottomX, bottomY);
+      await strokeTextWithTwemoji(ctx, bottom, bottomX, bottomY);
+    }
+
+    return new MessageAttachment(canvas.createPNGStream());
+  };
+
   // Hier is een 'Handler' als argument in principe is dit een eindpunt van de routing.
   // Dit is waar berichten worden afgehandeld
   const stabHandler : BothHandler = async ({ params, msg, flags }) => {
@@ -89,62 +143,32 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
       const message : string = mentionsToText(flags.get('top') || params);
 
       if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
-        const canvas = createCanvas(800, 600);
-        const ctx = canvas.getContext('2d');
-
-        const avatar = await loadImage(url);
-
-        ctx.drawImage(await eiImage, 0, Math.abs((await eiImage).height - canvas.height) / 2);
-
-        const x = 500;
-        const y = Math.abs(avatar.height - canvas.height) / 2;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(x + avatar.width / 2, y + avatar.height / 2, avatar.height / 2, 0, Math.PI * 2, true);
-        ctx.closePath();
-        ctx.clip();
-
-        ctx.drawImage(avatar, x + 0, y + 0, avatar.width, avatar.height);
-        ctx.closePath();
-        ctx.restore();
-
-        ctx.drawImage(await knife, 0, 0, 600, 760, 200, 70, 400, 500);
-        ctx.drawImage(await blood, 450, 220, 300, 300);
-
-        const fontSize = 70;
-
-        ctx.font = `${fontSize}px Calibri`;
-        ctx.fillStyle = '#FFFFFF';
-
-        const lines = getLines(ctx, message, 800);
-
-        await Promise.all(lines.map((line, index) => {
-          const { width } = measureText(ctx, line);
-          return Promise.all([
-            fillTextWithTwemoji(ctx, line, Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (index * fontSize)),
-            strokeTextWithTwemoji(ctx, line, Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (index * fontSize)),
-          ]);
-        }));
-
-        const bottom = flags.get('b') || flags.get('bottom') || flags.get('bodem');
-        if (bottom) {
-          let bottomText = mentionsToText(bottom);
-          if (bottomText === '') bottomText = 'BODEM TEKST';
-          const bottomX = Math.abs(measureText(ctx, bottomText).width - canvas.width) / 2;
-          const bottomY = 540;
-
-          await fillTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
-          await strokeTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
-        }
-
-        return new MessageAttachment(canvas.createPNGStream());
+        const bottom = flags.get('bottom') || flags.get('b');
+        return generateStab(url, message, bottom ? mentionsToText(bottom) : undefined);
       }
 
       return `Met plezier, kom hier <@!${user.id}>!`;
     }
     return 'Lekker';
   };
+
+  eiNoah.useContext('Steek', 'USER', async ({ interaction }) => {
+    const user = interaction.options.getUser('user', true);
+
+    const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
+
+    if (url) {
+      if (
+        interaction.channel instanceof DMChannel
+        || ((interaction.channel instanceof TextChannel || interaction.channel instanceof ThreadChannel || interaction.channel instanceof NewsChannel)
+        && interaction.client.user && interaction.channel.permissionsFor(interaction.client.user)?.has('ATTACH_FILES', true) && interaction.channel.permissionsFor(interaction.client.user)?.has('SEND_MESSAGES', true)
+        )) {
+        return { files: [await generateStab(url)] };
+      }
+    }
+
+    return `Met plezier, kom hier <@!${user.id}>!`;
+  });
 
   eiNoah.use('steek', stabHandler, HandlerType.BOTH, {
     description: 'Steek iemand die het verdiend heeft <3',
@@ -168,6 +192,60 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
   eiNoah.use('stab', stabHandler);
 
   const hugImg = loadImage('./src/images/hug.png');
+  const generateHug = async (url : string, topText ?: string, bottomText ?: string) => {
+    const canvas = createCanvas(800, 600);
+    const ctx = canvas.getContext('2d');
+
+    const avatar = await loadImage(url);
+    const avatarWidth = 256;
+    const avatarHeight = avatarWidth;
+
+    ctx.drawImage(await eiImage, Math.abs((await eiImage).width - canvas.width) / 2, Math.abs((await eiImage).height - canvas.height) / 2);
+
+    const x = Math.abs(avatarWidth - canvas.width) / 2;
+    const y = Math.abs(avatarHeight - canvas.height) / 2 + 120;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x + avatarWidth / 2, y + avatarHeight / 2, avatarHeight / 2, 0, Math.PI * 2, true);
+    ctx.closePath();
+    ctx.clip();
+
+    ctx.drawImage(avatar, x, y, avatarWidth, avatarHeight);
+    ctx.closePath();
+    ctx.restore();
+
+    const hug = await hugImg;
+
+    ctx.drawImage(hug, 230, 240, 350, 350);
+
+    const fontSize = 70;
+
+    ctx.font = `${fontSize}px Calibri`;
+    ctx.fillStyle = '#FFFFFF';
+
+    if (topText) {
+      const lines = getLines(ctx, topText, 800);
+
+      await Promise.all(lines.map((line, index) => {
+        const { width } = measureText(ctx, line);
+        return Promise.all([
+          fillTextWithTwemoji(ctx, line, Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (index * fontSize)),
+          strokeTextWithTwemoji(ctx, line, Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (index * fontSize)),
+        ]);
+      }));
+    }
+
+    if (bottomText) {
+      const bottomX = Math.abs(measureText(ctx, bottomText).width - canvas.width) / 2;
+      const bottomY = 540;
+
+      await fillTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
+      await strokeTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
+    }
+
+    return new MessageAttachment(canvas.createPNGStream());
+  };
 
   const hugHandler : BothHandler = async ({ params, msg, flags }) => {
     const persoon = flags.get('persoon');
@@ -179,63 +257,32 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
       const message : string = mentionsToText(flags.get('top') || params);
 
       if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
-        const canvas = createCanvas(800, 600);
-        const ctx = canvas.getContext('2d');
-
-        const avatar = await loadImage(url);
-
-        ctx.drawImage(await eiImage, Math.abs((await eiImage).width - canvas.width) / 2, Math.abs((await eiImage).height - canvas.height) / 2);
-
-        const x = Math.abs(avatar.width - canvas.width) / 2;
-        const y = Math.abs(avatar.height - canvas.height) / 2 + 120;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(x + avatar.width / 2, y + avatar.height / 2, avatar.height / 2, 0, Math.PI * 2, true);
-        ctx.closePath();
-        ctx.clip();
-
-        ctx.drawImage(avatar, x, y, avatar.width, avatar.height);
-        ctx.closePath();
-        ctx.restore();
-
-        const hug = await hugImg;
-
-        ctx.drawImage(hug, 230, 240, 350, 350);
-
-        const fontSize = 70;
-
-        ctx.font = `${fontSize}px Calibri`;
-        ctx.fillStyle = '#FFFFFF';
-
-        const lines = getLines(ctx, message, 800);
-
-        await Promise.all(lines.map((line, index) => {
-          const { width } = measureText(ctx, line);
-          return Promise.all([
-            fillTextWithTwemoji(ctx, line, Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (index * fontSize)),
-            strokeTextWithTwemoji(ctx, line, Math.abs(canvas.width - width) / 2 + 0.5, 100.5 + (index * fontSize)),
-          ]);
-        }));
-
-        const bottom = flags.get('b') || flags.get('bottom') || flags.get('bodem');
-        if (bottom) {
-          let bottomText = mentionsToText(bottom);
-          if (bottomText === '') bottomText = 'BODEM TEKST';
-          const bottomX = Math.abs(measureText(ctx, bottomText).width - canvas.width) / 2;
-          const bottomY = 540;
-
-          await fillTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
-          await strokeTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
-        }
-
-        return new MessageAttachment(canvas.createPNGStream());
+        const bottom = flags.get('bottom') || flags.get('b');
+        return generateHug(url, message, bottom ? mentionsToText(bottom) : undefined);
       }
 
-      return `Met plezier, kom hier <@!${user.id}>!`;
+      return `Met plezier, kom hier <@${user.id}>!`;
     }
     return 'Knuffel wie?';
   };
+
+  eiNoah.useContext('Knuffel', 'USER', async ({ interaction }) => {
+    const user = interaction.options.getUser('user', true);
+
+    const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
+
+    if (url) {
+      if (
+        interaction.channel instanceof DMChannel
+        || ((interaction.channel instanceof TextChannel || interaction.channel instanceof ThreadChannel || interaction.channel instanceof NewsChannel)
+        && interaction.client.user && interaction.channel.permissionsFor(interaction.client.user)?.has('ATTACH_FILES', true) && interaction.channel.permissionsFor(interaction.client.user)?.has('SEND_MESSAGES', true)
+        )) {
+        return { files: [await generateHug(url)] };
+      }
+    }
+
+    return `Met plezier, kom hier <@!${user.id}>!`;
+  });
 
   eiNoah.use('hug', hugHandler, HandlerType.BOTH, {
     description: 'Geef iemand een knuffel die het verdiend heeft <3',

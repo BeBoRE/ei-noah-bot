@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandSubCommandData,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandSubCommandData, ApplicationCommandType,
 } from 'discord.js';
 import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
@@ -7,8 +7,9 @@ import {
 
 import console from 'console';
 import LazyRouteInfo from './router/LazyRouteInfo';
+import ContextMenuInfo from './router/ContextMenuInfo';
 import Router, {
-  BothHandler, DMHandler, GuildHandler, HandlerReturn, HandlerType, IRouter, RouteInfo,
+  BothHandler, ContextMenuHandler, ContextMenuHandlerInfo, DMHandler, GuildHandler, HandlerReturn, HandlerType, IRouter, RouteInfo,
 } from './router/Router';
 
 enum ErrorType {
@@ -231,6 +232,8 @@ class EiNoah implements IRouter {
 
   private applicationCommandData : ApplicationCommandData[] = [];
 
+  private contextHandlers : Map<string, ContextMenuHandlerInfo> = new Map();
+
   constructor(token : string, orm : MikroORM<IDatabaseDriver<Connection>>) {
     this.token = token;
     this.orm = orm;
@@ -260,6 +263,12 @@ class EiNoah implements IRouter {
           options: commandDataList,
         });
       }
+
+      using.contextHandlers.forEach((info, key) => {
+        if (this.contextHandlers.has(key)) throw new Error('ContextHandler already uses this name');
+
+        this.contextHandlers.set(key, info);
+      });
     }
 
     if (commandData) {
@@ -272,13 +281,23 @@ class EiNoah implements IRouter {
     }
   }
 
+  public useContext(name : string, type : Exclude<ApplicationCommandType, 'CHAT_INPUT'>, handler : ContextMenuHandler) : void {
+    if (this.contextHandlers.has(name)) throw new Error('There is already a context menu handler with that name');
+
+    this.contextHandlers.set(name, {
+      type,
+      handler,
+    });
+  }
+
   public onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
   => void | Promise<void>);
 
-  public readonly updateSlashCommands = () => Promise.all([
+  public readonly updateSlashCommands = () => Promise.all(
     this.client.guilds.cache.map((guild) => guild.commands.fetch()
       .then(() => guild.commands.set(this.applicationCommandData))
-      .then((commands) => commands))]);
+      .then((commands) => commands)),
+  );
 
   public async start() {
     const { orm } = this;
@@ -310,13 +329,40 @@ class EiNoah implements IRouter {
             // Dit wordt gecallt wanneer de parsing faalt
             if (process.env.NODE_ENV !== 'production' && interaction.channel) {
               errorToChannel(interaction.channel.id, interaction.client, err).catch(() => { console.log('Error could not be send :('); });
-            } else if (process.env.ERROR_CHANNEL && interaction.channel) {
-              interaction.channel.send('Er is iets misgegaan').catch(() => {});
+            } else if (process.env.ERROR_CHANNEL) {
+              interaction.followUp({ content: 'Er is iets misgegaan', ephemeral: true }).catch(() => {});
               errorToChannel(process.env.ERROR_CHANNEL, interaction.client, err).catch(() => { console.log('Stel error kanaal in'); });
             }
 
             console.error(err);
           });
+      }
+
+      if (interaction.isContextMenu()) {
+        const em = orm.em.fork();
+
+        const handler = this.contextHandlers.get(interaction.commandName);
+        if (!handler) {
+          interaction.reply({ content: 'Kon deze actie niet vinden', ephemeral: true });
+          return;
+        }
+
+        try {
+          const handlerReturn = await handler.handler(new ContextMenuInfo(interaction, em));
+          if (interaction.deferred) interaction.followUp(typeof (handlerReturn) === 'string' ? { content: handlerReturn, ephemeral: true } : handlerReturn);
+          else interaction.reply(typeof (handlerReturn) === 'string' ? { content: handlerReturn, ephemeral: true } : handlerReturn);
+        } catch (err) {
+          if (interaction.channel && process.env.ERROR_CHANNEL) {
+            if (process.env.NODE_ENV !== 'production') {
+              errorToChannel(interaction?.channel.id || process.env.ERROR_CHANNEL, interaction.client, err).catch(() => { console.log('Error could not be send :('); });
+              return;
+            }
+
+            if (interaction.deferred) interaction.followUp({ content: 'Er is iets misgegaan' }).catch(() => { });
+            else interaction.reply({ content: 'Er is iets misgegaan', ephemeral: true });
+            errorToChannel(process.env.ERROR_CHANNEL, interaction.client, err).catch(() => { console.log('Stel error kanaal in'); });
+          }
+        }
       }
     });
 
@@ -396,6 +442,14 @@ class EiNoah implements IRouter {
 
     this.router.onInit = async (client) => {
       if (this.onInit) await this.onInit(client, orm);
+
+      this.contextHandlers.forEach((info, name) => {
+        this.applicationCommandData.push({
+          name,
+          type: info.type,
+        });
+      });
+
       if (process.env.NODE_ENV === 'production') {
         await client.application?.commands.set(this.applicationCommandData);
       }
