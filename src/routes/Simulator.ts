@@ -7,15 +7,19 @@ import Router, { HandlerType } from '../router/Router';
 
 const router = new Router('Simuleer je vrienden');
 
-const userChain = new Map<string, Chain<string>>();
+const userChain = new Map<string, Chain<string> | null>();
 
 router.use('user', async ({ flags, params, msg }) => {
   const [user] = flags.get('persoon') || params;
 
   if (!(user instanceof User)) return 'Geef iemand om te simuleren';
 
-  let chain : Chain<string> | undefined = userChain.get(user.id);
+  let chain : Chain<string> | undefined | null = userChain.get(user.id);
+
+  if (chain === null) return 'Ik ben toch bezig retard';
+
   if (!chain) {
+    userChain.set(user.id, null);
     const spliced : string[] = new Array<string>().concat(...(await Promise.all(msg.guild.channels.cache
       .filter((channel) : channel is BaseGuildTextChannel => {
         const permissions = msg.client.user && channel.permissionsFor(msg.client.user);
