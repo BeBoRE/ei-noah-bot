@@ -56,7 +56,7 @@ router.use('user', async ({ flags, params, msg }) => {
     if (spliced.length < 50) return 'Niet genoeg berichten gevonden om iets mee te genereren';
     console.log(`${spliced.length} berichten gevonden`);
 
-    chain = new Chain(spliced.map((m) => m.split(' ')).slice(0, spliced.length > 550 ? 550 : -1));
+    chain = new Chain(spliced.map((m) => m.split(' ')).slice(0, spliced.length > 500 ? 500 : -1));
     userChain.set(user.id, chain);
   }
 
