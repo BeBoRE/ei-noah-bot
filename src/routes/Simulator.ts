@@ -1,4 +1,7 @@
-import { MessageEmbed, User } from 'discord.js';
+import {
+  BaseGuildTextChannel,
+  MessageEmbed, User,
+} from 'discord.js';
 import Chain from 'markov-chains';
 import Router, { HandlerType } from '../router/Router';
 
@@ -9,36 +12,46 @@ router.use('user', async ({ flags, params, msg }) => {
 
   if (!(user instanceof User)) return 'Geef iemand om te simuleren';
 
-  const messages : string[] = [];
+  const spliced : string[] = new Array<string>().concat(...(await Promise.all(msg.guild.channels.cache
+    .filter((channel) : channel is BaseGuildTextChannel => {
+      const permissions = msg.client.user && channel.permissionsFor(msg.client.user);
+      return !!(channel.isText() && permissions?.has('READ_MESSAGE_HISTORY') && permissions.has('VIEW_CHANNEL'));
+    })
+    .map(async (channel) => {
+      const messages : string[] = [];
 
-  let lastMessage : string | undefined = msg.channel.lastMessageId ?? undefined;
-  let iterations = 0;
-  if (lastMessage) {
-    while (messages.length < 100 && lastMessage && iterations < 25) {
-      console.log(`------====== ${messages.length} on the list (iteration ${iterations}) ========-------`);
-      iterations += 1;
-      // eslint-disable-next-line no-await-in-loop
-      const fetchedMessages = await msg.channel.messages.fetch({ limit: 100, before: lastMessage })
-        // eslint-disable-next-line no-loop-func
-        .then((msgs) => {
-          lastMessage = msgs.last()?.id;
-          return msgs;
-        })
-        // eslint-disable-next-line no-loop-func
-        .catch(() => undefined);
+      let lastMessage : string | undefined = channel.lastMessageId ?? undefined;
+      if (lastMessage) {
+        let iterations = 0;
+        while (lastMessage && iterations < 20 && messages.length < 150) {
+          iterations += 1;
+          // console.log(`---=== Fetching in ${channel.name} ${channel.parent ? `(${channel.parent.name})` : ''} ===---`);
+          // eslint-disable-next-line no-await-in-loop
+          const fetchedMessages = await channel.messages.fetch({ limit: 100, before: lastMessage })
+          // eslint-disable-next-line no-loop-func
+            .then((msgs) => {
+              lastMessage = msgs.last()?.id !== lastMessage ? msgs.last()?.id : undefined;
+              return msgs;
+            })
+          // eslint-disable-next-line no-loop-func
+            .catch((err) => console.log(err));
 
-      fetchedMessages?.forEach((m) => {
-        if (m.content !== '' && m.author.id === user.id) {
-          console.log(m.content);
-          messages.push(m.content);
+          fetchedMessages?.forEach((m) => {
+            if (m.content !== '' && m.author.id === user.id) {
+              // console.log(m.content);
+              messages.push(m.content);
+            }
+          });
         }
-      });
-    }
-  }
+      }
 
-  if (messages.length < 25) return 'Niet genoeg berichten gevonden om iets mee te genereren';
+      // console.log(`---=== Completed ${channel.name} ${channel.parent ? `(${channel.parent.name})` : ''} ===---`);
+      return messages;
+    }))));
 
-  const chain = new Chain(messages.map((m) => m.split(' ')));
+  if (spliced.length < 50) return 'Niet genoeg berichten gevonden om iets mee te genereren';
+
+  const chain = new Chain(spliced.map((m) => m.split(' '), { stateSize: 3 }));
   const text = chain.walk().join(' ');
 
   const embed = new MessageEmbed();
@@ -49,7 +62,14 @@ router.use('user', async ({ flags, params, msg }) => {
 
   if (color) embed.setColor(color);
 
-  return embed;
+  return {
+    embeds: [embed],
+    allowedMentions: {
+      roles: [],
+      users: [],
+      repliedUser: false,
+    },
+  };
 }, HandlerType.GUILD, {
   description: 'Simuleer je vrienden',
   options: [{

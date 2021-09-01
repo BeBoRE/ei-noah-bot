@@ -58,7 +58,7 @@ export interface GuildRouteInfo extends RouteInfo {
 }
 
 export type HandlerReturn =
-  (MessageOptions & {content: string}) | MessageEmbed | MessageAttachment | (MessageEmbed | MessageAttachment)[] | string | null;
+  MessageOptions | MessageEmbed | MessageAttachment | (MessageEmbed | MessageAttachment)[] | string | null;
 
 export enum HandlerType {
   DM = 'dm',
