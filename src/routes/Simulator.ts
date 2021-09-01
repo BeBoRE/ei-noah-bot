@@ -52,7 +52,7 @@ router.use('user', async ({ flags, params, msg }) => {
   if (spliced.length < 50) return 'Niet genoeg berichten gevonden om iets mee te genereren';
   console.log(`${spliced.length} berichten gevonden`);
 
-  const chain = new Chain(spliced.map((m) => m.split(' '), { stateSize: 3 }).slice(0, spliced.length > 800 ? 800 : -1));
+  const chain = new Chain(spliced.map((m) => m.split(' '), { stateSize: 3 }).slice(0, spliced.length > 500 ? 500 : -1));
   const text = chain.walk().join(' ');
 
   const embed = new MessageEmbed();
