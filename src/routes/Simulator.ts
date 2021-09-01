@@ -1,6 +1,6 @@
 import {
   BaseGuildTextChannel,
-  MessageEmbed, User,
+  MessageEmbed, TextChannel, User,
 } from 'discord.js';
 import Chain from 'markov-chains';
 import Router, { HandlerType } from '../router/Router';
@@ -16,12 +16,16 @@ router.use('user', async ({ flags, params, msg }) => {
 
   let chain : Chain<string> | undefined | null = userChain.get(user.id);
 
-  if (chain === null) return 'Ik ben toch bezig retard';
+  if (chain === null) return 'Ik ben toch bezig smeerlap';
 
   if (!chain) {
     userChain.set(user.id, null);
     const spliced : string[] = new Array<string>().concat(...(await Promise.all(msg.guild.channels.cache
       .filter((channel) : channel is BaseGuildTextChannel => {
+        if (channel instanceof TextChannel) {
+          if (channel.nsfw) return false;
+        }
+
         const permissions = msg.client.user && channel.permissionsFor(msg.client.user);
         return !!(channel.isText() && permissions?.has('READ_MESSAGE_HISTORY') && permissions.has('VIEW_CHANNEL'));
       })
