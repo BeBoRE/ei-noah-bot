@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandSubCommandData, ApplicationCommandType,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions,
 } from 'discord.js';
 import {
   Connection, IDatabaseDriver, MikroORM, EntityManager,
@@ -213,7 +213,11 @@ const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : MessageO
 
 const messageSender = (options : MessageOptions | null, msg : Message | CommandInteraction) : Promise<Message | Message[] | null> => {
   if (options && msg.channel) {
-    return msg.channel.send({ ...options });
+    return msg.channel.send({
+      allowedMentions: { users: [], roles: [] },
+      reply: { messageReference: msg.id },
+      ...options,
+    });
   }
   return Promise.resolve(null);
 };
@@ -239,12 +243,12 @@ class EiNoah implements IRouter {
     this.orm = orm;
   }
 
-  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
-  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
-  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ChatInputApplicationCommandData, 'name' | 'type'>) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ChatInputApplicationCommandData, 'name' | 'type'>) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ChatInputApplicationCommandData, 'name' | 'type'>) : void
   use(route : string, using: Router | BothHandler) : void
-  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type?: HandlerType, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
-  use(route: string, using: any, type: any = HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>): void {
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type?: HandlerType, commandData?: Omit<ChatInputApplicationCommandData, 'name' | 'type'>) : void
+  use(route: string, using: any, type: any = HandlerType.BOTH, commandData?: Omit<ChatInputApplicationCommandData, 'name' | 'type'>): void {
     this.router.use(route, using, type);
 
     if (using instanceof Router) {
@@ -349,8 +353,16 @@ class EiNoah implements IRouter {
 
         try {
           const handlerReturn = await handler.handler(new ContextMenuInfo(interaction, em));
-          if (interaction.deferred) interaction.followUp(typeof (handlerReturn) === 'string' ? { content: handlerReturn, ephemeral: true } : handlerReturn);
-          else interaction.reply(typeof (handlerReturn) === 'string' ? { content: handlerReturn, ephemeral: true } : handlerReturn);
+          const defaultOptions : InteractionReplyOptions = {
+            allowedMentions: {
+              roles: [],
+              users: [],
+            },
+            ephemeral: true,
+          };
+
+          if (interaction.deferred) interaction.followUp(typeof (handlerReturn) === 'string' ? { ...defaultOptions, content: handlerReturn } : { ...defaultOptions, ...handlerReturn });
+          else interaction.reply(typeof (handlerReturn) === 'string' ? { ...defaultOptions, content: handlerReturn } : { ...defaultOptions, ...handlerReturn });
         } catch (err) {
           if (interaction.channel && process.env.ERROR_CHANNEL) {
             if (process.env.NODE_ENV !== 'production') {

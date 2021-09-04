@@ -164,7 +164,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
         || ((interaction.channel instanceof TextChannel || interaction.channel instanceof ThreadChannel || interaction.channel instanceof NewsChannel)
         && interaction.client.user && interaction.channel.permissionsFor(interaction.client.user)?.has('ATTACH_FILES', true) && interaction.channel.permissionsFor(interaction.client.user)?.has('SEND_MESSAGES', true)
         )) {
-        return { files: [await generateStab(url)] };
+        return { files: [await generateStab(url)], ephemeral: false };
       }
     }
 
@@ -278,7 +278,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
         || ((interaction.channel instanceof TextChannel || interaction.channel instanceof ThreadChannel || interaction.channel instanceof NewsChannel)
         && interaction.client.user && interaction.channel.permissionsFor(interaction.client.user)?.has('ATTACH_FILES', true) && interaction.channel.permissionsFor(interaction.client.user)?.has('SEND_MESSAGES', true)
         )) {
-        return { files: [await generateHug(url)] };
+        return { files: [await generateHug(url)], ephemeral: false };
       }
     }
 

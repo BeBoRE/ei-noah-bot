@@ -334,11 +334,11 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
 
   let allowedUsersMessage : string;
   if (!allowedUsers.length) allowedUsersMessage = 'Geen user(s) toegevoegd';
-  else allowedUsersMessage = `${allowedUsers.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} ${allowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? 'mogen' : 'mag'} nu naar binnen`;
+  else allowedUsersMessage = `${allowedUsers.map((userOrRole) => (userOrRole instanceof DiscordUser ? userOrRole : `${userOrRole}`)).join(', ')} ${allowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? 'mogen' : 'mag'} nu naar binnen`;
 
   let alreadyInMessage : string;
   if (!alreadyAllowedUsers.length) alreadyInMessage = '';
-  else alreadyInMessage = `${alreadyAllowedUsers.map((user) => (user instanceof DiscordUser ? user.username : `${user.name}s`)).join(', ')} ${alreadyAllowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? 'konden' : 'kon'} al naar binnen`;
+  else alreadyInMessage = `${alreadyAllowedUsers.map((userOrRole) => (userOrRole instanceof DiscordUser ? userOrRole : `${userOrRole}`)).join(', ')} ${alreadyAllowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? 'konden' : 'kon'} al naar binnen`;
 
   return {
     allowedUsersOrRoles: allowedUsers,
@@ -928,6 +928,8 @@ const changeLobby = (() => {
       const msg = await (await textChannel)?.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => null);
       if (msg) msg.edit({ content, components: generateButtons(activeChannel) }).catch(() => {});
     }
+
+    return timeTillNameChange;
   };
 })();
 
@@ -1244,9 +1246,14 @@ const nameHandler : GuildHandler = async ({
 
   gu.tempChannel.name = name;
   const type = getChannelType(tempChannel);
-  await changeLobby(type, tempChannel, requestingUser, msg.guild, gu.tempChannel, tempChannel.userLimit);
+  const timeTillChange = await changeLobby(type, tempChannel, requestingUser, msg.guild, gu.tempChannel, tempChannel.userLimit);
+  const newName = generateLobbyName(type, requestingUser, gu.tempChannel, false);
 
-  return 'Lobby naam is aangepast\n> Bij overmatig gebruik kan het meer dan 10 minuten duren';
+  if (timeTillChange) {
+    return `Lobbynaam wordt ${timeTillChange.locale('nl').humanize(true)} veranderd naar \`${newName}\``;
+  }
+
+  return `Lobbynaam is veranderd naar \`${newName}\``;
 };
 
 router.use('name', nameHandler, HandlerType.GUILD, {
@@ -1284,7 +1291,11 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
     style: 'SUCCESS',
   }));
 
-  textChannel.send({ content: `Voeg ${user.username} toe aan de lobby?`, components: [actionRow] }).then((msg) => {
+  textChannel.send({
+    allowedMentions: { roles: [], users: [] },
+    content: `Voeg ${user} toe aan de lobby?`,
+    components: [actionRow],
+  }).then((msg) => {
     const collector = msg.createMessageComponentCollector();
     collector.on('collect', async (interaction) => {
       if (interaction.user.id === tempChannel.guildUser.user.id && interaction.customId === 'add') {
@@ -1406,7 +1417,11 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel,
 
       await Promise.all([
         changeLobby(type, activeChannel, newOwner.user, newOwner.guild, tempChannel, activeChannel.userLimit, true),
-          activeTextChannel?.send(`De lobby is overgedragen aan ${newOwner.displayName}`),
+          activeTextChannel?.send({
+            allowedMentions: { users: [] },
+            reply: tempChannel.controlDashboardId ? { messageReference: tempChannel.controlDashboardId } : undefined,
+            content: `De lobby is overgedragen aan ${newOwner}`,
+          }),
       ]).catch(console.error);
 
       console.log('Ownership is overgedragen');
