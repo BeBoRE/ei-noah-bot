@@ -85,8 +85,15 @@ router.use('user', async ({ flags, params, msg }) => {
 
     const shuffled = shuffle(shuffle(shuffle(spliced)));
 
-    chain = new Chain(shuffled.map((m) => m.split(' ')).slice(0, spliced.length > 400 ? 400 : -1));
-    userChain.set(user.id, chain);
+    let maxSize = 1000;
+    while (!chain) {
+      try {
+        chain = new Chain(shuffled.map((m) => m.split(' ')).slice(0, spliced.length > maxSize ? maxSize : -1));
+        userChain.set(user.id, chain);
+      } catch (error) {
+        maxSize -= 100;
+      }
+    }
   }
 
   const fromState = flags.get('finish')?.map((element) => element.toString());
