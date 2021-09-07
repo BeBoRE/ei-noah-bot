@@ -1326,9 +1326,10 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
     let msg = tempChannel.controlDashboardId ? await textChannel.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => undefined) : undefined;
     if (!msg) {
       msg = await textChannel.send({ content: dashBoardText, components: generateButtons(voiceChannel) }).catch(() => undefined);
-      if (!msg?.pinned && msg?.pinnable) await msg.pin();
       if (msg) tempChannel.controlDashboardId = msg.id;
     }
+
+    if (!msg?.pinned && msg?.pinnable) await msg.pin();
 
     if (msg && !msgCollectors.has(msg.id)) {
       msgCollectors.set(msg.id, msg.createMessageComponentCollector().on('collect', async (interaction) => {
@@ -1519,15 +1520,7 @@ router.onInit = async (client, orm) => {
           textChannel = await createTextChannel(client, em, guildUser.tempChannel, user);
           guildUser.tempChannel.textChannelId = textChannel.id;
 
-          await textChannel.send({
-            content: dashBoardText,
-            components: generateButtons(createdChannel),
-          }).then(async (msg) => {
-            if (guildUser.tempChannel) {
-              guildUser.tempChannel.controlDashboardId = msg.id;
-              await createDashBoardCollector(client, createdChannel, guildUser.tempChannel, orm.em.fork());
-            }
-          });
+          await createDashBoardCollector(client, createdChannel, guildUser.tempChannel, em);
         }
       } else if ( // Check of iemand een tempChannel is gejoint
         user
