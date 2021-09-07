@@ -9,6 +9,25 @@ const router = new Router('Simuleer je vrienden');
 
 const userChain = new Map<string, Chain<string> | null>();
 
+function shuffle<T>(_array : Array<T>) : Array<T> {
+  const array = [..._array];
+  let currentIndex = array.length; let
+    randomIndex;
+
+  // While there remain elements to shuffle...
+  while (currentIndex !== 0) {
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+
+  return array;
+}
+
 router.use('user', async ({ flags, params, msg }) => {
   const [user] = flags.get('persoon') || params;
 
@@ -64,17 +83,22 @@ router.use('user', async ({ flags, params, msg }) => {
     if (spliced.length < 50) return 'Niet genoeg berichten gevonden om iets mee te genereren';
     console.log(`${spliced.length} berichten gevonden`);
 
-    chain = new Chain(spliced.map((m) => m.split(' ')).slice(0, spliced.length > 500 ? 500 : -1));
+    const shuffled = shuffle(shuffle(shuffle(spliced)));
+
+    chain = new Chain(shuffled.map((m) => m.split(' ')).slice(0, spliced.length > 500 ? 500 : -1));
     userChain.set(user.id, chain);
   }
 
-  const text = chain.walk().join(' ');
+  const fromState = flags.get('finish')?.map((element) => element.toString());
+  const generated = chain.walk(fromState);
+
+  if (!generated.length) return 'Ik kon hier niks mee';
 
   const embed = new MessageEmbed();
   const avatarURL = user.avatarURL({ size: 128, format: 'png', dynamic: false }) || undefined;
   const color : number | undefined = msg.guild.me?.displayColor;
   embed.setAuthor(user.username, avatarURL);
-  embed.setDescription(text);
+  embed.setDescription([...fromState ?? [], ...generated].join(' '));
 
   if (color) embed.setColor(color);
 
@@ -93,6 +117,10 @@ router.use('user', async ({ flags, params, msg }) => {
     description: 'Persoon die je wil simuleren',
     type: 'USER',
     required: true,
+  }, {
+    name: 'finish',
+    description: 'Zin die afgemaakt moet worden',
+    type: 'STRING',
   }],
 });
 
