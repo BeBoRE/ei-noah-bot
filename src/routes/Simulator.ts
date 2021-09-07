@@ -85,7 +85,7 @@ router.use('user', async ({ flags, params, msg }) => {
 
     const shuffled = shuffle(shuffle(shuffle(spliced)));
 
-    chain = new Chain(shuffled.map((m) => m.split(' ')).slice(0, spliced.length > 500 ? 500 : -1));
+    chain = new Chain(shuffled.map((m) => m.split(' ')).slice(0, spliced.length > 400 ? 400 : -1));
     userChain.set(user.id, chain);
   }
 
