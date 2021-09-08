@@ -811,7 +811,7 @@ const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, 
     })),
   });
 
-  return [
+  const actionRows = [
     new MessageActionRow({
       components: Object.entries(ChannelType).map(([,type]) => new MessageButton({
         customId: type,
@@ -823,10 +823,17 @@ const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, 
     }),
     limitRow,
     highLimitButtons,
-    new MessageActionRow({
-      components: [selectMenu],
-    }),
   ];
+
+  if (latestNameChanges.length > 0) {
+    actionRows.push(new MessageActionRow({
+      components: [
+        selectMenu,
+      ],
+    }));
+  }
+
+  return actionRows;
 };
 
 interface NameChangeTimeout {
