@@ -1,5 +1,5 @@
 import { ContextMenuInteraction } from 'discord.js';
-import { EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/postgresql';
 import { GuildUser } from 'entity/GuildUser';
 import { getUserData, getUserGuildData } from '../data';
 import { User } from '../entity/User';

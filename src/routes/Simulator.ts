@@ -83,12 +83,10 @@ router.use('user', async ({ flags, params, msg }) => {
     if (spliced.length < 50) return 'Niet genoeg berichten gevonden om iets mee te genereren';
     console.log(`${spliced.length} berichten gevonden`);
 
-    const shuffled = shuffle(shuffle(shuffle(spliced)));
-
     let maxSize = 1000;
-    while (!chain) {
+    while (!chain || maxSize > 0) {
       try {
-        chain = new Chain(shuffled.map((m) => m.split(' ')).slice(0, spliced.length > maxSize ? maxSize : -1));
+        chain = new Chain(shuffle(shuffle(shuffle(spliced))).map((m) => m.split(' ')).slice(0, spliced.length > maxSize ? maxSize : -1));
         userChain.set(user.id, chain);
       } catch (error) {
         maxSize -= 100;

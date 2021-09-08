@@ -1,5 +1,5 @@
 import { User as DiscordUser, Guild as DiscordGuild, CategoryChannel } from 'discord.js';
-import { EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/postgresql';
 import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
 import { User } from './entity/User';

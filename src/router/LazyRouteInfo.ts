@@ -1,4 +1,4 @@
-import { EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/postgresql';
 import {
   Channel, CommandInteraction, Message, NewsChannel, Role, TextChannel, User as DiscordUser,
 } from 'discord.js';

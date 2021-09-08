@@ -17,8 +17,9 @@ import {
   ApplicationCommandType,
 } from 'discord.js';
 import {
-  EntityManager, MikroORM, IDatabaseDriver, Connection,
+  MikroORM,
 } from '@mikro-orm/core';
+import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { Category } from '../entity/Category';
 import { GuildUser } from '../entity/GuildUser';
 import { User } from '../entity/User';
@@ -104,7 +105,7 @@ export interface IRouter {
   use(route : string, using: Router | BothHandler) : void
   use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
 
-  onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
+  onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>)
   => void | Promise<void>)
 }
 
@@ -227,7 +228,7 @@ export default class Router implements IRouter {
     });
   }
 
-  protected initialize(client : Client, orm : MikroORM<IDatabaseDriver<Connection>>) {
+  protected initialize(client : Client, orm : MikroORM<PostgreSqlDriver>) {
     Object.entries(this.routes).forEach(([, route]) => {
       if (route instanceof Router && !route.isInitialized) {
         route.initialize(client, orm);
@@ -241,6 +242,6 @@ export default class Router implements IRouter {
     }
   }
 
-  public onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
+  public onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>)
   => void | Promise<void>);
 }

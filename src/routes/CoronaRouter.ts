@@ -3,7 +3,8 @@ import moment from 'moment';
 import { CronJob } from 'cron';
 import parse from 'csv-parse/lib/sync';
 import { Client } from 'discord.js';
-import { Connection, IDatabaseDriver, MikroORM } from '@mikro-orm/core';
+import { MikroORM } from '@mikro-orm/core';
+import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import UserCoronaRegions from '../entity/UserCoronaRegions';
 import Router, { BothHandler, HandlerType } from '../router/Router';
 import CoronaData, { CoronaInfo } from '../entity/CoronaData';
@@ -143,7 +144,7 @@ enum Niveau {
   zeerernstig = 'Zeer Ernstig'
 }
 
-const coronaRefresher = async (client : Client, orm : MikroORM<IDatabaseDriver<Connection>>) => {
+const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>) => {
   const regionPopulations = await getPopulation();
 
   const refreshData = async () => {

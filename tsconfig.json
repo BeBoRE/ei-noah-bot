@@ -16,7 +16,7 @@
       "outDir": "dist",
       "skipLibCheck": true,
       "skipDefaultLibCheck": true,
-      "typeRoots": ["./src/declarations"],
+      "typeRoots": ["./src/declarations"]
   },
   "exclude": ["node_modules/**"]
 }

@@ -12,7 +12,7 @@ import {
   Permissions, Role, TextChannel,
   User as DiscordUser,
 } from 'discord.js';
-import { EntityManager } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/postgresql';
 import { createCanvas, loadImage } from 'canvas';
 import { getUserData } from '../data';
 import { User } from '../entity/User';

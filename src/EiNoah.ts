@@ -2,8 +2,9 @@ import {
   Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions,
 } from 'discord.js';
 import {
-  Connection, IDatabaseDriver, MikroORM, EntityManager,
+  MikroORM,
 } from '@mikro-orm/core';
+import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
 
 import console from 'console';
 import LazyRouteInfo from './router/LazyRouteInfo';
@@ -17,10 +18,10 @@ enum ErrorType {
   Unhandled,
 }
 
-const errorToChannel = async (channelId : string, client : Client, err : Error, type?: ErrorType) => {
+const errorToChannel = async (channelId : string, client : Client, err : unknown, type?: ErrorType) => {
   const errorChannel = await client.channels.fetch(<Snowflake>channelId, { cache: true });
-  if (errorChannel instanceof TextChannel
-     || errorChannel instanceof NewsChannel
+  if (err instanceof Error && (errorChannel instanceof TextChannel
+     || errorChannel instanceof NewsChannel)
   ) {
     let header = '';
     if (type === ErrorType.Uncaught) header = '**Uncaught**';
@@ -232,13 +233,13 @@ class EiNoah implements IRouter {
 
   private readonly token : string;
 
-  private readonly orm : MikroORM<IDatabaseDriver<Connection>>;
+  private readonly orm : MikroORM<PostgreSqlDriver>;
 
   private applicationCommandData : ApplicationCommandData[] = [];
 
   private contextHandlers : Map<string, ContextMenuHandlerInfo> = new Map();
 
-  constructor(token : string, orm : MikroORM<IDatabaseDriver<Connection>>) {
+  constructor(token : string, orm : MikroORM<PostgreSqlDriver>) {
     this.token = token;
     this.orm = orm;
   }
@@ -294,7 +295,7 @@ class EiNoah implements IRouter {
     });
   }
 
-  public onInit ?: ((client : Client, orm : MikroORM<IDatabaseDriver<Connection>>)
+  public onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>)
   => void | Promise<void>);
 
   public readonly updateSlashCommands = () => Promise.all(

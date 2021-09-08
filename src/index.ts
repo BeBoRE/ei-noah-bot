@@ -3,6 +3,7 @@ import {
   User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel, NewsChannel, Channel, ThreadChannel,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
+import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { fork } from 'child_process';
 import {
   CanvasRenderingContext2D, createCanvas, loadImage,
@@ -41,7 +42,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
   if (!process.env.CLIENT_TOKEN) throw new Error('Add a client token');
 
   // Creëerd de database connectie
-  const orm = await MikroORM.init().catch((err) => { console.error(err); process.exit(-1); });
+  const orm = await MikroORM.init<PostgreSqlDriver>().catch((err) => { console.error(err); process.exit(-1); });
   await orm.getMigrator().up();
 
   const child = fork('./src/child.ts');

@@ -9,6 +9,8 @@ import { Guild } from './Guild';
 import Quote from './Quote';
 // eslint-disable-next-line import/no-cycle
 import TempChannel from './TempChannel';
+// eslint-disable-next-line import/no-cycle
+import LobbyNameChange from './LobbyNameChange';
 
 @Entity()
 @Unique({ properties: ['guild', 'user'] })
@@ -36,4 +38,7 @@ export class GuildUser extends BaseEntity<GuildUser, 'id'> {
 
   @Property({ length: 20 })
   birthdayMsg?: string;
+
+  @OneToMany(() => LobbyNameChange, (lnc) => lnc.guildUser)
+  lobbyNameChanges = new Collection<LobbyNameChange>(this);
 }
