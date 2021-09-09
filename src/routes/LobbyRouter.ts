@@ -61,7 +61,7 @@ function generateLobbyName(
   owner : DiscordUser,
   newName ?: string,
   textChat?: boolean,
-) : string {
+) : string | null {
   const icon = getIcon(type);
 
   if (newName) {
@@ -73,6 +73,8 @@ function generateLobbyName(
         const name = newName
           .substring(result[0].length, newName.length)
           .trim();
+
+        if (name.length <= 0 || name.length > 90) return null;
 
         if (textChat) return `${customIcon}${name} chat`;
         return `${customIcon} ${name}`;
@@ -152,7 +154,11 @@ async function createTempChannel(
     deny,
   });
 
-  return guild.channels.create(generateLobbyName(type, owner), {
+  const name = generateLobbyName(type, owner);
+
+  if (!name) throw new Error('Invalid Name');
+
+  return guild.channels.create(name, {
     type: 'GUILD_VOICE',
     permissionOverwrites,
     parent,
@@ -238,8 +244,12 @@ async function createTextChannel(
       deny: toDenyText(getChannelType(voiceChannel)),
     }];
 
+  const name = generateLobbyName(getChannelType(voiceChannel), owner, tempChannel.name, true);
+
+  if (!name) throw new Error('Invalid Name');
+
   return voiceChannel.guild.channels.create(
-    generateLobbyName(getChannelType(voiceChannel), owner, tempChannel.name, true),
+    name,
     {
       type: 'GUILD_TEXT',
       parent: voiceChannel.parent || undefined,
@@ -784,6 +794,9 @@ const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, 
   selectMenu.setPlaceholder('Geen Naam Geselecteerd');
   selectMenu.addOptions(latestNameChanges.map((ltc) : MessageSelectOptionData => {
     const generatedName = generateLobbyName(currentType, owner, ltc.name);
+
+    if (!generatedName) throw new Error('Invalid Name');
+
     const icon = emojiRegex().exec(generatedName)?.[0];
 
     return {
@@ -887,8 +900,6 @@ const changeLobby = (() => {
           });
       }
 
-      console.log('Changing Permissions');
-
       await voiceChannel.permissionOverwrites.set([
         ...voiceChannel.permissionOverwrites.cache.values(),
         { id: guild.id, deny },
@@ -903,6 +914,8 @@ const changeLobby = (() => {
     }
 
     const newName = generateLobbyName(changeTo, owner, tempChannel.name);
+    if (!newName) throw new Error('Invalid Lobby Name');
+
     const currentName = await voiceChannel.fetch(false).then((vc) => (vc instanceof VoiceChannel && vc.name) || null).catch(() => null);
     let timeTillNameChange : Duration | undefined;
 
@@ -916,18 +929,22 @@ const changeLobby = (() => {
 
       const timeout = timeouts.get(voiceChannel.id);
       const execute = async () => {
-        await Promise.all([voiceChannel.fetch(false).catch(() => null), (await textChannel)?.fetch().catch(() => null)])
+        await Promise.all([voiceChannel.fetch(false).catch(() => null), (await textChannel)?.fetch(false).catch(() => null)])
           .then(([vc, tc]) => {
+            const newVoiceName = generateLobbyName(changeTo, owner, tempChannel.name);
+            const newTextName = generateLobbyName(changeTo, owner, tempChannel.name, true);
+
+            if (!newVoiceName || !newTextName) throw new Error('Invalid Name Given');
+
             if (vc && vc instanceof VoiceChannel) {
-              const type = getChannelType(vc);
-              vc.setName(generateLobbyName(type, owner, tempChannel.name))
+              vc.setName(newVoiceName)
                 .then(() => {
                   timeout?.changes.push(new Date());
                 })
                 .catch(() => {});
 
               if (tc && tc instanceof TextChannel) {
-                tc.setName(generateLobbyName(type, owner, tempChannel.name, true))
+                tc.setName(newTextName)
                   .then((updatedTc) => {
                     if (tempChannel.controlDashboardId) return updatedTc.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true });
 
@@ -1293,18 +1310,23 @@ const nameHandler : GuildHandler = async ({
 
   const name = nameArray.join(' ');
 
-  if (name.length > 98) return 'De naam mag niet langer zijn dan 98 tekens';
+  if (name.length > 80) return 'De naam mag niet langer zijn dan 80 tekens';
 
   gu.tempChannel.name = name;
   const type = getChannelType(tempChannel);
-  const timeTillChange = await changeLobby(type, tempChannel, requestingUser, msg.guild, gu.tempChannel, tempChannel.userLimit, false, null, em);
-  const newName = generateLobbyName(type, requestingUser, gu.tempChannel.name, false);
 
-  if (timeTillChange) {
-    return `Lobbynaam wordt *${timeTillChange.locale('nl').humanize(true)}* veranderd naar \`${newName}\``;
+  try {
+    const timeTillChange = await changeLobby(type, tempChannel, requestingUser, msg.guild, gu.tempChannel, tempChannel.userLimit, false, null, em);
+    const newName = generateLobbyName(type, requestingUser, gu.tempChannel.name, false);
+
+    if (timeTillChange) {
+      return `Lobbynaam wordt *${timeTillChange.locale('nl').humanize(true)}* veranderd naar \`${newName}\``;
+    }
+
+    return `Lobbynaam is veranderd naar \`${newName}\``;
+  } catch {
+    return 'Lobby naam kan niet alleen uit een emoji bestaan';
   }
-
-  return `Lobbynaam is veranderd naar \`${newName}\``;
 };
 
 router.use('name', nameHandler, HandlerType.GUILD, {
