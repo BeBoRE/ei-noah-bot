@@ -69,7 +69,7 @@ function generateLobbyName(
     if (result && result[0] === newName.substr(0, result[0].length)) {
       const [customIcon] = result;
 
-      if (customIcon !== '🔐' && customIcon !== '🙊') {
+      if (!Object.keys(ChannelType).map<string>((t) => getIcon(<ChannelType>t)).includes(customIcon) && customIcon !== '📝') {
         const name = newName
           .substring(result[0].length, newName.length)
           .trim();
@@ -781,8 +781,18 @@ const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, 
 
   const selectMenu = new MessageSelectMenu();
   selectMenu.setCustomId('name');
-  selectMenu.setPlaceholder('Selecteer Naam');
-  selectMenu.addOptions(latestNameChanges.map((ltc) : MessageSelectOptionData => ({ label: ltc.name, value: ltc.name, default: generateLobbyName(currentType, owner, ltc.name) === voiceChannel.name })));
+  selectMenu.setPlaceholder('Geen Naam Geselecteerd');
+  selectMenu.addOptions(latestNameChanges.map((ltc) : MessageSelectOptionData => {
+    const generatedName = generateLobbyName(currentType, owner, ltc.name);
+    const icon = emojiRegex().exec(generatedName)?.[0];
+
+    return {
+      emoji: icon ?? undefined,
+      label: icon ? generatedName.substring(icon?.length).trim() : generatedName,
+      value: ltc.name,
+      default: generatedName === voiceChannel.name,
+    };
+  }));
 
   const limitRow = new MessageActionRow({
     components: [new MessageButton({
@@ -1391,7 +1401,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
             if (limit >= 0 && limit < 100 && interaction.guild) {
               await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, limit, false, interaction, em);
             }
-          } else if (interaction.isSelectMenu()) {
+          } else if (interaction.isSelectMenu() && interaction.customId === 'name') {
             [currentTempChannel.name] = interaction.values;
             await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, interaction, em);
           } else {
