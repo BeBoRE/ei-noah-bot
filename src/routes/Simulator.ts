@@ -84,7 +84,7 @@ router.use('user', async ({ flags, params, msg }) => {
     console.log(`${spliced.length} berichten gevonden`);
 
     let maxSize = 1000;
-    while (!chain || maxSize > 0) {
+    while (!chain && maxSize > 0) {
       try {
         chain = new Chain(shuffle(shuffle(shuffle(spliced))).map((m) => m.split(' ')).slice(0, spliced.length > maxSize ? maxSize : -1));
         userChain.set(user.id, chain);
@@ -93,6 +93,8 @@ router.use('user', async ({ flags, params, msg }) => {
       }
     }
   }
+
+  if (!chain) return 'Er kon geen model voor dit persoon gemaakt worden';
 
   const fromState = flags.get('finish')?.map((element) => element.toString());
   const generated = chain.walk(fromState);
