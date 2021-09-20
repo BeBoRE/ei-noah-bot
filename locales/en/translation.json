@@ -26,6 +26,10 @@
     "notSelectedAsAnnouncement": "Current channel is not a birthday announcement channel anymore",
     "selectedAsAnnouncement": "Current channel is selected as birthday announcement channel",
     "birthdayRoleSet": "Birthday role is set",
+    "birthdayMsg": "Happy birthday, {{user}}!!!",
+    "meBirthdayMsg": "Celebrate my birthday my subjects",
+    "birthdayMsgAge": "Turned {{age}} today. happy birthday!!",
+    "birthdayMsgAgeUser": "{{user}} turned {{age}} today, happy birthday!!\n> $t(birthday.error.permissionMissing)",
     "error": {
       "niceTry": "Nice try",
       "notInFuture": "Your birthday cant be in the future",

@@ -260,7 +260,7 @@ const setRoleHandler : GuildHandler = async ({
 
   const [role] = flags.get('role') || params;
 
-  const guild = await (await guildUser).guild.init();
+  const guild = await guildUser.guild.init();
 
   if (role instanceof Role) {
     if (msg.guild && msg.guild.me && msg.guild?.me?.roles.highest.position > role.position) {
@@ -409,7 +409,7 @@ const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChanne
 
   if (url && permissions.has('ATTACH_FILES', true)) {
     return {
-      content: member.client.user?.id !== member.user.id ? `Gefeliciteerd met jouw verjaardag ${member.user}!` : '@everyone @everyone @everyone Vier mijn verjaardag mijn onderlingen',
+      content: member.client.user?.id !== member.user.id ? i18n.t('birthday.birthdayMsg', { user: member.user }) : i18n.t('birthday.meBirthdayMsg'),
       files: [await generateImage(url, age.toString())],
     };
   }
@@ -426,7 +426,7 @@ const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChanne
 
     // eslint-disable-next-line max-len
     embed.setAuthor(member.nickname || member.user.username, member.user.avatarURL() || undefined);
-    embed.description = `Is vandaag ${age} geworden! Gefeliciteerd`;
+    embed.description = i18n.t('birthday.birthdayMsgAge', { age });
     embed.setThumbnail('http://clipart-library.com/images/kcKnBz4Ai.jpg');
 
     embed.setFooter(permissionMissingText);
@@ -434,7 +434,7 @@ const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChanne
     return { embeds: [embed] };
   }
 
-  return { content: `${member.displayName} is vandaag ${age} geworden! Gefeliciteerd!!\n> ${permissionMissingText}` };
+  return { content: i18n.t('birthday.birthdayMsgAgeUser', { age, user: member.user }) };
 };
 
 // TODO: Deze functie aanpakken
