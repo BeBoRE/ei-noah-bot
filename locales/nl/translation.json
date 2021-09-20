@@ -23,10 +23,17 @@
     "userIsBornOnAge": "Geboren op {{date}} en is {{yearsOld}} jaar old",
     "noBirthdaySad": "{{username}} heeft geen verjaardag, dit is zo zielig",
     "birthdayRemoved": "Je verjaardag is verwijderd",
+    "notSelectedAsAnnouncement": "Huidig kanaal is meer geselecteerd als verjaardag-aankondigings-kanaal",
+    "selectedAsAnnouncement": "Huidig kanaal is nu geselecteerd als verjaardag-aankondigings-kanaal",
+    "birthdayRoleSet": "Rol voor de jarig-jop is ingesteld",
     "error": {
       "niceTry": "Leuk geprobeerd",
       "notInFuture": "Je verjaardag kan niet in de toekomst zijn",
-      "notUser": "Give user as argument"
+      "notUser": "Geef een gebruiker als argument",
+      "noGiveRolePermission": "Ik heb niet de permissions om iemand een rol te geven",
+      "givenRoleTooHigh": "Gegeven rol is hoger dan mijn hoogste rol",
+      "noRoleGiven": "Geef een rol als argument",
+      "permissionMissing": "Voor een uniek verjaardag's plaatje, sta mij toe om in dit kanaal afbeeldingen weer te geven"
     }
   }, 
   "error": {

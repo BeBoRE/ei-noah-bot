@@ -248,14 +248,14 @@ router.use('channel', setChannelHandler, HandlerType.GUILD, {
 });
 
 const setRoleHandler : GuildHandler = async ({
-  guildUser, msg, params, flags,
+  guildUser, msg, params, flags, i18n,
 }) => {
   if (!msg.member?.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
-    return 'Alleen een Edwin mag dit aanpassen';
+    return i18n.t('error.notAdmin');
   }
 
   if (!msg.guild.me?.permissions.has(Permissions.FLAGS.MANAGE_ROLES)) {
-    return 'Ik heb geen permissions om iemand een rol te geven';
+    return i18n.t('birthday.error.noGiveRolePermission');
   }
 
   const [role] = flags.get('role') || params;
@@ -265,22 +265,22 @@ const setRoleHandler : GuildHandler = async ({
   if (role instanceof Role) {
     if (msg.guild && msg.guild.me && msg.guild?.me?.roles.highest.position > role.position) {
       guild.birthdayRole = role.id;
-      return 'De role voor deze server is gezet';
+      return i18n.t('birthday.birthdayRoleSet');
     }
 
-    return 'Gegeven rol is hoger dan mijn rol';
+    return i18n.t('birthday.error.givenRoleTooHigh');
   }
 
-  return 'Mention een role';
+  return i18n.t('birthday.error.noRoleGiven');
 };
 
 router.use('set-role', setRoleHandler, HandlerType.GUILD);
 router.use('role', setRoleHandler, HandlerType.GUILD, {
-  description: 'Selecteerd de rol voor de jarige-jop',
+  description: 'User who\'s birthday it is get this role',
   options: [{
     name: 'role',
     type: 'ROLE',
-    description: 'Rol voor de jarige-jop',
+    description: 'Role for the one who\'s birthday it is',
     required: true,
   }],
 });
@@ -399,9 +399,9 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChannel, age : number) : Promise<MessageOptions | null> => {
+const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChannel, age : number, i18n : I18n) : Promise<MessageOptions | null> => {
   const url = member.user.avatarURL({ size: 256, dynamic: false, format: 'png' });
-  const permissionMissingText = "Voor een uniek verjaardag's plaatje, sta mij toe om in dit kanaal afbeeldingen weer te geven";
+  const permissionMissingText = i18n.t('birthday.error.permissionMissing');
 
   const permissions = member.client.user ? channel.permissionsFor(member.client.user) : null;
 

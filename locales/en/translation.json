@@ -25,10 +25,15 @@
     "birthdayRemoved": "Your birthday has been removed",
     "notSelectedAsAnnouncement": "Current channel is not a birthday announcement channel anymore",
     "selectedAsAnnouncement": "Current channel is selected as birthday announcement channel",
+    "birthdayRoleSet": "Birthday role is set",
     "error": {
       "niceTry": "Nice try",
       "notInFuture": "Your birthday cant be in the future",
-      "notUser": "Geef een gebruiker als argument"
+      "notUser": "Give user as argument",
+      "noGiveRolePermission": "I don't have the permission to give someone a role",
+      "givenRoleTooHigh": "Given role is higher than my highest role",
+      "noRoleGiven": "Please give a role as argument",
+      "permissionMissing": "For a unique birthday card, allow me to show pictures in this channel"
     }
   },
   "error": {
