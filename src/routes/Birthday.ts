@@ -409,7 +409,7 @@ const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChanne
 
   if (url && permissions.has('ATTACH_FILES', true)) {
     return {
-      content: member.client.user?.id !== member.user.id ? i18n.t('birthday.birthdayMsg', { user: member.user }) : i18n.t('birthday.meBirthdayMsg'),
+      content: member.client.user?.id !== member.user.id ? i18n.t('birthday.birthdayMsg', { user: `<@${member.user.id}>` }) : i18n.t('birthday.meBirthdayMsg'),
       files: [await generateImage(url, age.toString())],
     };
   }
@@ -485,8 +485,7 @@ const checkBday = async (client : Client, em : EntityManager, _i18n : I18n) => {
             // Post the birthday message when it's a member's birthday,
             // when there is already a birthday message only post a new message if the last one can't be deleted
             if (member && isBirthday && !birthdayMessage) {
-              const i18n = _i18n.cloneInstance();
-              await i18n.changeLanguage(gu.guild.language || user.language);
+              const i18n = _i18n.cloneInstance({ lng: gu.guild.language || user.language || 'nl' });
               const options = await getMsgOptions(member, channel, age, i18n);
 
               if (options) {

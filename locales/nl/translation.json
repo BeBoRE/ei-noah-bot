@@ -3,7 +3,9 @@
   "locale": {
     "availableLanguages": "Dit zijn alle beschikbare talen `{{languages}}`",
     "userLanguageChanged": "Taal veranderd naar **Nederlands**",
-    "guildLanguageChanged": "Default server taal veranderd **Nederlands**",
+    "guildLanguageChanged": "Default server taal veranderd naar **Nederlands**",
+    "userLanguageRemoved": "Taal voorkeur verwijderd",
+    "guildLanguageRemoved": "Default server taal verwijderd",
     "error": {
       "notLanguage": "Dat is niet een taal",
       "notAdmin": "Alleen een admin kan dit doen"
@@ -26,6 +28,11 @@
     "notSelectedAsAnnouncement": "Huidig kanaal is meer geselecteerd als verjaardag-aankondigings-kanaal",
     "selectedAsAnnouncement": "Huidig kanaal is nu geselecteerd als verjaardag-aankondigings-kanaal",
     "birthdayRoleSet": "Rol voor de jarig-jop is ingesteld",
+    "birthdayMsg": "Gefeliciteerd met jouw verjaardag, {{user}}!!!",
+    "meBirthdayMsg": "VIER MIJN VERJAARDAG MIJN ONDERDANEN",
+    "birthdayMsgAge": "Is vandaag {{age}} geworden. GEFELICITEERD!!",
+    "birthdayMsgAgeUser": "{{user}} is vandaag {{age}} geworden, Gefeliciteerd!!\n> $t(birthday.error.permissionMissing)",
+    "congratulations": "Felicitaties",
     "error": {
       "niceTry": "Leuk geprobeerd",
       "notInFuture": "Je verjaardag kan niet in de toekomst zijn",
@@ -33,7 +40,8 @@
       "noGiveRolePermission": "Ik heb niet de permissions om iemand een rol te geven",
       "givenRoleTooHigh": "Gegeven rol is hoger dan mijn hoogste rol",
       "noRoleGiven": "Geef een rol als argument",
-      "permissionMissing": "Voor een uniek verjaardag's plaatje, sta mij toe om in dit kanaal afbeeldingen weer te geven"
+      "permissionMissing": "Voor een uniek verjaardag's plaatje, sta mij toe om in dit kanaal afbeeldingen weer te geven",
+      "noSendPermission": "Ik heb de *Send Messages* permission nodig om in {{channel}} een verjaardags aankondiging te zetten>\nOm een uniek verjaardagskaartje te genereren heb ik de *Attach Files* permission nodig, die ziet er zo uit"
     }
   }, 
   "error": {

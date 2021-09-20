@@ -4,6 +4,8 @@
     "availableLanguages": "All available languages `{{languages}}`",
     "userLanguageChanged": "Language changed to **English**",
     "guildLanguageChanged": "Default server language changed to **English**",
+    "userLanguageRemoved": "Language preference removed",
+    "guildLanguageRemoved": "Default server language removed",
     "error": {
       "notLanguage": "That's not a language",
       "notAdmin": "Only admins are allowed to do this"
@@ -27,9 +29,10 @@
     "selectedAsAnnouncement": "Current channel is selected as birthday announcement channel",
     "birthdayRoleSet": "Birthday role is set",
     "birthdayMsg": "Happy birthday, {{user}}!!!",
-    "meBirthdayMsg": "Celebrate my birthday my subjects",
+    "meBirthdayMsg": "Celebrate my birthday my subjects!",
     "birthdayMsgAge": "Turned {{age}} today. happy birthday!!",
     "birthdayMsgAgeUser": "{{user}} turned {{age}} today, happy birthday!!\n> $t(birthday.error.permissionMissing)",
+    "congratulations": "Congratulations",
     "error": {
       "niceTry": "Nice try",
       "notInFuture": "Your birthday cant be in the future",

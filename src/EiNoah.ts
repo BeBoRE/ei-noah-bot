@@ -166,8 +166,7 @@ async function messageParser(msg : Message | CommandInteraction, em: EntityManag
   const awaitedGuildUserOrUser = await guildUserOrUser;
   const language = (awaitedGuildUserOrUser instanceof GuildUser ? (awaitedGuildUserOrUser.user.language || awaitedGuildUserOrUser.guild.language) : awaitedGuildUserOrUser.language);
 
-  const newI18n = i18n.cloneInstance();
-  if (language) await newI18n.changeLanguage(language);
+  const newI18n = i18n.cloneInstance({ lng: language || 'nl' });
 
   const routeInfo : RouteInfo = new LazyRouteInfo({
     params,

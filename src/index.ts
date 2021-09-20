@@ -66,6 +66,9 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
       fallbackLng: ['en', 'nl'],
       lng: 'nl',
       preload: preloadLanguages,
+      interpolation: {
+        escapeValue: false,
+      },
       backend: {
         loadPath: join(__dirname, '../locales/{{lng}}/{{ns}}.json'),
       },

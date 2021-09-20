@@ -7,14 +7,22 @@ router.use('languages', ({ i18n }) => i18n.t('locale.availableLanguages', { lang
 });
 
 router.use('user', async ({
-  i18n, user, params, flags,
+  i18n, user, params, flags, guildUser,
 }) => {
   const [language] = flags.get('language') || params;
   const availableLanguages = Object.keys(i18n.services.resourceStore.data).sort();
 
   if (typeof language !== 'string') return i18n.t('locale.error.notLanguage');
 
-  if (!availableLanguages.includes(language)) return i18n.t('locale.error.notLanguage');
+  if (!availableLanguages.includes(language) && language !== 'none') return i18n.t('locale.error.notLanguage');
+
+  if (language === 'none') {
+    // eslint-disable-next-line no-param-reassign
+    user.language = undefined;
+    await i18n.changeLanguage(guildUser?.guild.language || 'en');
+
+    return i18n.t('locale.userLanguageRemoved');
+  }
 
   await i18n.changeLanguage(language);
   // eslint-disable-next-line no-param-reassign
@@ -26,7 +34,7 @@ router.use('user', async ({
   options: [{
     name: 'language',
     type: 'STRING',
-    description: 'Language you want to change to',
+    description: "Language you want to change to ('none removes your preference')",
     required: true,
   }],
 });
@@ -40,8 +48,16 @@ router.use('guild', async ({
 
   if (typeof language !== 'string') return i18n.t('locale.error.notLanguage');
 
-  if (!availableLanguages.includes(language)) return i18n.t('locale.error.notLanguage');
+  if (!availableLanguages.includes(language) && language !== 'none') return i18n.t('locale.error.notLanguage');
   if (!member || !member.permissions.has('ADMINISTRATOR')) return i18n.t('locale.error.notAdmin');
+
+  if (language === 'none') {
+    // eslint-disable-next-line no-param-reassign
+    guildUser.guild.language = undefined;
+    await i18n.changeLanguage(guildUser.guild.language || 'en');
+
+    return i18n.t('locale.guildLanguageRemoved');
+  }
 
   await i18n.changeLanguage(language);
   // eslint-disable-next-line no-param-reassign
