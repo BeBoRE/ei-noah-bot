@@ -43,7 +43,16 @@
       "permissionMissing": "Voor een uniek verjaardag's plaatje, sta mij toe om in dit kanaal afbeeldingen weer te geven",
       "noSendPermission": "Ik heb de *Send Messages* permission nodig om in {{channel}} een verjaardags aankondiging te zetten>\nOm een uniek verjaardagskaartje te genereren heb ik de *Attach Files* permission nodig, die ziet er zo uit"
     }
-  }, 
+  },
+  "lobby": {
+    "noUsersAdded": "Geen user(s) toegevoegd",
+    "can": "kan",
+    "canPlural": "kunnen",
+    "could": "kon",
+    "couldPlural": "konden",
+    "goIn": "nu naar binnen",
+    "alreadyGoIn": "al naar binnen"
+  },
   "error": {
     "notAdmin": "Alleen een admin kan dit doen"
   }

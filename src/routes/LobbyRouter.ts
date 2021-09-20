@@ -34,6 +34,7 @@ import {
 } from '@mikro-orm/postgresql';
 import emojiRegex from 'emoji-regex';
 import moment, { Duration } from 'moment';
+import { i18n as I18n } from 'i18next';
 import LobbyNameChange from '../entity/LobbyNameChange';
 import { Category } from '../entity/Category';
 import TempChannel from '../entity/TempChannel';
@@ -311,7 +312,7 @@ interface AddUsersResponse {
   alreadyInMessage: string,
   text: string
 }
-const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChannel, owner : GuildUser, client : Client) : AddUsersResponse => {
+const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChannel, owner : GuildUser, client : Client, i18n : I18n) : AddUsersResponse => {
   const allowedUsers : Array<DiscordUser | Role> = [];
   const alreadyAllowedUsers : Array<DiscordUser | Role> = [];
 
@@ -349,12 +350,12 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
     .catch(() => console.log('Overwrite permission error'));
 
   let allowedUsersMessage : string;
-  if (!allowedUsers.length) allowedUsersMessage = 'Geen user(s) toegevoegd';
-  else allowedUsersMessage = `${allowedUsers.map((userOrRole) => (userOrRole instanceof DiscordUser ? userOrRole : `${userOrRole}`)).join(', ')} ${allowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? 'mogen' : 'mag'} nu naar binnen`;
+  if (!allowedUsers.length) allowedUsersMessage = i18n.t('lobby.noUsersAdded');
+  else allowedUsersMessage = `${allowedUsers.map((userOrRole) => (userOrRole instanceof DiscordUser ? userOrRole : `${userOrRole}`)).join(', ')} ${allowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? i18n.t('lobby.canPlural') : i18n.t('lobby.can')} ${i18n.t('lobby.goIn')}`;
 
   let alreadyInMessage : string;
   if (!alreadyAllowedUsers.length) alreadyInMessage = '';
-  else alreadyInMessage = `${alreadyAllowedUsers.map((userOrRole) => (userOrRole instanceof DiscordUser ? userOrRole : `${userOrRole}`)).join(', ')} ${alreadyAllowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? 'konden' : 'kon'} al naar binnen`;
+  else alreadyInMessage = `${alreadyAllowedUsers.map((userOrRole) => (userOrRole instanceof DiscordUser ? userOrRole : `${userOrRole}`)).join(', ')} ${alreadyAllowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? i18n.t('lobby.couldPlural') : i18n.t('lobby.could')} ${i18n.t('lobby.alreadyGoIn')}`;
 
   return {
     allowedUsersOrRoles: allowedUsers,
@@ -366,7 +367,7 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
 };
 
 router.use('add', async ({
-  params, msg, guildUser, em, flags,
+  params, msg, guildUser, em, flags, i18n,
 }) => {
   const nonUserOrRole = params
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
@@ -395,7 +396,7 @@ router.use('add', async ({
 
   if (gu.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
 
-  return addUsers(userOrRole, activeChannel, await guildUser, msg.client).text;
+  return addUsers(userOrRole, activeChannel, await guildUser, msg.client, i18n).text;
 }, HandlerType.GUILD, {
   description: 'Voeg een gebruiker of rol toe aan je lobby',
   options: [{
@@ -466,7 +467,9 @@ router.use('add', async ({
   }],
 });
 
-router.useContext('Toevoegen aan lobby', 'USER', async ({ interaction, guildUser, em }) => {
+router.useContext('Toevoegen aan lobby', 'USER', async ({
+  interaction, guildUser, em, i18n,
+}) => {
   const gu = await guildUser;
   if (!gu) return 'Commando kan alleen op een server gebruikt worden';
 
@@ -475,7 +478,7 @@ router.useContext('Toevoegen aan lobby', 'USER', async ({ interaction, guildUser
 
   const userToAdd = interaction.options.getUser('user', true);
 
-  const addResponse = addUsers([userToAdd], activeChannel, gu, interaction.client);
+  const addResponse = addUsers([userToAdd], activeChannel, gu, interaction.client, i18n);
 
   if (interaction.channel?.id !== gu.tempChannel.textChannelId) {
     const textChannel = await activeTempText(interaction.client, gu.tempChannel);
@@ -1348,7 +1351,7 @@ router.use('help', helpHandler, HandlerType.BOTH, {
   description: 'Get help',
 });
 
-const createAddMessage = async (tempChannel : TempChannel, user : User, client : Client, em : EntityManager) => {
+const createAddMessage = async (tempChannel : TempChannel, user : User, client : Client, em : EntityManager, i18n : I18n) => {
   if (!tempChannel.textChannelId) throw new Error('Text channel not defined');
 
   const textChannel = await client.channels.fetch(`${BigInt(tempChannel.textChannelId)}`, { cache: true });
@@ -1372,7 +1375,7 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
     const collector = msg.createMessageComponentCollector();
     collector.on('collect', async (interaction) => {
       if (interaction.user.id === tempChannel.guildUser.user.id && interaction.customId === 'add') {
-        interaction.update({ content: addUsers([user], activeChannel, tempChannel.guildUser, client).text, components: [] });
+        interaction.update({ content: addUsers([user], activeChannel, tempChannel.guildUser, client, i18n).text, components: [] });
         return;
       }
 
@@ -1529,7 +1532,7 @@ const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => 
   await Promise.all(categories.map((category) => createCreateChannels(category, client).catch(() => {})));
 };
 
-router.onInit = async (client, orm) => {
+router.onInit = async (client, orm, _i18n) => {
   // Check elke tempChannel om de 60 minuten
   const checkTempLobbies = async () => {
     const em = orm.em.fork();
@@ -1608,13 +1611,14 @@ router.onInit = async (client, orm) => {
       ) {
         const tempChannel = await em.findOne(TempChannel, {
           channelId: channel.id,
-        }, { populate: ['guildUser', 'guildUser.user'] });
+        }, { populate: ['guildUser', 'guildUser.user', 'guildUser.guild'] });
 
         if (tempChannel) {
+          const i18n = _i18n.cloneInstance({ lng: tempChannel.guildUser.user.language || tempChannel.guildUser.guild.language });
           const activeChannel = await activeTempChannel(client, em, tempChannel);
 
           if (!activeChannel?.permissionsFor(user)?.has(Permissions.FLAGS.SPEAK, true)) {
-            await createAddMessage(tempChannel, user, client, em);
+            await createAddMessage(tempChannel, user, client, em, i18n);
           }
         }
       }

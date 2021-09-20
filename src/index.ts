@@ -62,7 +62,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
   i18next.use(Backend)
     .init({
       initImmediate: false,
-      debug: true,
+      debug: process.env.NODE_ENV !== 'production',
       fallbackLng: ['en', 'nl'],
       lng: 'nl',
       preload: preloadLanguages,

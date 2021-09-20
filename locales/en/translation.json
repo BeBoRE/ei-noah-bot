@@ -44,6 +44,15 @@
       "noSendPermission": "I need the *Send Messages* permission in {{channel}} to send a birthday announcement>\nTo generate a unique birthday card I need the *Attach Files* permission, which looks like follows"
     }
   },
+  "lobby": {
+    "noUsersAdded": "No user(s) added",
+    "can": "can",
+    "canPlural": "can",
+    "could": "could",
+    "couldPlural": "could",
+    "goIn": "now enter",
+    "alreadyGoIn": "already enter"
+  },
   "error": {
     "notAdmin": "Only admins are allowed to do this"
   }

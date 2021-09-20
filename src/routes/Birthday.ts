@@ -546,7 +546,12 @@ router.onInit = async (client, orm, i18n) => {
   const offset = new Date().getTimezoneOffset();
   console.log(`Offset in minutes: ${offset}`);
 
-  await checkBday(client, orm.em.fork(), i18n);
+  {
+    const em = orm.em.fork();
+    await checkBday(client, em, i18n);
+    await em.flush();
+  }
+
   const reportCron = new CronJob('5 0 0 * * *', async () => {
     const em = orm.em.fork();
     await checkBday(client, em, i18n);
