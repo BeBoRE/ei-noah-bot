@@ -9,6 +9,10 @@ import {
   CanvasRenderingContext2D, createCanvas, loadImage,
 } from 'canvas';
 import { fillTextWithTwemoji, strokeTextWithTwemoji, measureText } from 'node-canvas-with-twemoji-and-discord-emoji';
+import i18next from 'i18next';
+import Backend from 'i18next-fs-backend';
+import { lstatSync, readdirSync } from 'fs';
+import { join } from 'path';
 import { BothHandler, HandlerType } from './router/Router';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
@@ -17,6 +21,7 @@ import Birthday from './routes/Birthday';
 import QuoteRouter from './routes/QuoteRouter';
 import CoronaRouter from './routes/CoronaRouter';
 import SimulatorRouter from './routes/Simulator';
+import LocaleRouter from './routes/Locale';
 
 dotenv.config();
 
@@ -48,7 +53,25 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
   const child = fork('./src/child.ts');
   child.on('message', (msg) => console.log(msg));
 
-  const eiNoah = new EiNoah(process.env.CLIENT_TOKEN, orm);
+  const preloadLanguages = readdirSync(join(__dirname, '../locales')).filter((fileName) => {
+    const joinedPath = join(join(__dirname, '../locales'), fileName);
+    const isDirectory = lstatSync(joinedPath).isDirectory();
+    return isDirectory;
+  });
+
+  i18next.use(Backend)
+    .init({
+      initImmediate: false,
+      debug: true,
+      fallbackLng: ['en', 'nl'],
+      lng: 'nl',
+      preload: preloadLanguages,
+      backend: {
+        loadPath: join(__dirname, '../locales/{{lng}}/{{ns}}.json'),
+      },
+    }, (err) => err && console.log(err));
+
+  const eiNoah = new EiNoah(process.env.CLIENT_TOKEN, orm, i18next);
 
   // LobbyRouter wordt gebruikt wanneer mensen "ei lobby" aanroepen
   eiNoah.use('lobby', LobbyRouter);
@@ -347,6 +370,8 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
   ].join('\n'), HandlerType.BOTH, {
     description: 'Het heerlijke Ei Noah menu, geniet ervan :P)',
   });
+
+  eiNoah.use('locale', LocaleRouter);
 
   eiNoah.onInit = async (client) => {
     const updatePrecense = () => {

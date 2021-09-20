@@ -38,4 +38,7 @@ export class Guild extends BaseEntity<Guild, 'id'> {
 
   @Property()
   category?: string;
+
+  @Property()
+  language?: string;
 }

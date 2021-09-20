@@ -23,4 +23,7 @@ export class User extends BaseEntity<User, 'id'> {
 
   @Property()
   birthday?: Date;
+
+  @Property()
+  language?: string;
 }

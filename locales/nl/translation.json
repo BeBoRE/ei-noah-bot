@@ -1,0 +1,35 @@
+{
+  "hello": "Hallo Wereld",
+  "locale": {
+    "availableLanguages": "Dit zijn alle beschikbare talen `{{languages}}`",
+    "userLanguageChanged": "Taal veranderd naar **Nederlands**",
+    "guildLanguageChanged": "Default server taal veranderd **Nederlands**",
+    "error": {
+      "notLanguage": "Dat is niet een taal",
+      "notAdmin": "Alleen een admin kan dit doen"
+    }
+  },
+  "birthday": {
+    "setHelperText": "door een datum (zoals 18 november 1999) als argument te gegeven",
+    "setHelperChange": "Verander je verjaardag $t(setHelperText)",
+    "setHelperAdd": "Voeg je verjaardag toe $t(setHelperText)",
+    "bdayChanged": "Je verjaardag is gewijzigd naar: {{changedTo}}",
+    "bdayAdded": "Je verjaardag is toegevoegd: {{changedTo}}",
+    "userIsBornOn": "{{username}} is geboren op {{date}}",
+    "embedTitleAll": "Verjaardagen:",
+    "embedTitleAge": "Leeftijden:",
+    "oncomingFirst": "Aanstaande eerst:",
+    "noBirthdaysRegistered": "Geen verjaardagen geregistreerd",
+    "userIsBornOnAge": "Geboren op {{date}} en is {{yearsOld}} jaar old",
+    "noBirthdaySad": "{{username}} heeft geen verjaardag, dit is zo zielig",
+    "birthdayRemoved": "Je verjaardag is verwijderd",
+    "error": {
+      "niceTry": "Leuk geprobeerd",
+      "notInFuture": "Je verjaardag kan niet in de toekomst zijn",
+      "notUser": "Give user as argument"
+    }
+  }, 
+  "error": {
+    "notAdmin": "Alleen een admin kan dit doen"
+  }
+}

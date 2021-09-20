@@ -14,45 +14,48 @@ import {
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { createCanvas, loadImage } from 'canvas';
+import i18next, { i18n as I18n } from 'i18next';
 import { getUserData } from '../data';
 import { User } from '../entity/User';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Laat Ei-Noah je verjaardag bijhouden of vraag die van iemand anders op');
 
-const setRouter : BothHandler = async ({ user, params, flags }) => {
+const setRouter : BothHandler = async ({
+  user, params, flags, i18n,
+}) => {
   const input = (flags.get('date') || params)
     .filter((item) : item is string => typeof (item) === 'string')
     .join(' ');
 
   if (!input.length) {
-    if (!(await user).birthday) return 'Voeg je verjaardag toe door een datum (zoals 18 november 1999) als argument te gegeven';
-    return 'Verander je verjaardag door een datum (zoals 18 november 1999) als argument te geven';
+    if (!user.birthday) return i18n.t('birthday.setHelperAdd');
+    return i18n.t('birthday.setHelperChange');
   }
 
   const birthday = moment(input, ['DD MM YYYY', 'DD MMMM YYYY'], 'nl');
 
-  if (!birthday.isValid()) { return 'Leuk geprobeerd'; }
+  if (!birthday.isValid()) { return i18n.t('birthday.error.niceTry'); }
 
   if (birthday.isAfter(new Date())) {
-    return 'Je geboorte kan niet in de toekomst zijn';
+    return i18n.t('birthday.error.notInFuture');
   }
 
   // eslint-disable-next-line no-param-reassign
-  (await user).birthday = birthday.toDate();
+  user.birthday = birthday.toDate();
 
-  if ((await user).birthday != null) {
-    return `Je verjaardag is gewijzigd naar: ${birthday.locale('nl').format('D MMMM YYYY')}`;
+  if (user.birthday != null) {
+    return i18n.t('birthday.bdayChanged', { changedTo: birthday.locale(i18n.language).format('D MMMM YYYY') });
   }
-  return `Je verjaardag is toegevoegd: ${birthday.locale('nl').format('D MMMM YYYY')}`;
+  return i18n.t('birthday.bdayAdded', { changedTo: birthday.locale(i18n.language).format('D MMMM YYYY') });
 };
 
 router.use('set', setRouter, HandlerType.BOTH, {
-  description: 'Stel je geboortedatum in',
+  description: 'Change or set your birthday',
   options: [
     {
       name: 'date',
-      description: 'Je geboorte datum',
+      description: 'Your birthday',
       type: 'STRING',
       required: true,
     },
@@ -77,7 +80,7 @@ router.use('help', helpHandler, HandlerType.BOTH, {
   description: 'Krijg een help menu',
 });
 
-const showAll : BothHandler = async ({ msg, em }) => {
+const showAll : BothHandler = async ({ msg, em, i18n }) => {
   const users = await em.find(User, { $not: { birthday: null } });
 
   const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(`${BigInt(u.id)}`, { cache: true })));
@@ -93,7 +96,7 @@ const showAll : BothHandler = async ({ msg, em }) => {
 
       return dayA - dayB;
     })
-    .map((du) => `\n${du.username} is geboren op ${moment(users.find((u) => u.id === du.id)?.birthday).locale('nl').format('D MMMM YYYY')}`);
+    .map((du) => `\n${i18n.t('birthday.userIsBornOn', { username: du.username, date: moment(users.find((u) => u.id === du.id)?.birthday).locale(i18n.language).format('D MMMM YYYY') })}`);
 
   let color : `#${string}` | undefined;
   if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
@@ -104,27 +107,27 @@ const showAll : BothHandler = async ({ msg, em }) => {
 
   const embed = new MessageEmbed();
   embed.setColor(color);
-  embed.setTitle('Verjaardagen:');
+  embed.setTitle(i18n.t('birthday.embedTitleAll'));
 
   if (users.length === 0) {
-    embed.setDescription('Geen verjaardagen geregistreerd');
+    embed.setDescription(i18n.t('birthday.noBirthdaysRegistered'));
     return embed;
   }
 
-  embed.addField('Aankomende eerst', description.join('\n'));
+  embed.addField(i18n.t('birthday.oncomingFirst'), description.join('\n'));
 
   return embed;
 };
 
 router.use('show-all', showAll);
 router.use('all', showAll, HandlerType.BOTH, {
-  description: 'Laat alle geboortedatums zien',
+  description: 'See all birthdays',
 });
 
-const showAgeHandler : BothHandler = async ({ msg, em }) => {
+const showAgeHandler : BothHandler = async ({ msg, em, i18n }) => {
   const users = await em.find(User, { $not: { birthday: null } });
 
-  if (users.length === 0) return 'Geen geboortedatum\'s geregistreerd';
+  if (users.length === 0) return i18next.t('birthday.noBirthdayRegistered');
 
   const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(`${BigInt(u.id)}`, { cache: true })));
   const description = discUsers
@@ -147,10 +150,10 @@ const showAgeHandler : BothHandler = async ({ msg, em }) => {
   const embed = new MessageEmbed();
 
   embed.setColor(color);
-  embed.setTitle('Leeftijden:');
+  embed.setTitle(i18n.t('birthday.embedTitleAge'));
 
   if (users.length === 0) {
-    embed.setDescription('Geen verjaardagen geregistreerd');
+    embed.setDescription(i18n.t('birthday.noBirthdaysRegistered'));
     return embed;
   }
   embed.description = description;
@@ -160,10 +163,10 @@ const showAgeHandler : BothHandler = async ({ msg, em }) => {
 
 router.use('show-age', showAgeHandler);
 router.use('ages', showAgeHandler, HandlerType.BOTH, {
-  description: 'Laat alle leeftijden zien',
+  description: 'Show everyones birthday',
 });
 
-const getBdayEmbed = (user : DiscordUser, dbUser : User, guild : Guild | null) => {
+const getBdayEmbed = (user : DiscordUser, dbUser : User, guild : Guild | null, i18n : I18n) => {
   const embed = new MessageEmbed();
 
   let color : `#${string}` | undefined = guild?.me?.displayHexColor;
@@ -173,73 +176,75 @@ const getBdayEmbed = (user : DiscordUser, dbUser : User, guild : Guild | null) =
   embed.setColor(color);
   embed.setAuthor(user.username, user.avatarURL() || undefined);
 
-  embed.description = dbUser.birthday ? `Geboren op ${moment(dbUser.birthday).format('D MMMM YYYY')} en is ${moment().diff(moment(dbUser.birthday), 'year')} jaar oud` : `${user.username} heeft geen verjaardag, dit is zo zielig`;
+  embed.description = dbUser.birthday ? i18n.t('birthday.userIsBornOnAge', { date: moment(dbUser.birthday).format('D MMMM YYYY'), yearsOld: moment().diff(moment(dbUser.birthday), 'year') }) : i18n.t('birthday.noBirthdaySad', { username: user.username });
 
   return embed;
 };
 
 router.use('get', async ({
-  params, em, msg, flags,
+  params, em, msg, flags, i18n,
 }) => {
   const [user] = flags.get('user') || params;
 
   if (!(user instanceof DiscordUser)) {
-    return 'Geef een gebruiker als argument';
+    return i18n.t('birthday.error.notUser');
   }
 
   const dbUser = await getUserData(em, user);
 
-  return getBdayEmbed(user, dbUser, msg.guild);
+  return getBdayEmbed(user, dbUser, msg.guild, i18n);
 }, HandlerType.BOTH, {
-  description: 'Vraag de verjaardag en leeftijd van iemand op',
+  description: 'Get someone\'s birthday',
   options: [{
     name: 'user',
-    description: 'Degene waarvan je de verjaardag opvraagt',
+    description: 'The person you want to know the birthday of',
     type: 'USER',
     required: true,
   }],
 });
 
-router.useContext('Zie Verjaardag', 'USER', async ({ interaction, em }) => {
-  const user = interaction.options.getUser('user', true);
+router.useContext('See birthday', 'USER', async ({
+  interaction, em, i18n, user,
+}) => {
+  const discUser = interaction.options.getUser('user', true);
 
-  if (!(user instanceof DiscordUser)) {
-    return 'Geef een gebruiker als argument';
+  if (!(discUser instanceof DiscordUser)) {
+    return i18n.t('birthday.error.notUser');
   }
 
-  const dbUser = await getUserData(em, user);
+  const dbUser = discUser.id === user.id ? user : await getUserData(em, discUser);
 
-  return { embeds: [getBdayEmbed(user, dbUser, interaction.guild)], ephemeral: true };
+  return { embeds: [getBdayEmbed(discUser, dbUser, interaction.guild, i18n)], ephemeral: true };
 });
 
-router.use('delete', async ({ user }) => {
+router.use('remove', async ({ user, i18n }) => {
   // eslint-disable-next-line no-param-reassign
-  (await user).birthday = undefined;
-  return 'Je verjaardag is verwijderd.';
+  user.birthday = undefined;
+  return i18n.t('birthday.birthdayRemoved');
 }, HandlerType.BOTH, {
-  description: 'Geef Ei-Noah geheugen verlies',
+  description: 'Give Ei-Noah amnosia',
 });
 
-const setChannelHandler : GuildHandler = async ({ guildUser, msg }) => {
+const setChannelHandler : GuildHandler = async ({ guildUser, msg, i18n }) => {
   if (!msg.member?.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
-    return 'Alleen een Edwin mag dit aanpassen';
+    return i18n.t('error.notAdmin');
   }
 
-  const guild = await (await guildUser).guild.init();
+  const guild = await guildUser.guild.init();
   const { channel } = msg;
 
   if (guild.birthdayChannel === channel.id) {
     guild.birthdayChannel = undefined;
-    return 'Kanaal niet meer geselecteerd als announcement kanaal';
+    return i18n.t('birthday.notSelectedAsAnnouncement');
   }
 
   guild.birthdayChannel = channel.id;
-  return 'Het huidige kanaal is nu geselecteerd als bday announcement kanaal';
+  return i18n.t('birthday.selectedAsAnnouncement');
 };
 
 router.use('set-channel', setChannelHandler, HandlerType.GUILD);
 router.use('channel', setChannelHandler, HandlerType.GUILD, {
-  description: 'Selecteer dit kanaal als bday announcment kanaal',
+  description: 'Select/deselect current channel as birthday announcement channel',
 });
 
 const setRoleHandler : GuildHandler = async ({

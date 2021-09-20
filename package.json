@@ -5,7 +5,7 @@
   "main": "./dist/index.js",
   "scripts": {
     "start": "npx ts-node ./src/index.ts",
-    "dev": "npx ts-node-dev ./src/index.ts",
+    "dev": "npx ts-node-dev ./src/index.ts -watch ./locales/**/*.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -40,6 +40,8 @@
     "discord.js": "^13.1.0",
     "dotenv": "^8.2.0",
     "emoji-regex": "^9.2.1",
+    "i18next": "^20.6.1",
+    "i18next-fs-backend": "^1.1.1",
     "markov-chains": "^1.0.2",
     "moment": "^2.29.0",
     "node-canvas-with-twemoji-and-discord-emoji": "^1.2.1",
@@ -53,6 +55,7 @@
   "devDependencies": {
     "@mikro-orm/cli": "^4.4.1",
     "@types/emoji-regex": "^9.2.0",
+    "@types/i18next-fs-backend": "^1.0.1",
     "@typescript-eslint/eslint-plugin": "^3.9.0",
     "@typescript-eslint/parser": "^3.9.0",
     "eslint": "^7.25.0",

@@ -20,6 +20,7 @@ import {
   MikroORM,
 } from '@mikro-orm/core';
 import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { i18n } from 'i18next';
 import { Category } from '../entity/Category';
 import { GuildUser } from '../entity/GuildUser';
 import { User } from '../entity/User';
@@ -30,10 +31,11 @@ export interface RouteInfo {
   absoluteParams: Array<string | DiscordUser | Role | Channel>
   params: Array<string | DiscordUser | Role | Channel>
   flags: Map<string, Array<string | DiscordUser | Role | Channel | boolean | number>>,
-  readonly guildUser: Promise<GuildUser> | null,
-  readonly user: Promise<User>,
+  readonly guildUser: GuildUser | null,
+  readonly user: User,
   readonly category: Promise<Category> | null,
   em : EntityManager
+  i18n : i18n
 }
 
 type BothRouteInfo = (DMRouteInfo | GuildRouteInfo);
@@ -54,7 +56,7 @@ export interface GuildRouteInfo extends RouteInfo {
     guild : Guild
     member : GuildMember
   }
-  readonly guildUser: Promise<GuildUser>,
+  readonly guildUser: GuildUser,
   readonly category: null | Promise<Category>,
 }
 

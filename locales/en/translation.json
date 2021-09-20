@@ -1,0 +1,37 @@
+{
+  "hello": "Hallo Wereld",
+  "locale": {
+    "availableLanguages": "All available languages `{{languages}}`",
+    "userLanguageChanged": "Language changed to **English**",
+    "guildLanguageChanged": "Default server language changed to **English**",
+    "error": {
+      "notLanguage": "That's not a language",
+      "notAdmin": "Only admins are allowed to do this"
+    }
+  }, 
+  "birthday": {
+    "setHelperText": "your birthday by giving a date (eg. 18 november 1999) as argument",
+    "setHelperChange": "Change $t(setHelperText)",
+    "setHelperAdd": "Add $t(setHelperText)",
+    "bdayChanged": "Your birtday has been changed to: {{changedTo}}",
+    "bdayAdded": "Your birthday has been added: {{changedTo}}",
+    "userIsBornOn": "{{username}} was born on {{date}}",
+    "embedTitleAll": "Birthdays:",
+    "embedTitleAge": "Ages:",
+    "oncomingFirst": "Oncoming first:",
+    "noBirthdaysRegistered": "No birthdays registered",
+    "userIsBornOnAge": "Born on {{date}} and is {{yearsOld}} years old",
+    "noBirthdaySad": "{{username}} doesn't have a birthday, this is so sad",
+    "birthdayRemoved": "Your birthday has been removed",
+    "notSelectedAsAnnouncement": "Current channel is not a birthday announcement channel anymore",
+    "selectedAsAnnouncement": "Current channel is selected as birthday announcement channel",
+    "error": {
+      "niceTry": "Nice try",
+      "notInFuture": "Your birthday cant be in the future",
+      "notUser": "Geef een gebruiker als argument"
+    }
+  },
+  "error": {
+    "notAdmin": "Only admins are allowed to do this"
+  }
+}

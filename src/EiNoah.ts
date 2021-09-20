@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember,
 } from 'discord.js';
 import {
   MikroORM,
@@ -7,6 +7,9 @@ import {
 import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
 
 import console from 'console';
+import { i18n as I18n } from 'i18next';
+import { GuildUser } from './entity/GuildUser';
+import { getUserData, getUserGuildData } from './data';
 import LazyRouteInfo from './router/LazyRouteInfo';
 import ContextMenuInfo from './router/ContextMenuInfo';
 import Router, {
@@ -103,9 +106,11 @@ function isFlag(argument: string) {
   return argument[0] === '-' && argument.length > 1;
 }
 
-async function messageParser(msg : Message | CommandInteraction, em: EntityManager) {
+async function messageParser(msg : Message | CommandInteraction, em: EntityManager, i18n : I18n) {
   const flags = new Map<string, Array<Role | DiscordUser | string | Channel | boolean | number>>();
   const params : Array<Role | DiscordUser | string | Channel> = [];
+  const user = msg instanceof Message ? msg.author : msg.user;
+  const guildUserOrUser = msg.guild ? getUserGuildData(em, user, msg.guild) : getUserData(em, user);
 
   if (msg instanceof Message) {
     if (!msg.content) throw new Error('Message heeft geen content');
@@ -158,11 +163,19 @@ async function messageParser(msg : Message | CommandInteraction, em: EntityManag
     });
   }
 
+  const awaitedGuildUserOrUser = await guildUserOrUser;
+  const language = (awaitedGuildUserOrUser instanceof GuildUser ? (awaitedGuildUserOrUser.user.language || awaitedGuildUserOrUser.guild.language) : awaitedGuildUserOrUser.language);
+
+  const newI18n = i18n.cloneInstance();
+  if (language) await newI18n.changeLanguage(language);
+
   const routeInfo : RouteInfo = new LazyRouteInfo({
     params,
     msg,
     flags,
     em,
+    guildUserOrUser: await guildUserOrUser,
+    i18n: newI18n,
   });
 
   return routeInfo;
@@ -239,9 +252,12 @@ class EiNoah implements IRouter {
 
   private contextHandlers : Map<string, ContextMenuHandlerInfo> = new Map();
 
-  constructor(token : string, orm : MikroORM<PostgreSqlDriver>) {
+  public i18n : I18n;
+
+  constructor(token : string, orm : MikroORM<PostgreSqlDriver>, i18n : I18n) {
     this.token = token;
     this.orm = orm;
+    this.i18n = i18n;
   }
 
   use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ChatInputApplicationCommandData, 'name' | 'type'>) : void
@@ -316,7 +332,7 @@ class EiNoah implements IRouter {
         const em = orm.em.fork();
 
         const defer = interaction.deferReply();
-        messageParser(interaction, em)
+        messageParser(interaction, em, this.i18n)
           .then((info) => {
             if (info) { return this.router.handle(info); }
             return 'Er is iets misgegaan, volgende keer beter';
@@ -345,6 +361,7 @@ class EiNoah implements IRouter {
 
       if (interaction.isContextMenu()) {
         const em = orm.em.fork();
+        const guildUserOrUser = interaction.member instanceof GuildMember ? await getUserGuildData(em, interaction.member.user, interaction.member.guild) : await getUserData(em, interaction.user);
 
         const handler = this.contextHandlers.get(interaction.commandName);
         if (!handler) {
@@ -352,8 +369,11 @@ class EiNoah implements IRouter {
           return;
         }
 
+        const i18n = this.i18n.cloneInstance();
+        i18n.changeLanguage(guildUserOrUser instanceof GuildUser ? guildUserOrUser.user.language || guildUserOrUser.guild.language : guildUserOrUser.language);
+
         try {
-          const handlerReturn = await handler.handler(new ContextMenuInfo(interaction, em));
+          const handlerReturn = await handler.handler(new ContextMenuInfo(interaction, guildUserOrUser, em, i18n));
           const defaultOptions : InteractionReplyOptions = {
             allowedMentions: {
               roles: [],
@@ -410,7 +430,7 @@ class EiNoah implements IRouter {
 
           if (process.env.NODE_ENV !== 'production') console.time(`${msg.id}`);
 
-          messageParser(msg, em)
+          messageParser(msg, em, this.i18n)
             .then((info) => {
               if (!info) return 'Ongeldige user(s), role(s) en/of channel(s) gegeven';
 
