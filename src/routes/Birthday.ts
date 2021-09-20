@@ -442,7 +442,7 @@ const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChanne
 // Bug: Announcement wordt alleen gegeven wanneer de server een bday-rol had ingesteld (moet niet verplicht zijn)
 // Refactor: If in if in if in if in if
 // Refactor: Iets meer van async gebruikmaken
-const checkBday = async (client : Client, em : EntityManager) => {
+const checkBday = async (client : Client, em : EntityManager, _i18n : I18n) => {
   const today = moment().startOf('day').locale('nl').format('DD MMMM');
   const currentYear = (new Date()).getFullYear();
 
@@ -485,7 +485,9 @@ const checkBday = async (client : Client, em : EntityManager) => {
             // Post the birthday message when it's a member's birthday,
             // when there is already a birthday message only post a new message if the last one can't be deleted
             if (member && isBirthday && !birthdayMessage) {
-              const options = await getMsgOptions(member, channel, age);
+              const i18n = _i18n.cloneInstance();
+              await i18n.changeLanguage(gu.guild.language || user.language);
+              const options = await getMsgOptions(member, channel, age, i18n);
 
               if (options) {
                 // eslint-disable-next-line no-param-reassign
@@ -495,7 +497,7 @@ const checkBday = async (client : Client, em : EntityManager) => {
                       const overwrites = client.user && channel.permissionsFor(client.user);
 
                       if (overwrites && (overwrites.has('USE_PUBLIC_THREADS') || overwrites.has('USE_PRIVATE_THREADS'))) {
-                        msg.startThread({ name: 'Felicitaties', autoArchiveDuration: 1440 }).catch(() => {});
+                        msg.startThread({ name: i18n.t('birthday.congratulations'), autoArchiveDuration: 1440 }).catch(() => {});
                       }
                       return msg.id;
                     }
@@ -505,11 +507,15 @@ const checkBday = async (client : Client, em : EntityManager) => {
                   .catch(() => undefined);
               } else {
                 const owner = await guild.fetchOwner({ cache: true });
-                const url = member.user.avatarURL({ dynamic: false, size: 256, format: 'png' });
+
+                const url = member.user.avatarURL({ dynamic: false, size: 256, format: 'png' }) || member.user.defaultAvatarURL;
+
+                const ownerUser = await getUserData(em, owner.user);
+                await i18n.changeLanguage(ownerUser.language);
 
                 owner.send({
-                  content: `Om een verjaardag announcement te sturen in ${channel} moet ik de *Send Messages* permission hebben\n> Voor een uniek verjaardag's plaatje kan je ook *Attach Files* aanzetten${url ? ', die ziet er zo uit' : ''}`,
-                  files: url ? [await generateImage(url, age.toString())] : undefined,
+                  content: i18n.t('birthday.error.noSendPermission'),
+                  files: [await generateImage(url, age.toString())],
                 }).catch(() => {});
               }
             // If there is a birthday message delete it if the message is deletable and when it's not the members birthday or if the member left the server
@@ -526,9 +532,9 @@ const checkBday = async (client : Client, em : EntityManager) => {
 };
 
 if (process.env.NODE_ENV !== 'production') {
-  router.use('check', async ({ em, msg }) => {
+  router.use('check', async ({ em, msg, i18n }) => {
     const { client } = msg;
-    await checkBday(client, em);
+    await checkBday(client, em, i18n);
 
     return 'Ohko';
   },
@@ -537,14 +543,14 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-router.onInit = async (client, orm) => {
+router.onInit = async (client, orm, i18n) => {
   const offset = new Date().getTimezoneOffset();
   console.log(`Offset in minutes: ${offset}`);
 
-  await checkBday(client, orm.em);
+  await checkBday(client, orm.em.fork(), i18n);
   const reportCron = new CronJob('5 0 0 * * *', async () => {
     const em = orm.em.fork();
-    await checkBday(client, em);
+    await checkBday(client, em, i18n);
     await em.flush();
   });
 

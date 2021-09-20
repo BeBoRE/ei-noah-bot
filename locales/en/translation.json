@@ -37,7 +37,8 @@
       "noGiveRolePermission": "I don't have the permission to give someone a role",
       "givenRoleTooHigh": "Given role is higher than my highest role",
       "noRoleGiven": "Please give a role as argument",
-      "permissionMissing": "For a unique birthday card, allow me to show pictures in this channel"
+      "permissionMissing": "For a unique birthday card, allow me to show pictures in this channel",
+      "noSendPermission": "I need the *Send Messages* permission in {{channel}} to send a birthday announcement>\nTo generate a unique birthday card I need the *Attach Files* permission, which looks like follows"
     }
   },
   "error": {

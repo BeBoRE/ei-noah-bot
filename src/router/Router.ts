@@ -20,7 +20,7 @@ import {
   MikroORM,
 } from '@mikro-orm/core';
 import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { i18n } from 'i18next';
+import { i18n as I18n } from 'i18next';
 import { Category } from '../entity/Category';
 import { GuildUser } from '../entity/GuildUser';
 import { User } from '../entity/User';
@@ -35,7 +35,7 @@ export interface RouteInfo {
   readonly user: User,
   readonly category: Promise<Category> | null,
   em : EntityManager
-  i18n : i18n
+  i18n : I18n
 }
 
 type BothRouteInfo = (DMRouteInfo | GuildRouteInfo);
@@ -107,7 +107,7 @@ export interface IRouter {
   use(route : string, using: Router | BothHandler) : void
   use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
 
-  onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>)
+  onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>, i18n : I18n)
   => void | Promise<void>)
 }
 
@@ -230,20 +230,20 @@ export default class Router implements IRouter {
     });
   }
 
-  protected initialize(client : Client, orm : MikroORM<PostgreSqlDriver>) {
+  protected initialize(client : Client, orm : MikroORM<PostgreSqlDriver>, i18n : I18n) {
     Object.entries(this.routes).forEach(([, route]) => {
       if (route instanceof Router && !route.isInitialized) {
-        route.initialize(client, orm);
+        route.initialize(client, orm, i18n);
       }
     });
 
     if (this.onInit) {
-      this.onInit(client, orm);
+      this.onInit(client, orm, i18n);
       // eslint-disable-next-line no-underscore-dangle
       this._isInitialized = true;
     }
   }
 
-  public onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>)
+  public onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>, i18n : I18n)
   => void | Promise<void>);
 }

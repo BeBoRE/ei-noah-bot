@@ -489,7 +489,7 @@ class EiNoah implements IRouter {
     };
 
     // @ts-ignore
-    this.router.initialize(this.client, orm);
+    this.router.initialize(this.client, orm, this.i18n);
 
     process.on('uncaughtException', async (err) => {
       if (process.env.ERROR_CHANNEL) await errorToChannel(process.env.ERROR_CHANNEL, this.client, err, ErrorType.Uncaught);
