@@ -788,7 +788,7 @@ const helpCommandText = [
 
 const dashBoardText = ['**Beheer je lobby met deze commands:**', memberCommandText].join('\n');
 
-const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, guildUser : GuildUser, owner : DiscordUser) => {
+const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, guildUser : GuildUser, owner : DiscordUser, i18n : I18n) => {
   const currentType = getChannelType(voiceChannel);
 
   const query = em.createQueryBuilder(LobbyNameChange, 'lnc')
@@ -803,7 +803,7 @@ const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, 
 
   const selectMenu = new MessageSelectMenu();
   selectMenu.setCustomId('name');
-  selectMenu.setPlaceholder('Geen Naam Geselecteerd');
+  selectMenu.setPlaceholder(i18n.t('lobby.noNameSelected'));
   selectMenu.addOptions(latestNameChanges.map((ltc) : MessageSelectOptionData => {
     const generatedName = generateLobbyName(currentType, owner, ltc.name);
 
@@ -889,6 +889,7 @@ const changeLobby = (() => {
     forcePermissionUpdate = false,
     interaction: MessageComponentInteraction | null,
     em: EntityManager,
+    i18n : I18n,
   ) => {
     const deny = toDeny(changeTo);
     const currentType = getChannelType(voiceChannel);
@@ -907,8 +908,8 @@ const changeLobby = (() => {
         voiceChannel.members
           .filter((member) => !voiceChannel.permissionOverwrites.cache.has(member.id))
           .forEach((member) => {
-            member.voice.setChannel(null);
-            member.send(`Je bent verwijderd uit *${owner.username}'s*, omdat de lobby was veranderd naar ${changeTo} en jij nog geen toestemming had gekregen`);
+            member.voice.setChannel(null).catch(() => {});
+            member.send(i18n.t('lobby.typeChangeRemoval', { owner, type: changeTo })).catch(() => {});
           });
       }
 
@@ -962,7 +963,7 @@ const changeLobby = (() => {
 
                     return null;
                   })
-                  .then(async (msg) => msg?.edit({ content: dashBoardText, components: await generateButtons(vc, em, tempChannel.guildUser, owner) }))
+                  .then(async (msg) => msg?.edit({ content: dashBoardText, components: await generateButtons(vc, em, tempChannel.guildUser, owner, i18n) }))
                   .catch(() => { });
               }
             } else {
@@ -1002,11 +1003,11 @@ const changeLobby = (() => {
       await voiceChannel.setUserLimit(limit);
     }
 
-    const content = `${dashBoardText}${timeTillNameChange ? `\n\nDe naam van de lobby wordt ${timeTillNameChange.locale('nl').humanize(true)} veranderd naar \`${newName}\`` : ''}`;
+    const content = `${dashBoardText}${timeTillNameChange ? `\n\n${i18n.t('lobby.nameOfLobbyChangeDuration', { duration: timeTillNameChange.locale(i18n.language).humanize(true), name: newName })}` : ''}`;
 
-    if (!(interaction && interaction.update({ content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner) }).then(() => true).catch(() => false)) && tempChannel.controlDashboardId) {
+    if (!(interaction && interaction.update({ content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).then(() => true).catch(() => false)) && tempChannel.controlDashboardId) {
       const msg = await (await textChannel)?.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => null);
-      if (msg) msg.edit({ content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner) }).catch(() => {});
+      if (msg) msg.edit({ content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).catch(() => {});
     }
 
     return timeTillNameChange;
@@ -1014,7 +1015,7 @@ const changeLobby = (() => {
 })();
 
 const changeTypeHandler : GuildHandler = async ({
-  params, msg, guildUser, em, flags,
+  params, msg, guildUser, em, flags, i18n,
 }) => {
   const requestingUser = msg instanceof Message ? msg.author : msg.user;
   if (msg.channel instanceof DMChannel || msg.guild === null || guildUser === null) {
@@ -1059,7 +1060,7 @@ const changeTypeHandler : GuildHandler = async ({
     return `Je lobby was al een **${type}** lobby`;
   }
 
-  changeLobby(changeTo, activeChannel, requestingUser, msg.guild, lobbyOwner.tempChannel, activeChannel.userLimit, true, null, em);
+  changeLobby(changeTo, activeChannel, requestingUser, msg.guild, lobbyOwner.tempChannel, activeChannel.userLimit, true, null, em, i18n);
 
   return `Lobby type is veranderd naar *${changeTo}*`;
 };
@@ -1092,7 +1093,7 @@ router.use('set', changeTypeHandler, HandlerType.GUILD);
 router.use('verander', changeTypeHandler, HandlerType.GUILD);
 
 const sizeHandler : GuildHandler = async ({
-  msg, guildUser, params, em, flags,
+  msg, guildUser, params, em, flags, i18n,
 }) => {
   const gu = await guildUser;
   const activeChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
@@ -1125,7 +1126,7 @@ const sizeHandler : GuildHandler = async ({
 
   const type = getChannelType(activeChannel);
 
-  await changeLobby(type, activeChannel, requestingUser, msg.guild, gu.tempChannel, size, false, null, em);
+  await changeLobby(type, activeChannel, requestingUser, msg.guild, gu.tempChannel, size, false, null, em, i18n);
 
   if (size === 0) { return 'Limiet is verwijderd'; } return `Limiet veranderd naar ${size}${size === 1 && activeChannel.members.size === 1 ? '???\nWaarom zit je in discord als je in je eentje in een kanaal gaat zitten? Heb je niks beters te doen?' : ''}`;
 };
@@ -1302,7 +1303,7 @@ router.use('bitrate', async ({
 });
 
 const nameHandler : GuildHandler = async ({
-  params, guildUser, msg, em, flags,
+  params, guildUser, msg, em, flags, i18n,
 }) => {
   const requestingUser = msg instanceof Message ? msg.author : msg.user;
   const gu = await guildUser;
@@ -1328,7 +1329,7 @@ const nameHandler : GuildHandler = async ({
   const type = getChannelType(tempChannel);
 
   try {
-    const timeTillChange = await changeLobby(type, tempChannel, requestingUser, msg.guild, gu.tempChannel, tempChannel.userLimit, false, null, em);
+    const timeTillChange = await changeLobby(type, tempChannel, requestingUser, msg.guild, gu.tempChannel, tempChannel.userLimit, false, null, em, i18n);
     const newName = generateLobbyName(type, requestingUser, gu.tempChannel.name, false);
 
     if (timeTillChange) {
@@ -1404,14 +1405,15 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
 
 const msgCollectors = new Map<Snowflake, InteractionCollector<MessageComponentInteraction>>();
 
-const createDashBoardCollector = async (client : Client, voiceChannel : VoiceChannel, tempChannel : TempChannel, _em : EntityManager) => {
+const createDashBoardCollector = async (client : Client, voiceChannel : VoiceChannel, tempChannel : TempChannel, _em : EntityManager, _i18n : I18n) => {
   const textChannel = await activeTempText(client, tempChannel);
   const owner = await client.users.fetch(tempChannel.guildUser.user.id, { cache: true }).catch(() => null);
+  const i18 = _i18n.cloneInstance({ lng: tempChannel.guildUser.user.language || tempChannel.guildUser.guild.language });
 
   if (textChannel && owner) {
     let msg = tempChannel.controlDashboardId ? await textChannel.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => undefined) : undefined;
     if (!msg) {
-      msg = await textChannel.send({ content: dashBoardText, components: await generateButtons(voiceChannel, _em, tempChannel.guildUser, owner) }).catch((err) => { console.error(err); return undefined; });
+      msg = await textChannel.send({ content: dashBoardText, components: await generateButtons(voiceChannel, _em, tempChannel.guildUser, owner, i18) }).catch((err) => { console.error(err); return undefined; });
       if (msg) tempChannel.controlDashboardId = msg.id;
     }
 
@@ -1420,7 +1422,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
     if (msg && !msgCollectors.has(msg.id)) {
       msgCollectors.set(msg.id, msg.createMessageComponentCollector().on('collect', async (interaction) => {
         const em = _em.fork();
-        const currentTempChannel = await em.findOne(TempChannel, { channelId: voiceChannel.id }, { populate: { guildUser: { user: true } } });
+        const currentTempChannel = await em.findOne(TempChannel, { channelId: voiceChannel.id }, { populate: { guildUser: { user: true, guild: true } } });
 
         if (interaction.isMessageComponent() && currentTempChannel && interaction.guild) {
           if (interaction.user.id !== currentTempChannel.guildUser.user.id) {
@@ -1428,21 +1430,23 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
             return;
           }
 
+          const i18n = _i18n.cloneInstance({ lng: currentTempChannel.guildUser.user.language || currentTempChannel.guildUser.guild.language });
+
           const limit = Number.parseInt(interaction.customId, 10);
           const currentType = getChannelType(voiceChannel);
 
           if (Number.isSafeInteger(limit)) {
             if (limit >= 0 && limit < 100 && interaction.guild) {
-              await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, limit, false, interaction, em);
+              await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, limit, false, interaction, em, i18n);
             }
           } else if (interaction.isSelectMenu() && interaction.customId === 'name') {
             [currentTempChannel.name] = interaction.values;
-            await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, interaction, em);
+            await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, interaction, em, i18n);
           } else {
             const changeTo = <ChannelType>interaction.customId;
 
             if (Object.values(ChannelType).includes(changeTo) && changeTo !== currentType && interaction.guild) {
-              await changeLobby(changeTo, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, interaction, em);
+              await changeLobby(changeTo, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, interaction, em, i18n);
             }
           }
 
@@ -1453,8 +1457,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
   }
 };
 
-const checkTempChannel = async (client : Client, tempChannel: TempChannel,
-  em : EntityManager) => {
+const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : EntityManager, _i18n : I18n) => {
   const activeChannel = await activeTempChannel(client, em, tempChannel);
   const activeTextChannel = await activeTempText(client, tempChannel);
 
@@ -1500,6 +1503,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel,
       if (!newOwnerGuildUser) throw new Error('Guild User Not Found In Array');
 
       tempChannel.guildUser = newOwnerGuildUser;
+      const i18n = _i18n.cloneInstance({ lng: newOwnerGuildUser.user.language || newOwnerGuildUser.guild.language });
 
       const type = getChannelType(activeChannel);
 
@@ -1509,7 +1513,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel,
       if (newOwner.voice.suppress) { newOwner.voice.setMute(false).catch(() => { }); }
 
       await Promise.all([
-        changeLobby(type, activeChannel, newOwner.user, newOwner.guild, tempChannel, activeChannel.userLimit, true, null, em),
+        changeLobby(type, activeChannel, newOwner.user, newOwner.guild, tempChannel, activeChannel.userLimit, true, null, em, i18n),
           activeTextChannel?.send({
             allowedMentions: { users: [] },
             reply: tempChannel.controlDashboardId ? { messageReference: tempChannel.controlDashboardId } : undefined,
@@ -1523,9 +1527,11 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel,
     const discordUser = await client.users.fetch(`${BigInt(tempChannel.guildUser.user.id)}`);
     const lobbyType = getChannelType(activeChannel);
 
-    await createDashBoardCollector(client, activeChannel, tempChannel, em.fork());
+    const i18n = _i18n.cloneInstance({ lng: tempChannel.guildUser.user.language || tempChannel.guildUser.guild.language });
 
-    await changeLobby(lobbyType, activeChannel, discordUser, activeChannel.guild, tempChannel, activeChannel.userLimit, false, null, em);
+    await createDashBoardCollector(client, activeChannel, tempChannel, em.fork(), i18n);
+
+    await changeLobby(lobbyType, activeChannel, discordUser, activeChannel.guild, tempChannel, activeChannel.userLimit, false, null, em, i18n);
   }
 };
 
@@ -1548,7 +1554,7 @@ router.onInit = async (client, orm, _i18n) => {
 
     const usersWithTemp = await em.getRepository(TempChannel).findAll({ populate: { guildUser: true } });
 
-    const tempChecks = usersWithTemp.map((tcs) => checkTempChannel(client, tcs, em));
+    const tempChecks = usersWithTemp.map((tcs) => checkTempChannel(client, tcs, em, _i18n));
 
     await Promise.all(tempChecks).catch(console.error);
     await em.flush().catch(console.error);
@@ -1562,9 +1568,9 @@ router.onInit = async (client, orm, _i18n) => {
       const em = orm.em.fork();
       const tempChannel = await em.findOne(TempChannel, {
         channelId: oldState.channel.id,
-      }, { populate: { guildUser: true } });
+      }, { populate: { guildUser: { guild: true, user: true } } });
       if (tempChannel) {
-        await checkTempChannel(client, tempChannel, em);
+        await checkTempChannel(client, tempChannel, em, _i18n);
         await em.flush();
       }
     }
@@ -1612,7 +1618,7 @@ router.onInit = async (client, orm, _i18n) => {
           textChannel = await createTextChannel(client, em, guildUser.tempChannel, user);
           guildUser.tempChannel.textChannelId = textChannel.id;
 
-          await createDashBoardCollector(client, createdChannel, guildUser.tempChannel, em.fork());
+          await createDashBoardCollector(client, createdChannel, guildUser.tempChannel, em.fork(), _i18n);
         }
       } else if ( // Check of iemand een tempChannel is gejoint
         user
