@@ -51,9 +51,33 @@
     "could": "could",
     "couldPlural": "could",
     "goIn": "now enter",
-    "alreadyGoIn": "already enter"
+    "alreadyGoIn": "already enter",
+    "roleRemovalUserNotRemoved": "{{users}} had the removed role, they have been allowed to stay in",
+    "rolePluralRemovalUserNotRemoved": "{{users}} had one or more of the removed roles, they have been allowed to stay in",
+    "roleRemovalUserPluralNotRemoved": "{{users}} had the removed role, they have been allowed to stay in",
+    "rolePluralRemovalUserPluralNotRemoved": "{{users}} had one or more of the removed roles, they have been allowed to stay in",
+    "removeThemWith": "\nRemove them with `ei lobby remove {{users}}`",
+    "cantRemoveSelf": "\nYou can't remove yourself",
+    "cantRemoveEi": "\nRemoving me is futile, I am omnipresent",
+    "couldntBeRemoved": "\n{{users}} couldn't be removed",
+    "couldntBeRemoved_plural": "\n{{users}} couldn't be removed",
+    "usersRemoved": "\n{{users}} has been removed from the lobby",
+    "usersRemoved_plural": "\n{{users}} have been removed from the lobby",
+    "rolesRemoved": "\n{{roles}} role is removed",
+    "rolesRemoved_plural": "\n{{roles}} roles were removed",
+    "rolesNotRemoved": "\n{{roles}} role wasn't removed",
+    "rolesNotRemoved_plural": "\n{{roles}} roles weren't removed",
+    "roleRemovalTitle": "Which user(s) or role(s) do you want to remove",
+    "error": {
+      "onlyMentions":"Only mention(s) are allowed as arguments",
+      "noLobby": "You aren't the owner of a lobby\nJoin a **lobby create channel** to get one",
+      "useTextChannel": "This command can only be used in your text channel <#{{channel}}>",
+      "noRemoveInPublic": "What don't you understand about **public** lobby",
+      "noUserToBeRemoved": "No users or roles that can be removed"
+    }
   },
   "error": {
-    "notAdmin": "Only admins are allowed to do this"
+    "notAdmin": "Only admins are allowed to do this",
+    "onlyUsableInGuild": "This command can only be used on a server"
   }
 }

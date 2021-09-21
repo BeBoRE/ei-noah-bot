@@ -10,7 +10,6 @@ import {
   DiscordAPIError,
   Role,
   GuildMember,
-  TextBasedChannelFields,
   OverwriteResolvable,
   TextChannel,
   CategoryChannel,
@@ -382,87 +381,85 @@ router.use('add', async ({
   });
 
   if (nonUserOrRole.length > 0) {
-    return ('Alleen user mention(s) mogelijk als argument');
+    return (i18n.t('lobby.error.onlyMentions'));
   }
 
-  const gu = await guildUser;
+  if (!guildUser.tempChannel?.isInitialized()) await guildUser.tempChannel?.init();
+  const activeChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
 
-  if (!gu.tempChannel?.isInitialized()) await gu.tempChannel?.init();
-  const activeChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
-
-  if (!activeChannel || !gu.tempChannel) {
-    return 'Je hebt nog geen lobby aangemaakt\nMaak deze aan met `ei lobby create`';
+  if (!activeChannel || !guildUser.tempChannel) {
+    return i18n.t('lobby.error.noLobby');
   }
 
-  if (gu.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
+  if (guildUser.tempChannel.textChannelId !== msg.channel.id) return i18n.t('lobby.error.useTextChannel', { channel: guildUser.tempChannel.textChannelId });
 
-  return addUsers(userOrRole, activeChannel, await guildUser, msg.client, i18n).text;
+  return addUsers(userOrRole, activeChannel, guildUser, msg.client, i18n).text;
 }, HandlerType.GUILD, {
-  description: 'Voeg een gebruiker of rol toe aan je lobby',
+  description: 'Add a user or role to the lobby',
   options: [{
     name: 'mention',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
     required: true,
   }, {
     name: '1',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '2',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '3',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '4',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '5',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '6',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '7',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '8',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '9',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '10',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '11',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '12',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '13',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '14',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }, {
     name: '15',
-    description: 'Persoon of rol die je toe wil voegen',
+    description: 'User or role you want to add',
     type: 'MENTIONABLE',
   }],
 });
@@ -470,18 +467,17 @@ router.use('add', async ({
 router.useContext('Toevoegen aan lobby', 'USER', async ({
   interaction, guildUser, em, i18n,
 }) => {
-  const gu = await guildUser;
-  if (!gu) return 'Commando kan alleen op een server gebruikt worden';
+  if (!guildUser) return i18n.t('error.onlyUsableOnGuild');
 
-  const activeChannel = gu.tempChannel && await activeTempChannel(interaction.client, em, gu.tempChannel);
-  if (!gu.tempChannel || !activeChannel) return 'Dit kan alleen als je lobby hebt';
+  const activeChannel = guildUser.tempChannel && await activeTempChannel(interaction.client, em, guildUser.tempChannel);
+  if (!guildUser.tempChannel || !activeChannel) return i18n.t('lobby.error.noLobby');
 
   const userToAdd = interaction.options.getUser('user', true);
 
-  const addResponse = addUsers([userToAdd], activeChannel, gu, interaction.client, i18n);
+  const addResponse = addUsers([userToAdd], activeChannel, guildUser, interaction.client, i18n);
 
-  if (interaction.channel?.id !== gu.tempChannel.textChannelId) {
-    const textChannel = await activeTempText(interaction.client, gu.tempChannel);
+  if (interaction.channel?.id !== guildUser.tempChannel.textChannelId) {
+    const textChannel = await activeTempText(interaction.client, guildUser.tempChannel);
 
     if (addResponse.allowedUsersOrRoles.length && interaction.channel?.id !== textChannel?.id && interaction.client.user && textChannel?.permissionsFor(interaction.client.user)?.has('SEND_MESSAGES')) {
       textChannel.send(addResponse.alreadyAllowedMessage).catch(() => {});
@@ -497,9 +493,9 @@ const removeFromLobby = (
   channel : VoiceChannel,
   toRemoveUsers : DiscordUser[],
   toRemoveRoles : Role[],
-  textChannel : TextBasedChannelFields,
   channelOwner : DiscordUser,
-  tempChannel ?: TempChannel,
+  tempChannel : TempChannel,
+  i18n: I18n,
 ) => {
   const usersGivenPermissions : GuildMember[] = [];
 
@@ -556,27 +552,37 @@ const removeFromLobby = (
 
   let message = '';
 
-  if (usersGivenPermissions.length > 0) {
-    message += `Omdat ${usersGivenPermissions.map((user) => user.displayName).join(', ')} ${toRemoveRoles.length > 1 ? 'één of meer van de rollen' : 'de rol'} ${usersGivenPermissions.length > 1 ? 'hadden zijn ze' : 'had is hij'} niet verwijderd.`;
-    message += `\nVerwijder ${usersGivenPermissions.length > 1 ? 'hen' : 'hem'} met \`ei lobby remove ${usersGivenPermissions.map((member) => `@${member.user.tag}`).join(' ')}\``;
+  if (usersGivenPermissions.length) {
+    if (usersGivenPermissions.length > 1) {
+      if (rolesRemoved.length > 1) {
+        message += i18n.t('lobby.rolePluralRemovalUserPluralNotRemoved', { users: usersGivenPermissions.join(', ') });
+      } else {
+        message += i18n.t('lobby.roleRemovalUserPluralNotRemoved', { users: usersGivenPermissions.join(', ') });
+      }
+    } else if (rolesRemoved.length > 1) {
+      message += i18n.t('lobby.rolePluralRemovalUserNotRemoved', { users: usersGivenPermissions.join(', ') });
+    } else {
+      message += i18n.t('lobby.roleRemovalUserNotRemoved', { users: usersGivenPermissions.join(', ') });
+    }
+    message += i18n.t('lobby.removeThemWith', { users: usersGivenPermissions.map((member) => `@${member.user.tag}`).join(' ') });
   }
 
-  if (notRemoved.length > 0) {
-    if (triedRemoveSelf) message += '\nJe kan jezelf niet verwijderen';
-    if (triedRemoveEi) message += '\nEi Noah is omnipresent';
-    else message += `\n${notRemoved.map((user) => user.username).join(', ')} ${notRemoved.length > 1 ? 'konden' : 'kon'} niet verwijderd worden`;
-  } else if (removedList.length) {
-    message += `\n${removedList.map((user) => user.username).join(', ')} ${removedList.length > 1 ? 'zijn' : 'is'} verwijderd uit de lobby`;
+  if (notRemoved.length) {
+    if (triedRemoveSelf) message += i18n.t('lobby.cantRemoveSelf');
+    if (triedRemoveEi) message += i18n.t('lobby.cantRemoveEi');
+    message += i18n.t('lobby.couldntBeRemoved', { users: notRemoved.join(', '), count: notRemoved.length });
   }
 
-  if (rolesRemoved.length > 0) {
-    const roleNames = rolesRemoved.map((role) => role.name);
-    message += `\n${roleNames.join(', ')} rol${roleNames.length > 1 ? 'len zijn verwijderd' : ' is verwijderd'}`;
+  if (removedList.length) {
+    message += i18n.t('lobby.usersRemoved', { users: removedList.join(', '), count: removedList.length });
   }
 
-  if (rolesNotRemoved.length > 0) {
-    const roleNames = rolesNotRemoved.map((role) => role.name);
-    message += `\nRol${rolesNotRemoved.length > 1 ? 'len' : ''} ${roleNames.join(', ')} ${rolesNotRemoved.length > 1 ? 'zijn niet verwijderd' : 'is niet verwijderd'}`;
+  if (rolesRemoved.length) {
+    message += i18n.t('lobby.rolesRemoved', { roles: rolesRemoved, count: rolesRemoved.length });
+  }
+
+  if (rolesNotRemoved.length) {
+    message += i18n.t('lobby.rolesNotRemoved', { roles: rolesNotRemoved.join(', '), count: rolesNotRemoved.length });
   }
 
   Promise.all(deletePromises).then(() => {
@@ -590,7 +596,7 @@ const removeFromLobby = (
 };
 
 router.use('remove', async ({
-  params, msg, guildUser, em, flags,
+  params, msg, guildUser, em, flags, i18n,
 }) => {
   const nonUsersOrRoles = params
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
@@ -606,22 +612,21 @@ router.use('remove', async ({
   });
 
   if (nonUsersOrRoles.length > 0) {
-    return 'Alleen mention(s) mogelijk als argument';
+    return i18n.t('lobby.error.onlyMentions');
   }
 
-  const gu = await guildUser;
-  if (gu.tempChannel?.isInitialized()) await gu.tempChannel.init();
+  if (guildUser.tempChannel?.isInitialized()) await guildUser.tempChannel.init();
 
-  const activeChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
+  const activeChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
 
-  if (!activeChannel || !gu.tempChannel) {
-    return 'Je hebt nog geen lobby aangemaakt\nMaak één aan met `ei lobby create`';
+  if (!activeChannel || !guildUser.tempChannel || !guildUser.tempChannel) {
+    return i18n.t('lobby.error.noLobby');
   }
 
-  if (gu.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
+  if (guildUser.tempChannel.textChannelId !== msg.channel.id) return i18n.t('lobby.error.useTextChannel', { channel: guildUser.tempChannel.textChannelId });
 
   if (getChannelType(activeChannel) === ChannelType.Public) {
-    return 'Wat snap jij niet aan een **public** lobby smeerjoch';
+    return i18n.t('lobby.error.noRemoveInPublic');
   }
 
   await msg.guild.members.fetch();
@@ -643,7 +648,7 @@ router.use('remove', async ({
       .map((member) => member.user);
 
     if (removeAbleUsers.length === 0 && removeAbleRoles.length === 0) {
-      return 'Geen gebruikers of roles die verwijderd kunnen worden';
+      return i18n.t('lobby.error.noUserToBeRemoved');
     }
 
     const selectedUsers = new Set<DiscordUser>();
@@ -653,7 +658,7 @@ router.use('remove', async ({
       list: [...removeAbleRoles, ...removeAbleUsers],
       owner: requestingUser,
       msg,
-      title: 'Welke user(s) of role(s) wil je verwijderen',
+      title: i18n.t('lobby.roleRemovalTitle'),
       mapper: (item) => {
         if (item instanceof DiscordUser) {
           return `${selectedUsers.has(item) ? '✅' : ''}User: ${item.username}`;
@@ -675,86 +680,90 @@ router.use('remove', async ({
           label: '❌',
           customId: 'delete',
           style: 'DANGER',
-        }), async () => {
-          removeFromLobby(activeChannel,
-            Array.from(selectedUsers),
-            Array.from(selectedRoles),
-            msg.channel,
-            requestingUser,
-            (await guildUser).tempChannel);
+        }), () => {
+          if (guildUser.tempChannel) {
+            return removeFromLobby(activeChannel,
+              Array.from(selectedUsers),
+              Array.from(selectedRoles),
+              requestingUser,
+              guildUser.tempChannel,
+              i18n);
+          }
+
+          return 'Lobby bestaat niet meer';
         }],
       ],
     });
 
     return null;
   }
-  return removeFromLobby(activeChannel, users, roles, msg.channel, requestingUser, (await guildUser).tempChannel);
+  return removeFromLobby(activeChannel, users, roles, requestingUser, guildUser.tempChannel, i18n);
 }, HandlerType.GUILD, {
-  description: 'Verwijder een gebruiker of rol van de lobby',
+  description: 'Remove selected users and roles from the lobby',
   options: [
     {
       name: 'mention',
       type: 'MENTIONABLE',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
     }, {
       name: '1',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '2',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '3',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '4',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '5',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '6',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '7',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '8',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '9',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '10',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '11',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '12',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '13',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '14',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     }, {
       name: '15',
-      description: 'Persoon of rol die je wil verwijderen',
+      description: 'Person or role to remove',
       type: 'MENTIONABLE',
     },
   ],

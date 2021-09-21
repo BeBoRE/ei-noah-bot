@@ -51,9 +51,33 @@
     "could": "kon",
     "couldPlural": "konden",
     "goIn": "nu naar binnen",
-    "alreadyGoIn": "al naar binnen"
+    "alreadyGoIn": "al naar binnen",
+    "roleRemovalUserNotRemoved": "{{users}} had de verwijderde rol en heeft toegang gekregen buiten de rol om",
+    "rolePluralRemovalUserNotRemoved": "{{users}} had één of meer van de verwijderde rollen en heeft toegang gekregen buiten de rollen om",
+    "roleRemovalUserPluralNotRemoved": "{{users}} hadden de verwijderde rol en hebben toegang gekregen buiten de rol om",
+    "rolePluralRemovalUserPluralNotRemoved": "{{users}} hadden één of meer van de verwijderde rollen en hebben toegang gekregen buiten de rol om",
+    "removeThemWith": "\nVerwijder hen met `ei lobby remove {{users}}`",
+    "cantRemoveSelf": "\nJe kan jezelf niet verwijderen",
+    "cantRemoveEi": "\nMij verwijderen is zinloos, Ei Noah is omnipresent",
+    "couldntBeRemoved": "\n{{users}} kon niet verwijderd worden",
+    "couldntBeRemoved_plural": "\n{{users}} konden niet verwijderd worden",
+    "usersRemoved": "\n{{users}} is verwijderd uit de lobby",
+    "usersRemoved_plural": "\n{{users}} zijn verwijderd uit de lobby",
+    "rolesRemoved": "\n{{roles}} rol is verwijderd",
+    "rolesRemoved_plural": "\n{{roles}} rollen zijn verwijderd",
+    "rolesNotRemoved": "\n{{roles}} rol is niet verwijderd",
+    "rolesNotRemoved_plural": "\n{{roles}} rollen zijn niet verwijderd",
+    "roleRemovalTitle": "Welke user(s) of role(s) wil je verwijderen",
+    "error": {
+      "onlyMentions":"Alleen mention(s) mogelijk als argument",
+      "noLobby": "Je hebt nog geen lobby aangemaakt\nJoin een **lobby aanmaak kanaal** om er een aan te maken",
+      "useTextChannel": "Dit commando kan alleen gebruikt worden in <#{{channel}}>",
+      "noRemoveInPublic": "Wat snap jij niet aan een **public** lobby smeerjoch",
+      "noUserToBeRemoved": "Geen gebruikers of roles die verwijderd kunnen worden"
+    }
   },
   "error": {
-    "notAdmin": "Alleen een admin kan dit doen"
+    "notAdmin": "Alleen een admin kan dit doen",
+    "onlyUsableOnGuild": "Commando kan alleen op een server gebruikt worden"
   }
 }
