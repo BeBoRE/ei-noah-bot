@@ -71,12 +71,29 @@
     "noNameSelected": "Geen Naam Geselecteerd",
     "typeChangeRemoval": "Je bent verwijderd uit {{owner}}'s, omdat de lobby was veranderd naar **{{type}}** en jij nog geen toestemming had gekregen",
     "nameOfLobbyChangeDuration": "De naam van de lobby wordt {{duration}} veranderd naar `{{name}}`",
+    "typeOfLobbyOtherTypes": "Type van lobby is `{{currentType}}` andere types zijn {{otherTypes}}",
+    "and": "en",
+    "lobbyTypeChangedTo": "Lobby type is veranderd naar *{{type}}*",
+    "limitRemoved": "Limiet is verwijderd",
+    "limitChanged": "Limiet naar {{changedTo}} veranderd",
+    "removedLobbyCategory": "{{category}} is niet meer de lobby categorie",
+    "nowLobbyCategory": "'{{category}}' is nu de lobby categorie",
     "error": {
       "onlyMentions":"Alleen mention(s) mogelijk als argument",
       "noLobby": "Je hebt nog geen lobby aangemaakt\nJoin een **lobby aanmaak kanaal** om er een aan te maken",
       "useTextChannel": "Dit commando kan alleen gebruikt worden in <#{{channel}}>",
       "noRemoveInPublic": "Wat snap jij niet aan een **public** lobby smeerjoch",
-      "noUserToBeRemoved": "Geen gebruikers of roles die verwijderd kunnen worden"
+      "noUserToBeRemoved": "Geen gebruikers of roles die verwijderd kunnen worden",
+      "onlyOneArgumentExpected": "Ik verwachte niet meer dan **één** argument",
+      "noMentionExpected": "Ik verwachte hier geen **mention**",
+      "notALobbyType": "*{{type}}* is niet een lobby type",
+      "lobbyAlreadyType": "Je lobby was al een **{{type}}** lobby",
+      "numberExpected": "Geef een nummer",
+      "notSaveInt": "Even een normaal nummer alstublieft",
+      "createNotACategory": "Gegeven create-category is niet een categorie",
+      "lobbyNotACategory": "Gegeven lobby-category is niet een categorie",
+      "createNotInGuild": "Gegeven create-category van een andere server",
+      "lobbyNotInGuild": "Gegeven lobby-category van een andere server"
     }
   },
   "error": {

@@ -19,7 +19,7 @@ router.use('user', async ({
   if (language === 'none') {
     // eslint-disable-next-line no-param-reassign
     user.language = undefined;
-    await i18n.changeLanguage(guildUser?.guild.language || 'en');
+    await i18n.changeLanguage(guildUser?.guild.language);
 
     return i18n.t('locale.userLanguageRemoved');
   }
@@ -54,7 +54,7 @@ router.use('guild', async ({
   if (language === 'none') {
     // eslint-disable-next-line no-param-reassign
     guildUser.guild.language = undefined;
-    await i18n.changeLanguage(guildUser.guild.language || 'en');
+    await i18n.changeLanguage(guildUser.user.language);
 
     return i18n.t('locale.guildLanguageRemoved');
   }
@@ -65,7 +65,7 @@ router.use('guild', async ({
 
   return i18n.t('locale.guildLanguageChanged', { changedTo: language });
 }, HandlerType.GUILD, {
-  description: 'Change your guilds default language',
+  description: 'Change the guild\'s default language',
   options: [{
     name: 'language',
     type: 'STRING',
