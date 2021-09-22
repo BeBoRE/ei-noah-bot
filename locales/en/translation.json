@@ -78,6 +78,9 @@
     "limitChanged": "Limit changed to {{changedTo}}",
     "removedLobbyCategory": "Channels are now placed in the create-category",
     "nowLobbyCategory": "'{{category}}' is now the lobby-category",
+    "nowLobbyCreateCategory": "'{{category}}' is now a lobby creation category",
+    "removedCreateCategory": "'{{category}}' is no longer a lobby creation category",
+    "removedCreateCategoryNoCategory": "Category is no longer a lobby creation category",
     "error": {
       "onlyMentions":"Only mention(s) are allowed as arguments",
       "noLobby": "You aren't the owner of a lobby\nJoin a **lobby create channel** to get one",
@@ -93,7 +96,12 @@
       "createNotACategory": "Given create-category is not a category",
       "lobbyNotACategory": "Given lobby-category is not a category",
       "createNotInGuild": "Given create-category is in another server",
-      "lobbyNotInGuild": "given lobby-category is in another server"
+      "lobbyNotInGuild": "given lobby-category is in another server",
+      "notCategory": "Given is not a category",
+      "categoryNotInGuild": "Given category is not in this guild",
+      "noChannelCreatePermission": "I don't have the permissions to create channels within this category",
+      "noMovePermission": "I don't have the permission to move people between channels",
+      "somethingWentWrong": "Something went wrong try again later"
     }
   },
   "error": {

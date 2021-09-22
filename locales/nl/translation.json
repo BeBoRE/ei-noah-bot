@@ -78,6 +78,9 @@
     "limitChanged": "Limiet naar {{changedTo}} veranderd",
     "removedLobbyCategory": "{{category}} is niet meer de lobby categorie",
     "nowLobbyCategory": "'{{category}}' is nu de lobby categorie",
+    "nowLobbyCreateCategory": "'{{category}}' is nu een lobby aanmaak categorie",
+    "removedCreateCategory": "'{{category}}' is nu geen lobby aanmaak categorie meer",
+    "removedCreateCategoryNoCategory": "Categorie is nu geen lobby aanmaak categorie meer",
     "error": {
       "onlyMentions":"Alleen mention(s) mogelijk als argument",
       "noLobby": "Je hebt nog geen lobby aangemaakt\nJoin een **lobby aanmaak kanaal** om er een aan te maken",
@@ -93,7 +96,12 @@
       "createNotACategory": "Gegeven create-category is niet een categorie",
       "lobbyNotACategory": "Gegeven lobby-category is niet een categorie",
       "createNotInGuild": "Gegeven create-category van een andere server",
-      "lobbyNotInGuild": "Gegeven lobby-category van een andere server"
+      "lobbyNotInGuild": "Gegeven lobby-category van een andere server",
+      "notCategory": "Gegeven is geen categorie",
+      "categoryNotInGuild": "Gegeven categorie is in een andere server",
+      "noChannelCreatePermission": "Ik niet de permission om kanalen aan te maken",
+      "noMovePermission": "Ik heb niet de permission om mensen te verplaatsen tussen kanalen",
+      "somethingWentWrong": "Er is iets fout gegaan probeer het later opnieuw"
     }
   },
   "error": {

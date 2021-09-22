@@ -1194,36 +1194,35 @@ router.use('lobby-category', async ({
 });
 
 router.use('create-category', async ({
-  params, msg, em, flags,
+  params, msg, em, flags, i18n,
 }) => {
   if (!msg.client.user) throw new Error('msg.client.user not set somehow');
 
   let [category] = flags.get('category') || [null];
 
   if (!msg.member?.permissions.has('ADMINISTRATOR')) {
-    return 'Alleen een Edwin mag dit aanpassen';
+    return i18n.t('error.noAdmin');
   }
 
   if (!category && typeof params[0] === 'string') category = await msg.client.channels.fetch(`${BigInt(params[0])}`, { cache: true }).catch(() => null);
 
-  if (!(category instanceof CategoryChannel)) return 'Gegeven is geen categorie';
-  if (category.guild !== msg.guild) return 'Gegeven categorie is in een andere server';
+  if (!(category instanceof CategoryChannel)) return i18n.t('lobby.error.notCategory');
+  if (category.guild !== msg.guild) return i18n.t('lobby.error.categoryNotInGuild');
 
   if (!category.permissionsFor(msg.client.user)?.has('MANAGE_CHANNELS')) {
-    return 'Ik heb niet de permission om kanalen aan te maken';
+    return i18n.t('lobby.error.noChannelCreatePermission');
   }
 
   if (!category.permissionsFor(msg.client.user)?.has('MOVE_MEMBERS')) {
-    return 'Ik heb niet de permission om members te verplaatsen';
+    return i18n.t('lobby.error.noMovePermission');
   }
 
   const categoryData = await getCategoryData(em, category);
-  if (!categoryData) return 'Dit pad is onmogelijk :D';
 
   if (!categoryData.publicVoice || !categoryData.muteVoice || !categoryData.privateVoice) {
     await createCreateChannels(categoryData, msg.client);
 
-    return `${category.name} is nu een lobby aanmaak categorie`;
+    return i18n.t('lobby.nowLobbyCreateCategory', { category: category.name });
   }
 
   return Promise.all([
@@ -1236,15 +1235,15 @@ router.use('create-category', async ({
       categoryData.privateVoice = undefined;
       categoryData.muteVoice = undefined;
 
-      if (category instanceof CategoryChannel) return `${category.name} is nu geen lobby aanmaak categorie meer`;
-      return 'Categorie is nu geen lobby aanmaak categorie meer';
+      if (category instanceof CategoryChannel) i18n.t('lobby.removedCreateCategory', { category: category.name });
+      return i18n.t('lobby.removedCreateCategoryNoCategory');
     })
-    .catch(() => 'Er is iets fout gegaan probeer het later opnieuw');
+    .catch(() => i18n.t('lobby.error.somethingWentWrong'));
 }, HandlerType.GUILD, {
-  description: 'Stel de lobby aanmaak categorie in',
+  description: 'Add or remove a lobby-create category',
   options: [{
     name: 'category',
-    description: 'De categorie waar de aanmaak kanalen worden neergezet',
+    description: 'The category where the create-channels are placed in',
     type: 'CHANNEL',
     required: true,
   }],
