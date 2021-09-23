@@ -1372,13 +1372,13 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
   const actionRow = new MessageActionRow();
   actionRow.addComponents(new MessageButton({
     customId: 'add',
-    label: 'Voeg toe',
+    label: i18n.t('lobby.addUserButton') || 'Add User',
     style: 'SUCCESS',
   }));
 
   textChannel.send({
     allowedMentions: { roles: [], users: [] },
-    content: `Voeg ${user} toe aan de lobby?`,
+    content: i18n.t('lobby.addUserMessage', { user }),
     components: [actionRow],
   }).then((msg) => {
     const collector = msg.createMessageComponentCollector();
@@ -1392,9 +1392,9 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
 
       let message;
       if (!owner) {
-        message = 'Alleen de owner van de lobby kan iemand binnenlaten';
+        message = i18n.t('lobby.error.onlyOwnerCanAllow');
       } else {
-        message = `Alleen ${owner.displayName} kan iemand binnenlaten`;
+        message = i18n.t('lobby.error.onlyOwnerCanAllowUser', { user: owner });
       }
 
       interaction.reply({ content: message, ephemeral: true }).catch(() => { });
@@ -1424,12 +1424,11 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
         const currentTempChannel = await em.findOne(TempChannel, { channelId: voiceChannel.id }, { populate: { guildUser: { user: true, guild: true } } });
 
         if (interaction.isMessageComponent() && currentTempChannel && interaction.guild) {
+          const i18n = _i18n.cloneInstance({ lng: currentTempChannel.guildUser.user.language || currentTempChannel.guildUser.guild.language });
           if (interaction.user.id !== currentTempChannel.guildUser.user.id) {
-            interaction.reply({ content: 'Alleen de lobby leider kan dit doen', ephemeral: true });
+            interaction.reply({ content: i18n.t('lobby.error.onlyOwner'), ephemeral: true });
             return;
           }
-
-          const i18n = _i18n.cloneInstance({ lng: currentTempChannel.guildUser.user.language || currentTempChannel.guildUser.guild.language });
 
           const limit = Number.parseInt(interaction.customId, 10);
           const currentType = getChannelType(voiceChannel);
@@ -1463,12 +1462,10 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
   if (!activeChannel) {
     em.remove(tempChannel);
     if (activeTextChannel?.deletable) await activeTextChannel.delete().catch(() => { });
-    console.log('Lobby bestond niet meer');
   } else if (!activeChannel.members.filter((member) => !member.user.bot).size) {
     await activeChannel.delete();
 
     if (activeTextChannel) await activeTextChannel.delete();
-    console.log('Verwijderd: Niemand in lobby');
     em.remove(tempChannel);
   } else if (!activeChannel.members.has(`${BigInt(tempChannel.guildUser.user.id)}`)) {
     const guildUsers = await Promise.all(activeChannel.members
@@ -1516,12 +1513,10 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
           activeTextChannel?.send({
             allowedMentions: { users: [] },
             reply: tempChannel.controlDashboardId ? { messageReference: tempChannel.controlDashboardId } : undefined,
-            content: `De lobby is overgedragen aan ${newOwner}`,
+            content: i18n.t('lobby.ownershipTransferred', { user: newOwner }),
           }),
       ]).catch(console.error);
-
-      console.log('Ownership is overgedragen');
-    } else { console.log('Owner is weggegaan, maar niemand kwam in aanmerking om de nieuwe leider te worden'); }
+    }
   } else {
     const discordUser = await client.users.fetch(`${BigInt(tempChannel.guildUser.user.id)}`);
     const lobbyType = getChannelType(activeChannel);

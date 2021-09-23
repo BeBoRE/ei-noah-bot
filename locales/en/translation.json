@@ -83,6 +83,9 @@
     "removedCreateCategoryNoCategory": "Category is no longer a lobby creation category",
     "lobbyBitrateIs": "Lobby bitrate is {{bitrate}}",
     "bitrateChanged": "Bitrate for created lobbies changed to {{bitrate}}",
+    "addUserButton": "Add User",
+    "addUserMessage": "Add {{user}} to lobby",
+    "ownershipTransferred": "Lobby has been transferred to {{user}}",
     "error": {
       "onlyMentions":"Only mention(s) are allowed as arguments",
       "noLobby": "You aren't the owner of a lobby\nJoin a **lobby create channel** to get one",
@@ -110,7 +113,10 @@
       "noNameGiven": "Give a new name",
       "onlyUseText": "You can't use mentions in a name",
       "nameLimit": "Name can't be longer than 80 characters",
-      "noEmojiOnly": "Lobby name needs to be more than just an emoji"
+      "noEmojiOnly": "Lobby name needs to be more than just an emoji",
+      "onlyOwnerCanAllow": "Only the owner can allow someone into the lobby",
+      "onlyOwnerCanAllowUser": "Only {{user}} can allow someone into the lobby",
+      "onlyOwner": "Only the lobby leader can do this"
     }
   },
   "error": {

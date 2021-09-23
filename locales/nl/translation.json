@@ -85,6 +85,9 @@
     "bitrateChanged": "Bitrate voor aangemaakte lobbies bitrate veranderd naar {{bitrate}}",
     "lobbyNameChangeTimeLimit": "Lobbynaam wordt *{{duration}}* veranderd naar `{{name}}`",
     "lobbyNameChanged": "Lobbynaam is veranderd naar `{{name}}`",
+    "addUserButton": "Voeg toe",
+    "addUserMessage": "Voeg {{user}} toe aan lobby?",
+    "ownershipTransferred": "De lobby is overgedragen aan {{user}}",
     "error": {
       "onlyMentions":"Alleen mention(s) mogelijk als argument",
       "noLobby": "Je hebt nog geen lobby aangemaakt\nJoin een **lobby aanmaak kanaal** om er een aan te maken",
@@ -112,7 +115,10 @@
       "noNameGiven": "Geef een nieuwe naam",
       "onlyUseText": "Je mag alleen tekst gebruiken in de naam",
       "nameLimit": "De naam mag niet langer zijn dan 80 tekens",
-      "noEmojiOnly": "Lobby naam kan niet alleen uit een emoji bestaan"
+      "noEmojiOnly": "Lobby naam kan niet alleen uit een emoji bestaan",
+      "onlyOwnerCanAllow": "Alleen de owner van de lobby kan iemand binnenlaten",
+      "onlyOwnerCanAllowUser": "Alleen {{user}} kan iemand binnenlaten",
+      "onlyOwner": "Alleen de lobby leider kan dit doen"
     }
   },
   "error": {
