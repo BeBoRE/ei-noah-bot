@@ -81,6 +81,7 @@
     "nowLobbyCreateCategory": "'{{category}}' is nu een lobby aanmaak categorie",
     "removedCreateCategory": "'{{category}}' is nu geen lobby aanmaak categorie meer",
     "removedCreateCategoryNoCategory": "Categorie is nu geen lobby aanmaak categorie meer",
+    "lobbyBitrateIs": "Lobby bitrate is {{bitrate}}",
     "error": {
       "onlyMentions":"Alleen mention(s) mogelijk als argument",
       "noLobby": "Je hebt nog geen lobby aangemaakt\nJoin een **lobby aanmaak kanaal** om er een aan te maken",

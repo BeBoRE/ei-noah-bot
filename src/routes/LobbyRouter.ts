@@ -33,7 +33,7 @@ import {
 } from '@mikro-orm/postgresql';
 import emojiRegex from 'emoji-regex';
 import moment, { Duration } from 'moment';
-import { i18n as I18n } from 'i18next';
+import i18next, { i18n as I18n } from 'i18next';
 import LobbyNameChange from '../entity/LobbyNameChange';
 import { Category } from '../entity/Category';
 import TempChannel from '../entity/TempChannel';
@@ -265,7 +265,7 @@ function updateTextChannel(voice : VoiceChannel, text : TextChannel) {
 
 const createCreateChannel = (type : ChannelType, category : CategoryChannel) => {
   const typeName = `${type[0].toUpperCase()}${type.substring(1, type.length)}`;
-  return category.guild.channels.create(`${getIcon(type)} Maak ${typeName} Lobby`, {
+  return category.guild.channels.create(`${getIcon(type)} Create ${typeName} Lobby`, {
     type: 'GUILD_VOICE',
     parent: category,
   });
@@ -1252,17 +1252,13 @@ router.use('create-category', async ({
 router.use('bitrate', async ({
   msg, guildUser, params, flags,
 }) => {
-  if (msg.channel instanceof DMChannel || guildUser === null) {
-    return 'Je kan dit commando alleen op servers gebruiken';
-  }
-
   if (params.length === 0) {
-    if (!(await guildUser).guild.isInitialized()) await (await guildUser).guild.init();
-    return `Lobby bitrate is ${(await guildUser).guild.bitrate}`;
+    if (!guildUser.guild.isInitialized()) await guildUser.guild.init();
+    return i18next.t('lobby.lobbyBitrateIs', { bitrate: guildUser.guild.bitrate });
   }
 
   if (params.length > 1) {
-    return 'Ik verwacht maar één argument';
+    return i18next.t('lobby.error.onlyOneArgumentExpected');
   }
 
   if (typeof params[0] !== 'string') {
