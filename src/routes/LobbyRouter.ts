@@ -44,6 +44,25 @@ import Router, { GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');
 
+const memberCommandText = [
+  '`/lobby add @mention...`: Laat user(s) toe aan de lobby',
+  '`/lobby remove @mention...`: Verwijder user(s)/ role(s) uit de lobby',
+  '`/lobby type [mute / private / public]`: Verander het type van de lobby',
+  '`/lobby limit <nummer>`: Verander de lobby user limit',
+  '`/lobby name <lobby naam>`: Geef de lobby een naam',
+].join('\n');
+
+const helpCommandText = [
+  '**Maak een tijdelijke voice kanaal aan**',
+  'Mogelijke Commandos:',
+  memberCommandText,
+  '`*Admin* /lobby create-category <category>`: Maak in gegeven categorie lobby-aanmaak-kanalen aan, verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
+  '`*Admin* /lobby category <create-category> <lobby-category>`: Verander de categorie waar de lobbies worden neergezet',
+  '`*Admin* /lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
+].join('\n');
+
+const dashBoardText = ['**Beheer je lobby met deze commands:**', memberCommandText].join('\n');
+
 enum ChannelType {
   Public = 'public',
   Mute = 'mute',
@@ -768,25 +787,6 @@ router.use('remove', async ({
     },
   ],
 });
-
-const memberCommandText = [
-  '`/lobby add @mention...`: Laat user(s) toe aan de lobby',
-  '`/lobby remove @mention...`: Verwijder user(s)/ role(s) uit de lobby',
-  '`/lobby type [mute / private / public]`: Verander het type van de lobby',
-  '`/lobby limit <nummer>`: Verander de lobby user limit',
-  '`/lobby name <lobby naam>`: Geef de lobby een naam',
-].join('\n');
-
-const helpCommandText = [
-  '**Maak een tijdelijke voice kanaal aan**',
-  'Mogelijke Commandos:',
-  memberCommandText,
-  '`*Admin* /lobby create-category <category>`: Maak in gegeven categorie lobby-aanmaak-kanalen aan, verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
-  '`*Admin* /lobby category <create-category> <lobby-category>`: Verander de categorie waar de lobbies worden neergezet',
-  '`*Admin* /lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
-].join('\n');
-
-const dashBoardText = ['**Beheer je lobby met deze commands:**', memberCommandText].join('\n');
 
 const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, guildUser : GuildUser, owner : DiscordUser, i18n : I18n) => {
   const currentType = getChannelType(voiceChannel);

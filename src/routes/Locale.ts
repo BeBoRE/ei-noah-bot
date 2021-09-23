@@ -2,6 +2,11 @@ import { Message } from 'discord.js';
 import Router, { HandlerType } from '../router/Router';
 
 const router = new Router('Select your language');
+
+router.use('help', ({ i18n }) => i18n.t('locale.help', { joinArrays: '\n' }), HandlerType.BOTH, {
+  description: 'Help menu',
+});
+
 router.use('languages', ({ i18n }) => i18n.t('locale.availableLanguages', { languages: Object.keys(i18n.services.resourceStore.data).sort().join(' ') }), HandlerType.BOTH, {
   description: 'Get all available languages',
 });
@@ -39,7 +44,7 @@ router.use('user', async ({
   }],
 });
 
-router.use('guild', async ({
+router.use('server', async ({
   i18n, guildUser, params, flags, msg,
 }) => {
   const [language] = flags.get('language') || params;

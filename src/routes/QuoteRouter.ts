@@ -14,6 +14,19 @@ import Router, { GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Onthoud al');
 
+router.use('help', () => [
+  '**Hou quotes van je makkermaten bij!**',
+  'Mogelijke Commandos:',
+  '`/quote random`: Verstuur een random quote van de server',
+  '`/quote get <@member>`: Verstuur een quote van dat persoon',
+  '`/quote add <@member> <quote>`: Sla een nieuwe quote op van dat persoon',
+  '`/quote remove <@member>`: Verwijder een selectie aan quotes van dat persoon',
+  '> Je kan alleen de quotes verwijderen die je voor dat persoon geschreven hebt',
+  '> Alleen quotes van jezelf kan je volledig beheren',
+].join('\n'), HandlerType.BOTH, {
+  description: 'Help menu for quote\'s',
+});
+
 const getQuoteEmbed = async (guild : Guild, quote : Quote, i18n : I18n) : Promise<MessageEmbed> => {
   await Promise.all([(() => {
     if (!quote.guildUser.isInitialized()) return quote.guildUser.init();
@@ -229,19 +242,6 @@ router.use('random', async ({ msg, em, i18n }) => {
   return i18n.t('quote.guildNoQuotes');
 }, HandlerType.GUILD, {
   description: 'Give a random quote from the server',
-});
-
-router.use('help', () => [
-  '**Hou quotes van je makkermaten bij!**',
-  'Mogelijke Commandos:',
-  '`/quote random`: Verstuur een random quote van de server',
-  '`/quote get <@member>`: Verstuur een quote van dat persoon',
-  '`/quote add <@member> <quote>`: Sla een nieuwe quote op van dat persoon',
-  '`/quote remove <@member>`: Verwijder een selectie aan quotes van dat persoon',
-  '> Je kan alleen de quotes verwijderen die je voor dat persoon geschreven hebt',
-  '> Alleen quotes van jezelf kan je volledig beheren',
-].join('\n'), HandlerType.BOTH, {
-  description: 'Help menu for quote\'s',
 });
 
 export default router;

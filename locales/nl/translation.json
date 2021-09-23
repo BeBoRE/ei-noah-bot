@@ -2,7 +2,16 @@
   "hello": "Hallo Wereld",
   "index": {
     "withPleasure": "Met plezier, kom hier {{user}}",
-    "who": "Wie?"
+    "who": "Wie?",
+    "help": [
+      "**Alle Commando's & Routes**",
+      "`/bday`: Laat Ei je verjaardag bijhouden, of vraag die van anderen op",
+      "`/corona`: Krijg iedere morgen een rapportage over de locale corona situatie",
+      "`/lobby`: Maak en beheer een lobby (tijdelijk kanaal)",
+      "`/quote` Houd quotes van je makkermaten bij",
+      "`/hug <@User> [tekst] [-b bodemtekst]`: Geef iemand een knuffel die het verdiend heeft <3",
+      "`/stab <@User> [tekst] [-b bodemtekst]`: Steek iemand met een mes die het verdiend heeft <3"
+    ]
   },
   "locale": {
     "availableLanguages": "Dit zijn alle beschikbare talen `{{languages}}`",
@@ -10,6 +19,11 @@
     "guildLanguageChanged": "Default server taal veranderd naar **Nederlands**",
     "userLanguageRemoved": "Taal voorkeur verwijderd",
     "guildLanguageRemoved": "Default server taal verwijderd",
+    "help": [
+      "**Verander van taal**",
+      "`/locale user`: Verander je eigen taal",
+      "`/locale server`: Verander de default server taal"
+    ],
     "error": {
       "notLanguage": "Dat is niet een taal",
       "notAdmin": "Alleen een admin kan dit doen"

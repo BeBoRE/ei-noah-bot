@@ -2,7 +2,16 @@
   "hello": "Hallo Wereld",
   "index": {
     "withPleasure": "With pleasure, come here {{user}}",
-    "who": "Who?"
+    "who": "Who?",
+    "help": [
+      "**All Commands & Routes**",
+      "`/bday`: Let me track your birthdays, or request someone else's",
+      "`/corona`: Get a report about the local COVID-19 stats (the Netherlands only)",
+      "`/lobby`: Manager your personal lobby",
+      "`/quote` Keep quotes of your friends",
+      "`/hug <@User> [text] [-b bodemtext]`: Give someone a hug that deserves it <3",
+      "`/stab <@User> [text] [-b bodemtext]`: Stab someone that deserves it <3"
+    ]
   },
   "locale": {
     "availableLanguages": "All available languages `{{languages}}`",
@@ -10,6 +19,11 @@
     "guildLanguageChanged": "Default server language changed to **English**",
     "userLanguageRemoved": "Language preference removed",
     "guildLanguageRemoved": "Default server language removed",
+    "help": [
+      "**Change Language**",
+      "`/locale user`: Change your own language",
+      "`/locale server`: Change the default server language"
+    ],
     "error": {
       "notLanguage": "That's not a language",
       "notAdmin": "Only admins are allowed to do this"

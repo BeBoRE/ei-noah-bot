@@ -76,6 +76,10 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
 
   const eiNoah = new EiNoah(process.env.CLIENT_TOKEN, orm, i18next);
 
+  eiNoah.use('help', ({ i18n }) => i18n.t('index.help', { joinArrays: '\n' }), HandlerType.BOTH, {
+    description: 'Het heerlijke Ei Noah menu, geniet ervan :P)',
+  });
+
   // LobbyRouter wordt gebruikt wanneer mensen "ei lobby" aanroepen
   eiNoah.use('lobby', LobbyRouter);
 
@@ -365,18 +369,6 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
   eiNoah.use('quote', QuoteRouter);
 
   eiNoah.use('simulate', SimulatorRouter);
-
-  eiNoah.use('help', () => [
-    '**Alle Commando\'s**',
-    '`/bday`: Laat Ei je verjaardag bijhouden, of vraag die van anderen op',
-    '`/corona`: Krijg iedere morgen een rapportage over de locale corona situatie',
-    '`/lobby`: Maak en beheer een lobby (tijdelijk kanaal)',
-    '`/quote` Houd quotes van je makkermaten bij',
-    '`/knuffel <@User> [tekst] [-b bodemtekst]`: Geef iemand een knuffel die het verdiend heeft <3',
-    '`/steek <@User> [tekst] [-b bodemtekst]`: Steek iemand met een mes die het verdiend heeft <3',
-  ].join('\n'), HandlerType.BOTH, {
-    description: 'Het heerlijke Ei Noah menu, geniet ervan :P)',
-  });
 
   eiNoah.use('locale', LocaleRouter);
 
