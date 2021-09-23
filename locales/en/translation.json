@@ -1,5 +1,9 @@
 {
   "hello": "Hallo Wereld",
+  "index": {
+    "withPleasure": "With pleasure, come here {{user}}",
+    "who": "Who?"
+  },
   "locale": {
     "availableLanguages": "All available languages `{{languages}}`",
     "userLanguageChanged": "Language changed to **English**",
@@ -83,6 +87,8 @@
     "removedCreateCategoryNoCategory": "Category is no longer a lobby creation category",
     "lobbyBitrateIs": "Lobby bitrate is {{bitrate}}",
     "bitrateChanged": "Bitrate for created lobbies changed to {{bitrate}}",
+    "lobbyNameChangeTimeLimit": "Lobby name changes to `{{name}}` *{{duration}}*",
+    "lobbyNameChanged": "Lobby name changed to `{{name}}`",
     "addUserButton": "Add User",
     "addUserMessage": "Add {{user}} to lobby",
     "ownershipTransferred": "Lobby has been transferred to {{user}}",

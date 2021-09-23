@@ -1,5 +1,9 @@
 {
   "hello": "Hallo Wereld",
+  "index": {
+    "withPleasure": "Met plezier, kom hier {{user}}",
+    "who": "Wie?"
+  },
   "locale": {
     "availableLanguages": "Dit zijn alle beschikbare talen `{{languages}}`",
     "userLanguageChanged": "Taal veranderd naar **Nederlands**",

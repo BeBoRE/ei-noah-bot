@@ -161,7 +161,9 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
 
   // Hier is een 'Handler' als argument in principe is dit een eindpunt van de routing.
   // Dit is waar berichten worden afgehandeld
-  const stabHandler : BothHandler = async ({ params, msg, flags }) => {
+  const stabHandler : BothHandler = async ({
+    params, msg, flags, i18n,
+  }) => {
     const persoon = flags.get('persoon');
     const [user] = persoon || params;
 
@@ -175,12 +177,33 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
         return generateStab(url, message, bottom ? mentionsToText(bottom) : undefined);
       }
 
-      return `Met plezier, kom hier <@!${user.id}>!`;
+      return i18n.t('index.withPleasure', { user });
     }
-    return 'Lekker';
+    return i18n.t('index.who');
   };
 
-  eiNoah.useContext('Stab', 'USER', async ({ interaction }) => {
+  eiNoah.use('stab', stabHandler, HandlerType.BOTH, {
+    description: 'Stab someone that deserves it <3',
+    options: [
+      {
+        name: 'persoon',
+        description: 'Person you want to stab',
+        type: 'USER',
+        required: true,
+      }, {
+        name: 'top',
+        description: 'Text you want to add to the top',
+        type: 'STRING',
+      }, {
+        name: 'bottom',
+        description: 'Text you want to add to the bottom',
+        type: 'STRING',
+      },
+    ],
+  });
+  eiNoah.use('steek', stabHandler);
+
+  eiNoah.useContext('Stab', 'USER', async ({ interaction, i18n }) => {
     const user = interaction.options.getUser('user', true);
 
     const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
@@ -195,29 +218,8 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
       }
     }
 
-    return `Met plezier, kom hier <@!${user.id}>!`;
+    return i18n.t('index.withPleasure', { user });
   });
-
-  eiNoah.use('steek', stabHandler, HandlerType.BOTH, {
-    description: 'Steek iemand die het verdiend heeft <3',
-    options: [
-      {
-        name: 'persoon',
-        description: 'Persoon die je wilt steken',
-        type: 'USER',
-        required: true,
-      }, {
-        name: 'top',
-        description: 'De tekst die je erbij wil zetten',
-        type: 'STRING',
-      }, {
-        name: 'bottom',
-        description: 'De tekst die je erbij wil zetten',
-        type: 'STRING',
-      },
-    ],
-  });
-  eiNoah.use('stab', stabHandler);
 
   const hugImg = loadImage('./src/images/hug.png');
   const generateHug = async (url : string, topText ?: string, bottomText ?: string) => {
@@ -275,7 +277,9 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
     return new MessageAttachment(canvas.createPNGStream());
   };
 
-  const hugHandler : BothHandler = async ({ params, msg, flags }) => {
+  const hugHandler : BothHandler = async ({
+    params, msg, flags, i18n,
+  }) => {
     const persoon = flags.get('persoon');
     const [user] = persoon || params;
 
@@ -289,12 +293,12 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
         return generateHug(url, message, bottom ? mentionsToText(bottom) : undefined);
       }
 
-      return `Met plezier, kom hier <@${user.id}>!`;
+      return i18n.t('index.withPleasure', { user });
     }
-    return 'Knuffel wie?';
+    return i18n.t('index.who');
   };
 
-  eiNoah.useContext('Knuffel', 'USER', async ({ interaction }) => {
+  eiNoah.useContext('Hug', 'USER', async ({ interaction, i18n }) => {
     const user = interaction.options.getUser('user', true);
 
     const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
@@ -309,24 +313,24 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
       }
     }
 
-    return `Met plezier, kom hier <@!${user.id}>!`;
+    return i18n.t('index.withPleasure', { user });
   });
 
   eiNoah.use('hug', hugHandler, HandlerType.BOTH, {
-    description: 'Geef iemand een knuffel die het verdiend heeft <3',
+    description: 'Give someone a hug that deserves it <3',
     options: [
       {
         name: 'persoon',
-        description: 'Persoon die je een knuffel wil geven',
+        description: 'Person you want to hug',
         required: true,
         type: 'USER',
       }, {
         name: 'top',
-        description: 'Zet een leuke tekstje erbij',
+        description: 'Text you want to add to the top',
         type: 'STRING',
       }, {
         name: 'bottom',
-        description: 'Zet een leuk tekstje erbij (maar dan aan de onderkant)',
+        description: 'Text you want to add to the bottom',
         type: 'STRING',
       },
     ],
@@ -380,17 +384,27 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
     const updatePrecense = () => {
       const watDoetNoah : PresenceData[] = [{
         activities: [{
-          name: 'Probeer Niet Te Steken',
+          name: 'Trying not to stab',
           type: 'PLAYING',
         }],
       }, {
         activities: [{
-          name: 'Steek Geluiden',
+          name: 'Stabbing sounds',
           type: 'LISTENING',
         }],
       }, {
         activities: [{
           name: 'Slash Commands :-0',
+          type: 'LISTENING',
+        }],
+      }, {
+        activities: [{
+          name: 'Context Menu\'s',
+          type: 'LISTENING',
+        }],
+      }, {
+        activities: [{
+          name: 'Button Presses',
           type: 'LISTENING',
         }],
       }];
