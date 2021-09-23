@@ -77,7 +77,7 @@ const helpHandler : BothHandler = async () => [
 ].join('\n');
 
 router.use('help', helpHandler, HandlerType.BOTH, {
-  description: 'Krijg een help menu',
+  description: 'Get a help menu',
 });
 
 const showAll : BothHandler = async ({ msg, em, i18n }) => {
@@ -203,7 +203,7 @@ router.use('get', async ({
   }],
 });
 
-router.useContext('See birthday', 'USER', async ({
+router.useContext('Get Birthday', 'USER', async ({
   interaction, em, i18n, user,
 }) => {
   const discUser = interaction.options.getUser('user', true);

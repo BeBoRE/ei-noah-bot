@@ -464,7 +464,7 @@ router.use('add', async ({
   }],
 });
 
-router.useContext('Toevoegen aan lobby', 'USER', async ({
+router.useContext('Add To Lobby', 'USER', async ({
   interaction, guildUser, em, i18n,
 }) => {
   if (!guildUser) return i18n.t('error.onlyUsableOnGuild');

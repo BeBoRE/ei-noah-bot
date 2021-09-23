@@ -120,6 +120,21 @@
       "onlyOwnerCanAllowUser": "Alleen {{user}} kan iemand binnenlaten",
       "onlyOwner": "Alleen de lobby leider kan dit doen"
     }
+  }, 
+  "quote": {
+    "byUser": "Door {{user}}",
+    "noQuoteFound": "{{user}} is niet populair en heeft nog geen quotes",
+    "quoteMenuTitle": "**Kiest u maar**",
+    "noQuoteFoundRemove": "Jij hebt geen quotes aangemaakt voor deze user",
+    "quoteRemoveMenuTitle": "**Selecteer welke quote(s) je wil verwijderen**",
+    "amountQuotesRemoved": "{{count}} quote verwijderd",
+    "amountQuotesRemoved_plural": "{{count}} quotes verwijderd",
+    "noQuotesRemoved": "Geen quotes verwijderd",
+    "error": {
+      "quoteSizeLimit": "Quotes kunnen niet langer zijn dan 256 karakters",
+      "noUserGiven": "Dat is niet een persoon, mention iemand",
+      "guildNoQuotes": "Deze server heeft nog geen quotes"
+    }
   },
   "error": {
     "notAdmin": "Alleen een admin kan dit doen",

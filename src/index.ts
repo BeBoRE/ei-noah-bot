@@ -180,7 +180,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
     return 'Lekker';
   };
 
-  eiNoah.useContext('Steek', 'USER', async ({ interaction }) => {
+  eiNoah.useContext('Stab', 'USER', async ({ interaction }) => {
     const user = interaction.options.getUser('user', true);
 
     const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });

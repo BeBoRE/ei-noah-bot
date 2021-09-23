@@ -119,6 +119,21 @@
       "onlyOwner": "Only the lobby leader can do this"
     }
   },
+  "quote": {
+    "byUser": "By {{user}}",
+    "noQuoteFound": "{{user}} is not populair and has no quotes",
+    "quoteMenuTitle": "**Please pick a quote**",
+    "noQuoteFoundRemove": "You haven't created any quotes for this user",
+    "quoteRemoveMenuTitle": "**Select which quotes you want to remove**",
+    "amountQuotesRemoved": "{{count}} quote removed",
+    "amountQuotesRemoved_plural": "{{count}} quotes removed",
+    "noQuotesRemoved": "No quotes removed",
+    "error": {
+      "quoteSizeLimit": "Quotes cannot be longer than 256 characters",
+      "noUserGiven": "That's not a user, please give a user as argument",
+      "guildNoQuotes": "This server is void of quotes"
+    }
+  },
   "error": {
     "notAdmin": "Only admins are allowed to do this",
     "onlyUsableInGuild": "This command can only be used on a server"
