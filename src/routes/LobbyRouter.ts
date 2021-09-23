@@ -33,7 +33,7 @@ import {
 } from '@mikro-orm/postgresql';
 import emojiRegex from 'emoji-regex';
 import moment, { Duration } from 'moment';
-import i18next, { i18n as I18n } from 'i18next';
+import { i18n as I18n } from 'i18next';
 import LobbyNameChange from '../entity/LobbyNameChange';
 import { Category } from '../entity/Category';
 import TempChannel from '../entity/TempChannel';
@@ -1250,51 +1250,49 @@ router.use('create-category', async ({
 });
 
 router.use('bitrate', async ({
-  msg, guildUser, params, flags,
+  msg, guildUser, params, flags, i18n,
 }) => {
-  if (params.length === 0) {
+  const [bitrate] = flags.get('bitrate') || params;
+
+  if (!bitrate) {
     if (!guildUser.guild.isInitialized()) await guildUser.guild.init();
-    return i18next.t('lobby.lobbyBitrateIs', { bitrate: guildUser.guild.bitrate });
+    return i18n.t('lobby.lobbyBitrateIs', { bitrate: guildUser.guild.bitrate });
   }
 
   if (params.length > 1) {
-    return i18next.t('lobby.error.onlyOneArgumentExpected');
-  }
-
-  if (typeof params[0] !== 'string') {
-    return 'Ik verwacht een string als argument';
+    return i18n.t('lobby.error.onlyOneArgumentExpected');
   }
 
   if (!msg.member?.permissions.has('ADMINISTRATOR')) {
-    return 'Alleen een Edwin mag dit aanpassen';
+    return i18n.t('error.notAdmin');
   }
 
-  const newBitrate = Number(flags.get('bitrate')?.pop() || params[0]);
+  const newBitrate = Number(bitrate);
 
-  if (Number.isNaN(newBitrate)) {
-    return `${params[0]} is niet een nummer`;
+  if (!Number.isSafeInteger(newBitrate)) {
+    return i18n.t('lobby.error.notANumber');
   }
 
   if (newBitrate > 128000) {
-    return 'Bitrate gaat tot 128000';
+    return i18n.t('lobby.error.maxBitrateRange');
   }
 
   if (newBitrate < 8000) {
-    return 'Bitrate gaat boven 8000';
+    return i18n.t('lobby.error.minBitrateRange');
   }
 
-  if (!(await guildUser).guild.isInitialized()) await (await guildUser).guild.init();
+  if (!guildUser.guild.isInitialized()) await guildUser.guild.init();
 
   // eslint-disable-next-line no-param-reassign
-  (await guildUser).guild.bitrate = newBitrate;
+  guildUser.guild.bitrate = newBitrate;
 
-  return `Bitrate veranderd naar ${newBitrate}`;
+  return i18n.t('lobby.bitrateChanged', { bitrate: newBitrate });
 }, HandlerType.GUILD, {
-  description: 'Stel de bitrate van de lobbies in',
+  description: 'Set the bitrate for created lobbies',
   options: [
     {
       name: 'bitrate',
-      description: 'Bitrate waarnaar je de lobbies wil veranderen',
+      description: 'Bitrate for created lobbies',
       required: true,
       type: 'INTEGER',
     },

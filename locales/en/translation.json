@@ -81,6 +81,8 @@
     "nowLobbyCreateCategory": "'{{category}}' is now a lobby creation category",
     "removedCreateCategory": "'{{category}}' is no longer a lobby creation category",
     "removedCreateCategoryNoCategory": "Category is no longer a lobby creation category",
+    "lobbyBitrateIs": "Lobby bitrate is {{bitrate}}",
+    "bitrateChanged": "Bitrate for created lobbies changed to {{bitrate}}",
     "error": {
       "onlyMentions":"Only mention(s) are allowed as arguments",
       "noLobby": "You aren't the owner of a lobby\nJoin a **lobby create channel** to get one",
@@ -101,7 +103,10 @@
       "categoryNotInGuild": "Given category is not in this guild",
       "noChannelCreatePermission": "I don't have the permissions to create channels within this category",
       "noMovePermission": "I don't have the permission to move people between channels",
-      "somethingWentWrong": "Something went wrong try again later"
+      "somethingWentWrong": "Something went wrong try again later",
+      "notANumber": "Given is not an integer",
+      "maxBitrateRange": "Bitrate can't be higher than 128000",
+      "minBitrateRange": "Bitrate can't be higher than 8000"
     }
   },
   "error": {

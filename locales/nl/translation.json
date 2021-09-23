@@ -82,6 +82,7 @@
     "removedCreateCategory": "'{{category}}' is nu geen lobby aanmaak categorie meer",
     "removedCreateCategoryNoCategory": "Categorie is nu geen lobby aanmaak categorie meer",
     "lobbyBitrateIs": "Lobby bitrate is {{bitrate}}",
+    "bitrateChanged": "Bitrate voor aangemaakte lobbies bitrate veranderd naar {{bitrate}}",
     "error": {
       "onlyMentions":"Alleen mention(s) mogelijk als argument",
       "noLobby": "Je hebt nog geen lobby aangemaakt\nJoin een **lobby aanmaak kanaal** om er een aan te maken",
@@ -102,7 +103,10 @@
       "categoryNotInGuild": "Gegeven categorie is in een andere server",
       "noChannelCreatePermission": "Ik niet de permission om kanalen aan te maken",
       "noMovePermission": "Ik heb niet de permission om mensen te verplaatsen tussen kanalen",
-      "somethingWentWrong": "Er is iets fout gegaan probeer het later opnieuw"
+      "somethingWentWrong": "Er is iets fout gegaan probeer het later opnieuw",
+      "notANumber": "Gegeven is niet een nummer",
+      "maxBitrateRange": "Bitrate kan niet hoger dan 128000",
+      "minBitrateRange": "Bitrate kan niet lager dan 8000"
     }
   },
   "error": {
