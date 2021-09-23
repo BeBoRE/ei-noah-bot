@@ -1303,47 +1303,49 @@ const nameHandler : GuildHandler = async ({
   params, guildUser, msg, em, flags, i18n,
 }) => {
   const requestingUser = msg instanceof Message ? msg.author : msg.user;
-  const gu = await guildUser;
 
   const rawNameArray = flags.get('name') || params;
 
-  if (!(await guildUser).tempChannel?.isInitialized()) await (await guildUser).tempChannel?.init();
-  const tempChannel = await activeTempChannel(msg.client, em, gu.tempChannel);
+  if (!guildUser.tempChannel?.isInitialized()) await guildUser.tempChannel?.init();
+  const tempChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
 
-  if (!tempChannel || !gu.tempChannel) return 'Je moet een lobby hebben om dit commando te kunnen gebruiken';
-  if (gu.tempChannel.textChannelId !== msg.channel.id) return 'Dit commando kan alleen gegeven worden in het tekstkanaal van deze lobby';
+  if (!tempChannel || !guildUser.tempChannel) return i18n.t('lobby.error.noLobby');
+  if (guildUser.tempChannel.textChannelId !== msg.channel.id) return i18n.t('lobby.error.useTextChannel', { channel: guildUser.tempChannel.textChannelId });
 
-  if (!rawNameArray.length) return 'Geef een naam in';
+  if (!rawNameArray.length) return i18n.t('lobby.error.noNameGiven');
 
   const nameArray = rawNameArray.filter((param) : param is string => typeof param === 'string');
-  if (nameArray.length !== rawNameArray.length) return 'Je mag alleen tekst gebruiken in de naam';
+  if (nameArray.length !== rawNameArray.length) return i18n.t('lobby.error.onlyUseText');
 
   const name = nameArray.join(' ');
 
-  if (name.length > 80) return 'De naam mag niet langer zijn dan 80 tekens';
+  if (name.length > 80) return i18n.t('lobby.error.nameLimit');
 
-  gu.tempChannel.name = name;
+  guildUser.tempChannel.name = name;
   const type = getChannelType(tempChannel);
 
   try {
-    const timeTillChange = await changeLobby(type, tempChannel, requestingUser, msg.guild, gu.tempChannel, tempChannel.userLimit, false, null, em, i18n);
-    const newName = generateLobbyName(type, requestingUser, gu.tempChannel.name, false);
+    const timeTillChange = await changeLobby(type, tempChannel, requestingUser, msg.guild, guildUser.tempChannel, tempChannel.userLimit, false, null, em, i18n);
+    const newName = generateLobbyName(type, requestingUser, guildUser.tempChannel.name, false);
 
     if (timeTillChange) {
-      return `Lobbynaam wordt *${timeTillChange.locale('nl').humanize(true)}* veranderd naar \`${newName}\``;
+      return i18n.t('lobby.lobbyNameChangeTimeLimit', {
+        duration: timeTillChange.locale(i18n.language).humanize(true),
+        name: newName,
+      });
     }
 
-    return `Lobbynaam is veranderd naar \`${newName}\``;
+    return i18n.t('lobby.lobbyNameChanged', { name: newName });
   } catch {
-    return 'Lobby naam kan niet alleen uit een emoji bestaan';
+    return i18n.t('lobby.error.noEmojiOnly');
   }
 };
 
 router.use('name', nameHandler, HandlerType.GUILD, {
-  description: 'Verander de naam van je lobby',
+  description: 'Change the name of your lobby',
   options: [{
     name: 'name',
-    description: 'De naam waarin je de lobby naam wil veranderen',
+    description: 'New name of your lobby',
     type: 'STRING',
     required: true,
   }],

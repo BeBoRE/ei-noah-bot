@@ -106,7 +106,11 @@
       "somethingWentWrong": "Something went wrong try again later",
       "notANumber": "Given is not an integer",
       "maxBitrateRange": "Bitrate can't be higher than 128000",
-      "minBitrateRange": "Bitrate can't be higher than 8000"
+      "minBitrateRange": "Bitrate can't be higher than 8000",
+      "noNameGiven": "Give a new name",
+      "onlyUseText": "You can't use mentions in a name",
+      "nameLimit": "Name can't be longer than 80 characters",
+      "noEmojiOnly": "Lobby name needs to be more than just an emoji"
     }
   },
   "error": {

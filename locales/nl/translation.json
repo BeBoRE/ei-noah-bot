@@ -83,6 +83,8 @@
     "removedCreateCategoryNoCategory": "Categorie is nu geen lobby aanmaak categorie meer",
     "lobbyBitrateIs": "Lobby bitrate is {{bitrate}}",
     "bitrateChanged": "Bitrate voor aangemaakte lobbies bitrate veranderd naar {{bitrate}}",
+    "lobbyNameChangeTimeLimit": "Lobbynaam wordt *{{duration}}* veranderd naar `{{name}}`",
+    "lobbyNameChanged": "Lobbynaam is veranderd naar `{{name}}`",
     "error": {
       "onlyMentions":"Alleen mention(s) mogelijk als argument",
       "noLobby": "Je hebt nog geen lobby aangemaakt\nJoin een **lobby aanmaak kanaal** om er een aan te maken",
@@ -106,7 +108,11 @@
       "somethingWentWrong": "Er is iets fout gegaan probeer het later opnieuw",
       "notANumber": "Gegeven is niet een nummer",
       "maxBitrateRange": "Bitrate kan niet hoger dan 128000",
-      "minBitrateRange": "Bitrate kan niet lager dan 8000"
+      "minBitrateRange": "Bitrate kan niet lager dan 8000",
+      "noNameGiven": "Geef een nieuwe naam",
+      "onlyUseText": "Je mag alleen tekst gebruiken in de naam",
+      "nameLimit": "De naam mag niet langer zijn dan 80 tekens",
+      "noEmojiOnly": "Lobby naam kan niet alleen uit een emoji bestaan"
     }
   },
   "error": {
