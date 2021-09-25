@@ -70,7 +70,7 @@ router.use('server', async ({
 
   return i18n.t('locale.guildLanguageChanged', { changedTo: language });
 }, HandlerType.GUILD, {
-  description: 'Change the guild\'s default language',
+  description: 'Change the server\'s default language',
   options: [{
     name: 'language',
     type: 'STRING',
