@@ -126,7 +126,6 @@
     ],
     "helpText": [
       "**Beheer je persoonlijke lobby**",
-      "Mogelijke Commandos:",
       "$t(lobby.commands)",
       "`*Admin* /lobby create-category <categorie>`: Maak in gegeven categorie lobby-aanmaak-kanalen aan, verwijder deze kanalen door dezelfde categorie opnieuw te sturen",
       "`*Admin* /lobby category <create-categorie> <lobby-categorie>`: Verander de categorie waar de lobbies worden neergezet",
