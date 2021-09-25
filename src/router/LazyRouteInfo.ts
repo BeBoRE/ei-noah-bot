@@ -2,7 +2,8 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import {
   Channel, CommandInteraction, Message, NewsChannel, Role, TextChannel, User as DiscordUser,
 } from 'discord.js';
-import { getCategoryData, getUserData, getUserGuildData } from '../data';
+import { i18n as I18n } from 'i18next';
+import { getCategoryData } from '../data';
 import { Category } from '../entity/Category';
 import { GuildUser } from '../entity/GuildUser';
 import { User } from '../entity/User';
@@ -19,44 +20,11 @@ export default class LazyRouteInfo implements RouteInfo {
 
   public em : EntityManager;
 
-  private lazyGuildUser : undefined | null | Promise<GuildUser>;
+  public guildUser : GuildUser | null;
 
-  public get guildUser() {
-    if (this.lazyUser) {
-      throw new Error('Don\'t use both guildUser and user');
-    }
+  public user : User;
 
-    let user : DiscordUser;
-    if (this.msg instanceof Message) {
-      user = this.msg.author;
-    } else user = this.msg.user;
-
-    if (this.lazyGuildUser === undefined) {
-      if (!this.msg.guild) {
-        this.lazyGuildUser = null;
-      } else {
-        this.lazyGuildUser = getUserGuildData(this.em, user, this.msg.guild);
-      }
-    }
-
-    return this.lazyGuildUser;
-  }
-
-  private lazyUser : undefined | Promise<User>;
-
-  public get user() {
-    if (this.lazyGuildUser === null) {
-      throw new Error('Don\'t use both guildUser and user');
-    }
-
-    let user : DiscordUser;
-    if (this.msg instanceof Message) {
-      user = this.msg.author;
-    } else user = this.msg.user;
-
-    if (!this.lazyUser) this.lazyUser = getUserData(this.em, user);
-    return this.lazyUser;
-  }
+  public i18n : I18n;
 
   private lazyCategory : undefined | null | Promise<Category>;
 
@@ -77,16 +45,30 @@ export default class LazyRouteInfo implements RouteInfo {
     msg,
     flags,
     em,
+    guildUserOrUser,
+    i18n,
   } : {
     params : (string | Channel | DiscordUser | Role)[],
     msg : Message | CommandInteraction,
     flags : Map<string, (string | Channel | DiscordUser | Role | boolean | number)[]>
-    em : EntityManager
+    em : EntityManager,
+    guildUserOrUser : GuildUser | User,
+    i18n : I18n
   }) {
     this.absoluteParams = params;
     this.params = params;
     this.flags = flags;
     this.msg = msg;
     this.em = em;
+
+    if (guildUserOrUser instanceof GuildUser) {
+      this.guildUser = guildUserOrUser;
+      this.user = guildUserOrUser.user;
+    } else {
+      this.guildUser = null;
+      this.user = guildUserOrUser;
+    }
+
+    this.i18n = i18n;
   }
 }

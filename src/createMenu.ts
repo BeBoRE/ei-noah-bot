@@ -167,7 +167,12 @@ async function createMenu<T>(
       const destroyMessage = await selectCallback(item);
 
       if (destroyMessage || destroyMessage === undefined) {
-        message.delete().catch(() => {});
+        if (typeof destroyMessage === 'string') {
+          interaction.update({ content: destroyMessage, components: [] }).catch((err) => console.log(err));
+        } else {
+          message.delete().catch(() => {});
+        }
+
         collector.stop();
         timeout('stop');
       } else {
@@ -182,7 +187,12 @@ async function createMenu<T>(
       const destroyMessage = await extraButton[1]();
 
       if (destroyMessage || destroyMessage === undefined) {
-        message.delete().catch(() => {});
+        if (typeof destroyMessage === 'string') {
+          interaction.update({ content: destroyMessage, components: [] }).catch((err) => console.log(err));
+        } else {
+          message.delete().catch(() => {});
+        }
+
         collector.stop();
         timeout('stop');
       } else {

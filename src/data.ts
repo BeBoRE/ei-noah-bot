@@ -35,7 +35,8 @@ const getUserData = async (em : EntityManager, user: DiscordUser) : Promise<User
 
 const getUserGuildData = async (em : EntityManager, user : DiscordUser, guild : DiscordGuild) => {
   const dbGuildUser = await em.findOne(GuildUser,
-    { guild: { id: guild.id }, user: { id: user.id } });
+    { guild: { id: guild.id }, user: { id: user.id } },
+    { populate: { guild: true, user: true } });
 
   if (!dbGuildUser) {
     const dbUser = await getUserData(em, user);

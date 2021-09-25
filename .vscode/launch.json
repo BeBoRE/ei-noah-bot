@@ -8,13 +8,13 @@
       "protocol":"inspector",
       "cwd":"${workspaceRoot}",
       "runtimeExecutable":"${workspaceRoot}/node_modules/.bin/ts-node-dev",
-      "args":[  
-         "${workspaceRoot}/src/index.ts"
+      "args":[
+        "${workspaceRoot}/src/index.ts"
       ],
-      "restart":true,
+      "restart": true,
       "skipFiles": [
-        "${workspaceFolder}/node_modules/**/*.js",
-        "<node_internals>/**/*.js"
+        "<node_internals>/**/*.js",
+        "${workspaceFolder}/node_modules/**/*.js"
       ]
    }
   ]
