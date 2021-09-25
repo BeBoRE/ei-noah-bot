@@ -7,7 +7,7 @@
       "**All Commands & Routes**",
       "`/bday`: Let me track your birthdays, or request someone else's",
       "`/corona`: Get a report about the local COVID-19 stats (the Netherlands only)",
-      "`/lobby`: Manager your personal lobby",
+      "`/lobby`: Manage your personal lobby",
       "`/quote` Keep quotes of your friends",
       "`/hug <@User> [text] [-b bodemtext]`: Give someone a hug that deserves it <3",
       "`/stab <@User> [text] [-b bodemtext]`: Stab someone that deserves it <3"
@@ -51,6 +51,17 @@
     "birthdayMsgAge": "Turned {{age}} today. happy birthday!!",
     "birthdayMsgAgeUser": "{{user}} turned {{age}} today, happy birthday!!\n> $t(birthday.error.permissionMissing)",
     "congratulations": "Congratulations",
+    "help": [
+      "**Let me remember your birthday, maybe I'll even send you a birthday card**",
+      "`/bday set <birthdate>`: Set your birthdate",
+      "`/bday all`: Show everyone's birthday",
+      "`/bday ages`: Show everyone's age",
+      "`/bday get <@user>`: Get the birthday of a user",
+      "`/bday delete`: Make me forget your birthday",
+      "***Admin Commando's***",
+      "`/bday channel`: Select the channel where I'll post the birthday announcements",
+      "`/bday role <role>`: Select the role given to those who's birthday it is"
+    ],
     "error": {
       "niceTry": "Nice try",
       "notInFuture": "Your birthday cant be in the future",
@@ -106,6 +117,24 @@
     "addUserButton": "Add User",
     "addUserMessage": "Add {{user}} to lobby",
     "ownershipTransferred": "Lobby has been transferred to {{user}}",
+    "commands": [
+      "`/lobby add @mention...`: Allow user(s) and role(s) into your lobby",
+      "`/lobby remove @mention...`: Remove user(s) and role(s) from your lobby",
+      "`/lobby type [mute / private / public]`: Change the type of the lobby",
+      "`/lobby limit <number>`: Change the lobby's user limit",
+      "`/lobby name <name>`: Give your lobby a name"
+    ],
+    "helpText": [
+      "**Manage your lobby**",
+      "$t(lobby.commands)",
+      "`*Admin* /lobby create-category <category>`: Make a category a lobby create-category, to remove the lobby create-category give the lobby again",
+      "`*Admin* /lobby category <create-category> <lobby-category>`: Change where the lobbies are placed",
+      "`*Admin* /lobby bitrate <8000 - 128000>`: Change the bitrate of the lobbies when the lobbies are created"
+    ],
+    "dashboardText": [
+      "***Manage your lobby with these commands***",
+      "$t(lobby.commands)"
+    ],
     "error": {
       "onlyMentions":"Only mention(s) are allowed as arguments",
       "noLobby": "You aren't the owner of a lobby\nJoin a **lobby create channel** to get one",
@@ -148,6 +177,15 @@
     "amountQuotesRemoved": "{{count}} quote removed",
     "amountQuotesRemoved_plural": "{{count}} quotes removed",
     "noQuotesRemoved": "No quotes removed",
+    "help": [
+      "**Keep quotes of your friends**",
+      "`/quote random`: Send a random quote from someone in the server",
+      "`/quote get <@member>`: Retrieve a quote from someone",
+      "`/quote add <@member> <quote>`: Add a quote from someone",
+      "`/quote remove <@member>`: Make me forget some quotes",
+      "> You can only remove the quotes you created for someone (unless your an admin)",
+      "> You can fully manage your own quotes"
+    ],
     "error": {
       "quoteSizeLimit": "Quotes cannot be longer than 256 characters",
       "noUserGiven": "That's not a user, please give a user as argument",

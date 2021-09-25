@@ -40,28 +40,9 @@ import TempChannel from '../entity/TempChannel';
 import createMenu from '../createMenu';
 import { getCategoryData, getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
-import Router, { GuildHandler, HandlerType } from '../router/Router';
+import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');
-
-const memberCommandText = [
-  '`/lobby add @mention...`: Laat user(s) toe aan de lobby',
-  '`/lobby remove @mention...`: Verwijder user(s)/ role(s) uit de lobby',
-  '`/lobby type [mute / private / public]`: Verander het type van de lobby',
-  '`/lobby limit <nummer>`: Verander de lobby user limit',
-  '`/lobby name <lobby naam>`: Geef de lobby een naam',
-].join('\n');
-
-const helpCommandText = [
-  '**Maak een tijdelijke voice kanaal aan**',
-  'Mogelijke Commandos:',
-  memberCommandText,
-  '`*Admin* /lobby create-category <category>`: Maak in gegeven categorie lobby-aanmaak-kanalen aan, verwijder deze kanalen door dezelfde categorie opnieuw te sturen',
-  '`*Admin* /lobby category <create-category> <lobby-category>`: Verander de categorie waar de lobbies worden neergezet',
-  '`*Admin* /lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt',
-].join('\n');
-
-const dashBoardText = ['**Beheer je lobby met deze commands:**', memberCommandText].join('\n');
 
 enum ChannelType {
   Public = 'public',
@@ -963,7 +944,7 @@ const changeLobby = (() => {
 
                     return null;
                   })
-                  .then(async (msg) => msg?.edit({ content: dashBoardText, components: await generateButtons(vc, em, tempChannel.guildUser, owner, i18n) }))
+                  .then(async (msg) => msg?.edit({ content: i18n.t('lobby.dashboardText', { joinArrays: '\n' }), components: await generateButtons(vc, em, tempChannel.guildUser, owner, i18n) }))
                   .catch(() => { });
               }
             } else {
@@ -1003,7 +984,7 @@ const changeLobby = (() => {
       await voiceChannel.setUserLimit(limit);
     }
 
-    const content = `${dashBoardText}${timeTillNameChange ? `\n\n${i18n.t('lobby.nameOfLobbyChangeDuration', { duration: timeTillNameChange.locale(i18n.language).humanize(true), name: newName })}` : ''}`;
+    const content = `${i18n.t('lobby.dashboardText', { joinArrays: '\n' })}${timeTillNameChange ? `\n\n${i18n.t('lobby.nameOfLobbyChangeDuration', { duration: timeTillNameChange.locale(i18n.language).humanize(true), name: newName })}` : ''}`;
 
     if (!(interaction && interaction.update({ content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).then(() => true).catch(() => false)) && tempChannel.controlDashboardId) {
       const msg = await (await textChannel)?.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => null);
@@ -1354,7 +1335,7 @@ router.use('rename', nameHandler, HandlerType.GUILD);
 router.use('naam', nameHandler, HandlerType.GUILD);
 router.use('hernoem', nameHandler, HandlerType.GUILD);
 
-const helpHandler = () => helpCommandText;
+const helpHandler : BothHandler = ({ i18n }) => i18n.t('lobby.helpText', { joinArrays: '\n' });
 
 router.use('help', helpHandler, HandlerType.BOTH, {
   description: 'Get help',
@@ -1412,7 +1393,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
   if (textChannel && owner) {
     let msg = tempChannel.controlDashboardId ? await textChannel.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => undefined) : undefined;
     if (!msg) {
-      msg = await textChannel.send({ content: dashBoardText, components: await generateButtons(voiceChannel, _em, tempChannel.guildUser, owner, i18) }).catch((err) => { console.error(err); return undefined; });
+      msg = await textChannel.send({ content: i18.t('lobby.dashboardText', { joinArrays: '\n' }), components: await generateButtons(voiceChannel, _em, tempChannel.guildUser, owner, i18) }).catch((err) => { console.error(err); return undefined; });
       if (msg) tempChannel.controlDashboardId = msg.id;
     }
 

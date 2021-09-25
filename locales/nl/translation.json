@@ -7,7 +7,7 @@
       "**Alle Commando's & Routes**",
       "`/bday`: Laat Ei je verjaardag bijhouden, of vraag die van anderen op",
       "`/corona`: Krijg iedere morgen een rapportage over de locale corona situatie",
-      "`/lobby`: Maak en beheer een lobby (tijdelijk kanaal)",
+      "`/lobby`: Beheer je persoonlijke lobby",
       "`/quote` Houd quotes van je makkermaten bij",
       "`/hug <@User> [tekst] [-b bodemtekst]`: Geef iemand een knuffel die het verdiend heeft <3",
       "`/stab <@User> [tekst] [-b bodemtekst]`: Steek iemand met een mes die het verdiend heeft <3"
@@ -51,6 +51,17 @@
     "birthdayMsgAge": "Is vandaag {{age}} geworden. GEFELICITEERD!!",
     "birthdayMsgAgeUser": "{{user}} is vandaag {{age}} geworden, Gefeliciteerd!!\n> $t(birthday.error.permissionMissing)",
     "congratulations": "Felicitaties",
+    "help": [
+      "**Laat mij je verjaardag onthouden, misschien stuur ik je wel een feestkaartje**",
+      "`/bday set <datum>`: Stel je geboortedatum in",
+      "`/bday all`: Laat iedereens geboortedatum zien",
+      "`/bday ages`: Laat iedereens leeftijd zien",
+      "`/bday get <@user>`: Laat de geboortedatum en leeftijd van een user zien",
+      "`/bday delete`: Verwijderd jouw verjaardag",
+      "***Admin Commando's***",
+      "`/bday channel`: Selecteerd het huidige kanaal voor de dagelijkse update",
+      "`/bday role <Role Mention>`: Selecteerd de rol voor de jarige-jop"
+    ],
     "error": {
       "niceTry": "Leuk geprobeerd",
       "notInFuture": "Je verjaardag kan niet in de toekomst zijn",
@@ -106,6 +117,25 @@
     "addUserButton": "Voeg toe",
     "addUserMessage": "Voeg {{user}} toe aan lobby?",
     "ownershipTransferred": "De lobby is overgedragen aan {{user}}",
+    "commands": [
+      "`/lobby add @mention...`: Laat user(s) toe aan de lobby",
+      "`/lobby remove @mention...`: Verwijder user(s)/ role(s) uit de lobby",
+      "`/lobby type [mute / private / public]`: Verander het type van de lobby",
+      "`/lobby limit <nummer>`: Verander de lobby user limit",
+      "`/lobby name <lobby naam>`: Geef de lobby een naam"
+    ],
+    "helpText": [
+      "**Beheer je persoonlijke lobby**",
+      "Mogelijke Commandos:",
+      "$t(lobby.commands)",
+      "`*Admin* /lobby create-category <categorie>`: Maak in gegeven categorie lobby-aanmaak-kanalen aan, verwijder deze kanalen door dezelfde categorie opnieuw te sturen",
+      "`*Admin* /lobby category <create-categorie> <lobby-categorie>`: Verander de categorie waar de lobbies worden neergezet",
+      "`*Admin* /lobby bitrate <8000 - 128000>`: Stel in welke bitrate de lobbies hebben wanneer ze worden aangemaakt"
+    ],
+    "dashboardText": [
+      "***Beheer je lobby met deze commands***",
+      "$t(lobby.commands)"
+    ],
     "error": {
       "onlyMentions":"Alleen mention(s) mogelijk als argument",
       "noLobby": "Je hebt nog geen lobby aangemaakt\nJoin een **lobby aanmaak kanaal** om er een aan te maken",
@@ -148,6 +178,15 @@
     "amountQuotesRemoved": "{{count}} quote verwijderd",
     "amountQuotesRemoved_plural": "{{count}} quotes verwijderd",
     "noQuotesRemoved": "Geen quotes verwijderd",
+    "help": [
+      "**Hou quotes van je makkermaten bij!**",
+      "`/quote random`: Verstuur een random quote van de server",
+      "`/quote get <@member>`: Verstuur een quote van dat persoon",
+      "`/quote add <@member> <quote>`: Sla een nieuwe quote op van dat persoon",
+      "`/quote remove <@member>`: Verwijder een selectie aan quotes van dat persoon",
+      "> Je kan alleen de quotes verwijderen die je voor dat persoon geschreven hebt",
+      "> Alleen quotes van jezelf kan je volledig beheren"
+    ],
     "error": {
       "quoteSizeLimit": "Quotes kunnen niet langer zijn dan 256 karakters",
       "noUserGiven": "Dat is niet een persoon, mention iemand",

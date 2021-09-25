@@ -14,16 +14,7 @@ import Router, { GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Onthoud al');
 
-router.use('help', () => [
-  '**Hou quotes van je makkermaten bij!**',
-  'Mogelijke Commandos:',
-  '`/quote random`: Verstuur een random quote van de server',
-  '`/quote get <@member>`: Verstuur een quote van dat persoon',
-  '`/quote add <@member> <quote>`: Sla een nieuwe quote op van dat persoon',
-  '`/quote remove <@member>`: Verwijder een selectie aan quotes van dat persoon',
-  '> Je kan alleen de quotes verwijderen die je voor dat persoon geschreven hebt',
-  '> Alleen quotes van jezelf kan je volledig beheren',
-].join('\n'), HandlerType.BOTH, {
+router.use('help', ({ i18n }) => i18n.t('quote.help', { joinArrays: '\n' }), HandlerType.BOTH, {
   description: 'Help menu for quote\'s',
 });
 

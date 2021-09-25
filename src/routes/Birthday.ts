@@ -21,17 +21,7 @@ import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router
 
 const router = new Router('Laat Ei-Noah je verjaardag bijhouden of vraag die van iemand anders op');
 
-const helpHandler : BothHandler = async () => [
-  '**Krijg elke ochtend een melding als iemand jarig is**',
-  '`/bday set <datum>`: Stel je geboortedatum in',
-  '`/bday all`: Laat iedereens geboortedatum zien',
-  '`/bday ages`: Laat iedereens leeftijd zien',
-  '`/bday get <@user>`: Laat de geboortedatum en leeftijd van een user zien',
-  '`/bday delete`: Verwijderd jouw verjaardag',
-  '***Admin Commando\'s***',
-  '`/bday channel`: Selecteerd het huidige kanaal voor de dagelijkse update',
-  '`/bday role <Role Mention>`: Selecteerd de rol voor de jarige-jop',
-].join('\n');
+const helpHandler : BothHandler = async ({ i18n }) => i18n.t('birthday.help', { joinArrays: '\n' });
 
 router.use('help', helpHandler, HandlerType.BOTH, {
   description: 'Get a help menu',
