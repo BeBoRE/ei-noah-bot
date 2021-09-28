@@ -1359,7 +1359,7 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
 
   textChannel.send({
     allowedMentions: { roles: [], users: [] },
-    content: i18n.t('lobby.addUserMessage', { user }),
+    content: i18n.t('lobby.addUserMessage', { user: user.toString() }),
     components: [actionRow],
   }).then((msg) => {
     const collector = msg.createMessageComponentCollector();
@@ -1375,7 +1375,7 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
       if (!owner) {
         message = i18n.t('lobby.error.onlyOwnerCanAllow');
       } else {
-        message = i18n.t('lobby.error.onlyOwnerCanAllowUser', { user: owner });
+        message = i18n.t('lobby.error.onlyOwnerCanAllowUser', { user: owner.toString() });
       }
 
       interaction.reply({ content: message, ephemeral: true }).catch(() => { });

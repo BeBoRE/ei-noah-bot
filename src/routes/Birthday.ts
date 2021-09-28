@@ -86,7 +86,7 @@ const showAll : BothHandler = async ({ msg, em, i18n }) => {
 
       return dayA - dayB;
     })
-    .map((du) => `\n${i18n.t('birthday.userIsBornOn', { username: du.username, date: moment(users.find((u) => u.id === du.id)?.birthday).locale(i18n.language).format('D MMMM YYYY') })}`);
+    .map((du) => `\n${i18n.t('birthday.userIsBornOn', { username: du.toString(), date: moment(users.find((u) => u.id === du.id)?.birthday).locale(i18n.language).format('D MMMM YYYY') })}`);
 
   let color : `#${string}` | undefined;
   if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
@@ -166,7 +166,7 @@ const getBdayEmbed = (user : DiscordUser, dbUser : User, guild : Guild | null, i
   embed.setColor(color);
   embed.setAuthor(user.username, user.avatarURL() || undefined);
 
-  embed.description = dbUser.birthday ? i18n.t('birthday.userIsBornOnAge', { date: moment(dbUser.birthday).format('D MMMM YYYY'), yearsOld: moment().diff(moment(dbUser.birthday), 'year') }) : i18n.t('birthday.noBirthdaySad', { username: user.username });
+  embed.description = dbUser.birthday ? i18n.t('birthday.userIsBornOnAge', { date: moment(dbUser.birthday).format('D MMMM YYYY'), yearsOld: moment().diff(moment(dbUser.birthday), 'year') }) : i18n.t('birthday.noBirthdaySad', { username: user.toString() });
 
   return embed;
 };
@@ -424,7 +424,7 @@ const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChanne
     return { embeds: [embed] };
   }
 
-  return { content: i18n.t('birthday.birthdayMsgAgeUser', { age, user: member.user }) };
+  return { content: i18n.t('birthday.birthdayMsgAgeUser', { age, user: member.user.toString() }) };
 };
 
 // TODO: Deze functie aanpakken
