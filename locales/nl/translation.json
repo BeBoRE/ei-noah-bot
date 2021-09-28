@@ -6,7 +6,7 @@
     "help": [
       "**Alle Commando's & Routes**",
       "`/bday`: Laat Ei je verjaardag bijhouden, of vraag die van anderen op",
-      "`/corona`: Krijg iedere morgen een rapportage over de locale corona situatie",
+      "`/corona`: Krijg iedere morgen een rapportage over de lokale corona situatie",
       "`/lobby`: Beheer je persoonlijke lobby",
       "`/quote` Houd quotes van je makkermaten bij",
       "`/hug <@User> [tekst] [-b bodemtekst]`: Geef iemand een knuffel die het verdiend heeft <3",
@@ -40,7 +40,7 @@
     "embedTitleAge": "Leeftijden:",
     "oncomingFirst": "Aanstaande eerst:",
     "noBirthdaysRegistered": "Geen verjaardagen geregistreerd",
-    "userIsBornOnAge": "Geboren op {{date}} en is {{yearsOld}} jaar old",
+    "userIsBornOnAge": "Geboren op {{date}} en is {{yearsOld}} jaar oud",
     "noBirthdaySad": "{{username}} heeft geen verjaardag, dit is zo zielig",
     "birthdayRemoved": "Je verjaardag is verwijderd",
     "notSelectedAsAnnouncement": "Huidig kanaal is meer geselecteerd als verjaardag-aankondigings-kanaal",
@@ -59,8 +59,8 @@
       "`/bday get <@user>`: Laat de geboortedatum en leeftijd van een user zien",
       "`/bday delete`: Verwijderd jouw verjaardag",
       "***Admin Commando's***",
-      "`/bday channel`: Selecteerd het huidige kanaal voor de dagelijkse update",
-      "`/bday role <Role Mention>`: Selecteerd de rol voor de jarige-jop"
+      "`/bday channel`: Selecteert het huidige kanaal voor de dagelijkse update",
+      "`/bday role <Role Mention>`: Selecteert de rol voor de jarige-jop"
     ],
     "error": {
       "niceTry": "Leuk geprobeerd",
@@ -69,8 +69,8 @@
       "noGiveRolePermission": "Ik heb niet de permissions om iemand een rol te geven",
       "givenRoleTooHigh": "Gegeven rol is hoger dan mijn hoogste rol",
       "noRoleGiven": "Geef een rol als argument",
-      "permissionMissing": "Voor een uniek verjaardag's plaatje, sta mij toe om in dit kanaal afbeeldingen weer te geven",
-      "noSendPermission": "Ik heb de *Send Messages* permission nodig om in {{channel}} een verjaardags aankondiging te zetten>\nOm een uniek verjaardagskaartje te genereren heb ik de *Attach Files* permission nodig, die ziet er zo uit"
+      "permissionMissing": "Voor een uniek verjaardag plaatje, sta mij toe om in dit kanaal afbeeldingen weer te geven",
+      "noSendPermission": "Ik heb de *Send Messages* permission nodig om in {{channel}} een verjaardagaankondiging te zetten>\nOm een uniek verjaardagskaartje te genereren heb ik de *Attach Files* permission nodig, die ziet er zo uit"
     }
   },
   "lobby": {
@@ -111,7 +111,7 @@
     "removedCreateCategory": "'{{category}}' is nu geen lobby aanmaak categorie meer",
     "removedCreateCategoryNoCategory": "Categorie is nu geen lobby aanmaak categorie meer",
     "lobbyBitrateIs": "Lobby bitrate is {{bitrate}}",
-    "bitrateChanged": "Bitrate voor aangemaakte lobbies bitrate veranderd naar {{bitrate}}",
+    "bitrateChanged": "Bitrate voor aangemaakte lobby's bitrate veranderd naar {{bitrate}}",
     "lobbyNameChangeTimeLimit": "Lobbynaam wordt *{{duration}}* veranderd naar `{{name}}`",
     "lobbyNameChanged": "Lobbynaam is veranderd naar `{{name}}`",
     "addUserButton": "Voeg toe",
@@ -163,7 +163,7 @@
       "onlyUseText": "Je mag alleen tekst gebruiken in de naam",
       "nameLimit": "De naam mag niet langer zijn dan 80 tekens",
       "noEmojiOnly": "Lobby naam kan niet alleen uit een emoji bestaan",
-      "onlyOwnerCanAllow": "Alleen de owner van de lobby kan iemand binnenlaten",
+      "onlyOwnerCanAllow": "Alleen de eigenaar van de lobby kan iemand binnenlaten",
       "onlyOwnerCanAllowUser": "Alleen {{user}} kan iemand binnenlaten",
       "onlyOwner": "Alleen de lobby leider kan dit doen"
     }
