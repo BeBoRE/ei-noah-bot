@@ -1502,6 +1502,8 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
     const discordUser = await client.users.fetch(`${BigInt(tempChannel.guildUser.user.id)}`);
     const lobbyType = getChannelType(activeChannel);
 
+    if (!tempChannel.guildUser.user.isInitialized() || !tempChannel.guildUser.guild.isInitialized()) throw new Error('user of guild is not initialized');
+
     const i18n = _i18n.cloneInstance({ lng: tempChannel.guildUser.user.language || tempChannel.guildUser.guild.language });
 
     await createDashBoardCollector(client, activeChannel, tempChannel, em.fork(), i18n);
@@ -1527,7 +1529,14 @@ router.onInit = async (client, orm, _i18n) => {
   const checkTempLobbies = async () => {
     const em = orm.em.fork();
 
-    const usersWithTemp = await em.getRepository(TempChannel).findAll({ populate: { guildUser: true } });
+    const usersWithTemp = await em.getRepository(TempChannel).findAll({
+      populate: {
+        guildUser: {
+          user: true,
+          guild: true,
+        },
+      },
+    });
 
     const tempChecks = usersWithTemp.map((tcs) => checkTempChannel(client, tcs, em, _i18n));
 
