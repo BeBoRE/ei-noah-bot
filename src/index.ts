@@ -182,7 +182,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
         return generateStab(url, message, bottom ? mentionsToText(bottom) : undefined);
       }
 
-      return i18n.t('index.withPleasure', { user });
+      return i18n.t('index.withPleasure', { user: user.toString() });
     }
     return i18n.t('index.who');
   };

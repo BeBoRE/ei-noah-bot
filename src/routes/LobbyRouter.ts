@@ -890,7 +890,7 @@ const changeLobby = (() => {
           .filter((member) => !voiceChannel.permissionOverwrites.cache.has(member.id))
           .forEach((member) => {
             member.voice.setChannel(null).catch(() => {});
-            member.send(i18n.t('lobby.typeChangeRemoval', { owner, type: changeTo })).catch(() => {});
+            member.send(i18n.t('lobby.typeChangeRemoval', { owner: owner.toString(), type: changeTo })).catch(() => {});
           });
       }
 
@@ -1494,7 +1494,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
           activeTextChannel?.send({
             allowedMentions: { users: [] },
             reply: tempChannel.controlDashboardId ? { messageReference: tempChannel.controlDashboardId } : undefined,
-            content: i18n.t('lobby.ownershipTransferred', { user: newOwner }),
+            content: i18n.t('lobby.ownershipTransferred', { user: newOwner.user.toString() }),
           }),
       ]).catch(console.error);
     }

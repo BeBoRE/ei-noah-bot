@@ -41,7 +41,7 @@ const getQuoteEmbed = async (guild : Guild, quote : Quote, i18n : I18n) : Promis
 
   embed.setAuthor((await quoted).username, avatarURL);
   embed.setDescription(text);
-  embed.setFooter(i18n.t('quote.byUser', { user: owner }), (await owner).avatarURL() || undefined);
+  embed.setFooter(i18n.t('quote.byUser', { user: (await owner).username }), (await owner).displayAvatarURL({ size: 64, dynamic: false }));
   if (quote.date) embed.setTimestamp(quote.date);
   if (color) embed.setColor(color);
 
@@ -88,7 +88,7 @@ const handler : GuildHandler = async ({
 
   if (!quoteToAdd || quoteToAdd.length === 0) {
     if (quotedUser.quotes.length === 0) {
-      return i18n.t('quote.noQuoteFound', { user });
+      return i18n.t('quote.noQuoteFound', { user: user.toString() });
     }
 
     if (quotedUser.quotes.length === 1) {

@@ -399,7 +399,7 @@ const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChanne
 
   if (url && permissions.has('ATTACH_FILES', true)) {
     return {
-      content: member.client.user?.id !== member.user.id ? i18n.t('birthday.birthdayMsg', { user: `<@${member.user.id}>` }) : i18n.t('birthday.meBirthdayMsg'),
+      content: member.client.user?.id !== member.user.id ? i18n.t('birthday.birthdayMsg', { user: member.user.toString() }) : i18n.t('birthday.meBirthdayMsg'),
       files: [await generateImage(url, age.toString())],
     };
   }
@@ -503,7 +503,7 @@ const checkBday = async (client : Client, em : EntityManager, _i18n : I18n) => {
                 await i18n.changeLanguage(ownerUser.language);
 
                 owner.send({
-                  content: i18n.t('birthday.error.noSendPermission'),
+                  content: i18n.t('birthday.error.noSendPermission', channel.toString()),
                   files: [await generateImage(url, age.toString())],
                 }).catch(() => {});
               }
