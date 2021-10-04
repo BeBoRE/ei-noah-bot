@@ -2,9 +2,11 @@ import fetch from 'node-fetch';
 import moment from 'moment';
 import { CronJob } from 'cron';
 import parse from 'csv-parse/lib/sync';
-import { Client } from 'discord.js';
+import { Client, MessageAttachment, Collection } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
+import { ChartConfiguration } from 'chart.js';
 import UserCoronaRegions from '../entity/UserCoronaRegions';
 import Router, { BothHandler, HandlerType } from '../router/Router';
 import CoronaData, { CoronaInfo } from '../entity/CoronaData';
@@ -143,6 +145,85 @@ enum Niveau {
   ernstig = 'Ernstig',
   zeerernstig = 'Zeer Ernstig'
 }
+
+const canvas = new ChartJSNodeCanvas({ width: 800, height: 400 });
+
+const coronaGraph : BothHandler = async ({ em, params, flags }) => {
+  const [community] = flags.get('community') || params;
+  const [days] = flags.get('days') || [30];
+
+  if (typeof community !== 'string') return 'Community moet een gemeente zijn en niet een random string';
+  if (typeof days !== 'number') return 'Last-days moet een nummer zijn';
+
+  const query = em.createQueryBuilder(CoronaData, 'cd', 'read').raw('SELECT community, date, total_reported, sum(total_reported) over(partition by community order by date rows between 6 preceding and current row) as total_last_week_reported from corona_data where lower(community) = lower(:community) order by date', {
+    community,
+  });
+
+  const allData = await em.execute<{date: Date, community: string, total_reported: string, total_last_week_reported: string}[]>(query);
+  // const last30days = allData.filter((d) => d.date.getTime() > moment().subtract(1, 'month').toDate().getTime());
+
+  const collection = new Collection(allData.entries());
+
+  if (!allData.length) return `${community} is niet een gemeente`;
+
+  const configuration : ChartConfiguration = {
+    type: 'line',
+    data: {
+      labels: collection.last(days).map((value) => moment(value.date).format('DD')),
+      datasets: [{
+        label: 'Patienten',
+        data: collection.last(days).map((value) => Number.parseInt(value.total_last_week_reported, 10)),
+        borderColor: '#ffcc5f',
+        borderWidth: 3,
+      }],
+    },
+    options: {
+      plugins: {
+        legend: false,
+      },
+      elements: {
+        point: {
+          radius: 0,
+        },
+      },
+      scales: {
+        xAxes: [{
+          display: false,
+          gridLines: {
+            display: false,
+          },
+        }],
+        yAxes: [{
+          display: false,
+          ticks: {
+            beginAtZero: false,
+          },
+          gridLines: {
+            display: false,
+          },
+        }],
+      },
+    },
+  };
+
+  const buffer = await canvas.renderToBuffer(configuration, 'image/png');
+
+  return new MessageAttachment(buffer);
+};
+
+router.use('graph', coronaGraph, HandlerType.BOTH, {
+  description: 'Genereer een grafiekje :)',
+  options: [{
+    name: 'community',
+    type: 'STRING',
+    description: 'Gemeente waarvan je een grafiekje wil zien',
+    required: true,
+  }, {
+    name: 'days',
+    type: 'INTEGER',
+    description: 'Laatste zoveel dagen',
+  }],
+});
 
 const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>) => {
   const regionPopulations = await getPopulation();
