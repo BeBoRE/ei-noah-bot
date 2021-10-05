@@ -173,15 +173,16 @@ const coronaGraph : BothHandler = async ({ em, params, flags }) => {
     data: {
       labels: collection.last(days).map((value) => moment(value.date).format('DD')),
       datasets: [{
-        label: 'Patienten',
+        label: collection.first()?.community,
         data: collection.last(days).map((value) => Number.parseInt(value.total_last_week_reported, 10)),
+        backgroundColor: '#ffcc5f33',
         borderColor: '#ffcc5f',
         borderWidth: 3,
       }],
     },
     options: {
       plugins: {
-        legend: labels,
+        legend: false,
       },
       elements: {
         point: {
@@ -191,6 +192,9 @@ const coronaGraph : BothHandler = async ({ em, params, flags }) => {
       scales: {
         xAxes: [{
           display: labels,
+          ticks: {
+            fontColor: '#FFFFFF',
+          },
           gridLines: {
             display: labels,
           },
@@ -199,6 +203,7 @@ const coronaGraph : BothHandler = async ({ em, params, flags }) => {
           display: labels,
           ticks: {
             beginAtZero: labels,
+            fontColor: '#FFFFFF',
           },
           gridLines: {
             display: labels,
