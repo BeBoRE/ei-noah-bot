@@ -151,9 +151,11 @@ const canvas = new ChartJSNodeCanvas({ width: 800, height: 400 });
 const coronaGraph : BothHandler = async ({ em, params, flags }) => {
   const [community] = flags.get('community') || params;
   const [days] = flags.get('days') || [30];
+  const [labels] = flags.get('labels') || [false];
 
   if (typeof community !== 'string') return 'Community moet een gemeente zijn en niet een random string';
   if (typeof days !== 'number') return 'Last-days moet een nummer zijn';
+  if (typeof labels !== 'boolean') return 'Labels moet van type boolean zijn';
 
   const query = em.createQueryBuilder(CoronaData, 'cd', 'read').raw('SELECT community, date, total_reported, sum(total_reported) over(partition by community order by date rows between 6 preceding and current row) as total_last_week_reported from corona_data where lower(community) = lower(:community) order by date', {
     community,
@@ -179,7 +181,7 @@ const coronaGraph : BothHandler = async ({ em, params, flags }) => {
     },
     options: {
       plugins: {
-        legend: false,
+        legend: labels,
       },
       elements: {
         point: {
@@ -188,18 +190,18 @@ const coronaGraph : BothHandler = async ({ em, params, flags }) => {
       },
       scales: {
         xAxes: [{
-          display: false,
+          display: labels,
           gridLines: {
-            display: false,
+            display: labels,
           },
         }],
         yAxes: [{
-          display: false,
+          display: labels,
           ticks: {
-            beginAtZero: false,
+            beginAtZero: labels,
           },
           gridLines: {
-            display: false,
+            display: labels,
           },
         }],
       },
@@ -222,6 +224,10 @@ router.use('graph', coronaGraph, HandlerType.BOTH, {
     name: 'days',
     type: 'INTEGER',
     description: 'Laatste zoveel dagen',
+  }, {
+    name: 'labels',
+    type: 'BOOLEAN',
+    description: 'Laat de labels en gridlines zien',
   }],
 });
 
