@@ -181,6 +181,12 @@ const coronaGraph : BothHandler = async ({ em, params, flags }) => {
       }],
     },
     options: {
+      title: {
+        display: true,
+        text: collection.first()?.community,
+        fontColor: '#FFFFFF',
+        fontSize: 24,
+      },
       plugins: {
         legend: false,
       },
@@ -194,6 +200,8 @@ const coronaGraph : BothHandler = async ({ em, params, flags }) => {
           display: labels,
           ticks: {
             fontColor: '#FFFFFF',
+            fontSize: 14,
+            fontStyle: 'bold',
           },
           gridLines: {
             display: labels,
@@ -204,6 +212,8 @@ const coronaGraph : BothHandler = async ({ em, params, flags }) => {
           ticks: {
             beginAtZero: labels,
             fontColor: '#FFFFFF',
+            fontSize: 14,
+            fontStyle: 'bold',
           },
           gridLines: {
             display: labels,
