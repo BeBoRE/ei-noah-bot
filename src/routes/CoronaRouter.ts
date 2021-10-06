@@ -148,34 +148,24 @@ enum Niveau {
 
 const canvas = new ChartJSNodeCanvas({ width: 800, height: 400 });
 
-const coronaGraph : BothHandler = async ({ em, params, flags }) => {
-  const [community] = flags.get('community') || params;
-  const [days] = flags.get('days') || [30];
-  const [labels] = flags.get('labels') || [false];
+interface CoronaRollingData {
+  date: Date,
+  community: string,
+  total_reported: string,
+  total_last_week_reported: string
+}
 
-  if (typeof community !== 'string') return 'Community moet een gemeente zijn en niet een random string';
-  if (typeof days !== 'number') return 'Last-days moet een nummer zijn';
-  if (typeof labels !== 'boolean') return 'Labels moet van type boolean zijn';
-
-  const query = em.createQueryBuilder(CoronaData, 'cd', 'read').raw('SELECT community, date, total_reported, sum(total_reported) over(partition by community order by date rows between 6 preceding and current row) as total_last_week_reported from corona_data where lower(community) = lower(:community) order by date', {
-    community,
-  });
-
-  const allData = await em.execute<{date: Date, community: string, total_reported: string, total_last_week_reported: string}[]>(query);
-  // const last30days = allData.filter((d) => d.date.getTime() > moment().subtract(1, 'month').toDate().getTime());
-
-  const collection = new Collection(allData.entries());
-
-  if (!allData.length) return `${community} is niet een gemeente`;
+const generateGraph = (data : CoronaRollingData[], days = 7, displayLabels = false) => {
+  const collection = new Collection(data.entries());
 
   const configuration : ChartConfiguration = {
     type: 'line',
     data: {
-      labels: collection.last(days).map((value) => moment(value.date).format('DD')),
+      labels: collection.last(days).map((value) => moment(value.date).format(days < 90 ? 'DD' : 'DD MMMM')),
       datasets: [{
         label: collection.first()?.community,
         data: collection.last(days).map((value) => Number.parseInt(value.total_last_week_reported, 10)),
-        backgroundColor: '#ffcc5f33',
+        backgroundColor: '#ffcc5f11',
         borderColor: '#ffcc5f',
         borderWidth: 3,
       }],
@@ -197,35 +187,54 @@ const coronaGraph : BothHandler = async ({ em, params, flags }) => {
       },
       scales: {
         xAxes: [{
-          display: labels,
+          display: displayLabels,
           ticks: {
             fontColor: '#FFFFFF',
             fontSize: 14,
             fontStyle: 'bold',
           },
           gridLines: {
-            display: labels,
+            display: false,
           },
         }],
         yAxes: [{
-          display: labels,
+          display: displayLabels,
           ticks: {
-            beginAtZero: labels,
+            beginAtZero: true,
             fontColor: '#FFFFFF',
             fontSize: 14,
             fontStyle: 'bold',
           },
           gridLines: {
-            display: labels,
+            display: false,
           },
         }],
       },
     },
   };
 
-  const buffer = await canvas.renderToBuffer(configuration, 'image/png');
+  return canvas.renderToBuffer(configuration, 'image/png');
+};
 
-  return new MessageAttachment(buffer);
+const coronaGraph : BothHandler = async ({ em, params, flags }) => {
+  const [community] = flags.get('community') || params;
+  const [days] = flags.get('days') || [30];
+  const [labels] = flags.get('labels') || [false];
+
+  if (typeof community !== 'string') return 'Community moet een gemeente zijn en niet een random string';
+  if (typeof days !== 'number') return 'Last-days moet een nummer zijn';
+  if (typeof labels !== 'boolean') return 'Labels moet van type boolean zijn';
+
+  const query = em.createQueryBuilder(CoronaData, 'cd', 'read').raw('SELECT community, date, total_reported, sum(total_reported) over(partition by community order by date rows between 6 preceding and current row) as total_last_week_reported from corona_data where lower(community) = lower(:community) order by date', {
+    community,
+  });
+
+  const allData = await em.execute<CoronaRollingData[]>(query);
+  // const last30days = allData.filter((d) => d.date.getTime() > moment().subtract(1, 'month').toDate().getTime());
+
+  if (!allData.length) return `${community} is niet een gemeente`;
+
+  return new MessageAttachment(await generateGraph(allData, days, labels));
 };
 
 router.use('graph', coronaGraph, HandlerType.BOTH, {
