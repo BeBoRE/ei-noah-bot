@@ -356,7 +356,7 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
         else if (casesPer <= 250) niveau = Niveau.ernstig;
         else niveau = Niveau.zeerernstig;
 
-        let message = `**${r.region} (${niveau})**`;
+        let message = `**${r.region}${casesPer ? ` (${niveau})` : ''}**`;
         message += `\nNieuwe gevallen: ${cases}`;
         if (casesPer) message += ` (${casesPer} / 100,000 per week)`;
         message += `\nZiekenhuis Opnames: ${hospital}`;
