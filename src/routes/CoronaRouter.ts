@@ -4,7 +4,7 @@ import { CronJob } from 'cron';
 import parse from 'csv-parse/lib/sync';
 import { Client, MessageAttachment, Collection } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
-import { PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { PostgreSqlDriver, EntityManager } from '@mikro-orm/postgresql';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import { ChartConfiguration } from 'chart.js';
 import UserCoronaRegions from '../entity/UserCoronaRegions';
@@ -151,9 +151,17 @@ const canvas = new ChartJSNodeCanvas({ width: 800, height: 400 });
 interface CoronaRollingData {
   date: Date,
   community: string,
-  total_reported: string,
-  total_last_week_reported: string
+  total_reported_weekly: string
+  hospital_admissions_weekly: string,
+  deceased_weekly: string
 }
+
+const getRollingData = (em: EntityManager, communities : string[]) : Promise<CoronaRollingData[]> => {
+  const query = em.createQueryBuilder(CoronaData, 'cd', 'read')
+    .raw(`SELECT community, sum(total_reported) over(partition by community order by date rows between 6 preceding and current row) as total_reported_weekly, sum(deceased) over(partition by community order by date rows between 6 preceding and current row) as deceased_weekly, sum(hospital_admissions) over(partition by community order by date rows between 6 preceding and current row) as hospital_admissions_weekly from corona_data where lower(community) IN (${communities.map(() => '?').join('?')}) order by date`, ...[communities.map((c) => c.toLowerCase())]);
+
+  return em.execute<CoronaRollingData[]>(query);
+};
 
 const generateGraph = (data : CoronaRollingData[], days = 7, displayLabels = false) => {
   const collection = new Collection(data.entries());
@@ -164,7 +172,7 @@ const generateGraph = (data : CoronaRollingData[], days = 7, displayLabels = fal
       labels: collection.last(days).map((value) => moment(value.date).format(days < 90 ? 'DD' : 'DD MMMM')),
       datasets: [{
         label: collection.first()?.community,
-        data: collection.last(days).map((value) => Number.parseInt(value.total_last_week_reported, 10)),
+        data: collection.last(days).map((value) => Number.parseInt(value.total_reported_weekly, 10)),
         backgroundColor: '#ffcc5f11',
         borderColor: '#ffcc5f',
         borderWidth: 3,
@@ -225,16 +233,12 @@ const coronaGraph : BothHandler = async ({ em, params, flags }) => {
   if (typeof days !== 'number') return 'Last-days moet een nummer zijn';
   if (typeof labels !== 'boolean') return 'Labels moet van type boolean zijn';
 
-  const query = em.createQueryBuilder(CoronaData, 'cd', 'read').raw('SELECT community, date, total_reported, sum(total_reported) over(partition by community order by date rows between 6 preceding and current row) as total_last_week_reported from corona_data where lower(community) = lower(:community) order by date', {
-    community,
-  });
-
-  const allData = await em.execute<CoronaRollingData[]>(query);
+  const data = await getRollingData(em, [community]);
   // const last30days = allData.filter((d) => d.date.getTime() > moment().subtract(1, 'month').toDate().getTime());
 
-  if (!allData.length) return `${community} is niet een gemeente`;
+  if (!data.length) return `${community} is niet een gemeente`;
 
-  return new MessageAttachment(await generateGraph(allData, days, labels));
+  return new MessageAttachment(await generateGraph(data, days, labels));
 };
 
 router.use('graph', coronaGraph, HandlerType.BOTH, {
