@@ -7,6 +7,7 @@ import { MikroORM } from '@mikro-orm/core';
 import { PostgreSqlDriver, EntityManager } from '@mikro-orm/postgresql';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import { ChartConfiguration } from 'chart.js';
+import { i18n as I18n } from 'i18next';
 import UserCoronaRegions from '../entity/UserCoronaRegions';
 import Router, { BothHandler, HandlerType } from '../router/Router';
 import CoronaData, { CoronaInfo } from '../entity/CoronaData';
@@ -158,18 +159,18 @@ interface CoronaRollingData {
 
 const getRollingData = (em: EntityManager, communities : string[]) : Promise<CoronaRollingData[]> => {
   const query = em.createQueryBuilder(CoronaData, 'cd', 'read')
-    .raw(`SELECT community, sum(total_reported) over(partition by community order by date rows between 6 preceding and current row) as total_reported_weekly, sum(deceased) over(partition by community order by date rows between 6 preceding and current row) as deceased_weekly, sum(hospital_admissions) over(partition by community order by date rows between 6 preceding and current row) as hospital_admissions_weekly from corona_data where lower(community) IN (${communities.map(() => '?').join('?')}) order by date`, ...[communities.map((c) => c.toLowerCase())]);
+    .raw(`SELECT community, date, sum(total_reported) over(partition by community order by date rows between 6 preceding and current row) as total_reported_weekly, sum(deceased) over(partition by community order by date rows between 6 preceding and current row) as deceased_weekly, sum(hospital_admissions) over(partition by community order by date rows between 6 preceding and current row) as hospital_admissions_weekly from corona_data where lower(community) IN (${communities.map(() => '?').join(',')}) order by date`, ...[communities.map((c) => c.toLowerCase())]);
 
   return em.execute<CoronaRollingData[]>(query);
 };
 
-const generateGraph = (data : CoronaRollingData[], days = 7, displayLabels = false) => {
+const generateGraph = (data : CoronaRollingData[], days = 7, displayLabels = false, i18n ?: I18n) => {
   const collection = new Collection(data.entries());
 
   const configuration : ChartConfiguration = {
     type: 'line',
     data: {
-      labels: collection.last(days).map((value) => moment(value.date).format(days < 90 ? 'DD' : 'DD MMMM')),
+      labels: collection.last(days).map((value) => moment(value.date).locale(i18n?.language || 'nl').format(days < 90 ? 'DD' : 'DD MMMM')),
       datasets: [{
         label: collection.first()?.community,
         data: collection.last(days).map((value) => Number.parseInt(value.total_reported_weekly, 10)),
@@ -224,7 +225,9 @@ const generateGraph = (data : CoronaRollingData[], days = 7, displayLabels = fal
   return canvas.renderToBuffer(configuration, 'image/png');
 };
 
-const coronaGraph : BothHandler = async ({ em, params, flags }) => {
+const coronaGraph : BothHandler = async ({
+  em, params, flags, i18n,
+}) => {
   const [community] = flags.get('community') || params;
   const [days] = flags.get('days') || [30];
   const [labels] = flags.get('labels') || [false];
@@ -238,7 +241,7 @@ const coronaGraph : BothHandler = async ({ em, params, flags }) => {
 
   if (!data.length) return `${community} is niet een gemeente`;
 
-  return new MessageAttachment(await generateGraph(data, days, labels));
+  return new MessageAttachment(await generateGraph(data, days, labels, i18n));
 };
 
 router.use('graph', coronaGraph, HandlerType.BOTH, {
@@ -255,7 +258,7 @@ router.use('graph', coronaGraph, HandlerType.BOTH, {
   }, {
     name: 'labels',
     type: 'BOOLEAN',
-    description: 'Laat de labels en gridlines zien',
+    description: 'Laat de labels zien',
   }],
 });
 
@@ -302,42 +305,20 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
 
   const postReport = async () => {
     const em = orm.em.fork();
+    console.log('Posting report');
 
     const userRegions = await em.getRepository(UserCoronaRegions).findAll();
 
-    const relevantReports = await em
-      .find(CoronaData, { community: { $in: userRegions.map((region) => region.region) } });
+    const allRollingData = await getRollingData(em, userRegions.map((ur) => ur.region));
 
-    if (relevantReports.length === 0) return;
+    if (allRollingData.length === 0) return;
 
-    const groupedReports : {[key : string]: CoronaData[]} = {};
-    relevantReports.forEach((report) => {
-      if (groupedReports[report.community.toLowerCase()]) {
-        groupedReports[report.community.toLowerCase()].push(report);
-      } else groupedReports[report.community.toLowerCase()] = [report];
-    });
-
-    interface WeeklyCoronaDataCounted {
-      deceased: number
-      totalReported: number
-      hospitalized: number
-    }
-
-    const weeklyCountPerRegion : {[key : string]: WeeklyCoronaDataCounted} = {};
-
-    Object.keys(groupedReports).forEach((key) => {
-      groupedReports[key] = groupedReports[key]
-        .sort((r1, r2) => r2.date.getTime() - r1.date.getTime());
-
-      weeklyCountPerRegion[key] = { deceased: 0, hospitalized: 0, totalReported: 0 };
-
-      for (let i = 0; i < 7; i += 1) {
-        const currentReport = groupedReports[key][i];
-
-        weeklyCountPerRegion[key].deceased += currentReport.deceased;
-        weeklyCountPerRegion[key].hospitalized += currentReport.hospitalAdmissions;
-        weeklyCountPerRegion[key].totalReported += currentReport.totalReported;
-      }
+    const rollingDataPerRegion = new Map<string, CoronaRollingData[]>();
+    allRollingData.forEach((report) => {
+      const currentArray = rollingDataPerRegion.get(report.community.toLowerCase());
+      if (currentArray) {
+        currentArray.push(report);
+      } else rollingDataPerRegion.set(report.community.toLowerCase(), [report]);
     });
 
     const groupedUsers : {[key : string]: UserCoronaRegions[]} = {};
@@ -348,17 +329,24 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
 
     Object.keys(groupedUsers).forEach(async (key) => {
       const regions = groupedUsers[key];
+      const graphs : Promise<MessageAttachment>[] = [];
 
       const reports = regions.map((r) => {
-        const weeklyCount = weeklyCountPerRegion[r.region.toLowerCase()];
+        const rollingData = rollingDataPerRegion.get(r.region.toLowerCase());
         const population = regionPopulations[r.region.toLowerCase()];
 
-        const casesPer = population
-          ? Math.round((weeklyCount.totalReported / population) * 100_000) : 0;
-        const hospitalPer = population
-          ? Math.round((weeklyCount.hospitalized / population) * 100_000) : 0;
-        const deceasedPer = population
-          ? Math.round((weeklyCount.deceased / population) * 100_000) : 0;
+        if (!rollingData || !population) return 'Er is iets fout gegaan';
+        graphs.push(generateGraph(rollingData, 30, true).then((buffer) => new MessageAttachment(buffer, `${r.region}_graph_${moment(rollingData[0].date).format('DD-MM-YYYY')}.png`)));
+
+        const weeklyCount = rollingData[rollingData.length - 1];
+
+        const cases = Number.parseInt(weeklyCount.total_reported_weekly, 10);
+        const hospital = Number.parseInt(weeklyCount.hospital_admissions_weekly, 10);
+        const deceased = Number.parseInt(weeklyCount.deceased_weekly, 10);
+
+        const casesPer = Math.round((cases / population) * 100_000);
+        const hospitalPer = Math.round((hospital / population) * 100_000);
+        const deceasedPer = Math.round((deceased / population) * 100_000);
 
         let niveau : Niveau;
 
@@ -368,19 +356,19 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
         else niveau = Niveau.zeerernstig;
 
         let message = `**${r.region} (${niveau})**`;
-        message += `\nNieuwe gevallen: ${weeklyCount.totalReported}`;
+        message += `\nNieuwe gevallen: ${cases}`;
         if (casesPer) message += ` (${casesPer} / 100,000 per week)`;
-        message += `\nZiekenhuis Opnames: ${weeklyCount.hospitalized}`;
+        message += `\nZiekenhuis Opnames: ${hospital}`;
         if (hospitalPer) message += ` (${hospitalPer} / 100,000 per week)`;
-        message += `\nDoden: ${weeklyCount.deceased}`;
+        message += `\nDoden: ${deceased}`;
         if (deceasedPer) message += ` (${deceasedPer} / 100,000 per week)`;
 
         return message;
       });
 
       const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}`;
-      client.users.fetch(`${BigInt(groupedUsers[key][0].user.id)}`, { cache: true })
-        .then((user) => user.send({ content: report }))
+      await client.users.fetch(`${BigInt(groupedUsers[key][0].user.id)}`, { cache: true })
+        .then(async (user) => user.send({ content: report, files: await Promise.all(graphs) }))
         .catch(() => {});
     });
   };
