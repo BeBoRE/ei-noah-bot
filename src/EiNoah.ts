@@ -152,7 +152,7 @@ async function messageParser(msg : Message | CommandInteraction, em: EntityManag
     const options = Array.isArray(command.options) ? command.options : command.options?.data;
 
     options?.forEach((option) => {
-      if (option.type === 'STRING' || option.type === 'BOOLEAN' || option.type === 'INTEGER') {
+      if (option.type === 'STRING' || option.type === 'BOOLEAN' || option.type === 'INTEGER' || option.type === 'NUMBER') {
         if (typeof option.value === 'string') flags.set(option.name, option.value.split(' '));
         if (option.value !== undefined) flags.set(option.name, [option.value]);
       }
