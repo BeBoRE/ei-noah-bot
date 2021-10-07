@@ -230,7 +230,7 @@ const coronaGraph : BothHandler = async ({
 }) => {
   const [community] = flags.get('community') || params;
   const [days] = flags.get('days') || [30];
-  const [labels] = flags.get('labels') || [false];
+  const [labels] = flags.get('labels') || [true];
 
   if (typeof community !== 'string') return 'Community moet een gemeente zijn en niet een random string';
   if (typeof days !== 'number') return 'Last-days moet een nummer zijn';
