@@ -20,6 +20,7 @@ const helpHandler : BothHandler = () => [
   '`/corona regions`: Vraag alle mogelijke regio\'s op',
   '`/corona add <regio>`: Voeg een regio toe aan je dagelijkse rapportage',
   '`/corona remove <regio>`: Verwijder een regio van je dagelijkse rapportage',
+  '`/corona graph <region>`: Laat een grafiek zien van de corona-gevallen binnen een gegeven regio en tijd',
 ].join('\n');
 
 router.use('help', helpHandler, HandlerType.BOTH, {
