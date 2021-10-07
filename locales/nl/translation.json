@@ -97,6 +97,7 @@
     "rolesNotRemoved": "\n{{roles}} rol is niet verwijderd",
     "rolesNotRemoved_plural": "\n{{roles}} rollen zijn niet verwijderd",
     "roleRemovalTitle": "Welke user(s) of role(s) wil je verwijderen",
+    "none": "Geen",
     "noNameSelected": "Geen Naam Geselecteerd",
     "typeChangeRemoval": "Je bent verwijderd uit {{owner}}'s, omdat de lobby was veranderd naar **{{type}}** en jij nog geen toestemming had gekregen",
     "nameOfLobbyChangeDuration": "De naam van de lobby wordt {{duration}} veranderd naar `{{name}}`",

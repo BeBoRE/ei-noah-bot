@@ -803,7 +803,7 @@ const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, 
   const limitRow = new MessageActionRow({
     components: [new MessageButton({
       customId: '0',
-      label: 'Geen',
+      label: i18n.t('lobby.none') || 'none',
       style: voiceChannel.userLimit === 0 ? 'SUCCESS' : 'SECONDARY',
       disabled: voiceChannel.userLimit === 0,
     })],
