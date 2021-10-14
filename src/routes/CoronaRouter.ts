@@ -1,6 +1,5 @@
 import fetch from 'node-fetch';
 import moment from 'moment';
-import { CronJob } from 'cron';
 import parse from 'csv-parse/lib/sync';
 import { Client, MessageAttachment, Collection } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
@@ -266,44 +265,6 @@ router.use('graph', coronaGraph, HandlerType.BOTH, {
 const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>) => {
   const regionPopulations = await getPopulation();
 
-  const refreshData = async () => {
-    const em = orm.em.fork();
-
-    console.log(`${moment().format('HH:mm')}: corona fetch started`);
-
-    try {
-      const inDb = await em.getRepository(CoronaData).findAll();
-      const fetchedData = <CoronaInfo[]>(await fetch('https://data.rivm.nl/covid-19/COVID-19_aantallen_gemeente_per_dag.json').then((res) => res.json()));
-
-      const coronaData = fetchedData
-        .map((info) => new CoronaData(info))
-        .filter((data) => data.community !== null)
-        .filter((data) => !inDb
-          .some((db) => db.community === data.community
-            && db.date.getTime() === data.date.getTime()));
-
-      const duplicatesRemoved : CoronaData[] = [];
-      coronaData.forEach((data) => {
-        const duplicate = duplicatesRemoved
-          .find((item) => item.community === data.community
-          && item.date.getTime() === data.date.getTime());
-
-        if (!duplicate) duplicatesRemoved.push(data);
-      });
-
-      if (duplicatesRemoved.length > 0) {
-        console.log(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows discovered`);
-        em.persist(duplicatesRemoved);
-        await em.flush();
-        console.log(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows added to db`);
-      } else {
-        console.log(`${moment().format('HH:mm')}: no new data`);
-      }
-    } finally {
-      setTimeout(refreshData, 1000 * 60 * 60 * 3);
-    }
-  };
-
   const postReport = async () => {
     const em = orm.em.fork();
     console.log('Posting report');
@@ -374,15 +335,55 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
     });
   };
 
+  const refreshData = async () => {
+    const em = orm.em.fork();
+
+    console.log(`${moment().format('HH:mm')}: corona fetch started`);
+
+    try {
+      const inDb = await em.getRepository(CoronaData).findAll();
+      const fetchedData = <CoronaInfo[]>(await fetch('https://data.rivm.nl/covid-19/COVID-19_aantallen_gemeente_per_dag.json').then((res) => res.json()));
+
+      const coronaData = fetchedData
+        .map((info) => new CoronaData(info))
+        .filter((data) => data.community !== null)
+        .filter((data) => !inDb
+          .some((db) => db.community === data.community
+            && db.date.getTime() === data.date.getTime()));
+
+      const duplicatesRemoved : CoronaData[] = [];
+      coronaData.forEach((data) => {
+        const duplicate = duplicatesRemoved
+          .find((item) => item.community === data.community
+          && item.date.getTime() === data.date.getTime());
+
+        if (!duplicate) duplicatesRemoved.push(data);
+      });
+
+      if (duplicatesRemoved.length > 0) {
+        console.log(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows discovered`);
+        em.persist(duplicatesRemoved);
+        await em.flush();
+        console.log(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows added to db`);
+
+        await postReport();
+      } else {
+        console.log(`${moment().format('HH:mm')}: no new data`);
+      }
+    } finally {
+      setTimeout(refreshData, 1000 * 60 * 60 * 3);
+    }
+  };
+
   if (process.env.REFRESH_DATA?.toLowerCase() !== 'false') {
     refreshData();
   }
 
-  const reportCron = new CronJob('0 9 * * *', postReport);
+  // const reportCron = new CronJob('0 9 * * *', postReport);
 
   if (process.env.POST_RAPPORT?.toLowerCase() === 'true') postReport();
 
-  reportCron.start();
+  // reportCron.start();
 };
 
 export default router;
