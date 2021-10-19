@@ -109,6 +109,13 @@ function getChannelType(channel : VoiceChannel) {
   } return ChannelType.Nojoin;
 }
 
+function getMaxBitrate(guild : Guild) : number {
+  if (guild.premiumTier === 'TIER_1') return 128000;
+  if (guild.premiumTier === 'TIER_2') return 256000;
+  if (guild.premiumTier === 'TIER_3') return 384000;
+  return 96000;
+}
+
 async function createTempChannel(
   guild: DiscordGuild, parent: Snowflake,
   users: Array<DiscordUser | Role>, owner: DiscordUser,
@@ -124,6 +131,7 @@ async function createTempChannel(
   }));
 
   const bot = guild.client.user;
+  const maxBitrate = getMaxBitrate(guild);
 
   if (bot !== null) {
     permissionOverwrites.push({
@@ -162,7 +170,7 @@ async function createTempChannel(
     type: 'GUILD_VOICE',
     permissionOverwrites,
     parent,
-    bitrate,
+    bitrate: bitrate < maxBitrate ? bitrate : maxBitrate,
     userLimit,
   });
 }
@@ -1248,24 +1256,24 @@ router.use('bitrate', async ({
     return i18n.t('error.notAdmin');
   }
 
-  const newBitrate = Number(bitrate);
+  const givenBitrate = Number(bitrate);
 
-  if (!Number.isSafeInteger(newBitrate)) {
+  if (!Number.isSafeInteger(givenBitrate)) {
     return i18n.t('lobby.error.notANumber');
   }
 
-  if (newBitrate > 128000) {
-    return i18n.t('lobby.error.maxBitrateRange');
-  }
-
-  if (newBitrate < 8000) {
+  if (givenBitrate < 8000) {
     return i18n.t('lobby.error.minBitrateRange');
   }
+
+  const maxBitrate = getMaxBitrate(msg.guild);
+
+  const newBitrate = givenBitrate < maxBitrate ? givenBitrate : maxBitrate;
 
   if (!guildUser.guild.isInitialized()) await guildUser.guild.init();
 
   // eslint-disable-next-line no-param-reassign
-  guildUser.guild.bitrate = newBitrate;
+  guildUser.guild.bitrate = givenBitrate;
 
   return i18n.t('lobby.bitrateChanged', { bitrate: newBitrate });
 }, HandlerType.GUILD, {
