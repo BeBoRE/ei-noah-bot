@@ -142,9 +142,9 @@ const getPopulation = async () => {
 
 enum Niveau {
   Waakzaam = 'Waakzaam',
-  zorgelijk = 'Zorgelijk',
-  ernstig = 'Ernstig',
-  zeerernstig = 'Zeer Ernstig'
+  Zorgelijk = 'Zorgelijk',
+  Ernstig = 'Ernstig',
+  ZeerErnstig = 'Zeer Ernstig'
 }
 
 const canvas = new ChartJSNodeCanvas({ width: 800, height: 400 });
@@ -295,9 +295,9 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
 
       const reports = regions.map((r) => {
         const rollingData = rollingDataPerRegion.get(r.region.toLowerCase());
-        const population = regionPopulations[r.region.toLowerCase()];
+        const population = regionPopulations[r.region.toLowerCase()] || regionPopulations[`${r.region.toLowerCase()} (gemeente)`];
 
-        if (!rollingData || !population) return 'Er is iets fout gegaan';
+        if (!rollingData || !population) return `Er is iets fout gegaan bij het weergeven van ${r.region}`;
         graphs.push(generateGraph(rollingData, 30, true).then((buffer) => new MessageAttachment(buffer, `${r.region}_graph_${moment(rollingData[0].date).format('DD-MM-YYYY')}.png`)));
 
         const weeklyCount = rollingData[rollingData.length - 1];
@@ -313,9 +313,9 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
         let niveau : Niveau;
 
         if (casesPer < 50) niveau = Niveau.Waakzaam;
-        else if (casesPer <= 150) niveau = Niveau.zorgelijk;
-        else if (casesPer <= 250) niveau = Niveau.ernstig;
-        else niveau = Niveau.zeerernstig;
+        else if (casesPer <= 150) niveau = Niveau.Zorgelijk;
+        else if (casesPer <= 250) niveau = Niveau.Ernstig;
+        else niveau = Niveau.ZeerErnstig;
 
         let message = `**${r.region}${casesPer ? ` (${niveau})` : ''}**`;
         message += `\nNieuwe gevallen: ${cases}`;
