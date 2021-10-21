@@ -381,6 +381,7 @@ class EiNoah implements IRouter {
             ephemeral: true,
           };
 
+          await em.flush();
           if (interaction.deferred) interaction.followUp(typeof (handlerReturn) === 'string' ? { ...defaultOptions, content: handlerReturn } : { ...defaultOptions, ...handlerReturn });
           else interaction.reply(typeof (handlerReturn) === 'string' ? { ...defaultOptions, content: handlerReturn } : { ...defaultOptions, ...handlerReturn });
         } catch (err) {

@@ -3,7 +3,7 @@ import {
   Guild,
   Message,
   MessageButton,
-  MessageEmbed, NewsChannel, Permissions, Role, TextChannel, User as DiscordUser, Util,
+  MessageEmbed, MessageOptions, NewsChannel, Permissions, Role, TextChannel, User as DiscordUser, Util,
 } from 'discord.js';
 import { GuildUser } from 'entity/GuildUser';
 import { i18n as I18n } from 'i18next';
@@ -18,7 +18,7 @@ router.use('help', ({ i18n }) => i18n.t('quote.help', { joinArrays: '\n' }), Han
   description: 'Help menu for quote\'s',
 });
 
-const getQuoteEmbed = async (guild : Guild, quote : Quote, i18n : I18n) : Promise<MessageEmbed> => {
+const getQuoteOptions = async (guild : Guild, quote : Quote, i18n : I18n) : Promise<MessageOptions> => {
   await Promise.all([(() => {
     if (!quote.guildUser.isInitialized()) return quote.guildUser.init();
 
@@ -34,6 +34,10 @@ const getQuoteEmbed = async (guild : Guild, quote : Quote, i18n : I18n) : Promis
 
   const text = quote.text.replace('`', '\\`');
 
+  const linkRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/gm;
+
+  if (text.match(linkRegex)) return { content: text };
+
   const embed = new MessageEmbed();
 
   const avatarURL = (await quoted).avatarURL() || undefined;
@@ -45,7 +49,7 @@ const getQuoteEmbed = async (guild : Guild, quote : Quote, i18n : I18n) : Promis
   if (quote.date) embed.setTimestamp(quote.date);
   if (color) embed.setColor(color);
 
-  return embed;
+  return { embeds: [embed] };
 };
 
 const addQuote = (params : (string | DiscordUser | Channel | Role | number | boolean)[], quotedUser : GuildUser, owner : GuildUser, guild : Guild, i18n : I18n) => {
@@ -64,7 +68,7 @@ const addQuote = (params : (string | DiscordUser | Channel | Role | number | boo
   const quote = new Quote(text, owner);
   quotedUser.quotes.add(quote);
 
-  return getQuoteEmbed(guild, quote, i18n);
+  return getQuoteOptions(guild, quote, i18n);
 };
 
 const handler : GuildHandler = async ({
@@ -92,7 +96,7 @@ const handler : GuildHandler = async ({
     }
 
     if (quotedUser.quotes.length === 1) {
-      return getQuoteEmbed(msg.guild, quotedUser.quotes[0], i18n);
+      return getQuoteOptions(msg.guild, quotedUser.quotes[0], i18n);
     }
 
     createMenu({
@@ -102,7 +106,7 @@ const handler : GuildHandler = async ({
       title: i18n.t('quote.quoteMenuTitle'),
       mapper: (q) => q.text,
       selectCallback: async (q) => {
-        msg.channel.send({ embeds: [await getQuoteEmbed(msg.guild, q, i18n)] }).catch(() => { });
+        msg.channel.send({ ...await getQuoteOptions(msg.guild, q, i18n) }).catch(() => { });
       },
     });
     return null;
@@ -143,6 +147,33 @@ router.use('add', handler, HandlerType.GUILD, {
   ],
 });
 router.use('toevoegen', handler, HandlerType.GUILD);
+
+router.useContext('Save Quote', 'MESSAGE', async ({
+  interaction, i18n, guildUser, em,
+}) => {
+  const message = interaction.options.getMessage('message');
+
+  if (!(message instanceof Message)) {
+    return 'Onmogelijk pad';
+  }
+
+  if (!guildUser || !message.guild) {
+    return i18n.t('error.onlyUsableInGuild');
+  }
+
+  if (!message.content) return i18n.t('quote.error.noContentInMessage');
+
+  const quoted = await getUserGuildData(em, message.author, message.guild);
+
+  const quoteMessage = await addQuote(message.content.split(' '), quoted, guildUser, message.guild, i18n);
+
+  if (typeof quoteMessage === 'string') return quoteMessage;
+
+  return {
+    ...quoteMessage,
+    ephemeral: false,
+  };
+});
 
 const removeHandler : GuildHandler = async ({
   msg, em, params, guildUser, flags, i18n,
@@ -227,7 +258,7 @@ router.use('random', async ({ msg, em, i18n }) => {
   const quote = quotes[Math.floor(Math.random() * quotes.length)];
 
   if (quote) {
-    return getQuoteEmbed(msg.guild, quote, i18n);
+    return getQuoteOptions(msg.guild, quote, i18n);
   }
 
   return i18n.t('quote.guildNoQuotes');

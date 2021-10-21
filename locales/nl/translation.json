@@ -190,7 +190,8 @@
     "error": {
       "quoteSizeLimit": "Quotes kunnen niet langer zijn dan 256 karakters",
       "noUserGiven": "Dat is niet een persoon, mention iemand",
-      "guildNoQuotes": "Deze server heeft nog geen quotes"
+      "guildNoQuotes": "Deze server heeft nog geen quotes",
+      "noContentInMessage": "Dit bericht heeft geen tekst"
     }
   },
   "error": {

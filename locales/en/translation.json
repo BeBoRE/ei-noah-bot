@@ -190,7 +190,8 @@
     "error": {
       "quoteSizeLimit": "Quotes cannot be longer than 256 characters",
       "noUserGiven": "That's not a user, please give a user as argument",
-      "guildNoQuotes": "This server is void of quotes"
+      "guildNoQuotes": "This server is void of quotes",
+      "noContentInMessage": "This message has no text"
     }
   },
   "error": {
