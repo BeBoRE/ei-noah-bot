@@ -38,7 +38,7 @@
     "userIsBornOn": "{{username}} is geboren op {{date}}",
     "embedTitleAll": "Verjaardagen:",
     "embedTitleAge": "Leeftijden:",
-    "oncomingFirst": "Aanstaande eerst:",
+    "oncomingFirst": "Aanstaande eerst",
     "noBirthdaysRegistered": "Geen verjaardagen geregistreerd",
     "userIsBornOnAge": "Geboren op {{date}} en is {{yearsOld}} jaar oud",
     "noBirthdaySad": "{{username}} heeft geen verjaardag, dit is zo zielig",

@@ -38,7 +38,7 @@
     "userIsBornOn": "{{username}} was born on {{date}}",
     "embedTitleAll": "Birthdays:",
     "embedTitleAge": "Ages:",
-    "oncomingFirst": "Oncoming first:",
+    "oncomingFirst": "Oncoming first",
     "noBirthdaysRegistered": "No birthdays registered",
     "userIsBornOnAge": "Born on {{date}} and is {{yearsOld}} years old",
     "noBirthdaySad": "{{username}} doesn't have a birthday, this is so sad",

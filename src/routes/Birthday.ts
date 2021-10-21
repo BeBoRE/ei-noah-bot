@@ -88,25 +88,7 @@ const showAll : BothHandler = async ({ msg, em, i18n }) => {
     })
     .map((du) => `\n${i18n.t('birthday.userIsBornOn', { username: du.toString(), date: moment(users.find((u) => u.id === du.id)?.birthday).locale(i18n.language).format('D MMMM YYYY') })}`);
 
-  let color : `#${string}` | undefined;
-  if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
-    color = msg.channel.guild.me?.displayHexColor;
-  }
-
-  if (!color || color === '#000000') color = '#ffcc5f';
-
-  const embed = new MessageEmbed();
-  embed.setColor(color);
-  embed.setTitle(i18n.t('birthday.embedTitleAll'));
-
-  if (users.length === 0) {
-    embed.setDescription(i18n.t('birthday.noBirthdaysRegistered'));
-    return embed;
-  }
-
-  embed.addField(i18n.t('birthday.oncomingFirst'), description.join('\n'));
-
-  return embed;
+  return `**${i18n.t('birthday.embedTitleAll')}**${description.join('\n')}\n> ${i18n.t('birthday.oncomingFirst')}`;
 };
 
 router.use('show-all', showAll);
@@ -130,25 +112,7 @@ const showAgeHandler : BothHandler = async ({ msg, em, i18n }) => {
     .map((du) => `\n${du.username} is ${-moment(users.find((u) => u.id === du.id)?.birthday).diff(moment(), 'years')}`)
     .join('\n');
 
-  let color : `#${string}` | undefined;
-  if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
-    color = msg.channel.guild.me?.displayHexColor;
-  }
-
-  if (!color || color === '#000000') color = '#ffcc5f';
-
-  const embed = new MessageEmbed();
-
-  embed.setColor(color);
-  embed.setTitle(i18n.t('birthday.embedTitleAge'));
-
-  if (users.length === 0) {
-    embed.setDescription(i18n.t('birthday.noBirthdaysRegistered'));
-    return embed;
-  }
-  embed.description = description;
-
-  return embed;
+  return `**${i18n.t('birthday.embedTitleAge')}**${description}`;
 };
 
 router.use('show-age', showAgeHandler);
