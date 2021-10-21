@@ -36,7 +36,7 @@ const getQuoteOptions = async (guild : Guild, quote : Quote, i18n : I18n) : Prom
 
   const linkRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/gm;
 
-  if (text.match(linkRegex)) return { content: text };
+  if (text.match(linkRegex)) return { content: `${text}\n> - ${await quoted} ${quote.date ? `(<t:${quote.date.getTime() / 1000}:D>)` : ''}\n> ${i18n.t('quote.byUser', { user: (await owner).toString() })}` };
 
   const embed = new MessageEmbed();
 
