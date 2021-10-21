@@ -106,7 +106,14 @@ const handler : GuildHandler = async ({
       title: i18n.t('quote.quoteMenuTitle'),
       mapper: (q) => q.text,
       selectCallback: async (q) => {
-        msg.channel.send({ ...await getQuoteOptions(msg.guild, q, i18n) }).catch(() => { });
+        msg.channel.send({
+          ...await getQuoteOptions(msg.guild, q, i18n),
+          allowedMentions: {
+            users: [],
+            roles: [],
+            repliedUser: false,
+          },
+        }).catch(() => { });
       },
     });
     return null;
@@ -148,7 +155,7 @@ router.use('add', handler, HandlerType.GUILD, {
 });
 router.use('toevoegen', handler, HandlerType.GUILD);
 
-router.useContext('Save Quote', 'MESSAGE', async ({
+router.useContext('Save As Quote', 'MESSAGE', async ({
   interaction, i18n, guildUser, em,
 }) => {
   const message = interaction.options.getMessage('message');

@@ -70,14 +70,14 @@ router.use('set', setRouter, HandlerType.BOTH, {
 router.use('add', setRouter);
 router.use('change', setRouter);
 
-const showAll : BothHandler = async ({ msg, em, i18n }) => {
-  const users = await em.find(User, { $not: { birthday: null } });
+const showAll : GuildHandler = async ({ msg, em, i18n }) => {
+  const members : GuildMember[] = await msg.guild.members.list({ limit: 1000 }).then((c) => [...c.values()]).catch(() => []);
+  const users = await em.find(User, { $not: { birthday: null }, id: { $in: members.map((member) => member.id) } });
 
-  const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(`${BigInt(u.id)}`, { cache: true })));
-  const description = discUsers
+  const description = users
     .sort((a, b) => {
-      let dayA = moment(users.find((u) => u.id === a.id)?.birthday).dayOfYear();
-      let dayB = moment(users.find((u) => u.id === b.id)?.birthday).dayOfYear();
+      let dayA = moment(a.birthday).dayOfYear();
+      let dayB = moment(b.birthday).dayOfYear();
 
       const todayDayOfYear = moment().dayOfYear();
 
@@ -86,37 +86,32 @@ const showAll : BothHandler = async ({ msg, em, i18n }) => {
 
       return dayA - dayB;
     })
-    .map((du) => `\n${i18n.t('birthday.userIsBornOn', { username: du.toString(), date: moment(users.find((u) => u.id === du.id)?.birthday).locale(i18n.language).format('D MMMM YYYY') })}`);
+    .map((dbUser) => `\n${i18n.t('birthday.userIsBornOn', { username: members.find((u) => u.id === dbUser.id)?.toString(), date: moment(dbUser.birthday).locale(i18n.language).format('D MMMM YYYY') })}`);
 
-  return `**${i18n.t('birthday.embedTitleAll')}**${description.join('\n')}\n> ${i18n.t('birthday.oncomingFirst')}`;
+  return `**${i18n.t('birthday.embedTitleAll')}**${description.join('')}\n> ${i18n.t('birthday.oncomingFirst')}`;
 };
 
-router.use('show-all', showAll);
-router.use('all', showAll, HandlerType.BOTH, {
+router.use('show-all', showAll, HandlerType.GUILD);
+router.use('all', showAll, HandlerType.GUILD, {
   description: 'See all birthdays',
 });
 
-const showAgeHandler : BothHandler = async ({ msg, em, i18n }) => {
-  const users = await em.find(User, { $not: { birthday: null } });
+const showAgeHandler : GuildHandler = async ({ msg, em, i18n }) => {
+  const members : GuildMember[] = await msg.guild.members.list({ limit: 1000 }).then((c) => [...c.values()]).catch(() => []);
+  const users = await em.find(User, { $not: { birthday: null }, id: { $in: members.map((member) => member.id) } });
 
   if (users.length === 0) return i18next.t('birthday.noBirthdayRegistered');
 
-  const discUsers = await Promise.all(users.map((u) => msg.client.users.fetch(`${BigInt(u.id)}`, { cache: true })));
-  const description = discUsers
-    .sort((a, b) => {
-      const bdayA = users.find((u) => u.id === a.id)?.birthday;
-      const bdayB = users.find((u) => u.id === b.id)?.birthday;
-
-      return (bdayA?.valueOf() || 0) - (bdayB?.valueOf() || 0);
-    })
-    .map((du) => `\n${du.username} is ${-moment(users.find((u) => u.id === du.id)?.birthday).diff(moment(), 'years')}`)
-    .join('\n');
+  const description = users
+    .sort((a, b) => (a.birthday?.valueOf() || 0) - (b.birthday?.valueOf() || 0))
+    .map((dbUser) => `\n${members.find((m) => m.id === dbUser.id)?.toString()} is ${-moment(dbUser.birthday).diff(moment(), 'years')}`)
+    .join('');
 
   return `**${i18n.t('birthday.embedTitleAge')}**${description}`;
 };
 
-router.use('show-age', showAgeHandler);
-router.use('ages', showAgeHandler, HandlerType.BOTH, {
+router.use('show-age', showAgeHandler, HandlerType.GUILD);
+router.use('ages', showAgeHandler, HandlerType.GUILD, {
   description: 'Show everyones birthday',
 });
 
