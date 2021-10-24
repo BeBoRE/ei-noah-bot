@@ -975,7 +975,7 @@ const changeLobby = (() => {
 
           timeout.changes.push(new Date());
         } else {
-          const date = timeout.changes.sort()[0];
+          const date = timeout.changes.sort((a, b) => a.getTime() - b.getTime())[0];
           const timeTo = (date.getTime() + 1000 * 60 * 10) - (new Date()).getTime();
           timeTillNameChange = moment.duration(timeTo, 'milliseconds');
 
