@@ -306,9 +306,9 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
         const hospital = Number.parseInt(weeklyCount.hospital_admissions_weekly, 10);
         const deceased = Number.parseInt(weeklyCount.deceased_weekly, 10);
 
-        const casesPer = Math.round((cases / population) * 100_000);
-        const hospitalPer = Math.round((hospital / population) * 100_000);
-        const deceasedPer = Math.round((deceased / population) * 100_000);
+        const casesPer = Math.ceil((cases / population) * 100_000);
+        const hospitalPer = Math.ceil((hospital / population) * 100_000);
+        const deceasedPer = Math.ceil((deceased / population) * 100_000);
 
         let niveau : Niveau;
 

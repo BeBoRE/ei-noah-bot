@@ -24,6 +24,8 @@ import {
   InteractionCollector,
   MessageSelectMenu,
   MessageSelectOptionData,
+  MessageOptions,
+  MessageEmbed,
 } from 'discord.js';
 import {
   UniqueConstraintViolationException,
@@ -249,8 +251,10 @@ async function createTextChannel(
     ...getTextPermissionOverwrites(voiceChannel),
     {
       id: voiceChannel.guild.id,
-      deny: toDenyText(getChannelType(voiceChannel)),
-    }];
+      type: 'role',
+      deny: 'VIEW_CHANNEL',
+    },
+  ];
 
   const name = generateLobbyName(getChannelType(voiceChannel), owner, tempChannel.name, true);
 
@@ -860,6 +864,21 @@ const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, 
   return actionRows;
 };
 
+const getDashboardOptions = (i18n : I18n, guild : Guild, leader : User, timeTill ?: Duration, newName ?: string) : MessageOptions => {
+  const text = `${i18n.t('lobby.dashboardText', { joinArrays: '\n' })}`;
+  const embed = new MessageEmbed();
+
+  const avatarURL = leader.displayAvatarURL({ size: 64, dynamic: false, format: 'webp' });
+  const color : number | undefined = guild.me?.displayColor || 0xffcc5f;
+
+  embed.setAuthor(i18n.t('lobby.leader', { user: leader.username }), avatarURL);
+  embed.setDescription(text);
+  if (timeTill && newName) { embed.setFooter(i18n.t('lobby.nameOfLobbyChangeDuration', { duration: timeTill.locale(i18n.language).humanize(true), name: newName })); }
+  if (color) embed.setColor(color);
+
+  return { embeds: [embed], content: null };
+};
+
 interface NameChangeTimeout {
   changes : Date[],
   timeout ?: NodeJS.Timeout
@@ -952,7 +971,7 @@ const changeLobby = (() => {
 
                     return null;
                   })
-                  .then(async (msg) => msg?.edit({ content: i18n.t('lobby.dashboardText', { joinArrays: '\n' }), components: await generateButtons(vc, em, tempChannel.guildUser, owner, i18n) }))
+                  .then(async (msg) => msg?.edit({ ...getDashboardOptions(i18n, guild, owner), components: await generateButtons(vc, em, tempChannel.guildUser, owner, i18n) }))
                   .catch(() => { });
               }
             } else {
@@ -992,11 +1011,11 @@ const changeLobby = (() => {
       await voiceChannel.setUserLimit(limit);
     }
 
-    const content = `${i18n.t('lobby.dashboardText', { joinArrays: '\n' })}${timeTillNameChange ? `\n\n${i18n.t('lobby.nameOfLobbyChangeDuration', { duration: timeTillNameChange.locale(i18n.language).humanize(true), name: newName })}` : ''}`;
+    const content = getDashboardOptions(i18n, guild, owner, timeTillNameChange, newName);
 
-    if (!(interaction && interaction.update({ content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).then(() => true).catch(() => false)) && tempChannel.controlDashboardId) {
+    if (!(interaction && interaction.update({ ...content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).then(() => true).catch(() => false)) && tempChannel.controlDashboardId) {
       const msg = await (await textChannel)?.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => null);
-      if (msg) msg.edit({ content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).catch(() => {});
+      if (msg) msg.edit({ ...content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).catch(() => {});
     }
 
     return timeTillNameChange;
@@ -1401,7 +1420,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
   if (textChannel && owner) {
     let msg = tempChannel.controlDashboardId ? await textChannel.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => undefined) : undefined;
     if (!msg) {
-      msg = await textChannel.send({ content: i18.t('lobby.dashboardText', { joinArrays: '\n' }), components: await generateButtons(voiceChannel, _em, tempChannel.guildUser, owner, i18) }).catch((err) => { console.error(err); return undefined; });
+      msg = await textChannel.send({ ...getDashboardOptions(i18, textChannel.guild, owner), components: await generateButtons(voiceChannel, _em, tempChannel.guildUser, owner, i18) }).catch((err) => { console.error(err); return undefined; });
       if (msg) tempChannel.controlDashboardId = msg.id;
     }
 
@@ -1577,7 +1596,7 @@ router.onInit = async (client, orm, _i18n) => {
 
       const { channel } = newState;
 
-      let createdChannel : VoiceChannel;
+      let voiceChannel : VoiceChannel;
       let textChannel : TextChannel;
 
       // Check of iemand een create-lobby channel is gejoint
@@ -1602,15 +1621,17 @@ router.onInit = async (client, orm, _i18n) => {
 
           if (!guildUser.guild.isInitialized()) await guildUser.guild.init();
 
-          createdChannel = await createTempChannel(newState.guild, `${BigInt((await categoryData).lobbyCategory || channel.parent.id)}`, [], user, guildUser.guild.bitrate, type);
-          guildUser.tempChannel = new TempChannel(createdChannel.id, guildUser);
+          voiceChannel = await createTempChannel(newState.guild, `${BigInt((await categoryData).lobbyCategory || channel.parent.id)}`, [], user, guildUser.guild.bitrate, type);
+          guildUser.tempChannel = new TempChannel(voiceChannel.id, guildUser);
 
-          newState.setChannel(createdChannel);
+          newState.setChannel(voiceChannel);
 
           textChannel = await createTextChannel(client, em, guildUser.tempChannel, user);
           guildUser.tempChannel.textChannelId = textChannel.id;
 
-          await createDashBoardCollector(client, createdChannel, guildUser.tempChannel, em.fork(), _i18n);
+          await createDashBoardCollector(client, voiceChannel, guildUser.tempChannel, em.fork(), _i18n);
+
+          await textChannel.edit({ permissionOverwrites: getTextPermissionOverwrites(voiceChannel) });
         }
       } else if ( // Check of iemand een tempChannel is gejoint
         user
@@ -1632,7 +1653,7 @@ router.onInit = async (client, orm, _i18n) => {
 
       await em.flush().catch((err) => {
         if (err instanceof UniqueConstraintViolationException) {
-          if (createdChannel.deletable) createdChannel.delete();
+          if (voiceChannel.deletable) voiceChannel.delete();
           if (textChannel.deletable) textChannel.delete();
         } else {
           throw err;

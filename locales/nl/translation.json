@@ -100,7 +100,7 @@
     "none": "Geen",
     "noNameSelected": "Geen Naam Geselecteerd",
     "typeChangeRemoval": "Je bent verwijderd uit {{owner}}'s, omdat de lobby was veranderd naar **{{type}}** en jij nog geen toestemming had gekregen",
-    "nameOfLobbyChangeDuration": "De naam van de lobby wordt {{duration}} veranderd naar `{{name}}`",
+    "nameOfLobbyChangeDuration": "De naam van de lobby wordt {{duration}} veranderd naar {{name}}",
     "typeOfLobbyOtherTypes": "Type van lobby is `{{currentType}}` andere types zijn {{otherTypes}}",
     "and": "en",
     "lobbyTypeChangedTo": "Lobby type is veranderd naar *{{type}}*",
@@ -136,6 +136,7 @@
       "***Beheer je lobby met deze commands***",
       "$t(lobby.commands)"
     ],
+    "leader": "Leider: {{user}}",
     "error": {
       "onlyMentions":"Alleen mention(s) mogelijk als argument",
       "noLobby": "Je hebt nog geen lobby aangemaakt\nJoin een **lobby aanmaak kanaal** om er een aan te maken",
