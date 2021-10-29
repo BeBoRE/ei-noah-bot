@@ -36,8 +36,8 @@ const addHandler : BothHandler = async ({
   }
 
   const region = regionRaw.filter((param) : param is string => typeof param === 'string').join(' ');
-  if (!(await user).coronaRegions.isInitialized()) { await (await user).coronaRegions.init(); }
-  const currentRegions = (await user).coronaRegions.getItems()
+  if (!user.coronaRegions.isInitialized()) { await user.coronaRegions.init(); }
+  const currentRegions = user.coronaRegions.getItems()
     .find((r) => r.region.toLowerCase() === region.toLowerCase());
 
   if (currentRegions) {
@@ -54,7 +54,7 @@ const addHandler : BothHandler = async ({
   const newRegion = new UserCoronaRegions();
 
   newRegion.region = coronaReport.community;
-  newRegion.user = await user;
+  newRegion.user = user;
 
   em.persist(newRegion);
 
@@ -68,8 +68,9 @@ router.use('add', addHandler, HandlerType.BOTH, {
     description: 'Regio die je wil toevoegen',
     type: 'STRING',
     required: true,
+    autocomplete: true,
   }],
-});
+}, () => [{ name: 'gaming', value: 'gaming' }]);
 router.use('toevoegen', addHandler);
 
 const removeHandler : BothHandler = async ({
@@ -82,8 +83,8 @@ const removeHandler : BothHandler = async ({
   }
 
   const region = regionRaw.filter((param) : param is string => typeof param === 'string').join(' ');
-  if (!(await user).coronaRegions.isInitialized()) { await (await user).coronaRegions.init(); }
-  const dbRegion = (await user).coronaRegions.getItems()
+  if (!user.coronaRegions.isInitialized()) { await user.coronaRegions.init(); }
+  const dbRegion = user.coronaRegions.getItems()
     .find((r) => r.region.toLowerCase() === region.toLowerCase());
 
   if (!dbRegion) {
@@ -108,7 +109,7 @@ router.use('verwijder', removeHandler);
 router.use('delete', removeHandler);
 
 const listRegionsHandler : BothHandler = async ({ em }) => {
-  const coronaData = await em.getRepository(CoronaData).findAll({ limit: 500 });
+  const coronaData = await em.getRepository(CoronaData).findAll();
 
   const regions = Array.from(new Set<string>(coronaData.map((data) => data.community)))
     .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
