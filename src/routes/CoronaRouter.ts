@@ -7,8 +7,9 @@ import { PostgreSqlDriver, EntityManager } from '@mikro-orm/postgresql';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import { ChartConfiguration } from 'chart.js';
 import { i18n as I18n } from 'i18next';
+import stringSimilarity from 'string-similarity';
 import UserCoronaRegions from '../entity/UserCoronaRegions';
-import Router, { BothHandler, HandlerType } from '../router/Router';
+import Router, { BothAutocompleteHandler, BothHandler, HandlerType } from '../router/Router';
 import CoronaData, { CoronaInfo } from '../entity/CoronaData';
 
 const router = new Router('Krijg iedere morgen een rapportage over de locale corona situatie');
@@ -16,7 +17,6 @@ const router = new Router('Krijg iedere morgen een rapportage over de locale cor
 const helpHandler : BothHandler = () => [
   '**Krijg iedere morgen een rapportage over de locale corona situatie**',
   'Mogelijke Commandos:',
-  '`/corona regions`: Vraag alle mogelijke regio\'s op',
   '`/corona add <regio>`: Voeg een regio toe aan je dagelijkse rapportage',
   '`/corona remove <regio>`: Verwijder een regio van je dagelijkse rapportage',
   '`/corona graph <region>`: Laat een grafiek zien van de corona-gevallen binnen een gegeven regio en tijd',
@@ -61,6 +61,28 @@ const addHandler : BothHandler = async ({
   return `${coronaReport.community} is toegevoegd aan je dagelijkse rapport`;
 };
 
+let communityList : string[] | null = null;
+const communityAutocompleteHandler : BothAutocompleteHandler = async ({ em, flags }) => {
+  const [inputCommunity] = flags.get('region') || [];
+  if (typeof inputCommunity !== 'string') return [{ name: 'Not a string', value: 'notAString' }];
+
+  if (!communityList) {
+    const newItems : {community : string}[] = (await em.createQueryBuilder(CoronaData, 'cd', 'read')
+      .select(['community'], true)
+      .execute());
+
+    communityList = newItems
+      .map((item) => item.community)
+      .sort((a, b) => stringSimilarity.compareTwoStrings(inputCommunity, b) - stringSimilarity.compareTwoStrings(inputCommunity, a));
+  }
+
+  const itemsSorted = communityList
+    .sort((a, b) => stringSimilarity.compareTwoStrings(inputCommunity, b) - stringSimilarity.compareTwoStrings(inputCommunity, a));
+  const collection = new Collection([...itemsSorted.entries()]);
+
+  return collection.first(25).map((item) => ({ name: item, value: item }));
+};
+
 router.use('add', addHandler, HandlerType.BOTH, {
   description: 'Voeg een regio/gemeente toe',
   options: [{
@@ -70,7 +92,7 @@ router.use('add', addHandler, HandlerType.BOTH, {
     required: true,
     autocomplete: true,
   }],
-}, () => [{ name: 'gaming', value: 'gaming' }]);
+}, communityAutocompleteHandler);
 router.use('toevoegen', addHandler);
 
 const removeHandler : BothHandler = async ({
@@ -102,29 +124,12 @@ router.use('remove', removeHandler, HandlerType.BOTH, {
     name: 'region',
     description: 'Regio/gemeente die je wil verwijderen',
     type: 'STRING',
+    autocomplete: true,
     required: true,
   }],
-});
+}, communityAutocompleteHandler);
 router.use('verwijder', removeHandler);
 router.use('delete', removeHandler);
-
-const listRegionsHandler : BothHandler = async ({ em }) => {
-  const coronaData = await em.getRepository(CoronaData).findAll();
-
-  const regions = Array.from(new Set<string>(coronaData.map((data) => data.community)))
-    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-
-  if (regions.length === 0) return 'Regio\'s zijn nog niet geladen (dit kan nog 10 minuten duren)';
-
-  return `Regio's:\n${regions.join('\n')}`;
-};
-
-router.use('gemeentes', listRegionsHandler, HandlerType.BOTH);
-router.use('regions', listRegionsHandler, HandlerType.BOTH, {
-  description: 'Geeft een lijst met regio\'s die je kan toevoegen',
-});
-router.use('steden', listRegionsHandler);
-router.use('communities', listRegionsHandler);
 
 const getPopulation = async () => {
   const population : {[key: string]: number | undefined} = {};
@@ -248,10 +253,11 @@ const coronaGraph : BothHandler = async ({
 router.use('graph', coronaGraph, HandlerType.BOTH, {
   description: 'Genereer een grafiekje :)',
   options: [{
-    name: 'community',
+    name: 'region',
     type: 'STRING',
     description: 'Gemeente waarvan je een grafiekje wil zien',
     required: true,
+    autocomplete: true,
   }, {
     name: 'days',
     type: 'INTEGER',
@@ -261,7 +267,7 @@ router.use('graph', coronaGraph, HandlerType.BOTH, {
     type: 'BOOLEAN',
     description: 'Laat de labels zien',
   }],
-});
+}, communityAutocompleteHandler);
 
 const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>) => {
   const regionPopulations = await getPopulation();

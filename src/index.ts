@@ -52,11 +52,13 @@ process.title = 'Ei Noah Bot';
   const orm = await MikroORM.init<PostgreSqlDriver>().catch((err) => { console.error(err); process.exit(-1); });
   await orm.getMigrator().up();
 
-  const child = fork('./src/child.ts');
-  child.on('message', (msg) => console.log(msg));
-  process.on('beforeExit', () => {
-    child.kill();
-  });
+  if (process.env.CORONA_REFRESHER?.toLowerCase() !== 'false') {
+    const child = fork('./src/child.ts');
+    child.on('message', (msg) => console.log(msg));
+    process.on('beforeExit', () => {
+      child.kill();
+    });
+  }
 
   const preloadLanguages = readdirSync(join(__dirname, '../locales')).filter((fileName) => {
     const joinedPath = join(join(__dirname, '../locales'), fileName);
