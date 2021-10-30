@@ -242,7 +242,7 @@ const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : MessageO
 const messageSender = (options : MessageOptions | null, msg : Message | CommandInteraction) : Promise<Message | Message[] | null> => {
   if (options && msg.channel) {
     return msg.channel.send({
-      allowedMentions: { users: [], roles: [] },
+      allowedMentions: { users: [], roles: [], repliedUser: true },
       reply: { messageReference: msg.id },
       ...options,
     });
@@ -356,7 +356,7 @@ class EiNoah implements IRouter {
           .then(async ([options]) => {
             if (options) {
               await defer;
-              return interaction.followUp(options);
+              return interaction.followUp({ allowedMentions: { users: [], roles: [] }, ...options });
             }
             return null;
           })
