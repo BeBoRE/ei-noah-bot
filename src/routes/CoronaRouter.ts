@@ -152,8 +152,6 @@ enum Niveau {
   ZeerErnstig = 'Zeer Ernstig'
 }
 
-const canvas = new ChartJSNodeCanvas({ width: 800, height: 400 });
-
 interface CoronaRollingData {
   date: Date,
   community: string,
@@ -169,6 +167,18 @@ const getRollingData = (em: EntityManager, communities : string[]) : Promise<Cor
   return em.execute<CoronaRollingData[]>(query);
 };
 
+const scale = 1;
+const canvas = new ChartJSNodeCanvas({ width: 800 * scale, height: 400 * scale });
+canvas.registerFont('./fonts/Roboto-Regular.ttf', {
+  family: 'Roboto Regular',
+});
+canvas.registerFont('./fonts/Roboto-Bold.ttf', {
+  family: 'Roboto Bold',
+});
+canvas.registerFont('./fonts/Roboto-Black.ttf', {
+  family: 'Roboto Black',
+});
+
 const generateGraph = (data : CoronaRollingData[], days = 7, displayLabels = false, i18n ?: I18n) => {
   const collection = new Collection(data.entries());
 
@@ -181,7 +191,7 @@ const generateGraph = (data : CoronaRollingData[], days = 7, displayLabels = fal
         data: collection.last(days).map((value) => Number.parseInt(value.total_reported_weekly, 10)),
         backgroundColor: '#ffcc5f11',
         borderColor: '#ffcc5f',
-        borderWidth: 3,
+        borderWidth: 3 * scale,
       }],
     },
     options: {
@@ -189,7 +199,8 @@ const generateGraph = (data : CoronaRollingData[], days = 7, displayLabels = fal
         display: true,
         text: collection.first()?.community,
         fontColor: '#FFFFFF',
-        fontSize: 24,
+        fontSize: 32 * scale,
+        fontFamily: 'Roboto Bold, sans-serif',
       },
       plugins: {
         legend: false,
@@ -204,8 +215,8 @@ const generateGraph = (data : CoronaRollingData[], days = 7, displayLabels = fal
           display: displayLabels,
           ticks: {
             fontColor: '#FFFFFF',
-            fontSize: 14,
-            fontStyle: 'bold',
+            fontSize: 16 * scale,
+            fontFamily: 'Roboto Black, sans-serif',
           },
           gridLines: {
             display: false,
@@ -216,8 +227,8 @@ const generateGraph = (data : CoronaRollingData[], days = 7, displayLabels = fal
           ticks: {
             beginAtZero: true,
             fontColor: '#FFFFFF',
-            fontSize: 14,
-            fontStyle: 'bold',
+            fontSize: 16 * scale,
+            fontFamily: 'Roboto Black, sans-serif',
           },
           gridLines: {
             display: false,
@@ -233,7 +244,7 @@ const generateGraph = (data : CoronaRollingData[], days = 7, displayLabels = fal
 const coronaGraph : BothHandler = async ({
   em, params, flags, i18n,
 }) => {
-  const [community] = flags.get('community') || params;
+  const [community] = flags.get('region') || params;
   const [days] = flags.get('days') || [30];
   const [labels] = flags.get('labels') || [true];
 
