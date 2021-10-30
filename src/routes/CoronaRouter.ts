@@ -72,12 +72,11 @@ const communityAutocompleteHandler : BothAutocompleteHandler = async ({ em, flag
       .execute());
 
     communityList = newItems
-      .map((item) => item.community)
-      .sort((a, b) => stringSimilarity.compareTwoStrings(inputCommunity, b) - stringSimilarity.compareTwoStrings(inputCommunity, a));
+      .map((item) => item.community);
   }
 
   const itemsSorted = communityList
-    .sort((a, b) => stringSimilarity.compareTwoStrings(inputCommunity, b) - stringSimilarity.compareTwoStrings(inputCommunity, a));
+    .sort((a, b) => stringSimilarity.compareTwoStrings(inputCommunity.toLowerCase(), b.toLowerCase()) - stringSimilarity.compareTwoStrings(inputCommunity.toLowerCase(), a.toLowerCase()));
   const collection = new Collection([...itemsSorted.entries()]);
 
   return collection.first(25).map((item) => ({ name: item, value: item }));
