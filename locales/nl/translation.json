@@ -197,6 +197,7 @@
   },
   "error": {
     "notAdmin": "Alleen een admin kan dit doen",
-    "onlyUsableOnGuild": "Commando kan alleen op een server gebruikt worden"
+    "onlyUsableOnGuild": "Commando kan alleen in servers gebruikt worden",
+    "onlyUsableOnDM": "Commando kan alleen in DMs gebruikt worden"
   }
 }

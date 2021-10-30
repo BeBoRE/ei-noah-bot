@@ -1,5 +1,6 @@
 import { EntityManager } from '@mikro-orm/postgresql';
 import {
+  AutocompleteInteraction,
   Channel, CommandInteraction, Message, NewsChannel, Role, TextChannel, User as DiscordUser,
 } from 'discord.js';
 import { i18n as I18n } from 'i18next';
@@ -14,7 +15,7 @@ export default class LazyRouteInfo implements RouteInfo {
 
   public params : (string | Channel | DiscordUser | Role)[];
 
-  public msg : Message | CommandInteraction;
+  public msg : Message | CommandInteraction | AutocompleteInteraction;
 
   public flags : Map<string, (string | Channel | DiscordUser | Role | boolean | number)[]>;
 
@@ -49,7 +50,7 @@ export default class LazyRouteInfo implements RouteInfo {
     i18n,
   } : {
     params : (string | Channel | DiscordUser | Role)[],
-    msg : Message | CommandInteraction,
+    msg : Message | CommandInteraction | AutocompleteInteraction,
     flags : Map<string, (string | Channel | DiscordUser | Role | boolean | number)[]>
     em : EntityManager,
     guildUserOrUser : GuildUser | User,

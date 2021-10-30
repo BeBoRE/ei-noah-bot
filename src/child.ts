@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { coronaRefresher } from './routes/CoronaRouter';
 
 dotenv.config();
+process.title = 'Ei Noah Corona Refresher';
 
 (async () => {
   const client = new Client({

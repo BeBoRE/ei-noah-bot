@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction,
 } from 'discord.js';
 import {
   MikroORM,
@@ -8,12 +8,14 @@ import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
 
 import console from 'console';
 import { i18n as I18n } from 'i18next';
+import LazyAutocompleteRouteInfo from './router/LazyAutocompleteRouteInfo';
+import LazyMsgRouteInfo from './router/LazyMsgRouteInfo';
 import { GuildUser } from './entity/GuildUser';
 import { getUserData, getUserGuildData } from './data';
-import LazyRouteInfo from './router/LazyRouteInfo';
 import ContextMenuInfo from './router/ContextMenuInfo';
 import Router, {
-  BothHandler, ContextMenuHandler, ContextMenuHandlerInfo, DMHandler, GuildHandler, HandlerReturn, HandlerType, IRouter, RouteInfo,
+  AutocompleteRouteInfo,
+  BothHandler, ContextMenuHandler, ContextMenuHandlerInfo, DMHandler, GuildHandler, HandlerReturn, HandlerType, IRouter, MsgRouteInfo,
 } from './router/Router';
 
 enum ErrorType {
@@ -106,7 +108,9 @@ function isFlag(argument: string) {
   return argument[0] === '-' && argument.length > 1;
 }
 
-async function messageParser(msg : Message | CommandInteraction, em: EntityManager, i18n : I18n) {
+async function messageParser(msg : AutocompleteInteraction, em: EntityManager, i18n : I18n) : Promise<AutocompleteRouteInfo | null>;
+async function messageParser(msg : Message | CommandInteraction, em: EntityManager, i18n : I18n) : Promise<MsgRouteInfo | null>;
+async function messageParser(msg : Message | CommandInteraction | AutocompleteInteraction, em: EntityManager, i18n : I18n) : Promise<AutocompleteRouteInfo | MsgRouteInfo | null> {
   const flags = new Map<string, Array<Role | DiscordUser | string | Channel | boolean | number>>();
   const params : Array<Role | DiscordUser | string | Channel> = [];
   const user = msg instanceof Message ? msg.author : msg.user;
@@ -141,9 +145,9 @@ async function messageParser(msg : Message | CommandInteraction, em: EntityManag
       params.push(param);
     });
   } else {
-    let command : CommandInteractionOption | CommandInteraction = msg;
-    while (command instanceof CommandInteraction || command.type === 'SUB_COMMAND' || command.type === 'SUB_COMMAND_GROUP') {
-      if (command instanceof CommandInteraction) { params.push(command.commandName); } else params.push(command.name);
+    let command : CommandInteractionOption | CommandInteraction | AutocompleteInteraction = msg;
+    while (command instanceof CommandInteraction || command instanceof AutocompleteInteraction || command.type === 'SUB_COMMAND' || command.type === 'SUB_COMMAND_GROUP') {
+      if (command instanceof CommandInteraction || command instanceof AutocompleteInteraction) { params.push(command.commandName); } else params.push(command.name);
       const nextCommand : CommandInteractionOption | undefined = Array.isArray(command.options) ? command.options[0] : command.options?.data[0];
       if (!nextCommand || !(nextCommand.type === 'SUB_COMMAND' || nextCommand.type === 'SUB_COMMAND_GROUP')) break;
       command = nextCommand;
@@ -168,7 +172,18 @@ async function messageParser(msg : Message | CommandInteraction, em: EntityManag
 
   const newI18n = i18n.cloneInstance({ lng: language || 'nl' });
 
-  const routeInfo : RouteInfo = new LazyRouteInfo({
+  if (msg instanceof AutocompleteInteraction) {
+    return new LazyAutocompleteRouteInfo({
+      params,
+      msg,
+      flags,
+      em,
+      guildUserOrUser: await guildUserOrUser,
+      i18n: newI18n,
+    });
+  }
+
+  const routeInfo : MsgRouteInfo = new LazyMsgRouteInfo({
     params,
     msg,
     flags,
@@ -227,7 +242,7 @@ const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : MessageO
 const messageSender = (options : MessageOptions | null, msg : Message | CommandInteraction) : Promise<Message | Message[] | null> => {
   if (options && msg.channel) {
     return msg.channel.send({
-      allowedMentions: { users: [], roles: [] },
+      allowedMentions: { users: [], roles: [], repliedUser: true },
       reply: { messageReference: msg.id },
       ...options,
     });
@@ -341,7 +356,7 @@ class EiNoah implements IRouter {
           .then(async ([options]) => {
             if (options) {
               await defer;
-              return interaction.followUp(options);
+              return interaction.followUp({ allowedMentions: { users: [], roles: [] }, ...options });
             }
             return null;
           })
@@ -356,6 +371,17 @@ class EiNoah implements IRouter {
 
             console.error(err);
           });
+      }
+
+      if (interaction.isAutocomplete()) {
+        const em = orm.em.fork();
+        messageParser(interaction, em, this.i18n)
+          .then((info) => {
+            if (!info) return [{ name: 'Er is iets misgegaan', value: 'error' }];
+            return this.router.handle(info);
+          })
+          .then((options) => interaction.respond(options))
+          .catch((err) => console.log(err));
       }
 
       if (interaction.isContextMenu()) {

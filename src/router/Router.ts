@@ -15,6 +15,8 @@ import {
   ApplicationCommandSubCommandData,
   InteractionReplyOptions,
   ApplicationCommandType,
+  AutocompleteInteraction,
+  ApplicationCommandOptionChoice,
 } from 'discord.js';
 import {
   MikroORM,
@@ -27,7 +29,7 @@ import { User } from '../entity/User';
 import ContextMenuInfo from './ContextMenuInfo';
 
 export interface RouteInfo {
-  msg: Message | CommandInteraction
+  msg: Message | CommandInteraction | AutocompleteInteraction
   absoluteParams: Array<string | DiscordUser | Role | Channel>
   params: Array<string | DiscordUser | Role | Channel>
   flags: Map<string, Array<string | DiscordUser | Role | Channel | boolean | number>>,
@@ -38,9 +40,18 @@ export interface RouteInfo {
   i18n : I18n
 }
 
-type BothRouteInfo = (DMRouteInfo | GuildRouteInfo);
+export interface MsgRouteInfo extends RouteInfo {
+  msg: Message | CommandInteraction
+}
 
-export interface DMRouteInfo extends RouteInfo {
+export interface AutocompleteRouteInfo extends RouteInfo {
+  msg: AutocompleteInteraction
+}
+
+type BothRouteInfo = (DMMsgRouteInfo | GuildMsgRouteInfo);
+type BothAutocompleteRouteInfo = (DMAutocompleteRouteInfo | GuildAutocompleteRouteInfo);
+
+export interface DMMsgRouteInfo extends MsgRouteInfo {
   msg: (Message | CommandInteraction) & {
     channel: DMChannel
     guild : null
@@ -50,7 +61,27 @@ export interface DMRouteInfo extends RouteInfo {
   readonly category: null,
 }
 
-export interface GuildRouteInfo extends RouteInfo {
+export interface DMAutocompleteRouteInfo extends MsgRouteInfo {
+  msg: (Message | CommandInteraction) & {
+    channel: DMChannel
+    guild : null
+    member : null
+  }
+  readonly guildUser: null,
+  readonly category: null,
+}
+
+export interface GuildMsgRouteInfo extends MsgRouteInfo {
+  msg: (Message | CommandInteraction) & {
+    channel: TextChannel | NewsChannel
+    guild : Guild
+    member : GuildMember
+  }
+  readonly guildUser: GuildUser,
+  readonly category: null | Promise<Category>,
+}
+
+export interface GuildAutocompleteRouteInfo extends MsgRouteInfo {
   msg: (Message | CommandInteraction) & {
     channel: TextChannel | NewsChannel
     guild : Guild
@@ -63,6 +94,8 @@ export interface GuildRouteInfo extends RouteInfo {
 export type HandlerReturn =
   MessageOptions | MessageEmbed | MessageAttachment | (MessageEmbed | MessageAttachment)[] | string | null;
 
+export type AutocompleteHandlerReturn = ApplicationCommandOptionChoice[];
+
 export enum HandlerType {
   DM = 'dm',
   GUILD = 'guild',
@@ -73,39 +106,54 @@ export interface BothHandler {
   (info: BothRouteInfo) : HandlerReturn | Promise<HandlerReturn>
 }
 
-export interface BothHandlerWithIndicator {
+export interface BothAutocompleteHandler {
+  (info : BothAutocompleteRouteInfo) : AutocompleteHandlerReturn | Promise<AutocompleteHandlerReturn>
+}
+
+interface BothHandlerCombined {
   (info: BothRouteInfo) : HandlerReturn | Promise<HandlerReturn>,
+  autocomplete ?: BothAutocompleteHandler
   type : HandlerType.BOTH
 }
 
 export interface DMHandler {
-  (info: DMRouteInfo) : HandlerReturn | Promise<HandlerReturn>,
+  (info: DMMsgRouteInfo) : HandlerReturn | Promise<HandlerReturn>,
 }
 
-export interface DMHandlerWithIndicator {
-  (info: DMRouteInfo) : HandlerReturn | Promise<HandlerReturn>,
+export interface DMAutocompleteHandler {
+  (info : DMAutocompleteRouteInfo) : AutocompleteHandlerReturn | Promise<AutocompleteHandlerReturn>
+}
+
+interface DMHandlerCombined {
+  (info: DMMsgRouteInfo) : HandlerReturn | Promise<HandlerReturn>,
+  autocomplete ?: DMAutocompleteHandler
   type : HandlerType.DM
 }
 
 export interface GuildHandler {
-  (info: GuildRouteInfo) : HandlerReturn | Promise<HandlerReturn>
+  (info: GuildMsgRouteInfo) : HandlerReturn | Promise<HandlerReturn>
 }
 
-export interface GuildHandlerWithIndicator {
-  (info: GuildRouteInfo) : HandlerReturn | Promise<HandlerReturn>,
+export interface GuildAutocompleteHandler {
+  (info : GuildAutocompleteRouteInfo) : AutocompleteHandlerReturn | Promise<AutocompleteHandlerReturn>
+}
+
+interface GuildHandlerCombined {
+  (info: GuildMsgRouteInfo) : HandlerReturn | Promise<HandlerReturn>,
+  autocomplete ?: GuildAutocompleteHandler
   type : HandlerType.GUILD
 }
 
 interface RouteList {
-  [path : string]: Router | BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator | undefined;
+  [path : string]: Router | BothHandlerCombined | DMHandlerCombined | GuildHandlerCombined | undefined;
 }
 
 export interface IRouter {
-  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
-  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
-  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: BothAutocompleteHandler) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: DMAutocompleteHandler) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: GuildAutocompleteHandler) : void
   use(route : string, using: Router | BothHandler) : void
-  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: BothAutocompleteHandler) : void
 
   onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>, i18n : I18n)
   => void | Promise<void>)
@@ -138,17 +186,18 @@ export default class Router implements IRouter {
   public contextHandlers : Map<string, ContextMenuHandlerInfo> = new Map();
 
   // Met use geef je aan welk commando waarheen gaat
-  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
-  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
-  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: BothAutocompleteHandler) : void
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: DMAutocompleteHandler) : void
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: GuildAutocompleteHandler) : void
   use(route : string, using: Router | BothHandler) : void
-  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type: HandlerType = HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>) : void {
-    const newUsing = <Router | BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator>using;
+  use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type: HandlerType = HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: BothAutocompleteHandler | GuildAutocompleteHandler | DMAutocompleteHandler) : void {
+    const newUsing = <Router | BothHandlerCombined | DMHandlerCombined | GuildHandlerCombined>using;
 
-    if (this.routes[route]) throw new Error('This Route Already Exists');
+    if (this.routes[route.toUpperCase()]) throw new Error('This Route Already Exists');
 
     if (!(newUsing instanceof Router)) {
       newUsing.type = type;
+      if (!newUsing.autocomplete) newUsing.autocomplete = autocomplete;
     }
 
     this.routes[route.toUpperCase()] = newUsing;
@@ -167,11 +216,13 @@ export default class Router implements IRouter {
 
   // INTERNAL
   // Zorgt dat de commando's op de goede plek terecht komen
-  public handle(info: RouteInfo) : Promise<HandlerReturn> {
+  public handle(info: AutocompleteRouteInfo) : Promise<AutocompleteHandlerReturn>
+  public handle(info: MsgRouteInfo) : Promise<HandlerReturn>
+  public handle(info: MsgRouteInfo | AutocompleteRouteInfo) : Promise<HandlerReturn | AutocompleteHandlerReturn> {
     return new Promise((resolve, reject) => {
       const currentRoute = info.params[0];
 
-      let handler : Router | BothHandlerWithIndicator | DMHandlerWithIndicator | GuildHandlerWithIndicator | undefined;
+      let handler : Router | BothHandlerCombined | DMHandlerCombined | GuildHandlerCombined | undefined;
       const newInfo = info;
 
       if (typeof currentRoute === 'string') {
@@ -190,28 +241,31 @@ export default class Router implements IRouter {
         handler = this.routes.HELP;
       }
 
+      const isAutocomplete = newInfo.msg instanceof AutocompleteInteraction;
       if (handler) {
         if (handler instanceof Router) {
-          handler.handle(newInfo).then(resolve).catch(reject);
+          handler.handle(<MsgRouteInfo>newInfo).then(resolve).catch(reject);
         } else {
           try {
-            let handling : HandlerReturn | Promise<HandlerReturn>;
+            let handling : HandlerReturn | AutocompleteHandlerReturn | Promise<HandlerReturn | AutocompleteHandlerReturn>;
 
             if (handler.type === HandlerType.DM) {
               if (newInfo.msg.guild) {
-                handling = 'Commando kan alleen in server gebruikt worden';
-              } else {
-                handling = handler(<DMRouteInfo>newInfo);
-              }
+                if (!isAutocomplete) handling = newInfo.i18n.t('error.onlyUsableOnGuild');
+                else handling = [{ name: newInfo.i18n.t('error.onlyUsableOnGuild') || 'onlyInGuild', value: 'onlyInGuild' }];
+              } else if (!isAutocomplete) handling = handler(<DMMsgRouteInfo>newInfo);
+              else if (handler.autocomplete) handling = handler.autocomplete(<DMAutocompleteRouteInfo>newInfo);
+              else handling = [{ name: 'No Autocomplete Handler Present', value: 'noAutoComplete' }];
             } else if (handler.type === HandlerType.GUILD) {
               if (!newInfo.msg.guild) {
-                handling = 'Commando kan alleen in DMs gebruikt worden';
-              } else {
-                handling = handler(<GuildRouteInfo>newInfo);
-              }
-            } else {
-              handling = handler(<BothRouteInfo>newInfo);
-            }
+                if (!isAutocomplete) handling = newInfo.i18n.t('error.onlyUsableOnDM');
+                else handling = [{ name: newInfo.i18n.t('error.onlyUsableOnGuild') || 'onlyInGuild', value: 'onlyInGuild' }];
+              } else if (!isAutocomplete) handling = handler(<GuildMsgRouteInfo>newInfo);
+              else if (handler.autocomplete) handling = handler.autocomplete(<GuildAutocompleteRouteInfo>newInfo);
+              else handling = [{ name: 'No Autocomplete Handler Present', value: 'noAutoComplete' }];
+            } else if (!isAutocomplete) handling = handler(<BothRouteInfo>newInfo);
+            else if (handler.autocomplete) handling = handler.autocomplete(<BothAutocompleteRouteInfo>newInfo);
+            else handling = [{ name: 'No Autocomplete Handler Present', value: 'noAutoComplete' }];
 
             if (handling instanceof Promise) handling.then(resolve).catch(reject);
             else resolve(handling);
@@ -219,19 +273,19 @@ export default class Router implements IRouter {
             reject(err);
           }
         }
-      } else {
+      } else if (!isAutocomplete) {
         resolve(`Ja ik heb toch geen idee wat \`${info.absoluteParams.map((param) => {
           if (typeof param === 'string') return param;
           if (param instanceof Role) return `@${param.name}`;
           if (param instanceof DiscordUser) return `@${param.username}`;
           return '[UNKNOWN]';
         }).join(' ')}\` moet betekenen`);
-      }
+      } else resolve([{ name: 'No Autocomplete Handler Present', value: 'noAutoComplete' }]);
     });
   }
 
   protected initialize(client : Client, orm : MikroORM<PostgreSqlDriver>, i18n : I18n) {
-    Object.entries(this.routes).forEach(([, route]) => {
+    Object.values(this.routes).forEach((route) => {
       if (route instanceof Router && !route.isInitialized) {
         route.initialize(client, orm, i18n);
       }
