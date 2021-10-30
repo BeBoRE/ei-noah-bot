@@ -193,11 +193,11 @@ export default class Router implements IRouter {
   use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type: HandlerType = HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: BothAutocompleteHandler | GuildAutocompleteHandler | DMAutocompleteHandler) : void {
     const newUsing = <Router | BothHandlerCombined | DMHandlerCombined | GuildHandlerCombined>using;
 
-    if (this.routes[route]) throw new Error('This Route Already Exists');
+    if (this.routes[route.toUpperCase()]) throw new Error('This Route Already Exists');
 
     if (!(newUsing instanceof Router)) {
       newUsing.type = type;
-      newUsing.autocomplete = autocomplete;
+      if (!newUsing.autocomplete) newUsing.autocomplete = autocomplete;
     }
 
     this.routes[route.toUpperCase()] = newUsing;
@@ -285,7 +285,7 @@ export default class Router implements IRouter {
   }
 
   protected initialize(client : Client, orm : MikroORM<PostgreSqlDriver>, i18n : I18n) {
-    Object.entries(this.routes).forEach(([, route]) => {
+    Object.values(this.routes).forEach((route) => {
       if (route instanceof Router && !route.isInitialized) {
         route.initialize(client, orm, i18n);
       }

@@ -43,6 +43,8 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
   return messageArray.join(' ');
 };
 
+process.title = 'Ei Noah Bot';
+
 (async () => {
   if (!process.env.CLIENT_TOKEN) throw new Error('Add a client token');
 
@@ -52,6 +54,9 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
 
   const child = fork('./src/child.ts');
   child.on('message', (msg) => console.log(msg));
+  process.on('beforeExit', () => {
+    child.kill();
+  });
 
   const preloadLanguages = readdirSync(join(__dirname, '../locales')).filter((fileName) => {
     const joinedPath = join(join(__dirname, '../locales'), fileName);
