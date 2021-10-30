@@ -8,7 +8,7 @@ import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
 
 import console from 'console';
 import { i18n as I18n } from 'i18next';
-import LazyAutocompleteRouteInfo from './router/LazyAutoCompleteRouteInfo';
+import LazyAutocompleteRouteInfo from './router/LazyAutocompleteRouteInfo';
 import LazyMsgRouteInfo from './router/LazyMsgRouteInfo';
 import { GuildUser } from './entity/GuildUser';
 import { getUserData, getUserGuildData } from './data';
