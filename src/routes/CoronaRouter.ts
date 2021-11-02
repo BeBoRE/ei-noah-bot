@@ -313,7 +313,7 @@ const coronaGraph : BothHandler = async ({
   const [cumulative] = flags.get('cumulative') || [false];
   const [showCases] = flags.get('show-cases') || [true];
   const [showAdmissions] = flags.get('show-admissions') || [false];
-  const [showDeaths] = flags.get('show-deaths') || [false];
+  const [showDeaths] = flags.get('show-deceased') || [false];
 
   if (typeof community !== 'string') return 'Community moet een gemeente zijn en niet een random string';
   if (typeof days !== 'number') return 'Last-days moet een nummer zijn';
@@ -321,7 +321,7 @@ const coronaGraph : BothHandler = async ({
   if (typeof cumulative !== 'boolean') return 'Cumulative moet van type boolean zijn (true/false)';
   if (typeof showCases !== 'boolean') return 'Show-cases moet van type boolean zijn (true/false)';
   if (typeof showAdmissions !== 'boolean') return 'Show-admissions moet van type boolean zijn (true/false)';
-  if (typeof showDeaths !== 'boolean') return 'Show-deaths moet van type boolean zijn (true/false)';
+  if (typeof showDeaths !== 'boolean') return 'Show-deceased moet van type boolean zijn (true/false)';
 
   if (!showCases && !showAdmissions && !showDeaths) return 'Er moet een dataset geselecteerd zijn';
 
@@ -354,7 +354,7 @@ router.use('graph', coronaGraph, HandlerType.BOTH, {
   }, {
     name: 'cumulative',
     type: 'BOOLEAN',
-    description: 'Tel alle getallen van de datum terug op (i.p.v alleen de laatste 7 dagen)',
+    description: 'Tel alle getallen van de datum terug op (i.p.v. alleen de laatste 7 dagen)',
   }, {
     name: 'show-cases',
     type: 'BOOLEAN',
@@ -364,9 +364,9 @@ router.use('graph', coronaGraph, HandlerType.BOTH, {
     type: 'BOOLEAN',
     description: 'Laat ziekenhuis opnamens zien',
   }, {
-    name: 'show-deaths',
+    name: 'show-deceased',
     type: 'BOOLEAN',
-    description: 'Laat gevallen zien',
+    description: 'Laat sterftegevallen zien',
   }],
 }, communityAutocompleteHandler);
 
@@ -430,13 +430,13 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
         if (casesPer) message += ` (${casesPer} / 100,000 per week)`;
         message += `\nZiekenhuis Opnames: ${hospital}`;
         if (hospitalPer) message += ` (${hospitalPer} / 100,000 per week)`;
-        message += `\nDoden: ${deceased}`;
+        message += `\nSterfte: ${deceased}`;
         if (deceasedPer) message += ` (${deceasedPer} / 100,000 per week)`;
 
         return message;
       });
 
-      const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}`;
+      const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}> Cijfers liggen in werkelijkheid hoger`;
       await client.users.fetch(`${BigInt(groupedUsers[key][0].user.id)}`, { cache: true })
         .then(async (user) => user.send({ content: report, files: await Promise.all(graphs) }))
         .catch(() => {});
