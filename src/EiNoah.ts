@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, ThreadChannel,
 } from 'discord.js';
 import {
   MikroORM,
@@ -433,13 +433,20 @@ class EiNoah implements IRouter {
         const botMention = `<@${this.client.user?.id}>`;
         const botNickMention = `<@!${this.client.user?.id}>`;
 
-        let canSendMessage = true;
-
-        if ((msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) && msg.client.user) {
-          if (!msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.SEND_MESSAGES)) canSendMessage = false;
-        }
-
         if ((splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention)) {
+          let canSendMessage = true;
+          if (msg.client.user) {
+            if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
+              if (!msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.SEND_MESSAGES)) {
+                canSendMessage = false;
+              }
+            }
+
+            if (msg.channel instanceof ThreadChannel) {
+              if (!msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.SEND_MESSAGES_IN_THREADS)) canSendMessage = false;
+            }
+          }
+
           if (!canSendMessage) {
             if (msg.member && msg.member.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
               msg.author.send('Ik kan toch niet in dat kanaal praten, doe je fucking werk of ik steek je neer').catch(() => { });
