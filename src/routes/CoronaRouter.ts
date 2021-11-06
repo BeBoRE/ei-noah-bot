@@ -436,7 +436,7 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
         return message;
       });
 
-      const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}> Cijfers liggen in werkelijkheid hoger`;
+      const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}\n> Cijfers liggen in werkelijkheid hoger`;
       await client.users.fetch(`${BigInt(groupedUsers[key][0].user.id)}`, { cache: true })
         .then(async (user) => user.send({ content: report, files: await Promise.all(graphs) }))
         .catch(() => {});
