@@ -13,6 +13,9 @@ import i18next from 'i18next';
 import Backend from 'i18next-fs-backend';
 import { lstatSync, readdirSync } from 'fs';
 import { join } from 'path';
+import { CronJob } from 'cron';
+import { readFile } from 'fs/promises';
+import { Guild } from './entity/Guild';
 import { BothHandler, HandlerType } from './router/Router';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
@@ -417,6 +420,42 @@ process.title = 'Ei Noah Bot';
     };
 
     updatePrecense();
+
+    const sintpfpCron = new CronJob('* 12 17 10 *', async () => {
+      const avatar = await readFile('./avatars/sinter-ei.png')
+        .catch((err) => {
+          console.log(err);
+          return null;
+        });
+
+      if (client.user && avatar) {
+        client.user.edit({ avatar, username: 'ei Sint' })
+          .then(async () => {
+            const em = orm.em.fork();
+
+            const guilds = await em.find(Guild, { $not: { birthdayChannel: null } });
+
+            return Promise.all(
+              guilds.map((guild) => {
+                if (!guild.birthdayChannel) return null;
+
+                return client.channels.fetch(guild.birthdayChannel, { cache: true })
+                  .then((channel) => {
+                    if (channel === null || !channel.isText()) { return Promise.resolve(null); }
+
+                    return channel.send({
+                      content: 'Ik heb mijzelf in een sinter-ei veranderd, grote onthulling!\n\nIk ben ei Sint!!',
+                      files: [avatar],
+                    });
+                  });
+              }),
+            );
+          })
+          .catch((err) => console.log(err));
+      }
+    }, null, false, 'Europe/Amsterdam');
+
+    sintpfpCron.start();
   };
 
   eiNoah.use('corona', CoronaRouter);
