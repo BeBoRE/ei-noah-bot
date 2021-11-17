@@ -421,7 +421,7 @@ process.title = 'Ei Noah Bot';
 
     updatePrecense();
 
-    const sintpfpCron = new CronJob('* 12 17 10 *', async () => {
+    const sintpfpCron = new CronJob('00 12 17 10 *', async () => {
       const avatar = await readFile('./avatars/sinter-ei.png')
         .catch((err) => {
           console.log(err);
