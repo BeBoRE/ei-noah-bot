@@ -455,6 +455,41 @@ process.title = 'Ei Noah Bot';
       }
     }, null, false, 'Europe/Amsterdam');
 
+    const santaCron = new CronJob('00 12 6 11 *', async () => {
+      const avatar = await readFile('./avatars/santa-ei.png')
+        .catch((err) => {
+          console.log(err);
+          return null;
+        });
+
+      if (client.user && avatar) {
+        client.user.edit({ avatar, username: 'ei Kerst' })
+          .then(async () => {
+            const em = orm.em.fork();
+
+            const guilds = await em.find(Guild, { $not: { birthdayChannel: null } });
+
+            return Promise.all(
+              guilds.map((guild) => {
+                if (!guild.birthdayChannel) return null;
+
+                return client.channels.fetch(guild.birthdayChannel, { cache: true })
+                  .then((channel) => {
+                    if (channel === null || !channel.isText()) { return Promise.resolve(null); }
+
+                    return channel.send({
+                      content: 'ei Sint? Waar het je het over? Kom we gaan kerst vieren!',
+                      files: [avatar],
+                    });
+                  });
+              }),
+            );
+          })
+          .catch((err) => console.log(err));
+      }
+    }, null, false, 'Europe/Amsterdam');
+
+    santaCron.start();
     sintpfpCron.start();
   };
 
