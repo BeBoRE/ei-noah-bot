@@ -1,7 +1,7 @@
 import {
   Message,
   User as DiscordUser,
-  Role, Channel,
+  Role, AnyChannel,
   Client,
   MessageOptions,
   TextChannel,
@@ -30,9 +30,9 @@ import ContextMenuInfo from './ContextMenuInfo';
 
 export interface RouteInfo {
   msg: Message | CommandInteraction | AutocompleteInteraction
-  absoluteParams: Array<string | DiscordUser | Role | Channel>
-  params: Array<string | DiscordUser | Role | Channel>
-  flags: Map<string, Array<string | DiscordUser | Role | Channel | boolean | number>>,
+  absoluteParams: Array<string | DiscordUser | Role | AnyChannel>
+  params: Array<string | DiscordUser | Role | AnyChannel>
+  flags: Map<string, Array<string | DiscordUser | Role | AnyChannel | boolean | number>>,
   readonly guildUser: GuildUser | null,
   readonly user: User,
   readonly category: Promise<Category> | null,

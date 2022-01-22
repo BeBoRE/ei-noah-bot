@@ -13,7 +13,6 @@ import {
   OverwriteResolvable,
   TextChannel,
   CategoryChannel,
-  Channel,
   User,
   Snowflake,
   Message,
@@ -26,6 +25,7 @@ import {
   MessageSelectOptionData,
   MessageOptions,
   MessageEmbed,
+  AnyChannel,
 } from 'discord.js';
 import {
   UniqueConstraintViolationException,
@@ -283,7 +283,7 @@ const createCreateChannel = (type : ChannelType, category : CategoryChannel) => 
   });
 };
 
-const getChannel = (client : Client, channelId ?: string) => new Promise<null | Channel>(
+const getChannel = (client : Client, channelId ?: string) => new Promise<null | AnyChannel>(
   (resolve) => {
     if (!channelId) { resolve(null); return; }
     client.channels.fetch(`${BigInt(channelId)}`, { cache: true })
@@ -1234,9 +1234,9 @@ router.use('create-category', async ({
   }
 
   return Promise.all([
-    getChannel(msg.client, categoryData.publicVoice).then((channel) => channel?.delete()),
-    getChannel(msg.client, categoryData.privateVoice).then((channel) => channel?.delete()),
-    getChannel(msg.client, categoryData.muteVoice).then((channel) => channel?.delete()),
+    getChannel(msg.client, categoryData.publicVoice).then<AnyChannel | undefined>((channel) => channel?.delete()),
+    getChannel(msg.client, categoryData.privateVoice).then<AnyChannel | undefined>((channel) => channel?.delete()),
+    getChannel(msg.client, categoryData.muteVoice).then<AnyChannel | undefined>((channel) => channel?.delete()),
   ])
     .then(async () => {
       categoryData.publicVoice = undefined;

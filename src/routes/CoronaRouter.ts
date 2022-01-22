@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import moment from 'moment';
 import parse from 'csv-parse/lib/sync';
 import { Client, MessageAttachment, Collection } from 'discord.js';
@@ -12,6 +11,9 @@ import { CronJob } from 'cron';
 import UserCoronaRegions from '../entity/UserCoronaRegions';
 import Router, { BothAutocompleteHandler, BothHandler, HandlerType } from '../router/Router';
 import CoronaData, { CoronaInfo } from '../entity/CoronaData';
+
+// eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
+const fetch = Function('return import("node-fetch")')() as Promise<typeof import('node-fetch')>;
 
 const router = new Router('Krijg iedere morgen een rapportage over de locale corona situatie');
 
@@ -146,7 +148,7 @@ router.use('delete', removeHandler);
 const getPopulation = async () => {
   const population : {[key: string]: number | undefined} = {};
 
-  const rawData = (await fetch('https://opendata.cbs.nl/CsvDownload/csv/03759ned/TypedDataSet?dl=41EB0').then((res) => res.text()))
+  const rawData = (await fetch.then(({ default: f }) => f('https://opendata.cbs.nl/CsvDownload/csv/03759ned/TypedDataSet?dl=41EB0')).then((res) => res.text()))
     .replace(/"/g, '');
 
   const records = <Array<[string, string, string, string, string, string]>>parse(rawData, { delimiter: ';' });
@@ -428,7 +430,7 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
 
     try {
       const inDb = await em.getRepository(CoronaData).findAll();
-      const fetchedData = <CoronaInfo[]>(await fetch('https://data.rivm.nl/covid-19/COVID-19_aantallen_gemeente_per_dag.json').then((res) => res.json()));
+      const fetchedData = <CoronaInfo[]>(await fetch.then(({ default: f }) => f('https://data.rivm.nl/covid-19/COVID-19_aantallen_gemeente_per_dag.json')).then((res) => res.json()));
 
       let oldestRecord : CoronaData | undefined;
       inDb.forEach((cd) => {

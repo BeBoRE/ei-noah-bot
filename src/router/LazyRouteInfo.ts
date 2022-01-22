@@ -1,7 +1,7 @@
 import { EntityManager } from '@mikro-orm/postgresql';
 import {
   AutocompleteInteraction,
-  Channel, CommandInteraction, Message, NewsChannel, Role, TextChannel, User as DiscordUser,
+  AnyChannel, CommandInteraction, Message, NewsChannel, Role, TextChannel, User as DiscordUser,
 } from 'discord.js';
 import { i18n as I18n } from 'i18next';
 import { getCategoryData } from '../data';
@@ -11,13 +11,13 @@ import { User } from '../entity/User';
 import { RouteInfo } from './Router';
 
 export default class LazyRouteInfo implements RouteInfo {
-  public absoluteParams : (string | Channel | DiscordUser | Role)[];
+  public absoluteParams : (string | AnyChannel | DiscordUser | Role)[];
 
-  public params : (string | Channel | DiscordUser | Role)[];
+  public params : (string | AnyChannel | DiscordUser | Role)[];
 
   public msg : Message | CommandInteraction | AutocompleteInteraction;
 
-  public flags : Map<string, (string | Channel | DiscordUser | Role | boolean | number)[]>;
+  public flags : Map<string, (string | AnyChannel | DiscordUser | Role | boolean | number)[]>;
 
   public em : EntityManager;
 
@@ -49,9 +49,9 @@ export default class LazyRouteInfo implements RouteInfo {
     guildUserOrUser,
     i18n,
   } : {
-    params : (string | Channel | DiscordUser | Role)[],
+    params : (string | AnyChannel | DiscordUser | Role)[],
     msg : Message | CommandInteraction | AutocompleteInteraction,
-    flags : Map<string, (string | Channel | DiscordUser | Role | boolean | number)[]>
+    flags : Map<string, (string | AnyChannel | DiscordUser | Role | boolean | number)[]>
     em : EntityManager,
     guildUserOrUser : GuildUser | User,
     i18n : I18n

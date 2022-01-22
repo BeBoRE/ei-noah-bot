@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import {
-  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel, NewsChannel, Channel, ThreadChannel,
+  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel, NewsChannel, ThreadChannel, AnyChannel,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
@@ -28,7 +28,7 @@ import LocaleRouter from './routes/Locale';
 
 dotenv.config();
 
-const mentionsToText = (params : Array<string | User | Role | Channel | number | boolean>, startAt = 0) : string => {
+const mentionsToText = (params : Array<string | User | Role | AnyChannel | number | boolean>, startAt = 0) : string => {
   const messageArray : string[] = [];
   for (let i = startAt; i < params.length; i += 1) {
     const item = params[i];

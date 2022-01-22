@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, ThreadChannel,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, ThreadChannel, AnyChannel,
 } from 'discord.js';
 import {
   MikroORM,
@@ -39,7 +39,7 @@ const errorToChannel = async (channelId : string, client : Client, err : unknown
 
 function mapParams(mention : string,
   client : Client,
-  guild : Guild | null) : Array<Promise<Role | DiscordUser | string | Channel>> {
+  guild : Guild | null) : Array<Promise<Role | DiscordUser | string | AnyChannel>> {
   const seperated : string[] = [];
 
   const matches = mention.match(/<(@[!&]?|#)[0-9]+>/g);
@@ -86,14 +86,14 @@ function mapParams(mention : string,
 }
 
 export async function parseParams(params : string[], client : Client, guild : Guild | null) {
-  const parsed : Array<Promise<DiscordUser | Channel | Role | string | null>> = [];
+  const parsed : Array<Promise<DiscordUser | AnyChannel | Role | string | null>> = [];
 
   params.forEach((param) => { parsed.push(...mapParams(param, client, guild)); });
 
   let resolved;
 
   try {
-    resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role | string | Channel => !!item));
+    resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role | string | AnyChannel => !!item));
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.httpStatus === 404) throw new Error('Invalid Mention of User, Role or Channel');
@@ -111,8 +111,8 @@ function isFlag(argument: string) {
 async function messageParser(msg : AutocompleteInteraction, em: EntityManager, i18n : I18n) : Promise<AutocompleteRouteInfo | null>;
 async function messageParser(msg : Message | CommandInteraction, em: EntityManager, i18n : I18n) : Promise<MsgRouteInfo | null>;
 async function messageParser(msg : Message | CommandInteraction | AutocompleteInteraction, em: EntityManager, i18n : I18n) : Promise<AutocompleteRouteInfo | MsgRouteInfo | null> {
-  const flags = new Map<string, Array<Role | DiscordUser | string | Channel | boolean | number>>();
-  const params : Array<Role | DiscordUser | string | Channel> = [];
+  const flags = new Map<string, Array<Role | DiscordUser | string | AnyChannel | boolean | number>>();
+  const params : Array<Role | DiscordUser | string | AnyChannel> = [];
   const user = msg instanceof Message ? msg.author : msg.user;
   const guildUserOrUser = msg.guild ? getUserGuildData(em, user, msg.guild) : getUserData(em, user);
 

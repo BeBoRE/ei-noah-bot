@@ -1,6 +1,7 @@
 import { EntityManager } from '@mikro-orm/postgresql';
 import {
-  Channel, CommandInteraction, Message, Role, User as DiscordUser,
+  AnyChannel,
+  CommandInteraction, Message, Role, User as DiscordUser,
 } from 'discord.js';
 import { i18n as I18n } from 'i18next';
 import { GuildUser } from '../entity/GuildUser';
@@ -12,9 +13,9 @@ export default class LazyMsgRouteInfo extends LazyRouteInfo implements MsgRouteI
   public msg : Message | CommandInteraction;
 
   constructor(info : {
-    params : (string | Channel | DiscordUser | Role)[],
+    params : (string | AnyChannel | DiscordUser | Role)[],
     msg : Message | CommandInteraction,
-    flags : Map<string, (string | Channel | DiscordUser | Role | boolean | number)[]>
+    flags : Map<string, (string | AnyChannel | DiscordUser | Role | boolean | number)[]>
     em : EntityManager,
     guildUserOrUser : GuildUser | User,
     i18n : I18n

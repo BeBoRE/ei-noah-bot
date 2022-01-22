@@ -1,5 +1,5 @@
 import {
-  Channel,
+  AnyChannel,
   Guild,
   Message,
   MessageButton,
@@ -52,7 +52,7 @@ const getQuoteOptions = async (guild : Guild, quote : Quote, i18n : I18n) : Prom
   return { embeds: [embed] };
 };
 
-const addQuote = (params : (string | DiscordUser | Channel | Role | number | boolean)[], quotedUser : GuildUser, owner : GuildUser, guild : Guild, i18n : I18n, date ?: Date) => {
+const addQuote = (params : (string | DiscordUser | AnyChannel | Role | number | boolean)[], quotedUser : GuildUser, owner : GuildUser, guild : Guild, i18n : I18n, date ?: Date) => {
   const text = params.map((param) => {
     if (typeof param === 'string') return param;
     return param.toString();

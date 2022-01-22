@@ -1,6 +1,5 @@
 import {
-  BaseGuildTextChannel,
-  MessageEmbed, TextChannel, User,
+  MessageEmbed, NewsChannel, TextChannel, ThreadChannel, User,
 } from 'discord.js';
 import Chain from 'markov-chains';
 import Router, { HandlerType } from '../router/Router';
@@ -40,9 +39,9 @@ router.use('user', async ({ flags, params, msg }) => {
   if (!chain) {
     userChain.set(user.id, null);
     const spliced : string[] = new Array<string>().concat(...(await Promise.all(msg.guild.channels.cache
-      .filter((channel) : channel is BaseGuildTextChannel => {
-        if (channel instanceof TextChannel) {
-          if (channel.nsfw) return false;
+      .filter((channel) : channel is (TextChannel | ThreadChannel | NewsChannel) => {
+        if (channel.isText()) {
+          if (!(channel instanceof ThreadChannel) && channel.nsfw) return false;
         }
 
         const permissions = msg.client.user && channel.permissionsFor(msg.client.user);

@@ -1,7 +1,8 @@
 import { EntityManager } from '@mikro-orm/postgresql';
 import {
+  AnyChannel,
   AutocompleteInteraction,
-  Channel, Role, User as DiscordUser,
+  Role, User as DiscordUser,
 } from 'discord.js';
 import { i18n as I18n } from 'i18next';
 import { GuildUser } from '../entity/GuildUser';
@@ -13,9 +14,9 @@ export default class LazyAutocompleteRouteInfo extends LazyRouteInfo implements 
   public msg : AutocompleteInteraction;
 
   constructor(info : {
-    params : (string | Channel | DiscordUser | Role)[],
+    params : (string | AnyChannel | DiscordUser | Role)[],
     msg : AutocompleteInteraction,
-    flags : Map<string, (string | Channel | DiscordUser | Role | boolean | number)[]>
+    flags : Map<string, (string | AnyChannel | DiscordUser | Role | boolean | number)[]>
     em : EntityManager,
     guildUserOrUser : GuildUser | User,
     i18n : I18n
