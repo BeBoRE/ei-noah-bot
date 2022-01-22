@@ -6,7 +6,7 @@ import { User } from './entity/User';
 import { Guild } from './entity/Guild';
 
 const getGuildData = async (em : EntityManager, guild : DiscordGuild) : Promise<Guild> => {
-  const dbGuild = await em.findOne(Guild, { id: guild.id });
+  const dbGuild = await em.findOne(Guild, guild.id);
 
   if (!dbGuild) {
     const newGuild = em.create(Guild, { id: guild.id });

@@ -17,7 +17,6 @@ class CoronaData extends BaseEntity<CoronaData, 'id'> {
     super();
     this.community = coronaInfo.Municipality_name;
     this.totalReported = coronaInfo.Total_reported;
-    this.hospitalAdmissions = coronaInfo.Hospital_admission;
     this.deceased = coronaInfo.Deceased;
 
     this.date = new Date(coronaInfo.Date_of_publication);
@@ -34,9 +33,6 @@ class CoronaData extends BaseEntity<CoronaData, 'id'> {
 
   @Property()
   totalReported!: number;
-
-  @Property()
-  hospitalAdmissions!: number;
 
   @Property()
   deceased!: number;

@@ -3,7 +3,7 @@ import {
   Guild,
   Message,
   MessageButton,
-  MessageEmbed, MessageOptions, NewsChannel, Permissions, Role, TextChannel, User as DiscordUser, Util,
+  MessageEmbed, MessageOptions, Permissions, Role, User as DiscordUser,
 } from 'discord.js';
 import { GuildUser } from 'entity/GuildUser';
 import { i18n as I18n } from 'i18next';
@@ -52,20 +52,18 @@ const getQuoteOptions = async (guild : Guild, quote : Quote, i18n : I18n) : Prom
   return { embeds: [embed] };
 };
 
-const addQuote = (params : (string | DiscordUser | Channel | Role | number | boolean)[], quotedUser : GuildUser, owner : GuildUser, guild : Guild, i18n : I18n) => {
-  const text = Util.removeMentions(params.map((param) => {
+const addQuote = (params : (string | DiscordUser | Channel | Role | number | boolean)[], quotedUser : GuildUser, owner : GuildUser, guild : Guild, i18n : I18n, date ?: Date) => {
+  const text = params.map((param) => {
     if (typeof param === 'string') return param;
-    if (param instanceof DiscordUser) return param.username;
-    if (param instanceof Role) return param.name;
-    if (param instanceof TextChannel || param instanceof NewsChannel) return param.name;
-    return '[UNKNOWN]';
-  }).join(' '));
+    return param.toString();
+  }).join(' ');
 
   if (text.length > 256) {
     return i18n.t('quote.error.quoteSizeLimit');
   }
 
   const quote = new Quote(text, owner);
+  if (date) quote.date = date;
   quotedUser.quotes.add(quote);
 
   return getQuoteOptions(guild, quote, i18n);
@@ -172,7 +170,7 @@ router.useContext('Save As Quote', 'MESSAGE', async ({
 
   const quoted = await getUserGuildData(em, message.author, message.guild);
 
-  const quoteMessage = await addQuote(message.content.split(' '), quoted, guildUser, message.guild, i18n);
+  const quoteMessage = await addQuote(message.content.split(' '), quoted, guildUser, message.guild, i18n, message.createdAt);
 
   if (typeof quoteMessage === 'string') return quoteMessage;
 
