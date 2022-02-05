@@ -5,12 +5,14 @@ import {
   MessageActionRow,
   MessageButton,
   MessageComponentInteraction,
+  MessageEditOptions,
   User as DiscordUser,
 } from 'discord.js';
 
 export type ButtonReturn = boolean | Promise<boolean>
 | void | Promise<void>
-| string | Promise<string>;
+| string | Promise<string>
+| MessageEditOptions | Promise<MessageEditOptions>;
 
 export type ExtraButton = [MessageButton, () => ButtonReturn];
 
@@ -135,8 +137,10 @@ async function createMenu<T>(
   if (msg instanceof Message) {
     message = await msg.reply({ content: await generateText(), components });
   } else {
+    await msg.deferReply();
     const followup = await msg.followUp({ content: await generateText(), components });
-    if (!(followup instanceof Message)) throw new TypeError('Follow up is not of type message');
+
+    if (!(followup instanceof Message) && !(followup instanceof CommandInteraction)) throw new TypeError('Follow up is not of type message');
     message = followup;
   }
 
@@ -169,8 +173,15 @@ async function createMenu<T>(
       if (destroyMessage || destroyMessage === undefined) {
         if (typeof destroyMessage === 'string') {
           interaction.update({ content: destroyMessage, components: [] }).catch((err) => console.log(err));
+        } else if (typeof destroyMessage === 'object') {
+          interaction.update({
+            content: null,
+            embeds: null,
+            components: [],
+            ...destroyMessage,
+          }).catch((err) => console.log(err));
         } else {
-          message.delete().catch(() => {});
+          message.delete().catch((err) => console.log(err));
         }
 
         collector.stop();
@@ -189,8 +200,10 @@ async function createMenu<T>(
       if (destroyMessage || destroyMessage === undefined) {
         if (typeof destroyMessage === 'string') {
           interaction.update({ content: destroyMessage, components: [] }).catch((err) => console.log(err));
+        } else if (typeof destroyMessage === 'object') {
+          interaction.update({ components: [], ...destroyMessage }).catch((err) => console.log(err));
         } else {
-          message.delete().catch(() => {});
+          message.delete().catch((err) => console.log(err));
         }
 
         collector.stop();

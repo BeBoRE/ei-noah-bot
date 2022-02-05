@@ -43,9 +43,15 @@ const getQuoteOptions = async (guild : Guild, quote : Quote, i18n : I18n) : Prom
   const avatarURL = (await quoted).avatarURL() || undefined;
   const color : number | undefined = guild.me?.displayColor;
 
-  embed.setAuthor((await quoted).username, avatarURL);
+  embed.author = {
+    name: (await quoted).username,
+    url: avatarURL,
+  };
   embed.setDescription(text);
-  embed.setFooter(i18n.t('quote.byUser', { user: (await owner).username }), (await owner).displayAvatarURL({ size: 64, dynamic: false }));
+  embed.footer = {
+    text: i18n.t('quote.byUser', { user: (await owner).username }),
+    iconURL: (await owner).displayAvatarURL({ size: 64, dynamic: false }),
+  };
   if (quote.date) embed.setTimestamp(quote.date);
   if (color) embed.setColor(color);
 
@@ -103,16 +109,14 @@ const handler : GuildHandler = async ({
       msg,
       title: i18n.t('quote.quoteMenuTitle'),
       mapper: (q) => q.text,
-      selectCallback: async (q) => {
-        msg.channel.send({
-          ...await getQuoteOptions(msg.guild, q, i18n),
-          allowedMentions: {
-            users: [],
-            roles: [],
-            repliedUser: false,
-          },
-        }).catch(() => { });
-      },
+      selectCallback: async (q) => ({
+        ...await getQuoteOptions(msg.guild, q, i18n),
+        allowedMentions: {
+          users: [],
+          roles: [],
+          repliedUser: false,
+        },
+      }),
     });
     return null;
   }

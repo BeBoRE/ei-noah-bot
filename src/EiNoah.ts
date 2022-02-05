@@ -345,7 +345,6 @@ class EiNoah implements IRouter {
       if (interaction.isCommand()) {
         const em = orm.em.fork();
 
-        const defer = interaction.deferReply();
         messageParser(interaction, em, this.i18n)
           .then((info) => {
             if (info) { return this.router.handle(info); }
@@ -355,8 +354,8 @@ class EiNoah implements IRouter {
           .then((options) => Promise.all([options, em.flush()]))
           .then(async ([options]) => {
             if (options) {
-              await defer;
-              return interaction.followUp({ allowedMentions: { users: [], roles: [] }, ...options });
+              if (interaction.deferred) return interaction.followUp({ allowedMentions: { users: [], roles: [] }, ...options });
+              return interaction.reply({ allowedMentions: { users: [], roles: [] }, ...options });
             }
             return null;
           })
@@ -408,8 +407,8 @@ class EiNoah implements IRouter {
           };
 
           await em.flush();
-          if (interaction.deferred) interaction.followUp(typeof (handlerReturn) === 'string' ? { ...defaultOptions, content: handlerReturn } : { ...defaultOptions, ...handlerReturn });
-          else interaction.reply(typeof (handlerReturn) === 'string' ? { ...defaultOptions, content: handlerReturn } : { ...defaultOptions, ...handlerReturn });
+          if (interaction.deferred) await interaction.followUp(typeof (handlerReturn) === 'string' ? { ...defaultOptions, content: handlerReturn } : { ...defaultOptions, ...handlerReturn });
+          else await interaction.reply(typeof (handlerReturn) === 'string' ? { ...defaultOptions, content: handlerReturn } : { ...defaultOptions, ...handlerReturn });
         } catch (err) {
           if (interaction.channel && process.env.ERROR_CHANNEL) {
             if (process.env.NODE_ENV !== 'production') {

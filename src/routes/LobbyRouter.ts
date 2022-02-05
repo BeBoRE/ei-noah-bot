@@ -871,9 +871,16 @@ const getDashboardOptions = (i18n : I18n, guild : Guild, leader : User, timeTill
   const avatarURL = leader.displayAvatarURL({ size: 64, dynamic: false, format: 'webp' });
   const color : number | undefined = guild.me?.displayColor || 0xffcc5f;
 
-  embed.setAuthor(i18n.t('lobby.leader', { user: leader.username }), avatarURL);
+  embed.author = {
+    name: i18n.t('lobby.leader', { user: leader.username }),
+    iconURL: avatarURL,
+  };
   embed.setDescription(text);
-  if (timeTill && newName) { embed.setFooter(i18n.t('lobby.nameOfLobbyChangeDuration', { duration: timeTill.locale(i18n.language).humanize(true), name: newName })); }
+  if (timeTill && newName) {
+    embed.footer = {
+      text: i18n.t('lobby.nameOfLobbyChangeDuration', { duration: timeTill.locale(i18n.language).humanize(true), name: newName }),
+    };
+  }
   if (color) embed.setColor(color);
 
   return { embeds: [embed], content: null };
