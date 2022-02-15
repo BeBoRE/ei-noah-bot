@@ -1501,11 +1501,12 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
         return (isPublic || isAllowedUser || hasAllowedRole) && !member.user.bot;
       })
       .first() || activeChannel.members
-      .sort(
-        (member1, member2) => (member1.joinedTimestamp || 0) - (member2.joinedTimestamp || 0),
-      )
       .filter((member) => !guildUsers.find((gu) => gu.user.id === member.id)?.tempChannel)
       .filter((member) => !member.user.bot)
+      .sort(
+        (member1, member2) => member1.roles.highest.position - member2.roles.highest.position,
+      )
+      .reverse()
       .first();
 
     if (newOwner) {
