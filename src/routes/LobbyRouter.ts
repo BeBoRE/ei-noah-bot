@@ -1486,10 +1486,10 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
     const guildUsers = await Promise.all(activeChannel.members
       .map((member) => getUserGuildData(em, member.user, activeChannel.guild)));
 
+    // Alleen users die toegestaan zijn in de lobby kunnen de lobby krijgen
+    // Als er niemand in de lobby zit die toegang heeft, dan krijgt iemand de lobby die geen toegang heeft
+    // Anders krijgt niemand hem
     const newOwner = activeChannel.members
-      .sort(
-        (member1, member2) => (member1.joinedTimestamp || 0) - (member2.joinedTimestamp || 0),
-      )
       .filter((member) => !guildUsers.find((gu) => gu.user.id === member.id)?.tempChannel)
       .filter((member) => {
         const isPublic = getChannelType(activeChannel) === ChannelType.Public;
@@ -1500,6 +1500,10 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
 
         return (isPublic || isAllowedUser || hasAllowedRole) && !member.user.bot;
       })
+      .sort(
+        (member1, member2) => member1.roles.highest.position - member2.roles.highest.position,
+      )
+      .reverse()
       .first() || activeChannel.members
       .filter((member) => !guildUsers.find((gu) => gu.user.id === member.id)?.tempChannel)
       .filter((member) => !member.user.bot)
