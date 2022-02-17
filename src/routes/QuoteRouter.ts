@@ -40,12 +40,11 @@ const getQuoteOptions = async (guild : Guild, quote : Quote, i18n : I18n) : Prom
 
   const embed = new MessageEmbed();
 
-  const avatarURL = (await quoted).avatarURL() || undefined;
   const color : number | undefined = guild.me?.displayColor;
 
   embed.author = {
     name: (await quoted).username,
-    url: avatarURL,
+    iconURL: (await quoted).displayAvatarURL({ size: 64, dynamic: false }),
   };
   embed.setDescription(text);
   embed.footer = {
