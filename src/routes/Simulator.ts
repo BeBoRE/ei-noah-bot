@@ -1,4 +1,5 @@
 import {
+  Interaction,
   MessageEmbed, NewsChannel, TextChannel, ThreadChannel, User,
 } from 'discord.js';
 import Chain from 'markov-chains';
@@ -35,6 +36,11 @@ router.use('user', async ({ flags, params, msg }) => {
   let chain : Chain<string> | undefined | null = userChain.get(user.id);
 
   if (chain === null) return 'Ik ben toch bezig smeerlap';
+
+  let defer;
+  if (msg instanceof Interaction) {
+    if (!msg.deferred) defer = msg.deferReply();
+  }
 
   if (!chain) {
     userChain.set(user.id, null);
@@ -93,6 +99,7 @@ router.use('user', async ({ flags, params, msg }) => {
     }
   }
 
+  await defer;
   if (!chain) return 'Er kon geen model voor dit persoon gemaakt worden';
 
   const fromState = flags.get('finish')?.map((element) => element.toString());
