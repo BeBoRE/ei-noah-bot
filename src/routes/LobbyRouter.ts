@@ -33,6 +33,11 @@ import {
   ButtonStyle,
   MessageEditOptions,
   InteractionUpdateOptions,
+  Modal,
+  TextInputComponent,
+  ModalActionRowComponent,
+  TextInputStyle,
+  Interaction,
 } from 'discord.js';
 import {
   UniqueConstraintViolationException,
@@ -800,7 +805,7 @@ router.use('remove', async ({
   ],
 });
 
-const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, guildUser : GuildUser, owner : DiscordUser, i18n : I18n) => {
+const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManager, guildUser : GuildUser, owner : DiscordUser, i18n : I18n) => {
   const currentType = getChannelType(voiceChannel);
 
   const query = em.createQueryBuilder(LobbyNameChange, 'lnc')
@@ -878,6 +883,16 @@ const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, 
   if (latestNameChanges.length > 0) {
     actionRows.push(selectMenuRow);
   }
+
+  const renameButtonRow = new ActionRow();
+  renameButtonRow.addComponents(new ButtonComponent({
+    style: ButtonStyle.Secondary,
+    customId: 'open-rename-modal',
+    label: i18n.t('lobby.renameButton'),
+    emoji: { name: '✏' },
+  }));
+
+  actionRows.push(renameButtonRow);
 
   return actionRows;
 };
@@ -999,7 +1014,7 @@ const changeLobby = (() => {
 
                     return null;
                   })
-                  .then(async (msg) => msg?.edit({ ...<MessageEditOptions[]>getDashboardOptions(i18n, guild, owner), components: await generateButtons(vc, em, tempChannel.guildUser, owner, i18n) }))
+                  .then(async (msg) => msg?.edit({ ...<MessageEditOptions[]>getDashboardOptions(i18n, guild, owner), components: await generateComponents(vc, em, tempChannel.guildUser, owner, i18n) }))
                   .catch(() => { });
               }
             } else {
@@ -1041,9 +1056,9 @@ const changeLobby = (() => {
 
     const content = getDashboardOptions(i18n, guild, owner, timeTillNameChange, newName);
 
-    if (!(interaction && interaction.update({ ...<InteractionUpdateOptions>content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).then(() => true).catch(() => false)) && tempChannel.controlDashboardId) {
+    if (!(interaction && await interaction.update({ ...<InteractionUpdateOptions>content, components: await generateComponents(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).then(() => true).catch(() => false)) && tempChannel.controlDashboardId) {
       const msg = await (await textChannel)?.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => null);
-      if (msg) msg.edit({ ...<MessageEditOptions>content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).catch(() => {});
+      if (msg) msg.edit({ ...<MessageEditOptions>content, components: await generateComponents(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).catch(() => {});
     }
 
     return timeTillNameChange;
@@ -1438,7 +1453,7 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
   });
 };
 
-const msgCollectors = new Map<Snowflake, InteractionCollector<MessageComponentInteraction>>();
+const msgCollectors = new Map<Snowflake, InteractionCollector<Interaction>>();
 
 const createDashBoardCollector = async (client : Client, voiceChannel : VoiceChannel, tempChannel : TempChannel, _em : EntityManager, _i18n : I18n) => {
   const textChannel = await activeTempText(client, tempChannel);
@@ -1448,7 +1463,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
   if (textChannel && owner) {
     let msg = tempChannel.controlDashboardId ? await textChannel.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => undefined) : undefined;
     if (!msg) {
-      msg = await textChannel.send({ ...getDashboardOptions(i18, textChannel.guild, owner), components: await generateButtons(voiceChannel, _em, tempChannel.guildUser, owner, i18) }).catch((err) => { console.error(err); return undefined; });
+      msg = await textChannel.send({ ...getDashboardOptions(i18, textChannel.guild, owner), components: await generateComponents(voiceChannel, _em, tempChannel.guildUser, owner, i18) }).catch((err) => { console.error(err); return undefined; });
       if (msg) tempChannel.controlDashboardId = msg.id;
     }
 
@@ -1456,11 +1471,12 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
     // if (!msg?.pinned && msg?.pinnable && client.user && textChannel.permissionsFor(client.user, true)?.has(PermissionsBitField.Flags.ManageMessages)) await msg.pin();
 
     if (msg && !msgCollectors.has(msg.id)) {
-      msgCollectors.set(msg.id, msg.createMessageComponentCollector().on('collect', async (interaction) => {
+      const collector = new InteractionCollector(client, { message: msg });
+      collector.on('collect', async (interaction) => {
         const em = _em.fork();
         const currentTempChannel = await em.findOne(TempChannel, { channelId: voiceChannel.id }, { populate: { guildUser: { user: true, guild: true } } });
 
-        if (interaction.isMessageComponent() && currentTempChannel && interaction.guild) {
+        if ((interaction.isMessageComponent() || interaction.isModalSubmit()) && currentTempChannel && interaction.guild) {
           const i18n = _i18n.cloneInstance({ lng: currentTempChannel.guildUser.user.language || currentTempChannel.guildUser.guild.language });
           if (interaction.user.id !== currentTempChannel.guildUser.user.id) {
             interaction.reply({ content: i18n.t('lobby.error.onlyOwner'), ephemeral: true });
@@ -1470,13 +1486,48 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
           const limit = Number.parseInt(interaction.customId, 10);
           const currentType = getChannelType(voiceChannel);
 
-          if (Number.isSafeInteger(limit)) {
+          if (interaction.isModalSubmit()) {
+            const newName = interaction.fields.getTextInputValue('name');
+
+            try {
+              const voiceName = generateLobbyName(currentType, interaction.user, newName, false);
+              currentTempChannel.name = newName;
+
+              const duration = await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, null, em, i18n);
+
+              interaction.reply({
+                ephemeral: true,
+                content: duration ? i18n.t('lobby.lobbyNameChangeTimeLimit', {
+                  duration: duration.humanize(true),
+                  name: voiceName,
+                }) : i18n.t('lobby.lobbyNameChanged', { name: voiceName }),
+              }).catch((err) => console.log(err));
+            } catch (err) {
+              interaction.reply({ content: i18n.t('lobby.error.noEmojiOnly'), ephemeral: true });
+            }
+          } else if (Number.isSafeInteger(limit)) {
             if (limit >= 0 && limit < 100 && interaction.guild) {
               await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, limit, false, interaction, em, i18n);
             }
           } else if (interaction.isSelectMenu() && interaction.customId === 'name') {
             [currentTempChannel.name] = interaction.values;
             await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, interaction, em, i18n);
+          } else if (interaction.customId === 'open-rename-modal') {
+            const modal = new Modal();
+            modal.setCustomId('rename-modal');
+            modal.setTitle(i18n.t('lobby.renameModal.title'));
+
+            const row = new ActionRow<ModalActionRowComponent>();
+            row.addComponents(new TextInputComponent({
+              customId: 'name',
+              style: TextInputStyle.Short,
+              label: i18n.t('lobby.renameModal.nameLabel'),
+              maxLength: 80,
+            }));
+
+            modal.setComponents(row);
+
+            interaction.showModal(modal);
           } else {
             const changeTo = <ChannelType>interaction.customId;
 
@@ -1487,7 +1538,9 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
 
           await em.flush();
         }
-      }));
+      });
+
+      msgCollectors.set(msg.id, collector);
     }
   }
 };

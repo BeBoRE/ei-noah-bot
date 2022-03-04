@@ -136,6 +136,11 @@
       "***Manage your lobby with these commands***",
       "$t(lobby.commands)"
     ],
+    "renameButton": "Edit lobby name",
+    "renameModal": {
+      "title": "Change lobby name",
+      "nameLabel": "Lobby name"
+    },
     "leader": "Leader: {{user}}",
     "error": {
       "onlyMentions":"Only mention(s) are allowed as arguments",
