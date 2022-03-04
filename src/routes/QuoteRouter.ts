@@ -2,8 +2,8 @@ import {
   AnyChannel,
   Guild,
   Message,
-  MessageButton,
-  MessageEmbed, MessageOptions, Permissions, Role, User as DiscordUser,
+  ButtonComponent,
+  Embed, PermissionsBitField, Role, User as DiscordUser, InteractionReplyOptions, InteractionUpdateOptions, ApplicationCommandOptionType, ApplicationCommandType, ButtonStyle,
 } from 'discord.js';
 import { GuildUser } from 'entity/GuildUser';
 import { i18n as I18n } from 'i18next';
@@ -18,7 +18,7 @@ router.use('help', ({ i18n }) => i18n.t('quote.help', { joinArrays: '\n' }), Han
   description: 'Help menu for quote\'s',
 });
 
-const getQuoteOptions = async (guild : Guild, quote : Quote, i18n : I18n) : Promise<MessageOptions> => {
+const getQuoteOptions = async (guild : Guild, quote : Quote, i18n : I18n) : Promise<InteractionReplyOptions> => {
   await Promise.all([(() => {
     if (!quote.guildUser.isInitialized()) return quote.guildUser.init();
 
@@ -38,19 +38,19 @@ const getQuoteOptions = async (guild : Guild, quote : Quote, i18n : I18n) : Prom
 
   if (text.match(linkRegex)) return { content: `${text}\n> - ${await quoted} ${quote.date ? `(<t:${quote.date.getTime() / 1000}:D>)` : ''}\n> ${i18n.t('quote.byUser', { user: (await owner).toString() })}` };
 
-  const embed = new MessageEmbed();
+  const embed = new Embed();
 
   const color : number | undefined = guild.me?.displayColor;
 
-  embed.author = {
+  embed.setAuthor({
     name: (await quoted).username,
-    iconURL: (await quoted).displayAvatarURL({ size: 64, dynamic: false }),
-  };
+    iconURL: (await quoted).displayAvatarURL({ size: 64 }),
+  });
   embed.setDescription(text);
-  embed.footer = {
+  embed.setFooter({
     text: i18n.t('quote.byUser', { user: (await owner).username }),
-    iconURL: (await owner).displayAvatarURL({ size: 64, dynamic: false }),
-  };
+    iconURL: (await owner).displayAvatarURL({ size: 64 }),
+  });
   if (quote.date) embed.setTimestamp(quote.date);
   if (color) embed.setColor(color);
 
@@ -109,11 +109,10 @@ const handler : GuildHandler = async ({
       title: i18n.t('quote.quoteMenuTitle'),
       mapper: (q) => q.text,
       selectCallback: async (q) => ({
-        ...await getQuoteOptions(msg.guild, q, i18n),
+        ...<InteractionUpdateOptions> await getQuoteOptions(msg.guild, q, i18n),
         allowedMentions: {
           users: [],
           roles: [],
-          repliedUser: false,
         },
       }),
     });
@@ -133,7 +132,7 @@ router.use('get', handler, HandlerType.GUILD, {
     {
       name: 'persoon',
       description: 'Person you want to quote',
-      type: 'USER',
+      type: ApplicationCommandOptionType.User,
       required: true,
     },
   ],
@@ -144,19 +143,19 @@ router.use('add', handler, HandlerType.GUILD, {
     {
       name: 'persoon',
       description: 'Person you want to add a quote from',
-      type: 'USER',
+      type: ApplicationCommandOptionType.User,
       required: true,
     }, {
       name: 'quote',
       description: 'Quote you want to add',
-      type: 'STRING',
+      type: ApplicationCommandOptionType.String,
       required: true,
     },
   ],
 });
 router.use('toevoegen', handler, HandlerType.GUILD);
 
-router.useContext('Save As Quote', 'MESSAGE', async ({
+router.useContext('Save As Quote', ApplicationCommandType.Message, async ({
   interaction, i18n, guildUser, em,
 }) => {
   const message = interaction.options.getMessage('message');
@@ -197,7 +196,7 @@ const removeHandler : GuildHandler = async ({
 
   // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
-  const constraint = guToRemoveFrom.user.id === requestingUser.id || msg.member?.permissions.has(Permissions.FLAGS.ADMINISTRATOR)
+  const constraint = guToRemoveFrom.user.id === requestingUser.id || msg.member?.permissions.has(PermissionsBitField.Flags.Administrator)
     ? undefined : { where: { creator: guildUser } };
 
   if (!guToRemoveFrom.quotes.isInitialized()) { await guToRemoveFrom.quotes.init(constraint); }
@@ -225,8 +224,8 @@ const removeHandler : GuildHandler = async ({
     },
     extraButtons: [
       [
-        new MessageButton({
-          style: 'DANGER',
+        new ButtonComponent({
+          style: ButtonStyle.Danger,
           label: '❌',
           customId: 'delete',
         }),
@@ -250,7 +249,7 @@ router.use('remove', removeHandler, HandlerType.GUILD, {
     {
       name: 'user',
       description: 'User you wan\'t to remove a quote from',
-      type: 'USER',
+      type: ApplicationCommandOptionType.User,
       required: true,
     },
   ],

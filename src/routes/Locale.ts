@@ -1,4 +1,4 @@
-import { Message } from 'discord.js';
+import { ApplicationCommandOptionType, Message, PermissionsBitField } from 'discord.js';
 import Router, { HandlerType } from '../router/Router';
 
 const router = new Router('Select your language');
@@ -38,7 +38,7 @@ router.use('user', async ({
   description: 'Change your individual language',
   options: [{
     name: 'language',
-    type: 'STRING',
+    type: ApplicationCommandOptionType.String,
     description: "Language you want to change to ('none removes your preference')",
     required: true,
   }],
@@ -54,7 +54,7 @@ router.use('server', async ({
   if (typeof language !== 'string') return i18n.t('locale.error.notLanguage');
 
   if (!availableLanguages.includes(language) && language !== 'none') return i18n.t('locale.error.notLanguage');
-  if (!member || !member.permissions.has('ADMINISTRATOR')) return i18n.t('locale.error.notAdmin');
+  if (!member || !member.permissions.has(PermissionsBitField.Flags.Administrator)) return i18n.t('locale.error.notAdmin');
 
   if (language === 'none') {
     // eslint-disable-next-line no-param-reassign
@@ -73,7 +73,7 @@ router.use('server', async ({
   description: 'Change the server\'s default language',
   options: [{
     name: 'language',
-    type: 'STRING',
+    type: ApplicationCommandOptionType.String,
     description: 'Language you want to change to',
     required: true,
   }],

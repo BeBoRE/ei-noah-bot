@@ -3,7 +3,7 @@ import {
   User as DiscordUser,
   DMChannel,
   OverwriteData,
-  Permissions,
+  PermissionsBitField,
   Guild as DiscordGuild,
   Client,
   VoiceChannel,
@@ -16,16 +16,23 @@ import {
   User,
   Snowflake,
   Message,
-  MessageActionRow,
-  MessageButton,
+  ActionRow,
+  ButtonComponent,
   Guild,
   MessageComponentInteraction,
   InteractionCollector,
-  MessageSelectMenu,
-  MessageSelectOptionData,
+  SelectMenuComponent,
   MessageOptions,
-  MessageEmbed,
+  Embed,
   AnyChannel,
+  GuildPremiumTier,
+  SelectMenuOption,
+  ChannelType as DiscordChannelType,
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
+  ButtonStyle,
+  MessageEditOptions,
+  InteractionUpdateOptions,
 } from 'discord.js';
 import {
   UniqueConstraintViolationException,
@@ -36,6 +43,7 @@ import {
 import emojiRegex from 'emoji-regex';
 import moment, { Duration } from 'moment';
 import { i18n as I18n } from 'i18next';
+import { OverwriteType } from 'discord-api-types/v9';
 import LobbyNameChange from '../entity/LobbyNameChange';
 import { Category } from '../entity/Category';
 import TempChannel from '../entity/TempChannel';
@@ -89,32 +97,32 @@ function generateLobbyName(
 }
 
 function toDeny(type : ChannelType) {
-  if (type === ChannelType.Mute) return [Permissions.FLAGS.SPEAK];
-  if (type === ChannelType.Nojoin) return [Permissions.FLAGS.CONNECT, Permissions.FLAGS.SPEAK];
+  if (type === ChannelType.Mute) return [PermissionsBitField.Flags.Speak];
+  if (type === ChannelType.Nojoin) return [PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak];
   if (type === ChannelType.Public) return [];
 
   return [];
 }
 
 function toDenyText(type : ChannelType) {
-  if (type === ChannelType.Mute) return [Permissions.FLAGS.SEND_MESSAGES];
-  if (type === ChannelType.Nojoin) return [Permissions.FLAGS.VIEW_CHANNEL];
+  if (type === ChannelType.Mute) return [PermissionsBitField.Flags.SendMessages];
+  if (type === ChannelType.Nojoin) return [PermissionsBitField.Flags.ViewChannel];
   if (type === ChannelType.Public) return [];
 
   return [];
 }
 
 function getChannelType(channel : VoiceChannel) {
-  if (!channel.permissionOverwrites.resolve(channel.guild.id)?.deny.has('CONNECT')) {
-    if (!channel.permissionOverwrites.resolve(channel.guild.id)?.deny.has('SPEAK')) return ChannelType.Public;
+  if (!channel.permissionOverwrites.resolve(channel.guild.id)?.deny.has(PermissionsBitField.Flags.Connect)) {
+    if (!channel.permissionOverwrites.resolve(channel.guild.id)?.deny.has(PermissionsBitField.Flags.Speak)) return ChannelType.Public;
     return ChannelType.Mute;
   } return ChannelType.Nojoin;
 }
 
 function getMaxBitrate(guild : Guild) : number {
-  if (guild.premiumTier === 'TIER_1') return 128000;
-  if (guild.premiumTier === 'TIER_2') return 256000;
-  if (guild.premiumTier === 'TIER_3') return 384000;
+  if (guild.premiumTier === GuildPremiumTier.Tier1) return 128000;
+  if (guild.premiumTier === GuildPremiumTier.Tier2) return 256000;
+  if (guild.premiumTier === GuildPremiumTier.Tier3) return 384000;
   return 96000;
 }
 
@@ -129,7 +137,7 @@ async function createTempChannel(
 
   const permissionOverwrites : OverwriteData[] = userSnowflakes.map((id) => ({
     id,
-    allow: [Permissions.FLAGS.CONNECT, Permissions.FLAGS.SPEAK],
+    allow: [PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak],
   }));
 
   const bot = guild.client.user;
@@ -139,12 +147,12 @@ async function createTempChannel(
     permissionOverwrites.push({
       id: bot.id,
       allow: [
-        Permissions.FLAGS.CONNECT,
-        Permissions.FLAGS.SPEAK,
-        Permissions.FLAGS.MUTE_MEMBERS,
-        Permissions.FLAGS.MOVE_MEMBERS,
-        Permissions.FLAGS.DEAFEN_MEMBERS,
-        Permissions.FLAGS.MANAGE_CHANNELS,
+        PermissionsBitField.Flags.Connect,
+        PermissionsBitField.Flags.Speak,
+        PermissionsBitField.Flags.MuteMembers,
+        PermissionsBitField.Flags.MoveMembers,
+        PermissionsBitField.Flags.DeafenMembers,
+        PermissionsBitField.Flags.ManageChannels,
       ],
     });
   }
@@ -152,8 +160,8 @@ async function createTempChannel(
   permissionOverwrites.push({
     id: owner.id,
     allow: [
-      Permissions.FLAGS.CONNECT,
-      Permissions.FLAGS.SPEAK,
+      PermissionsBitField.Flags.Connect,
+      PermissionsBitField.Flags.Speak,
     ],
   });
 
@@ -169,7 +177,7 @@ async function createTempChannel(
   if (!name) throw new Error('Invalid Name');
 
   return guild.channels.create(name, {
-    type: 'GUILD_VOICE',
+    type: DiscordChannelType.GuildVoice,
     permissionOverwrites,
     parent,
     bitrate: bitrate < maxBitrate ? bitrate : maxBitrate,
@@ -188,7 +196,7 @@ async function activeTempChannel(client : Client, em : EntityManager, tempChanne
     }
   } catch (err) {
     if (err instanceof DiscordAPIError) {
-      if (err.httpStatus === 404) {
+      if (err.status === 404) {
         em.remove(tempChannel);
         return undefined;
       }
@@ -209,7 +217,7 @@ async function activeTempText(client : Client, tempChannel : TempChannel) {
     }
   } catch (err) {
     if (err instanceof DiscordAPIError) {
-      if (err.httpStatus === 404) {
+      if (err.status === 404) {
         tempChannel.textChannelId = undefined;
         return undefined;
       }
@@ -220,8 +228,9 @@ async function activeTempText(client : Client, tempChannel : TempChannel) {
   return undefined;
 }
 
-function getTextPermissionOverwrites(voice : VoiceChannel) : OverwriteData[] {
+function getTextPermissionOverwrites(voice : VoiceChannel, client : Client) : OverwriteData[] {
   return voice.permissionOverwrites.cache.map((overwrite) : OverwriteData => {
+    // @Everyone overwrite
     if (overwrite.id === voice.guild.id) {
       return {
         id: overwrite.id,
@@ -230,8 +239,18 @@ function getTextPermissionOverwrites(voice : VoiceChannel) : OverwriteData[] {
       };
     }
 
+    // @ei-noah / self overwrite
+    if (overwrite.id === client.user?.id) {
+      return {
+        id: overwrite.id,
+        allow: [PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ManageMessages, PermissionsBitField.Flags.ViewChannel],
+        type: overwrite.type,
+      };
+    }
+
+    // Individual overwrites
     return {
-      allow: [Permissions.FLAGS.SEND_MESSAGES, Permissions.FLAGS.VIEW_CHANNEL, Permissions.FLAGS.ADD_REACTIONS, Permissions.FLAGS.READ_MESSAGE_HISTORY],
+      allow: [PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.AddReactions, PermissionsBitField.Flags.ReadMessageHistory],
       id: overwrite.id,
       type: overwrite.type,
     };
@@ -248,11 +267,11 @@ async function createTextChannel(
   if (!voiceChannel) throw Error('There is no active temp channel');
 
   const permissionOverwrites : OverwriteData[] = [
-    ...getTextPermissionOverwrites(voiceChannel),
+    ...getTextPermissionOverwrites(voiceChannel, client),
     {
       id: voiceChannel.guild.id,
-      type: 'role',
-      deny: 'VIEW_CHANNEL',
+      type: OverwriteType.Role,
+      deny: PermissionsBitField.Flags.ViewChannel,
     },
   ];
 
@@ -263,22 +282,22 @@ async function createTextChannel(
   return voiceChannel.guild.channels.create(
     name,
     {
-      type: 'GUILD_TEXT',
+      type: DiscordChannelType.GuildText,
       parent: voiceChannel.parent || undefined,
       permissionOverwrites,
-      position: voiceChannel.calculatedPosition + 1,
+      position: voiceChannel.position + 1,
     },
   );
 }
 
 function updateTextChannel(voice : VoiceChannel, text : TextChannel) {
-  return text.permissionOverwrites.set(getTextPermissionOverwrites(voice));
+  return text.permissionOverwrites.set(getTextPermissionOverwrites(voice, voice.client));
 }
 
 const createCreateChannel = (type : ChannelType, category : CategoryChannel) => {
   const typeName = `${type[0].toUpperCase()}${type.substring(1, type.length)}`;
   return category.guild.channels.create(`${getIcon(type)} Create ${typeName} Lobby`, {
-    type: 'GUILD_VOICE',
+    type: DiscordChannelType.GuildVoice,
     parent: category,
   });
 };
@@ -345,9 +364,9 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
   const newOverwrites : OverwriteResolvable[] = [...activeChannel.permissionOverwrites.cache.values(), ...allowedUsers.map((userOrRole) : OverwriteResolvable => ({
     id: userOrRole.id,
     allow: [
-      'SPEAK',
-      'CONNECT',
-      'VIEW_CHANNEL',
+      PermissionsBitField.Flags.Speak,
+      PermissionsBitField.Flags.Connect,
+      PermissionsBitField.Flags.ViewChannel,
     ],
   }))];
 
@@ -411,72 +430,72 @@ router.use('add', async ({
   options: [{
     name: 'mention',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
     required: true,
   }, {
     name: '1',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '2',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '3',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '4',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '5',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '6',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '7',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '8',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '9',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '10',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '11',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '12',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '13',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '14',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }, {
     name: '15',
     description: 'User or role you want to add',
-    type: 'MENTIONABLE',
+    type: ApplicationCommandOptionType.Mentionable,
   }],
 });
 
-router.useContext('Add To Lobby', 'USER', async ({
+router.useContext('Add To Lobby', ApplicationCommandType.User, async ({
   interaction, guildUser, em, i18n,
 }) => {
   if (!guildUser) return i18n.t('error.onlyUsableOnGuild');
@@ -491,7 +510,7 @@ router.useContext('Add To Lobby', 'USER', async ({
   if (interaction.channel?.id !== guildUser.tempChannel.textChannelId) {
     const textChannel = await activeTempText(interaction.client, guildUser.tempChannel);
 
-    if (addResponse.allowedUsersOrRoles.length && interaction.channel?.id !== textChannel?.id && interaction.client.user && textChannel?.permissionsFor(interaction.client.user)?.has('SEND_MESSAGES')) {
+    if (addResponse.allowedUsersOrRoles.length && interaction.channel?.id !== textChannel?.id && interaction.client.user && textChannel?.permissionsFor(interaction.client.user)?.has(PermissionsBitField.Flags.SendMessages)) {
       textChannel.send(addResponse.alreadyAllowedMessage).catch(() => {});
     }
 
@@ -525,7 +544,7 @@ const removeFromLobby = (
         if (!channel.permissionOverwrites.cache.has(member.id)
         && channel.members.has(member.id)
         && !toRemoveUsers.some((user) => user.id === member.id)) {
-          deletePromises.push(channel.permissionOverwrites.edit(member.id, { CONNECT: true, SPEAK: true }));
+          deletePromises.push(channel.permissionOverwrites.edit(member.id, { Connect: true, Speak: true }));
           usersGivenPermissions.push(member);
         }
       });
@@ -688,10 +707,10 @@ router.use('remove', async ({
         return false;
       },
       extraButtons: [
-        [new MessageButton({
+        [new ButtonComponent({
           label: '❌',
           customId: 'delete',
-          style: 'DANGER',
+          style: ButtonStyle.Danger,
         }), () => {
           if (guildUser.tempChannel) {
             return removeFromLobby(activeChannel,
@@ -715,68 +734,68 @@ router.use('remove', async ({
   options: [
     {
       name: 'mention',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
       description: 'Person or role to remove',
     }, {
       name: '1',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '2',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '3',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '4',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '5',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '6',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '7',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '8',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '9',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '10',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '11',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '12',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '13',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '14',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     }, {
       name: '15',
       description: 'Person or role to remove',
-      type: 'MENTIONABLE',
+      type: ApplicationCommandOptionType.Mentionable,
     },
   ],
 });
@@ -794,71 +813,70 @@ const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, 
 
   const latestNameChanges = await em.getConnection().execute<LobbyNameChange[]>(query);
 
-  const selectMenu = new MessageSelectMenu();
+  const selectMenu = new SelectMenuComponent();
   selectMenu.setCustomId('name');
   selectMenu.setPlaceholder(i18n.t('lobby.noNameSelected'));
-  selectMenu.addOptions(latestNameChanges.map((ltc) : MessageSelectOptionData => {
+  selectMenu.addOptions(...latestNameChanges.map((ltc) : SelectMenuOption => {
     const generatedName = generateLobbyName(currentType, owner, ltc.name);
 
     if (!generatedName) throw new Error('Invalid Name');
 
     const icon = emojiRegex().exec(generatedName)?.[0];
+    const option = new SelectMenuOption();
+    if (icon) option.setEmoji({ name: icon });
+    option.setLabel(icon ? generatedName.substring(icon?.length).trim() : generatedName);
+    option.setValue(ltc.name);
+    option.setDefault(generatedName === voiceChannel.name);
 
-    return {
-      emoji: icon ?? undefined,
-      label: icon ? generatedName.substring(icon?.length).trim() : generatedName,
-      value: ltc.name,
-      default: generatedName === voiceChannel.name,
-    };
+    return option;
   }));
 
-  const limitRow = new MessageActionRow({
-    components: [new MessageButton({
-      customId: '0',
-      label: i18n.t('lobby.none') || 'none',
-      style: voiceChannel.userLimit === 0 ? 'SUCCESS' : 'SECONDARY',
-      disabled: voiceChannel.userLimit === 0,
-    })],
-  });
+  const limitRow = new ActionRow();
+
+  limitRow.addComponents(new ButtonComponent({
+    customId: '0',
+    label: i18n.t('lobby.none') || 'none',
+    style: voiceChannel.userLimit === 0 ? ButtonStyle.Success : ButtonStyle.Secondary,
+    disabled: voiceChannel.userLimit === 0,
+  }));
 
   for (let i = 2; i <= 5; i += 1) {
-    limitRow.addComponents(new MessageButton({
+    limitRow.addComponents(new ButtonComponent({
       customId: `${i}`,
       label: `${i}`,
-      style: voiceChannel.userLimit === i ? 'SUCCESS' : 'SECONDARY',
+      style: voiceChannel.userLimit === i ? ButtonStyle.Success : ButtonStyle.Secondary,
       disabled: voiceChannel.userLimit === i,
     }));
   }
 
-  const highLimitButtons = new MessageActionRow({
-    components: [10, 12, 15, 20, 25].map((n) => new MessageButton({
-      customId: `${n}`,
-      label: `${n}`,
-      style: voiceChannel.userLimit === n ? 'SUCCESS' : 'SECONDARY',
-      disabled: voiceChannel.userLimit === n,
-    })),
-  });
+  const highLimitButtons = new ActionRow();
+  highLimitButtons.addComponents(...[10, 12, 15, 20, 25].map((n) => new ButtonComponent({
+    customId: `${n}`,
+    label: `${n}`,
+    style: voiceChannel.userLimit === n ? ButtonStyle.Success : ButtonStyle.Secondary,
+    disabled: voiceChannel.userLimit === n,
+  })));
+
+  const channelTypeButtons = new ActionRow();
+  channelTypeButtons.addComponents(...Object.entries(ChannelType).map(([,type]) => new ButtonComponent({
+    customId: type,
+    emoji: { name: getIcon(type) },
+    label: `${type[0].toUpperCase()}${type.substring(1)}`,
+    style: currentType === type ? ButtonStyle.Success : ButtonStyle.Secondary,
+    disabled: currentType === type,
+  })));
 
   const actionRows = [
-    new MessageActionRow({
-      components: Object.entries(ChannelType).map(([,type]) => new MessageButton({
-        customId: type,
-        emoji: getIcon(type),
-        label: `${type[0].toUpperCase()}${type.substring(1)}`,
-        style: currentType === type ? 'SUCCESS' : 'SECONDARY',
-        disabled: currentType === type,
-      })),
-    }),
+    channelTypeButtons,
     limitRow,
     highLimitButtons,
   ];
 
+  const selectMenuRow = new ActionRow();
+  selectMenuRow.addComponents(selectMenu);
+
   if (latestNameChanges.length > 0) {
-    actionRows.push(new MessageActionRow({
-      components: [
-        selectMenu,
-      ],
-    }));
+    actionRows.push(selectMenuRow);
   }
 
   return actionRows;
@@ -866,21 +884,24 @@ const generateButtons = async (voiceChannel : VoiceChannel, em : EntityManager, 
 
 const getDashboardOptions = (i18n : I18n, guild : Guild, leader : User, timeTill ?: Duration, newName ?: string) : MessageOptions => {
   const text = `${i18n.t('lobby.dashboardText', { joinArrays: '\n' })}`;
-  const embed = new MessageEmbed();
+  const embed = new Embed();
 
-  const avatarURL = leader.displayAvatarURL({ size: 64, dynamic: false, format: 'webp' });
+  const avatarURL = leader.displayAvatarURL({ size: 64, extension: 'webp' });
   const color : number | undefined = guild.me?.displayColor || 0xffcc5f;
 
-  embed.author = {
+  embed.setAuthor({
     name: i18n.t('lobby.leader', { user: leader.username }),
     iconURL: avatarURL,
-  };
+  });
+
   embed.setDescription(text);
+
   if (timeTill && newName) {
-    embed.footer = {
+    embed.setFooter({
       text: i18n.t('lobby.nameOfLobbyChangeDuration', { duration: timeTill.locale(i18n.language).humanize(true), name: newName }),
-    };
+    });
   }
+
   if (color) embed.setColor(color);
 
   return { embeds: [embed], content: null };
@@ -913,7 +934,7 @@ const changeLobby = (() => {
     if (changeTo !== currentType || forcePermissionUpdate) {
       const newOverwrites = currentType === ChannelType.Public ? voiceChannel.members
         .filter((member) => !voiceChannel.permissionOverwrites.cache.has(member.id))
-        .map((member) : OverwriteResolvable => ({ id: member.id, allow: ['SPEAK', 'CONNECT'] })) : [];
+        .map((member) : OverwriteResolvable => ({ id: member.id, allow: [PermissionsBitField.Flags.Speak, PermissionsBitField.Flags.Connect] })) : [];
 
       if (currentType === ChannelType.Mute && changeTo === ChannelType.Public) {
         voiceChannel.members
@@ -978,7 +999,7 @@ const changeLobby = (() => {
 
                     return null;
                   })
-                  .then(async (msg) => msg?.edit({ ...getDashboardOptions(i18n, guild, owner), components: await generateButtons(vc, em, tempChannel.guildUser, owner, i18n) }))
+                  .then(async (msg) => msg?.edit({ ...<MessageEditOptions[]>getDashboardOptions(i18n, guild, owner), components: await generateButtons(vc, em, tempChannel.guildUser, owner, i18n) }))
                   .catch(() => { });
               }
             } else {
@@ -1020,9 +1041,9 @@ const changeLobby = (() => {
 
     const content = getDashboardOptions(i18n, guild, owner, timeTillNameChange, newName);
 
-    if (!(interaction && interaction.update({ ...content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).then(() => true).catch(() => false)) && tempChannel.controlDashboardId) {
+    if (!(interaction && interaction.update({ ...<InteractionUpdateOptions>content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).then(() => true).catch(() => false)) && tempChannel.controlDashboardId) {
       const msg = await (await textChannel)?.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => null);
-      if (msg) msg.edit({ ...content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).catch(() => {});
+      if (msg) msg.edit({ ...<MessageEditOptions>content, components: await generateButtons(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).catch(() => {});
     }
 
     return timeTillNameChange;
@@ -1102,7 +1123,7 @@ router.use('type', changeTypeHandler, HandlerType.GUILD, {
           value: ChannelType.Public,
         },
       ],
-      type: 'STRING',
+      type: ApplicationCommandOptionType.String,
       required: true,
     },
   ],
@@ -1157,7 +1178,7 @@ router.use('limit', sizeHandler, HandlerType.GUILD, {
   options: [{
     name: 'size',
     description: 'Limit you want to set',
-    type: 'INTEGER',
+    type: ApplicationCommandOptionType.Integer,
     required: true,
   }],
 });
@@ -1166,7 +1187,7 @@ router.use('userlimit', sizeHandler, HandlerType.GUILD);
 router.use('lobby-category', async ({
   params, msg, em, flags, i18n,
 }) => {
-  if (!msg.member?.permissions.has('ADMINISTRATOR')) {
+  if (!msg.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return i18n.t('error.notAdmin');
   }
 
@@ -1198,12 +1219,12 @@ router.use('lobby-category', async ({
   options: [{
     name: 'create-category',
     description: 'Category where the create-channels are placed',
-    type: 'CHANNEL',
+    type: ApplicationCommandOptionType.Channel,
     required: true,
   }, {
     name: 'lobby-category',
     description: 'The category the created lobbies should be placed',
-    type: 'CHANNEL',
+    type: ApplicationCommandOptionType.Channel,
     required: true,
   }],
 });
@@ -1215,7 +1236,7 @@ router.use('create-category', async ({
 
   let [category] = flags.get('category') || [null];
 
-  if (!msg.member?.permissions.has('ADMINISTRATOR')) {
+  if (!msg.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return i18n.t('error.noAdmin');
   }
 
@@ -1224,11 +1245,11 @@ router.use('create-category', async ({
   if (!(category instanceof CategoryChannel)) return i18n.t('lobby.error.notCategory');
   if (category.guild !== msg.guild) return i18n.t('lobby.error.categoryNotInGuild');
 
-  if (!category.permissionsFor(msg.client.user)?.has('MANAGE_CHANNELS')) {
+  if (!category.permissionsFor(msg.client.user)?.has(PermissionsBitField.Flags.ManageChannels)) {
     return i18n.t('lobby.error.noChannelCreatePermission');
   }
 
-  if (!category.permissionsFor(msg.client.user)?.has('MOVE_MEMBERS')) {
+  if (!category.permissionsFor(msg.client.user)?.has(PermissionsBitField.Flags.MoveMembers)) {
     return i18n.t('lobby.error.noMovePermission');
   }
 
@@ -1259,7 +1280,7 @@ router.use('create-category', async ({
   options: [{
     name: 'category',
     description: 'The category where the create-channels are placed in',
-    type: 'CHANNEL',
+    type: ApplicationCommandOptionType.Channel,
     required: true,
   }],
 });
@@ -1278,7 +1299,7 @@ router.use('bitrate', async ({
     return i18n.t('lobby.error.onlyOneArgumentExpected');
   }
 
-  if (!msg.member?.permissions.has('ADMINISTRATOR')) {
+  if (!msg.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return i18n.t('error.notAdmin');
   }
 
@@ -1309,7 +1330,7 @@ router.use('bitrate', async ({
       name: 'bitrate',
       description: 'Bitrate for created lobbies',
       required: true,
-      type: 'INTEGER',
+      type: ApplicationCommandOptionType.Integer,
     },
   ],
 });
@@ -1361,7 +1382,7 @@ router.use('name', nameHandler, HandlerType.GUILD, {
   options: [{
     name: 'name',
     description: 'New name of your lobby',
-    type: 'STRING',
+    type: ApplicationCommandOptionType.String,
     required: true,
   }],
 });
@@ -1384,11 +1405,11 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
   const activeChannel = await activeTempChannel(client, em, tempChannel);
   if (!activeChannel) throw new Error('No active temp channel');
 
-  const actionRow = new MessageActionRow();
-  actionRow.addComponents(new MessageButton({
+  const actionRow = new ActionRow();
+  actionRow.addComponents(new ButtonComponent({
     customId: 'add',
     label: i18n.t('lobby.addUserButton') || 'Add User',
-    style: 'SUCCESS',
+    style: ButtonStyle.Success,
   }));
 
   textChannel.send({
@@ -1431,7 +1452,8 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
       if (msg) tempChannel.controlDashboardId = msg.id;
     }
 
-    if (!msg?.pinned && msg?.pinnable) await msg.pin();
+    // TODO: Fix dat dit weer werkt
+    // if (!msg?.pinned && msg?.pinnable && client.user && textChannel.permissionsFor(client.user, true)?.has(PermissionsBitField.Flags.ManageMessages)) await msg.pin();
 
     if (msg && !msgCollectors.has(msg.id)) {
       msgCollectors.set(msg.id, msg.createMessageComponentCollector().on('collect', async (interaction) => {
@@ -1523,7 +1545,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
 
       const type = getChannelType(activeChannel);
 
-      await activeChannel.permissionOverwrites.edit(newOwner, { SPEAK: true, CONNECT: true })
+      await activeChannel.permissionOverwrites.edit(newOwner, { Speak: true, Connect: true })
         .catch(console.error);
 
       if (newOwner.voice.suppress) { newOwner.voice.setMute(false).catch(() => { }); }
@@ -1643,7 +1665,7 @@ router.onInit = async (client, orm, _i18n) => {
 
           await createDashBoardCollector(client, voiceChannel, guildUser.tempChannel, em.fork(), _i18n);
 
-          await textChannel.edit({ permissionOverwrites: getTextPermissionOverwrites(voiceChannel) });
+          await textChannel.edit({ permissionOverwrites: getTextPermissionOverwrites(voiceChannel, client) });
         }
       } else if ( // Check of iemand een tempChannel is gejoint
         user
@@ -1657,7 +1679,7 @@ router.onInit = async (client, orm, _i18n) => {
           const i18n = _i18n.cloneInstance({ lng: tempChannel.guildUser.user.language || tempChannel.guildUser.guild.language });
           const activeChannel = await activeTempChannel(client, em, tempChannel);
 
-          if (!activeChannel?.permissionsFor(user)?.has(Permissions.FLAGS.SPEAK, true)) {
+          if (!activeChannel?.permissionsFor(user)?.has(PermissionsBitField.Flags.Speak, true)) {
             await createAddMessage(tempChannel, user, client, em, i18n);
           }
         }

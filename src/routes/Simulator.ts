@@ -1,6 +1,6 @@
 import {
   Interaction,
-  MessageEmbed, NewsChannel, TextChannel, ThreadChannel, User,
+  Embed, NewsChannel, TextChannel, ThreadChannel, User, ApplicationCommandOptionType, PermissionsBitField,
 } from 'discord.js';
 import Chain from 'markov-chains';
 import Router, { HandlerType } from '../router/Router';
@@ -51,7 +51,7 @@ router.use('user', async ({ flags, params, msg }) => {
         }
 
         const permissions = msg.client.user && channel.permissionsFor(msg.client.user);
-        return !!(channel.isText() && permissions?.has('READ_MESSAGE_HISTORY') && permissions.has('VIEW_CHANNEL'));
+        return !!(channel.isText() && permissions?.has(PermissionsBitField.Flags.ReadMessageHistory) && permissions.has(PermissionsBitField.Flags.ViewChannel));
       })
       .map(async (channel) => {
         const messages : string[] = [];
@@ -107,10 +107,10 @@ router.use('user', async ({ flags, params, msg }) => {
 
   if (!generated.length) return 'Ik kon hier niks mee';
 
-  const embed = new MessageEmbed();
-  const avatarURL = user.avatarURL({ size: 128, format: 'png', dynamic: false }) || undefined;
+  const embed = new Embed();
+  const avatarURL = user.displayAvatarURL({ size: 64 });
   const color : number | undefined = msg.guild.me?.displayColor;
-  embed.setAuthor(user.username, avatarURL);
+  embed.setAuthor({ name: user.username, iconURL: avatarURL });
   embed.setDescription([...fromState ?? [], ...generated].join(' '));
 
   if (color) embed.setColor(color);
@@ -128,12 +128,12 @@ router.use('user', async ({ flags, params, msg }) => {
   options: [{
     name: 'persoon',
     description: 'Persoon die je wil simuleren',
-    type: 'USER',
+    type: ApplicationCommandOptionType.User,
     required: true,
   }, {
     name: 'finish',
     description: 'Zin die afgemaakt moet worden',
-    type: 'STRING',
+    type: ApplicationCommandOptionType.String,
   }],
 });
 

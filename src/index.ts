@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import {
-  User, Role, PresenceData, MessageAttachment, TextChannel, Permissions, DMChannel, NewsChannel, ThreadChannel, AnyChannel,
+  User, Role, PresenceData, MessageAttachment, TextChannel, PermissionsBitField, DMChannel, NewsChannel, ThreadChannel, AnyChannel, ApplicationCommandOptionType, ApplicationCommandType, ActivityType,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
@@ -183,11 +183,11 @@ process.title = 'Ei Noah Bot';
     const [user] = persoon || params;
 
     if (user instanceof User) {
-      const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
+      const url = user.avatarURL({ size: 256, extension: 'png' });
       params.shift();
       const message : string = mentionsToText(flags.get('top') || params);
 
-      if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
+      if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(PermissionsBitField.Flags.AttachFiles)))) {
         const bottom = flags.get('bottom') || flags.get('b');
         return generateStab(url, message, bottom ? mentionsToText(bottom) : undefined);
       }
@@ -203,31 +203,31 @@ process.title = 'Ei Noah Bot';
       {
         name: 'persoon',
         description: 'Person you want to stab',
-        type: 'USER',
+        type: ApplicationCommandOptionType.User,
         required: true,
       }, {
         name: 'top',
         description: 'Text you want to add to the top',
-        type: 'STRING',
+        type: ApplicationCommandOptionType.String,
       }, {
         name: 'bottom',
         description: 'Text you want to add to the bottom',
-        type: 'STRING',
+        type: ApplicationCommandOptionType.String,
       },
     ],
   });
   eiNoah.use('steek', stabHandler);
 
-  eiNoah.useContext('Stab', 'USER', async ({ interaction, i18n }) => {
+  eiNoah.useContext('Stab', ApplicationCommandType.User, async ({ interaction, i18n }) => {
     const user = interaction.options.getUser('user', true);
 
-    const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
+    const url = user.displayAvatarURL({ size: 256 });
 
     if (url) {
       if (
         interaction.channel instanceof DMChannel
         || ((interaction.channel instanceof TextChannel || interaction.channel instanceof ThreadChannel || interaction.channel instanceof NewsChannel)
-        && interaction.client.user && interaction.channel.permissionsFor(interaction.client.user)?.has('ATTACH_FILES', true) && interaction.channel.permissionsFor(interaction.client.user)?.has('SEND_MESSAGES', true)
+        && interaction.client.user && interaction.channel.permissionsFor(interaction.client.user)?.has(PermissionsBitField.Flags.AttachFiles, true) && interaction.channel.permissionsFor(interaction.client.user)?.has(PermissionsBitField.Flags.SendMessages, true)
         )) {
         return { files: [await generateStab(url)], ephemeral: false };
       }
@@ -299,11 +299,11 @@ process.title = 'Ei Noah Bot';
     const [user] = persoon || params;
 
     if (user instanceof User) {
-      const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
+      const url = user.avatarURL({ size: 256, extension: 'png' });
       params.shift();
       const message : string = mentionsToText(flags.get('top') || params);
 
-      if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.ATTACH_FILES)))) {
+      if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(PermissionsBitField.Flags.AttachFiles)))) {
         const bottom = flags.get('bottom') || flags.get('b');
         return generateHug(url, message, bottom ? mentionsToText(bottom) : undefined);
       }
@@ -313,16 +313,16 @@ process.title = 'Ei Noah Bot';
     return i18n.t('index.who');
   };
 
-  eiNoah.useContext('Hug', 'USER', async ({ interaction, i18n }) => {
+  eiNoah.useContext('Hug', ApplicationCommandType.User, async ({ interaction, i18n }) => {
     const user = interaction.options.getUser('user', true);
 
-    const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
+    const url = user.avatarURL({ size: 256, extension: 'png' });
 
     if (url) {
       if (
         interaction.channel instanceof DMChannel
         || ((interaction.channel instanceof TextChannel || interaction.channel instanceof ThreadChannel || interaction.channel instanceof NewsChannel)
-        && interaction.client.user && interaction.channel.permissionsFor(interaction.client.user)?.has('ATTACH_FILES', true) && interaction.channel.permissionsFor(interaction.client.user)?.has('SEND_MESSAGES', true)
+        && interaction.client.user && interaction.channel.permissionsFor(interaction.client.user)?.has(PermissionsBitField.Flags.AttachFiles, true) && interaction.channel.permissionsFor(interaction.client.user)?.has(PermissionsBitField.Flags.SendMessages, true)
         )) {
         return { files: [await generateHug(url)], ephemeral: false };
       }
@@ -338,15 +338,15 @@ process.title = 'Ei Noah Bot';
         name: 'persoon',
         description: 'Person you want to hug',
         required: true,
-        type: 'USER',
+        type: ApplicationCommandOptionType.User,
       }, {
         name: 'top',
         description: 'Text you want to add to the top',
-        type: 'STRING',
+        type: ApplicationCommandOptionType.User,
       }, {
         name: 'bottom',
         description: 'Text you want to add to the bottom',
-        type: 'STRING',
+        type: ApplicationCommandOptionType.User,
       },
     ],
   });
@@ -388,27 +388,27 @@ process.title = 'Ei Noah Bot';
       const watDoetNoah : PresenceData[] = [{
         activities: [{
           name: 'Trying not to stab',
-          type: 'PLAYING',
+          type: ActivityType.Playing,
         }],
       }, {
         activities: [{
           name: 'Stabbing sounds',
-          type: 'LISTENING',
+          type: ActivityType.Listening,
         }],
       }, {
         activities: [{
-          name: 'Slash Commands :-0',
-          type: 'LISTENING',
+          name: 'Slash Commands',
+          type: ActivityType.Listening,
         }],
       }, {
         activities: [{
           name: 'Context Menu\'s',
-          type: 'LISTENING',
+          type: ActivityType.Listening,
         }],
       }, {
         activities: [{
           name: 'Button Presses',
-          type: 'LISTENING',
+          type: ActivityType.Listening,
         }],
       }];
 

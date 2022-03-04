@@ -3,20 +3,18 @@ import {
   User as DiscordUser,
   Role, AnyChannel,
   Client,
-  MessageOptions,
   TextChannel,
   NewsChannel,
   DMChannel,
   Guild,
   GuildMember,
-  MessageEmbed,
-  MessageAttachment,
   CommandInteraction,
   ApplicationCommandSubCommandData,
   InteractionReplyOptions,
   ApplicationCommandType,
   AutocompleteInteraction,
   ApplicationCommandOptionChoice,
+  ApplicationCommandOptionType,
 } from 'discord.js';
 import {
   MikroORM,
@@ -92,7 +90,7 @@ export interface GuildAutocompleteRouteInfo extends MsgRouteInfo {
 }
 
 export type HandlerReturn =
-  MessageOptions | MessageEmbed | MessageAttachment | (MessageEmbed | MessageAttachment)[] | string | null;
+  InteractionReplyOptions | string | null;
 
 export type AutocompleteHandlerReturn = ApplicationCommandOptionChoice[];
 
@@ -202,7 +200,7 @@ export default class Router implements IRouter {
 
     this.routes[route.toUpperCase()] = newUsing;
 
-    if (commandData) this.commandDataList.set(route.toLowerCase(), { ...commandData, type: 'SUB_COMMAND' });
+    if (commandData) this.commandDataList.set(route.toLowerCase(), { ...commandData, type: ApplicationCommandOptionType.Subcommand });
   }
 
   public useContext(name : string, type : Exclude<ApplicationCommandType, 'CHAT_INPUT'>, handler : ContextMenuHandler) : void {
