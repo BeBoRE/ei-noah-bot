@@ -1,6 +1,8 @@
 import moment from 'moment';
 import parse from 'csv-parse/lib/sync';
-import { Client, MessageAttachment, Collection } from 'discord.js';
+import {
+  Client, MessageAttachment, Collection, ApplicationCommandOptionType,
+} from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { PostgreSqlDriver, EntityManager } from '@mikro-orm/postgresql';
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
@@ -90,7 +92,7 @@ router.use('add', addHandler, HandlerType.BOTH, {
   options: [{
     name: 'region',
     description: 'Regio die je wil toevoegen',
-    type: 'STRING',
+    type: ApplicationCommandOptionType.String,
     required: true,
     autocomplete: true,
   }],
@@ -137,7 +139,7 @@ router.use('remove', removeHandler, HandlerType.BOTH, {
   options: [{
     name: 'region',
     description: 'Regio/gemeente die je wil verwijderen',
-    type: 'STRING',
+    type: ApplicationCommandOptionType.String,
     autocomplete: true,
     required: true,
   }],
@@ -327,29 +329,29 @@ router.use('graph', coronaGraph, HandlerType.BOTH, {
   description: 'Genereer een grafiekje :)',
   options: [{
     name: 'region',
-    type: 'STRING',
+    type: ApplicationCommandOptionType.String,
     description: 'Gemeente waarvan je een grafiekje wil zien',
     required: true,
     autocomplete: true,
   }, {
     name: 'days',
-    type: 'INTEGER',
+    type: ApplicationCommandOptionType.Integer,
     description: 'Laatste zoveel dagen',
   }, {
     name: 'labels',
-    type: 'BOOLEAN',
+    type: ApplicationCommandOptionType.Boolean,
     description: 'Laat de labels zien',
   }, {
     name: 'cumulative',
-    type: 'BOOLEAN',
+    type: ApplicationCommandOptionType.Boolean,
     description: 'Tel alle getallen van de datum terug op (i.p.v. alleen de laatste 7 dagen)',
   }, {
     name: 'show-cases',
-    type: 'BOOLEAN',
+    type: ApplicationCommandOptionType.Boolean,
     description: 'Laat gevallen zien',
   }, {
     name: 'show-deceased',
-    type: 'BOOLEAN',
+    type: ApplicationCommandOptionType.Boolean,
     description: 'Laat sterftegevallen zien',
   }],
 }, communityAutocompleteHandler);

@@ -1,6 +1,6 @@
 import { MikroORM } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { Client } from 'discord.js';
+import { Client, GatewayIntentBits } from 'discord.js';
 import dotenv from 'dotenv';
 import { coronaRefresher } from './routes/CoronaRouter';
 
@@ -9,7 +9,7 @@ process.title = 'Ei Noah Corona Refresher';
 
 (async () => {
   const client = new Client({
-    intents: ['DIRECT_MESSAGES'],
+    intents: [GatewayIntentBits.DirectMessages],
   });
 
   const orm = await MikroORM.init<PostgreSqlDriver>().catch((err) => { console.error(err); process.exit(-1); });

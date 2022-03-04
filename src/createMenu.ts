@@ -2,19 +2,20 @@ import {
   CollectorOptions,
   CommandInteraction,
   Message,
-  MessageActionRow,
-  MessageButton,
+  ActionRow,
+  ButtonComponent,
   MessageComponentInteraction,
-  MessageEditOptions,
   User as DiscordUser,
+  ButtonStyle,
+  InteractionUpdateOptions,
 } from 'discord.js';
 
 export type ButtonReturn = boolean | Promise<boolean>
 | void | Promise<void>
 | string | Promise<string>
-| MessageEditOptions | Promise<MessageEditOptions>;
+| InteractionUpdateOptions | Promise<InteractionUpdateOptions>;
 
-export type ExtraButton = [MessageButton, () => ButtonReturn];
+export type ExtraButton = [ButtonComponent, () => ButtonReturn];
 
 async function createMenu<T>(
   {
@@ -35,44 +36,44 @@ async function createMenu<T>(
     extraButtons ?: ExtraButton[]
   },
 ) {
-  const navigationButtons : MessageButton[] = [
-    new MessageButton({
+  const navigationButtons : ButtonComponent[] = [
+    new ButtonComponent({
       customId: '1',
       label: '1',
-      style: 'PRIMARY',
+      style: ButtonStyle.Primary,
       disabled: true,
-    }), new MessageButton({
+    }), new ButtonComponent({
       customId: '2',
       label: '2',
-      style: 'PRIMARY',
+      style: ButtonStyle.Primary,
       disabled: true,
-    }), new MessageButton({
+    }), new ButtonComponent({
       customId: '3',
       label: '3',
-      style: 'PRIMARY',
+      style: ButtonStyle.Primary,
       disabled: true,
-    }), new MessageButton({
+    }), new ButtonComponent({
       customId: '4',
       label: '4',
-      style: 'PRIMARY',
+      style: ButtonStyle.Primary,
       disabled: true,
-    }), new MessageButton({
+    }), new ButtonComponent({
       customId: '5',
       label: '5',
-      style: 'PRIMARY',
+      style: ButtonStyle.Primary,
       disabled: true,
     }),
   ];
 
-  const pageLeft = new MessageButton({
+  const pageLeft = new ButtonComponent({
     customId: 'left',
     label: '◀️',
-    style: 'SECONDARY',
+    style: ButtonStyle.Secondary,
   });
-  const pageRight = new MessageButton({
+  const pageRight = new ButtonComponent({
     customId: 'right',
     label: '▶️',
-    style: 'SECONDARY',
+    style: ButtonStyle.Secondary,
   });
 
   let page = 0;
@@ -95,7 +96,7 @@ async function createMenu<T>(
   };
 
   const generateButtons = () => {
-    const listButtons = new MessageActionRow();
+    const listButtons = new ActionRow();
 
     list.forEach((q, i) => {
       if (i < navigationButtons.length) {
@@ -105,7 +106,7 @@ async function createMenu<T>(
       }
     });
 
-    const additionalButtons : MessageButton[] = [];
+    const additionalButtons : ButtonComponent[] = [];
 
     if (list.length > navigationButtons.length) {
       pageLeft.setDisabled(page === 0);
@@ -118,9 +119,9 @@ async function createMenu<T>(
       additionalButtons.push(button[0]);
     });
 
-    const rows : MessageActionRow[] = [listButtons];
+    const rows : ActionRow[] = [listButtons];
     for (let i = 0; i < Math.ceil(additionalButtons.length / 5); i += 1) {
-      const row = new MessageActionRow();
+      const row = new ActionRow();
       for (let j = 0; j < 5; j += 1) {
         const button = additionalButtons[i * 5 + j];
         if (button) row.addComponents(button);

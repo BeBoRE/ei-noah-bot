@@ -136,6 +136,11 @@
       "***Beheer je lobby met deze commands***",
       "$t(lobby.commands)"
     ],
+    "renameButton": "Lobbynaam aanpassen",
+    "renameModal": {
+      "title": "Lobbynaam aanpassen",
+      "nameLabel": "Nieuwe naam"
+    },
     "leader": "Leider: {{user}}",
     "error": {
       "onlyMentions":"Alleen mention(s) mogelijk als argument",

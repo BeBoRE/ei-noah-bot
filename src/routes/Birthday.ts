@@ -6,14 +6,16 @@ import {
   Guild,
   GuildMember,
   MessageAttachment,
-  MessageEmbed,
+  Embed,
   MessageOptions,
   NewsChannel,
-  Permissions, Role, TextChannel,
+  PermissionsBitField, Role, TextChannel,
   User as DiscordUser,
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/postgresql';
-import { createCanvas, loadImage } from 'canvas';
+import { createCanvas, loadImage, CanvasRenderingContext2D } from 'canvas';
 import i18next, { i18n as I18n } from 'i18next';
 import { getUserData } from '../data';
 import { User } from '../entity/User';
@@ -62,7 +64,7 @@ router.use('set', setRouter, HandlerType.BOTH, {
     {
       name: 'date',
       description: 'Your birthday',
-      type: 'STRING',
+      type: ApplicationCommandOptionType.String,
       required: true,
     },
   ],
@@ -116,16 +118,15 @@ router.use('ages', showAgeHandler, HandlerType.GUILD, {
 });
 
 const getBdayEmbed = (user : DiscordUser, dbUser : User, guild : Guild | null, i18n : I18n) => {
-  const embed = new MessageEmbed();
+  const embed = new Embed();
 
-  let color : `#${string}` | undefined = guild?.me?.displayHexColor;
+  let color = guild?.me?.displayColor;
 
-  if (!color || color === '#000000') color = '#ffcc5f';
+  if (!color || color === 0) color = 0xffcc5f;
 
   embed.setColor(color);
-  embed.setAuthor(user.username, user.avatarURL() || undefined);
-
-  embed.description = dbUser.birthday ? i18n.t('birthday.userIsBornOnAge', { date: moment(dbUser.birthday).format('D MMMM YYYY'), yearsOld: moment().diff(moment(dbUser.birthday), 'year') }) : i18n.t('birthday.noBirthdaySad', { username: user.toString() });
+  embed.setAuthor({ name: user.username, iconURL: user.avatarURL() || undefined });
+  embed.setDescription(dbUser.birthday ? i18n.t('birthday.userIsBornOnAge', { date: moment(dbUser.birthday).format('D MMMM YYYY'), yearsOld: moment().diff(moment(dbUser.birthday), 'year') }) : i18n.t('birthday.noBirthdaySad', { username: user.toString() }));
 
   return embed;
 };
@@ -141,18 +142,18 @@ router.use('get', async ({
 
   const dbUser = await getUserData(em, user);
 
-  return getBdayEmbed(user, dbUser, msg.guild, i18n);
+  return { embeds: [getBdayEmbed(user, dbUser, msg.guild, i18n)] };
 }, HandlerType.BOTH, {
   description: 'Get someone\'s birthday',
   options: [{
     name: 'user',
     description: 'The person you want to know the birthday of',
-    type: 'USER',
+    type: ApplicationCommandOptionType.User,
     required: true,
   }],
 });
 
-router.useContext('Get Birthday', 'USER', async ({
+router.useContext('Get Birthday', ApplicationCommandType.User, async ({
   interaction, em, i18n, user,
 }) => {
   const discUser = interaction.options.getUser('user', true);
@@ -175,7 +176,7 @@ router.use('remove', async ({ user, i18n }) => {
 });
 
 const setChannelHandler : GuildHandler = async ({ guildUser, msg, i18n }) => {
-  if (!msg.member?.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
+  if (!msg.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return i18n.t('error.notAdmin');
   }
 
@@ -199,11 +200,11 @@ router.use('channel', setChannelHandler, HandlerType.GUILD, {
 const setRoleHandler : GuildHandler = async ({
   guildUser, msg, params, flags, i18n,
 }) => {
-  if (!msg.member?.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
+  if (!msg.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return i18n.t('error.notAdmin');
   }
 
-  if (!msg.guild.me?.permissions.has(Permissions.FLAGS.MANAGE_ROLES)) {
+  if (!msg.guild.me?.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
     return i18n.t('birthday.error.noGiveRolePermission');
   }
 
@@ -228,7 +229,7 @@ router.use('role', setRoleHandler, HandlerType.GUILD, {
   description: 'User who\'s birthday it is get this role',
   options: [{
     name: 'role',
-    type: 'ROLE',
+    type: ApplicationCommandOptionType.Role,
     description: 'Role for the one who\'s birthday it is',
     required: true,
   }],
@@ -342,43 +343,43 @@ if (process.env.NODE_ENV !== 'production') {
     const [user] = params;
 
     if (!(user instanceof DiscordUser)) return 'Not gaming';
-    const url = user.avatarURL({ size: 256, dynamic: false, format: 'png' });
+    const url = user.avatarURL({ size: 256, extension: 'png' });
     if (!url) return 'Not url';
     return generateImage(url, '22');
   });
 }
 
 const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChannel, age : number, i18n : I18n) : Promise<MessageOptions | null> => {
-  const url = member.user.avatarURL({ size: 256, dynamic: false, format: 'png' });
+  const url = member.user.avatarURL({ size: 256, extension: 'png' });
   const permissionMissingText = i18n.t('birthday.error.permissionMissing');
 
   const permissions = member.client.user ? channel.permissionsFor(member.client.user) : null;
 
-  if (!member.client.user || !permissions || !permissions.has('SEND_MESSAGES', true)) { return null; }
+  if (!member.client.user || !permissions || !permissions.has(PermissionsBitField.Flags.SendMessages, true)) { return null; }
 
-  if (url && permissions.has('ATTACH_FILES', true)) {
+  if (url && permissions.has(PermissionsBitField.Flags.AttachFiles, true)) {
     return {
       content: member.client.user?.id !== member.user.id ? i18n.t('birthday.birthdayMsg', { user: member.user.toString() }) : i18n.t('birthday.meBirthdayMsg'),
       files: [await generateImage(url, age.toString())],
     };
   }
 
-  if (permissions.has('EMBED_LINKS', true)) {
-    const embed = new MessageEmbed();
+  if (permissions.has(PermissionsBitField.Flags.EmbedLinks, true)) {
+    const embed = new Embed();
 
-    let color : `#${string}` | undefined;
-    color = member.guild.me?.displayHexColor;
+    let color;
+    color = member.guild.me?.displayColor;
 
-    if (!color || color === '#000000') color = '#ffcc5f';
+    if (!color || color === 0) color = 0xffcc5f;
 
     embed.setColor(color);
 
     // eslint-disable-next-line max-len
-    embed.setAuthor(member.nickname || member.user.username, member.user.avatarURL() || undefined);
-    embed.description = i18n.t('birthday.birthdayMsgAge', { age });
+    embed.setAuthor({ name: member.nickname || member.user.username, iconURL: member.user.avatarURL() || undefined });
+    embed.setDescription(i18n.t('birthday.birthdayMsgAge', { age }));
     embed.setThumbnail('http://clipart-library.com/images/kcKnBz4Ai.jpg');
 
-    embed.setFooter(permissionMissingText);
+    embed.setFooter({ text: permissionMissingText });
 
     return { embeds: [embed] };
   }
@@ -444,7 +445,7 @@ const checkBday = async (client : Client, em : EntityManager, _i18n : I18n) => {
                     if (msg) {
                       const overwrites = client.user && channel.permissionsFor(client.user);
 
-                      if (overwrites && (overwrites.has('USE_PUBLIC_THREADS') || overwrites.has('USE_PRIVATE_THREADS'))) {
+                      if (overwrites && (overwrites.has(PermissionsBitField.Flags.SendMessagesInThreads) || overwrites.has(PermissionsBitField.Flags.SendMessagesInThreads))) {
                         msg.startThread({ name: i18n.t('birthday.congratulations'), autoArchiveDuration: 1440 }).catch(() => {});
                       }
                       return msg.id;
@@ -456,7 +457,7 @@ const checkBday = async (client : Client, em : EntityManager, _i18n : I18n) => {
               } else {
                 const owner = await guild.fetchOwner({ cache: true });
 
-                const url = member.user.avatarURL({ dynamic: false, size: 256, format: 'png' }) || member.user.defaultAvatarURL;
+                const url = member.user.avatarURL({ size: 256, extension: 'png' }) || member.user.defaultAvatarURL;
 
                 const ownerUser = await getUserData(em, owner.user);
                 await i18n.changeLanguage(ownerUser.language);

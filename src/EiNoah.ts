@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Permissions, Guild, Message, DiscordAPIError, Channel, Snowflake, MessageEmbed, MessageAttachment, MessageOptions, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, ThreadChannel, AnyChannel,
+  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Guild, Message, DiscordAPIError, Channel, Snowflake, Embed, MessageAttachment, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, AnyChannel, ApplicationCommandOptionType, GatewayIntentBits, Partials,
 } from 'discord.js';
 import {
   MikroORM,
@@ -96,7 +96,7 @@ export async function parseParams(params : string[], client : Client, guild : Gu
     resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role | string | AnyChannel => !!item));
   } catch (err) {
     if (err instanceof DiscordAPIError) {
-      if (err.httpStatus === 404) throw new Error('Invalid Mention of User, Role or Channel');
+      if (err.status === 404) throw new Error('Invalid Mention of User, Role or Channel');
       else throw new Error('Unknown Discord Error');
     } else throw new Error('Unknown Parsing error');
   }
@@ -146,17 +146,17 @@ async function messageParser(msg : Message | CommandInteraction | AutocompleteIn
     });
   } else {
     let command : CommandInteractionOption | CommandInteraction | AutocompleteInteraction = msg;
-    while (command instanceof CommandInteraction || command instanceof AutocompleteInteraction || command.type === 'SUB_COMMAND' || command.type === 'SUB_COMMAND_GROUP') {
+    while (command instanceof CommandInteraction || command instanceof AutocompleteInteraction || command.type === ApplicationCommandOptionType.Subcommand || command.type === ApplicationCommandOptionType.SubcommandGroup) {
       if (command instanceof CommandInteraction || command instanceof AutocompleteInteraction) { params.push(command.commandName); } else params.push(command.name);
       const nextCommand : CommandInteractionOption | undefined = Array.isArray(command.options) ? command.options[0] : command.options?.data[0];
-      if (!nextCommand || !(nextCommand.type === 'SUB_COMMAND' || nextCommand.type === 'SUB_COMMAND_GROUP')) break;
+      if (!nextCommand || !(nextCommand.type === ApplicationCommandOptionType.Subcommand || nextCommand.type === ApplicationCommandOptionType.SubcommandGroup)) break;
       command = nextCommand;
     }
 
     const options = Array.isArray(command.options) ? command.options : command.options?.data;
 
     options?.forEach((option) => {
-      if (option.type === 'STRING' || option.type === 'BOOLEAN' || option.type === 'INTEGER' || option.type === 'NUMBER') {
+      if (option.type === ApplicationCommandOptionType.String || option.type === ApplicationCommandOptionType.Boolean || option.type === ApplicationCommandOptionType.Integer || option.type === ApplicationCommandOptionType.Number) {
         if (typeof option.value === 'string') flags.set(option.name, option.value.split(' '));
         if (option.value !== undefined) flags.set(option.name, [option.value]);
       }
@@ -195,17 +195,17 @@ async function messageParser(msg : Message | CommandInteraction | AutocompleteIn
   return routeInfo;
 }
 
-const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : MessageOptions | null => {
+const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : InteractionReplyOptions | null => {
   if (handlerReturn) {
     if (typeof (handlerReturn) !== 'string') {
-      if (handlerReturn instanceof MessageEmbed) return { embeds: [handlerReturn] };
+      if (handlerReturn instanceof Embed) return { embeds: [handlerReturn] };
       if (handlerReturn instanceof MessageAttachment) return { files: [handlerReturn] };
       if (Array.isArray(handlerReturn)) {
-        const embeds : MessageEmbed[] = [];
+        const embeds : Embed[] = [];
         const files : MessageAttachment[] = [];
 
         handlerReturn.forEach((item) => {
-          if (item instanceof MessageEmbed) {
+          if (item instanceof Embed) {
             embeds.push(item);
             return;
           }
@@ -239,21 +239,10 @@ const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : MessageO
   return null;
 };
 
-const messageSender = (options : MessageOptions | null, msg : Message | CommandInteraction) : Promise<Message | Message[] | null> => {
-  if (options && msg.channel) {
-    return msg.channel.send({
-      allowedMentions: { users: [], roles: [], repliedUser: true },
-      reply: { messageReference: msg.id },
-      ...options,
-    });
-  }
-  return Promise.resolve(null);
-};
-
 class EiNoah implements IRouter {
   public readonly client = new Client({
-    intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_TYPING', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MEMBERS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILDS', 'GUILD_VOICE_STATES'],
-    partials: ['USER', 'CHANNEL', 'GUILD_MEMBER', 'MESSAGE', 'REACTION'],
+    intents: [GatewayIntentBits.DirectMessages, GatewayIntentBits.DirectMessageTyping, GatewayIntentBits.DirectMessageReactions, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
+    partials: [Partials.User, Partials.Channel, Partials.GuildMember, Partials.Message, Partials.Reaction],
   });
 
   private readonly router = new Router('Ei Noah');
@@ -383,7 +372,7 @@ class EiNoah implements IRouter {
           .catch((err) => console.log(err));
       }
 
-      if (interaction.isContextMenu()) {
+      if (interaction.isContextMenuCommand()) {
         const em = orm.em.fork();
         const guildUserOrUser = interaction.member instanceof GuildMember ? await getUserGuildData(em, interaction.member.user, interaction.member.guild) : await getUserData(em, interaction.user);
 
@@ -424,73 +413,6 @@ class EiNoah implements IRouter {
       }
     });
 
-    this.client.on('messageCreate', (msg) => {
-      if (msg.author !== this.client.user && msg.content) {
-        const splitted = msg.content.split(' ').filter((param : string) => param);
-
-        // Raw mention ziet er anders uit wanneer user een nickname heeft
-        const botMention = `<@${this.client.user?.id}>`;
-        const botNickMention = `<@!${this.client.user?.id}>`;
-
-        if ((splitted[0] === botMention || splitted[0].toUpperCase() === 'EI' || splitted[0] === botNickMention)) {
-          let canSendMessage = true;
-          if (msg.client.user) {
-            if (msg.channel instanceof TextChannel || msg.channel instanceof NewsChannel) {
-              if (!msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.SEND_MESSAGES)) {
-                canSendMessage = false;
-              }
-            }
-
-            if (msg.channel instanceof ThreadChannel) {
-              if (!msg.channel.permissionsFor(msg.client.user.id)?.has(Permissions.FLAGS.SEND_MESSAGES_IN_THREADS)) canSendMessage = false;
-            }
-          }
-
-          if (!canSendMessage) {
-            if (msg.member && msg.member.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
-              msg.author.send('Ik kan toch niet in dat kanaal praten, doe je fucking werk of ik steek je neer').catch(() => { });
-              return;
-            }
-
-            msg.author.send('Ik kan niet in dat kanaal reageren, kunnen die klote admins niet hun werk doen??').catch(() => { });
-            return;
-          }
-
-          msg.channel.sendTyping().catch(() => { });
-
-          const em = orm.em.fork();
-
-          if (process.env.NODE_ENV !== 'production') console.time(`${msg.id}`);
-
-          messageParser(msg, em, this.i18n)
-            .then((info) => {
-              if (!info) return 'Ongeldige user(s), role(s) en/of channel(s) gegeven';
-
-              return this.router.handle(info);
-            })
-            .then(handlerReturnToMessageOptions)
-            .then((options) => Promise.all([options, em.flush()]))
-            .then(([options]) => {
-              if (process.env.NODE_ENV !== 'production') console.timeEnd(`${msg.id}`);
-              return options;
-            })
-            .then((options) => messageSender(options, msg))
-            .catch((err) => {
-              if (process.env.NODE_ENV !== 'production') console.timeEnd(`${msg.id}`);
-              // Dit wordt gecallt wanneer de parsing faalt
-              if (process.env.NODE_ENV !== 'production') {
-                errorToChannel(msg.channel.id, msg.client, err).catch(() => { console.log('Error could not be send :('); });
-              } else if (process.env.ERROR_CHANNEL) {
-                msg.channel.send('Er is iets misgegaan').catch(() => {});
-                errorToChannel(process.env.ERROR_CHANNEL, msg.client, err).catch(() => { console.log('Stel error kanaal in'); });
-              }
-
-              console.error(err);
-            });
-        }
-      }
-    });
-
     this.client.on('rateLimit', ({
       timeout, limit, method, path, global,
     }) => {
@@ -509,6 +431,8 @@ class EiNoah implements IRouter {
       if (this.onInit) await this.onInit(client, orm);
 
       this.contextHandlers.forEach((info, name) => {
+        // TODO: Dit weer weghalen na release V14
+        // @ts-ignore
         this.applicationCommandData.push({
           name,
           type: info.type,
