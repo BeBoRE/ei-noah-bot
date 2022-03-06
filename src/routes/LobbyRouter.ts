@@ -290,7 +290,6 @@ async function createTextChannel(
       type: DiscordChannelType.GuildText,
       parent: voiceChannel.parent || undefined,
       permissionOverwrites,
-      position: voiceChannel.position + 1,
     },
   );
 }
