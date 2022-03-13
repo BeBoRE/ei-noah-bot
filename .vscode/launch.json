@@ -8,6 +8,7 @@
       "protocol":"inspector",
       "cwd":"${workspaceRoot}",
       "runtimeExecutable":"${workspaceRoot}/node_modules/.bin/ts-node-dev",
+      "outputCapture": "std",
       "args":[
         "${workspaceRoot}/src/index.ts"
       ],

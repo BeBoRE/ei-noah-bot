@@ -1,13 +1,13 @@
 import {
-  Client, User as DiscordUser, TextChannel, NewsChannel, Role, Guild, Message, DiscordAPIError, Channel, Snowflake, Embed, MessageAttachment, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, AnyChannel, ApplicationCommandOptionType, GatewayIntentBits, Partials,
+  Client, User as DiscordUser, Role, Guild, Message, DiscordAPIError, Channel, Snowflake, Embed, MessageAttachment, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, AnyChannel, ApplicationCommandOptionType, GatewayIntentBits, Partials,
 } from 'discord.js';
 import {
   MikroORM,
 } from '@mikro-orm/core';
 import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
 
-import console from 'console';
 import { i18n as I18n } from 'i18next';
+import { Logger } from 'winston';
 import LazyAutocompleteRouteInfo from './router/LazyAutocompleteRouteInfo';
 import LazyMsgRouteInfo from './router/LazyMsgRouteInfo';
 import { GuildUser } from './entity/GuildUser';
@@ -17,25 +17,6 @@ import Router, {
   AutocompleteRouteInfo,
   BothHandler, ContextMenuHandler, ContextMenuHandlerInfo, DMHandler, GuildHandler, HandlerReturn, HandlerType, IRouter, MsgRouteInfo,
 } from './router/Router';
-
-enum ErrorType {
-  Uncaught,
-  Unhandled,
-}
-
-const errorToChannel = async (channelId : string, client : Client, err : unknown, type?: ErrorType) => {
-  const errorChannel = await client.channels.fetch(<Snowflake>channelId, { cache: true });
-  if (err instanceof Error && (errorChannel instanceof TextChannel
-     || errorChannel instanceof NewsChannel)
-  ) {
-    let header = '';
-    if (type === ErrorType.Uncaught) header = '**Uncaught**';
-    if (type === ErrorType.Unhandled) header = '**Unhandled**';
-    return errorChannel.send({ content: `${header}\n**${err?.name}**\n\`\`\`${err?.stack}\`\`\`` }).catch(() => { console.error(`${header}\n**${err?.name}**\n\`\`\`${err?.stack}\`\`\``); });
-  }
-
-  return null;
-};
 
 function mapParams(mention : string,
   client : Client,
@@ -251,16 +232,19 @@ class EiNoah implements IRouter {
 
   private readonly orm : MikroORM<PostgreSqlDriver>;
 
+  private readonly logger : Logger;
+
   private applicationCommandData : ApplicationCommandData[] = [];
 
   private contextHandlers : Map<string, ContextMenuHandlerInfo> = new Map();
 
   public i18n : I18n;
 
-  constructor(token : string, orm : MikroORM<PostgreSqlDriver>, i18n : I18n) {
+  constructor(token : string, orm : MikroORM<PostgreSqlDriver>, i18n : I18n, logger : Logger) {
     this.token = token;
     this.orm = orm;
     this.i18n = i18n;
+    this.logger = logger;
   }
 
   use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ChatInputApplicationCommandData, 'name' | 'type'>) : void
@@ -327,7 +311,7 @@ class EiNoah implements IRouter {
     const { orm } = this;
 
     this.client.on('ready', () => {
-      console.log('Client online');
+      this.logger.info('Client online');
     });
 
     this.client.on('interactionCreate', async (interaction) => {
@@ -349,15 +333,13 @@ class EiNoah implements IRouter {
             return null;
           })
           .catch((err) => {
-            // Dit wordt gecallt wanneer de parsing faalt
-            if (process.env.NODE_ENV !== 'production' && interaction.channel) {
-              errorToChannel(interaction.channel.id, interaction.client, err).catch(() => { console.log('Error could not be send :('); });
-            } else if (process.env.ERROR_CHANNEL) {
+            if (interaction.deferred) {
               interaction.followUp({ content: 'Er is iets misgegaan', ephemeral: true }).catch(() => {});
-              errorToChannel(process.env.ERROR_CHANNEL, interaction.client, err).catch(() => { console.log('Stel error kanaal in'); });
-            }
+            } else interaction.reply({ content: 'Er is iets misgegaan', ephemeral: true }).catch(() => {});
 
-            console.error(err);
+            this.logger.error('Command interaction handeling error', {
+              error: err,
+            });
           });
       }
 
@@ -369,7 +351,7 @@ class EiNoah implements IRouter {
             return this.router.handle(info);
           })
           .then((options) => interaction.respond(options))
-          .catch((err) => console.log(err));
+          .catch((err) => { this.logger.error('Autocomplete handeling error', { error: err }); });
       }
 
       if (interaction.isContextMenuCommand()) {
@@ -400,14 +382,10 @@ class EiNoah implements IRouter {
           else await interaction.reply(typeof (handlerReturn) === 'string' ? { ...defaultOptions, content: handlerReturn } : { ...defaultOptions, ...handlerReturn });
         } catch (err) {
           if (interaction.channel && process.env.ERROR_CHANNEL) {
-            if (process.env.NODE_ENV !== 'production') {
-              errorToChannel(interaction?.channel.id || process.env.ERROR_CHANNEL, interaction.client, err).catch(() => { console.log('Error could not be send :('); });
-              return;
-            }
-
             if (interaction.deferred) interaction.followUp({ content: 'Er is iets misgegaan' }).catch(() => { });
             else interaction.reply({ content: 'Er is iets misgegaan', ephemeral: true });
-            errorToChannel(process.env.ERROR_CHANNEL, interaction.client, err).catch(() => { console.log('Stel error kanaal in'); });
+
+            this.logger.error('ContextMenu handling error', { error: err });
           }
         }
       }
@@ -416,13 +394,15 @@ class EiNoah implements IRouter {
     this.client.on('rateLimit', ({
       timeout, limit, method, path, global,
     }) => {
-      console.log([
-        '**Rate Limit**',
-        `Global: ${global}`,
-        `Method: ${method}`,
-        `Path: ${path}`,
-        `Limit: ${limit}`,
-        `Timeout: ${timeout}`].join('\n'));
+      this.logger.warn('Rate Limit', {
+        meta: {
+          global,
+          method,
+          path,
+          limit,
+          timeout,
+        },
+      });
     });
 
     await this.client.login(this.token);
@@ -448,13 +428,17 @@ class EiNoah implements IRouter {
     this.router.initialize(this.client, orm, this.i18n);
 
     process.on('uncaughtException', async (err) => {
-      if (process.env.ERROR_CHANNEL) await errorToChannel(process.env.ERROR_CHANNEL, this.client, err, ErrorType.Uncaught);
+      this.logger.error('UncaughtError', {
+        level: 'error',
+        message: 'UncaughtError',
+        error: err,
+      });
     });
 
     process.on('unhandledRejection', (err) => {
-      if (err instanceof Error && process.env.ERROR_CHANNEL) {
-        errorToChannel(process.env.ERROR_CHANNEL, this.client, err, ErrorType.Unhandled);
-      }
+      this.logger.error('UnhandledRejection', {
+        error: err,
+      });
     });
   }
 }
