@@ -76,7 +76,6 @@ process.title = 'Ei Noah Bot';
   i18next.use(Backend)
     .init({
       initImmediate: false,
-      debug: process.env.NODE_ENV !== 'production',
       fallbackLng: ['en', 'nl'],
       lng: 'nl',
       preload: preloadLanguages,

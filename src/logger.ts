@@ -1,6 +1,6 @@
-import winston from 'winston';
+import winston, { transports, format } from 'winston';
+import { consoleFormat } from 'winston-console-format';
 import DiscordTransport from 'winston-discord-transport';
-import { Console } from 'winston/lib/winston/transports';
 
 const logger = winston.createLogger({
   transports: [
@@ -10,10 +10,22 @@ const logger = winston.createLogger({
       level: process.env.NODE_ENV !== 'production' ? 'verbose' : 'info',
     }),
 
-    new Console({
+    new transports.Console({
       level: process.env.NODE_ENV !== 'production' ? 'verbose' : 'info',
-      format: winston.format.combine(
-        winston.format.cli(),
+      format: format.combine(
+        format.colorize({ all: true }),
+        format.padLevels(),
+        consoleFormat({
+          showMeta: true,
+          metaStrip: ['timestamp', 'service'],
+          inspectOptions: {
+            depth: Infinity,
+            colors: true,
+            maxArrayLength: Infinity,
+            breakLength: 120,
+            compact: Infinity,
+          },
+        }),
       ),
     }),
   ],
