@@ -9,6 +9,7 @@ import {
   ButtonStyle,
   InteractionUpdateOptions,
 } from 'discord.js';
+import { Logger } from 'winston';
 
 export type ButtonReturn = boolean | Promise<boolean>
 | void | Promise<void>
@@ -26,6 +27,7 @@ async function createMenu<T>(
     mapper,
     selectCallback,
     extraButtons = [],
+    logger,
   } : {
     list : T[],
     owner : DiscordUser,
@@ -33,7 +35,8 @@ async function createMenu<T>(
     title : string,
     mapper : (item : T) => string | Promise<string>,
     selectCallback : (selected : T) => ButtonReturn,
-    extraButtons ?: ExtraButton[]
+    extraButtons ?: ExtraButton[],
+    logger : Logger
   },
 ) {
   const navigationButtons : ButtonComponent[] = [
@@ -156,7 +159,7 @@ async function createMenu<T>(
       if (action === 'reset') {
         to = setTimeout(() => {
           collector.stop();
-          message.delete().catch(console.error);
+          message.delete().catch((error) => logger.info(error.description, { error }));
         }, 1000 * 30);
       }
     };
@@ -173,16 +176,16 @@ async function createMenu<T>(
 
       if (destroyMessage || destroyMessage === undefined) {
         if (typeof destroyMessage === 'string') {
-          interaction.update({ content: destroyMessage, components: [] }).catch((err) => console.log(err));
+          interaction.update({ content: destroyMessage, components: [] }).catch((error) => logger.error(error.description, { error }));
         } else if (typeof destroyMessage === 'object') {
           interaction.update({
             content: null,
             embeds: null,
             components: [],
             ...destroyMessage,
-          }).catch((err) => console.log(err));
+          }).catch((error) => logger.error(error.description, { error }));
         } else {
-          message.delete().catch((err) => console.log(err));
+          message.delete().catch(((error) => logger.error(error.description, { error })));
         }
 
         collector.stop();
@@ -200,11 +203,11 @@ async function createMenu<T>(
 
       if (destroyMessage || destroyMessage === undefined) {
         if (typeof destroyMessage === 'string') {
-          interaction.update({ content: destroyMessage, components: [] }).catch((err) => console.log(err));
+          interaction.update({ content: destroyMessage, components: [] }).catch((error) => logger.error(error.description, { error }));
         } else if (typeof destroyMessage === 'object') {
-          interaction.update({ components: [], ...destroyMessage }).catch((err) => console.log(err));
+          interaction.update({ components: [], ...destroyMessage }).catch((error) => logger.error(error.description, { error }));
         } else {
-          message.delete().catch((err) => console.log(err));
+          message.delete().catch((error) => logger.error(error.description, { error }));
         }
 
         collector.stop();

@@ -10,6 +10,7 @@ import Chart, { ChartConfiguration } from 'chart.js';
 import { i18n as I18n } from 'i18next';
 import stringSimilarity from 'string-similarity';
 import { CronJob } from 'cron';
+import { Logger } from 'winston';
 import UserCoronaRegions from '../entity/UserCoronaRegions';
 import Router, { BothAutocompleteHandler, BothHandler, HandlerType } from '../router/Router';
 import CoronaData, { CoronaInfo } from '../entity/CoronaData';
@@ -356,12 +357,12 @@ router.use('graph', coronaGraph, HandlerType.BOTH, {
   }],
 }, communityAutocompleteHandler);
 
-const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>) => {
+const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>, logger : Logger) => {
   const regionPopulations = await getPopulation();
 
   const postReport = async () => {
     const em = orm.em.fork();
-    console.log('Posting report');
+    logger.info('Posting report');
 
     const userRegions = await em.getRepository(UserCoronaRegions).findAll();
 
@@ -428,7 +429,7 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
   const refreshData = async () => {
     const em = orm.em.fork();
 
-    console.log(`${moment().format('HH:mm')}: corona fetch started`);
+    logger.info(`${moment().format('HH:mm')}: corona fetch started`);
 
     try {
       const inDb = await em.getRepository(CoronaData).findAll();
@@ -466,16 +467,16 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
       });
 
       if (duplicatesRemoved.length > 0) {
-        console.log(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows discovered`);
+        logger.info(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows discovered`);
         em.persist(duplicatesRemoved);
         await em.flush();
-        console.log(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows added to db`);
+        logger.info(`${moment().format('HH:mm')}: ${duplicatesRemoved.length} new corona_data rows added to db`);
 
         await postReport();
       } else {
-        console.log(`${moment().format('HH:mm')}: no new data`);
+        logger.info(`${moment().format('HH:mm')}: no new data`);
       }
-    } catch (err) { console.log(err); }
+    } catch (err) { logger.error(err); }
   };
 
   const refreshDataCron = new CronJob('0 16 * * *', refreshData, null, false, 'Europe/Amsterdam');

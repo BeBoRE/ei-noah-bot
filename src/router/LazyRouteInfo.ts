@@ -1,7 +1,8 @@
+import { Logger } from 'winston';
 import { EntityManager } from '@mikro-orm/postgresql';
 import {
   AutocompleteInteraction,
-  AnyChannel, CommandInteraction, Message, NewsChannel, Role, TextChannel, User as DiscordUser,
+  AnyChannel, CommandInteraction, NewsChannel, Role, TextChannel, User as DiscordUser,
 } from 'discord.js';
 import { i18n as I18n } from 'i18next';
 import { getCategoryData } from '../data';
@@ -15,7 +16,7 @@ export default class LazyRouteInfo implements RouteInfo {
 
   public params : (string | AnyChannel | DiscordUser | Role)[];
 
-  public msg : Message | CommandInteraction | AutocompleteInteraction;
+  public msg : CommandInteraction | AutocompleteInteraction;
 
   public flags : Map<string, (string | AnyChannel | DiscordUser | Role | boolean | number)[]>;
 
@@ -26,6 +27,8 @@ export default class LazyRouteInfo implements RouteInfo {
   public user : User;
 
   public i18n : I18n;
+
+  public logger : Logger;
 
   private lazyCategory : undefined | null | Promise<Category>;
 
@@ -48,19 +51,22 @@ export default class LazyRouteInfo implements RouteInfo {
     em,
     guildUserOrUser,
     i18n,
+    logger,
   } : {
     params : (string | AnyChannel | DiscordUser | Role)[],
-    msg : Message | CommandInteraction | AutocompleteInteraction,
+    msg : CommandInteraction | AutocompleteInteraction,
     flags : Map<string, (string | AnyChannel | DiscordUser | Role | boolean | number)[]>
     em : EntityManager,
     guildUserOrUser : GuildUser | User,
-    i18n : I18n
+    i18n : I18n,
+    logger : Logger
   }) {
     this.absoluteParams = params;
     this.params = params;
     this.flags = flags;
     this.msg = msg;
     this.em = em;
+    this.logger = logger;
 
     if (guildUserOrUser instanceof GuildUser) {
       this.guildUser = guildUserOrUser;

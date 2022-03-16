@@ -28,7 +28,9 @@ function shuffle<T>(_array : Array<T>) : Array<T> {
   return array;
 }
 
-router.use('user', async ({ flags, params, msg }) => {
+router.use('user', async ({
+  flags, params, msg, logger,
+}) => {
   const [user] = flags.get('persoon') || params;
 
   if (!(user instanceof User)) return 'Geef iemand om te simuleren';
@@ -70,7 +72,7 @@ router.use('user', async ({ flags, params, msg }) => {
                 return msgs;
               })
             // eslint-disable-next-line no-loop-func
-              .catch((err) => console.log(err));
+              .catch((error) => { logger.error(error.description, { error }); });
 
             fetchedMessages?.forEach((m) => {
               if (m.content !== '' && m.author.id === user.id) {
@@ -86,7 +88,7 @@ router.use('user', async ({ flags, params, msg }) => {
       }))));
 
     if (spliced.length < 50) return 'Niet genoeg berichten gevonden om iets mee te genereren';
-    console.log(`${spliced.length} berichten gevonden`);
+    logger.info(`${spliced.length} berichten gevonden`);
 
     let maxSize = 1000;
     while (!chain && maxSize > 0) {

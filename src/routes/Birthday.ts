@@ -17,6 +17,7 @@ import {
 import { EntityManager } from '@mikro-orm/postgresql';
 import { createCanvas, loadImage, CanvasRenderingContext2D } from 'canvas';
 import i18next, { i18n as I18n } from 'i18next';
+import { Logger } from 'winston';
 import { getUserData } from '../data';
 import { User } from '../entity/User';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
@@ -392,7 +393,7 @@ const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChanne
 // Bug: Announcement wordt alleen gegeven wanneer de server een bday-rol had ingesteld (moet niet verplicht zijn)
 // Refactor: If in if in if in if in if
 // Refactor: Iets meer van async gebruikmaken
-const checkBday = async (client : Client, em : EntityManager, _i18n : I18n) => {
+const checkBday = async (client : Client, em : EntityManager, _i18n : I18n, logger : Logger) => {
   const today = moment().startOf('day').locale('nl').format('DD MMMM');
   const currentYear = (new Date()).getFullYear();
 
@@ -423,9 +424,9 @@ const checkBday = async (client : Client, em : EntityManager, _i18n : I18n) => {
           // Give or remove birthday role
           if (member && role) {
             if (isBirthday && !member.roles.cache.has(role.id)) {
-              member.roles.add(role).catch(console.error);
+              member.roles.add(role).catch((error) => logger.error(error.description, { error }));
             } else if (!isBirthday && member.roles.cache.has(role.id)) {
-              member.roles.remove(role).catch(console.error);
+              member.roles.remove(role).catch((error) => logger.error(error.description, { error }));
             }
           }
 
@@ -481,9 +482,11 @@ const checkBday = async (client : Client, em : EntityManager, _i18n : I18n) => {
 };
 
 if (process.env.NODE_ENV !== 'production') {
-  router.use('check', async ({ em, msg, i18n }) => {
+  router.use('check', async ({
+    em, msg, i18n, logger,
+  }) => {
     const { client } = msg;
-    await checkBday(client, em, i18n);
+    await checkBday(client, em, i18n, logger);
 
     return 'Ohko';
   },
@@ -492,19 +495,19 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-router.onInit = async (client, orm, i18n) => {
+router.onInit = async (client, orm, i18n, logger) => {
   const offset = new Date().getTimezoneOffset();
-  console.log(`Offset in minutes: ${offset}`);
+  logger.info(`Offset in minutes: ${offset}`);
 
   {
     const em = orm.em.fork();
-    await checkBday(client, em, i18n);
+    await checkBday(client, em, i18n, logger);
     await em.flush();
   }
 
   const reportCron = new CronJob('5 0 0 * * *', async () => {
     const em = orm.em.fork();
-    await checkBday(client, em, i18n);
+    await checkBday(client, em, i18n, logger);
     await em.flush();
   });
 

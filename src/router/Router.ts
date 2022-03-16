@@ -1,5 +1,4 @@
 import {
-  Message,
   User as DiscordUser,
   Role, AnyChannel,
   Client,
@@ -21,25 +20,27 @@ import {
 } from '@mikro-orm/core';
 import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { i18n as I18n } from 'i18next';
+import { Logger } from 'winston';
 import { Category } from '../entity/Category';
 import { GuildUser } from '../entity/GuildUser';
 import { User } from '../entity/User';
 import ContextMenuInfo from './ContextMenuInfo';
 
 export interface RouteInfo {
-  msg: Message | CommandInteraction | AutocompleteInteraction
-  absoluteParams: Array<string | DiscordUser | Role | AnyChannel>
-  params: Array<string | DiscordUser | Role | AnyChannel>
-  flags: Map<string, Array<string | DiscordUser | Role | AnyChannel | boolean | number>>,
-  readonly guildUser: GuildUser | null,
-  readonly user: User,
-  readonly category: Promise<Category> | null,
-  em : EntityManager
-  i18n : I18n
+  msg: CommandInteraction | AutocompleteInteraction;
+  absoluteParams: Array<string | DiscordUser | Role | AnyChannel>;
+  params: Array<string | DiscordUser | Role | AnyChannel>;
+  flags: Map<string, Array<string | DiscordUser | Role | AnyChannel | boolean | number>>;
+  readonly guildUser: GuildUser | null;
+  readonly user: User;
+  readonly category: Promise<Category> | null;
+  em : EntityManager;
+  i18n : I18n;
+  logger : Logger;
 }
 
 export interface MsgRouteInfo extends RouteInfo {
-  msg: Message | CommandInteraction
+  msg: CommandInteraction
 }
 
 export interface AutocompleteRouteInfo extends RouteInfo {
@@ -50,7 +51,7 @@ type BothRouteInfo = (DMMsgRouteInfo | GuildMsgRouteInfo);
 type BothAutocompleteRouteInfo = (DMAutocompleteRouteInfo | GuildAutocompleteRouteInfo);
 
 export interface DMMsgRouteInfo extends MsgRouteInfo {
-  msg: (Message | CommandInteraction) & {
+  msg: CommandInteraction & {
     channel: DMChannel
     guild : null
     member : null
@@ -60,7 +61,7 @@ export interface DMMsgRouteInfo extends MsgRouteInfo {
 }
 
 export interface DMAutocompleteRouteInfo extends MsgRouteInfo {
-  msg: (Message | CommandInteraction) & {
+  msg: CommandInteraction & {
     channel: DMChannel
     guild : null
     member : null
@@ -70,7 +71,7 @@ export interface DMAutocompleteRouteInfo extends MsgRouteInfo {
 }
 
 export interface GuildMsgRouteInfo extends MsgRouteInfo {
-  msg: (Message | CommandInteraction) & {
+  msg: CommandInteraction & {
     channel: TextChannel | NewsChannel
     guild : Guild
     member : GuildMember
@@ -80,7 +81,7 @@ export interface GuildMsgRouteInfo extends MsgRouteInfo {
 }
 
 export interface GuildAutocompleteRouteInfo extends MsgRouteInfo {
-  msg: (Message | CommandInteraction) & {
+  msg: CommandInteraction & {
     channel: TextChannel | NewsChannel
     guild : Guild
     member : GuildMember
@@ -153,7 +154,7 @@ export interface IRouter {
   use(route : string, using: Router | BothHandler) : void
   use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type ?: HandlerType, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: BothAutocompleteHandler) : void
 
-  onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>, i18n : I18n)
+  onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>, i18n : I18n, logger : Logger)
   => void | Promise<void>)
 }
 
@@ -282,20 +283,20 @@ export default class Router implements IRouter {
     });
   }
 
-  protected initialize(client : Client, orm : MikroORM<PostgreSqlDriver>, i18n : I18n) {
+  protected initialize(client : Client, orm : MikroORM<PostgreSqlDriver>, i18n : I18n, logger : Logger) {
     Object.values(this.routes).forEach((route) => {
       if (route instanceof Router && !route.isInitialized) {
-        route.initialize(client, orm, i18n);
+        route.initialize(client, orm, i18n, logger);
       }
     });
 
     if (this.onInit) {
-      this.onInit(client, orm, i18n);
+      this.onInit(client, orm, i18n, logger);
       // eslint-disable-next-line no-underscore-dangle
       this._isInitialized = true;
     }
   }
 
-  public onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>, i18n : I18n)
+  public onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>, i18n : I18n, logger : Logger)
   => void | Promise<void>);
 }

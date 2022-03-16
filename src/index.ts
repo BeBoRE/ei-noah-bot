@@ -15,6 +15,7 @@ import { lstatSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { CronJob } from 'cron';
 import { readFile } from 'fs/promises';
+import logger from './logger';
 import { Guild } from './entity/Guild';
 import { BothHandler, HandlerType } from './router/Router';
 import EiNoah from './EiNoah';
@@ -52,12 +53,12 @@ process.title = 'Ei Noah Bot';
   if (!process.env.CLIENT_TOKEN) throw new Error('Add a client token');
 
   // Creëerd de database connectie
-  const orm = await MikroORM.init<PostgreSqlDriver>().catch((err) => { console.error(err); process.exit(-1); });
+  const orm = await MikroORM.init<PostgreSqlDriver>().catch((err) => { logger.error({ err }); process.exit(-1); });
   await orm.getMigrator().up();
 
   if (process.env.CORONA_REFRESHER?.toLowerCase() !== 'false') {
     const child = fork('./src/child.ts');
-    child.on('message', (msg) => console.log(msg));
+
     process.on('beforeExit', () => {
       child.kill();
     });
@@ -72,7 +73,6 @@ process.title = 'Ei Noah Bot';
   i18next.use(Backend)
     .init({
       initImmediate: false,
-      debug: process.env.NODE_ENV !== 'production',
       fallbackLng: ['en', 'nl'],
       lng: 'nl',
       preload: preloadLanguages,
@@ -83,9 +83,9 @@ process.title = 'Ei Noah Bot';
       backend: {
         loadPath: join(__dirname, '../locales/{{lng}}/{{ns}}.json'),
       },
-    }, (err) => err && console.log(err));
+    }, (err) => err && logger.error({ err }));
 
-  const eiNoah = new EiNoah(process.env.CLIENT_TOKEN, orm, i18next);
+  const eiNoah = new EiNoah(process.env.CLIENT_TOKEN, orm, i18next, logger);
 
   eiNoah.use('help', ({ i18n }) => i18n.t('index.help', { joinArrays: '\n' }), HandlerType.BOTH, {
     description: 'Het heerlijke Ei Noah menu, geniet ervan :P)',
@@ -369,7 +369,7 @@ process.title = 'Ei Noah Bot';
         .then((promises) => Promise.all(promises))
         .then(() => 'Slash commands geupdate')
         .catch((err) => {
-          console.error(err);
+          logger.error('Slash Command Error', { err });
           return 'Er is iets fout gegaan';
         });
     }, HandlerType.BOTH, {
@@ -424,7 +424,7 @@ process.title = 'Ei Noah Bot';
     const sintpfpCron = new CronJob('00 12 17 10 *', async () => {
       const avatar = await readFile('./avatars/sinter-ei.png')
         .catch((err) => {
-          console.log(err);
+          logger.error('Cannot change avatar', { err });
           return null;
         });
 
@@ -451,14 +451,14 @@ process.title = 'Ei Noah Bot';
               }),
             );
           })
-          .catch((err) => console.log(err));
+          .catch((err) => logger.error({ err }));
       }
     }, null, false, 'Europe/Amsterdam');
 
     const santaCron = new CronJob('00 12 6 11 *', async () => {
       const avatar = await readFile('./avatars/santa-ei.png')
         .catch((err) => {
-          console.log(err);
+          logger.error({ err });
           return null;
         });
 
@@ -485,7 +485,7 @@ process.title = 'Ei Noah Bot';
               }),
             );
           })
-          .catch((err) => console.log(err));
+          .catch((err) => logger.error({ err }));
       }
     }, null, false, 'Europe/Amsterdam');
 
