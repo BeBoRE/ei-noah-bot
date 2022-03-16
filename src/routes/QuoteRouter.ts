@@ -75,7 +75,7 @@ const addQuote = (params : (string | DiscordUser | AnyChannel | Role | number | 
 };
 
 const handler : GuildHandler = async ({
-  params, msg, em, guildUser, flags, i18n,
+  params, msg, em, guildUser, flags, i18n, logger,
 }) => {
   const [user] = flags.get('persoon') || params;
   params.shift();
@@ -103,6 +103,7 @@ const handler : GuildHandler = async ({
     }
 
     createMenu({
+      logger,
       list: quotedUser.quotes.getItems(),
       owner: requestingUser,
       msg,
@@ -183,7 +184,7 @@ router.useContext('Save As Quote', ApplicationCommandType.Message, async ({
 });
 
 const removeHandler : GuildHandler = async ({
-  msg, em, params, guildUser, flags, i18n,
+  msg, em, params, guildUser, flags, i18n, logger,
 }) => {
   const [user] = flags.get('user') || params;
   if (!(user instanceof DiscordUser)) {
@@ -212,6 +213,7 @@ const removeHandler : GuildHandler = async ({
   const menuEm = em.fork();
 
   createMenu({
+    logger,
     list: quotes,
     owner: requestingUser,
     msg,

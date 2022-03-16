@@ -631,7 +631,7 @@ const removeFromLobby = (
 };
 
 router.use('remove', async ({
-  params, msg, guildUser, em, flags, i18n,
+  params, msg, guildUser, em, flags, i18n, logger,
 }) => {
   const nonUsersOrRoles = params
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
@@ -690,6 +690,7 @@ router.use('remove', async ({
     const selectedRoles = new Set<Role>();
 
     createMenu({
+      logger,
       list: [...removeAbleRoles, ...removeAbleUsers],
       owner: requestingUser,
       msg,
