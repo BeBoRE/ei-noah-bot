@@ -58,10 +58,7 @@ process.title = 'Ei Noah Bot';
 
   if (process.env.CORONA_REFRESHER?.toLowerCase() !== 'false') {
     const child = fork('./src/child.ts');
-    child.on('message', (msg) => {
-      if (msg instanceof Object) logger.info('Corona Data Message', { meta: msg });
-      else logger.info(msg.toString(), { meta: { process: 'Corona Data' } });
-    });
+
     process.on('beforeExit', () => {
       child.kill();
     });
