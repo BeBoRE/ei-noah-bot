@@ -238,7 +238,7 @@ class EiNoah implements IRouter {
 
   private contextHandlers : Map<string, ContextMenuHandlerInfo> = new Map();
 
-  public i18n : I18n;
+  private readonly i18n : I18n;
 
   constructor(token : string, orm : MikroORM<PostgreSqlDriver>, i18n : I18n, logger : Logger) {
     this.token = token;
@@ -298,7 +298,7 @@ class EiNoah implements IRouter {
     });
   }
 
-  public onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>)
+  public onInit ?: ((client : Client, orm : MikroORM<PostgreSqlDriver>, i18n : I18n, logger : Logger)
   => void | Promise<void>);
 
   public readonly updateSlashCommands = () => Promise.all(
@@ -408,7 +408,7 @@ class EiNoah implements IRouter {
     await this.client.login(this.token);
 
     this.router.onInit = async (client) => {
-      if (this.onInit) await this.onInit(client, orm);
+      if (this.onInit) await this.onInit(client, orm, this.i18n, this.logger);
 
       this.contextHandlers.forEach((info, name) => {
         // TODO: Dit weer weghalen na release V14
@@ -425,7 +425,7 @@ class EiNoah implements IRouter {
     };
 
     // @ts-ignore
-    this.router.initialize(this.client, orm, this.i18n);
+    this.router.initialize(this.client, orm, this.i18n, this.logger);
 
     process.on('uncaughtException', async (err) => {
       this.logger.error('UncaughtError', {

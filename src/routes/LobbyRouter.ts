@@ -49,6 +49,7 @@ import emojiRegex from 'emoji-regex';
 import moment, { Duration } from 'moment';
 import { i18n as I18n } from 'i18next';
 import { OverwriteType } from 'discord-api-types/v9';
+import { Logger } from 'winston';
 import LobbyNameChange from '../entity/LobbyNameChange';
 import { Category } from '../entity/Category';
 import TempChannel from '../entity/TempChannel';
@@ -1454,7 +1455,7 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
 
 const msgCollectors = new Map<Snowflake, InteractionCollector<Interaction>>();
 
-const createDashBoardCollector = async (client : Client, voiceChannel : VoiceChannel, tempChannel : TempChannel, _em : EntityManager, _i18n : I18n) => {
+const createDashBoardCollector = async (client : Client, voiceChannel : VoiceChannel, tempChannel : TempChannel, _em : EntityManager, _i18n : I18n, logger : Logger) => {
   const textChannel = await activeTempText(client, tempChannel);
   const owner = await client.users.fetch(tempChannel.guildUser.user.id, { cache: true }).catch(() => null);
   const i18 = _i18n.cloneInstance({ lng: tempChannel.guildUser.user.language || tempChannel.guildUser.guild.language });
@@ -1462,7 +1463,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
   if (textChannel && owner) {
     let msg = tempChannel.controlDashboardId ? await textChannel.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => undefined) : undefined;
     if (!msg) {
-      msg = await textChannel.send({ ...getDashboardOptions(i18, textChannel.guild, owner), components: await generateComponents(voiceChannel, _em, tempChannel.guildUser, owner, i18) }).catch((err) => { console.error(err); return undefined; });
+      msg = await textChannel.send({ ...getDashboardOptions(i18, textChannel.guild, owner), components: await generateComponents(voiceChannel, _em, tempChannel.guildUser, owner, i18) }).catch((err) => { logger.error(err.description, { error: err }); return undefined; });
       if (msg) tempChannel.controlDashboardId = msg.id;
     }
 
@@ -1500,7 +1501,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
                   duration: duration.humanize(true),
                   name: voiceName,
                 }) : i18n.t('lobby.lobbyNameChanged', { name: voiceName }),
-              }).catch((err) => console.log(err));
+              }).catch((err) => logger.error(err.description, { error: err }));
             } catch (err) {
               interaction.reply({ content: i18n.t('lobby.error.noEmojiOnly'), ephemeral: true });
             }
@@ -1544,7 +1545,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
   }
 };
 
-const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : EntityManager, _i18n : I18n) => {
+const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : EntityManager, _i18n : I18n, logger : Logger) => {
   const activeChannel = await activeTempChannel(client, em, tempChannel);
   const activeTextChannel = await activeTempText(client, tempChannel);
 
@@ -1598,7 +1599,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
       const type = getChannelType(activeChannel);
 
       await activeChannel.permissionOverwrites.edit(newOwner, { Speak: true, Connect: true })
-        .catch(console.error);
+        .catch((err) => logger.error(err.message, { error: err }));
 
       if (newOwner.voice.suppress) { newOwner.voice.setMute(false).catch(() => { }); }
 
@@ -1609,7 +1610,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
             reply: tempChannel.controlDashboardId ? { messageReference: tempChannel.controlDashboardId } : undefined,
             content: i18n.t('lobby.ownershipTransferred', { user: newOwner.user.toString() }),
           }),
-      ]).catch(console.error);
+      ]).catch((err) => logger.error(err.message, { error: err }));
     }
   } else {
     const discordUser = await client.users.fetch(`${BigInt(tempChannel.guildUser.user.id)}`);
@@ -1619,7 +1620,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
 
     const i18n = _i18n.cloneInstance({ lng: tempChannel.guildUser.user.language || tempChannel.guildUser.guild.language });
 
-    await createDashBoardCollector(client, activeChannel, tempChannel, em.fork(), i18n);
+    await createDashBoardCollector(client, activeChannel, tempChannel, em.fork(), i18n, logger);
 
     await changeLobby(lobbyType, activeChannel, discordUser, activeChannel.guild, tempChannel, activeChannel.userLimit, false, null, em, i18n);
   }
@@ -1637,7 +1638,7 @@ const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => 
   await Promise.all(categories.map((category) => createCreateChannels(category, client).catch(() => {})));
 };
 
-router.onInit = async (client, orm, _i18n) => {
+router.onInit = async (client, orm, _i18n, logger) => {
   // Check elke tempChannel om de 60 minuten
   const checkTempLobbies = async () => {
     const em = orm.em.fork();
@@ -1651,10 +1652,10 @@ router.onInit = async (client, orm, _i18n) => {
       },
     });
 
-    const tempChecks = usersWithTemp.map((tcs) => checkTempChannel(client, tcs, em, _i18n));
+    const tempChecks = usersWithTemp.map((tcs) => checkTempChannel(client, tcs, em, _i18n, logger));
 
-    await Promise.all(tempChecks).catch(console.error);
-    await em.flush().catch(console.error);
+    await Promise.all(tempChecks).catch((err) => logger.error(err.description, { error: err }));
+    await em.flush().catch((error) => logger.error(error.description, { error }));
 
     setTimeout(checkTempLobbies, 1000 * 60);
   };
@@ -1667,7 +1668,7 @@ router.onInit = async (client, orm, _i18n) => {
         channelId: oldState.channel.id,
       }, { populate: { guildUser: { guild: true, user: true } } });
       if (tempChannel) {
-        await checkTempChannel(client, tempChannel, em, _i18n);
+        await checkTempChannel(client, tempChannel, em, _i18n, logger);
         await em.flush();
       }
     }
@@ -1715,7 +1716,7 @@ router.onInit = async (client, orm, _i18n) => {
           textChannel = await createTextChannel(client, em, guildUser.tempChannel, user);
           guildUser.tempChannel.textChannelId = textChannel.id;
 
-          await createDashBoardCollector(client, voiceChannel, guildUser.tempChannel, em.fork(), _i18n);
+          await createDashBoardCollector(client, voiceChannel, guildUser.tempChannel, em.fork(), _i18n, logger);
 
           await textChannel.edit({ permissionOverwrites: getTextPermissionOverwrites(voiceChannel, client) });
         }

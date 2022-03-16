@@ -492,9 +492,9 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-router.onInit = async (client, orm, i18n) => {
+router.onInit = async (client, orm, i18n, logger) => {
   const offset = new Date().getTimezoneOffset();
-  console.log(`Offset in minutes: ${offset}`);
+  logger.info(`Offset in minutes: ${offset}`);
 
   {
     const em = orm.em.fork();
