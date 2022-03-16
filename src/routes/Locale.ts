@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, Message, PermissionsBitField } from 'discord.js';
+import { ApplicationCommandOptionType, PermissionsBitField } from 'discord.js';
 import Router, { HandlerType } from '../router/Router';
 
 const router = new Router('Select your language');
@@ -48,7 +48,7 @@ router.use('server', async ({
   i18n, guildUser, params, flags, msg,
 }) => {
   const [language] = flags.get('language') || params;
-  const member = msg instanceof Message ? await msg.guild.members.fetch({ user: msg.author, cache: true }).catch(() => null) : msg.member;
+  const { member } = msg;
   const availableLanguages = Object.keys(i18n.services.resourceStore.data).sort();
 
   if (typeof language !== 'string') return i18n.t('locale.error.notLanguage');

@@ -1,5 +1,4 @@
 import {
-  Message,
   User as DiscordUser,
   Role, AnyChannel,
   Client,
@@ -28,19 +27,20 @@ import { User } from '../entity/User';
 import ContextMenuInfo from './ContextMenuInfo';
 
 export interface RouteInfo {
-  msg: Message | CommandInteraction | AutocompleteInteraction
-  absoluteParams: Array<string | DiscordUser | Role | AnyChannel>
-  params: Array<string | DiscordUser | Role | AnyChannel>
-  flags: Map<string, Array<string | DiscordUser | Role | AnyChannel | boolean | number>>,
-  readonly guildUser: GuildUser | null,
-  readonly user: User,
-  readonly category: Promise<Category> | null,
-  em : EntityManager
-  i18n : I18n
+  msg: CommandInteraction | AutocompleteInteraction;
+  absoluteParams: Array<string | DiscordUser | Role | AnyChannel>;
+  params: Array<string | DiscordUser | Role | AnyChannel>;
+  flags: Map<string, Array<string | DiscordUser | Role | AnyChannel | boolean | number>>;
+  readonly guildUser: GuildUser | null;
+  readonly user: User;
+  readonly category: Promise<Category> | null;
+  em : EntityManager;
+  i18n : I18n;
+  logger : Logger;
 }
 
 export interface MsgRouteInfo extends RouteInfo {
-  msg: Message | CommandInteraction
+  msg: CommandInteraction
 }
 
 export interface AutocompleteRouteInfo extends RouteInfo {
@@ -51,7 +51,7 @@ type BothRouteInfo = (DMMsgRouteInfo | GuildMsgRouteInfo);
 type BothAutocompleteRouteInfo = (DMAutocompleteRouteInfo | GuildAutocompleteRouteInfo);
 
 export interface DMMsgRouteInfo extends MsgRouteInfo {
-  msg: (Message | CommandInteraction) & {
+  msg: CommandInteraction & {
     channel: DMChannel
     guild : null
     member : null
@@ -61,7 +61,7 @@ export interface DMMsgRouteInfo extends MsgRouteInfo {
 }
 
 export interface DMAutocompleteRouteInfo extends MsgRouteInfo {
-  msg: (Message | CommandInteraction) & {
+  msg: CommandInteraction & {
     channel: DMChannel
     guild : null
     member : null
@@ -71,7 +71,7 @@ export interface DMAutocompleteRouteInfo extends MsgRouteInfo {
 }
 
 export interface GuildMsgRouteInfo extends MsgRouteInfo {
-  msg: (Message | CommandInteraction) & {
+  msg: CommandInteraction & {
     channel: TextChannel | NewsChannel
     guild : Guild
     member : GuildMember
@@ -81,7 +81,7 @@ export interface GuildMsgRouteInfo extends MsgRouteInfo {
 }
 
 export interface GuildAutocompleteRouteInfo extends MsgRouteInfo {
-  msg: (Message | CommandInteraction) & {
+  msg: CommandInteraction & {
     channel: TextChannel | NewsChannel
     guild : Guild
     member : GuildMember

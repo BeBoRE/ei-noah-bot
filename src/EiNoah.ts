@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, Role, Guild, Message, DiscordAPIError, Channel, Snowflake, Embed, MessageAttachment, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, AnyChannel, ApplicationCommandOptionType, GatewayIntentBits, Partials,
+  Client, User as DiscordUser, Role, Guild, DiscordAPIError, Channel, Snowflake, Embed, MessageAttachment, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, AnyChannel, ApplicationCommandOptionType, GatewayIntentBits, Partials,
 } from 'discord.js';
 import {
   MikroORM,
@@ -85,56 +85,23 @@ export async function parseParams(params : string[], client : Client, guild : Gu
   return resolved;
 }
 
-function isFlag(argument: string) {
-  return argument[0] === '-' && argument.length > 1;
-}
-
-async function messageParser(msg : AutocompleteInteraction, em: EntityManager, i18n : I18n) : Promise<AutocompleteRouteInfo | null>;
-async function messageParser(msg : Message | CommandInteraction, em: EntityManager, i18n : I18n) : Promise<MsgRouteInfo | null>;
-async function messageParser(msg : Message | CommandInteraction | AutocompleteInteraction, em: EntityManager, i18n : I18n) : Promise<AutocompleteRouteInfo | MsgRouteInfo | null> {
+async function messageParser(msg : AutocompleteInteraction, em: EntityManager, i18n : I18n, logger : Logger) : Promise<AutocompleteRouteInfo | null>;
+async function messageParser(msg : CommandInteraction, em: EntityManager, i18n : I18n, logger : Logger) : Promise<MsgRouteInfo | null>;
+async function messageParser(msg : CommandInteraction | AutocompleteInteraction, em: EntityManager, i18n : I18n, logger : Logger) : Promise<AutocompleteRouteInfo | MsgRouteInfo | null> {
   const flags = new Map<string, Array<Role | DiscordUser | string | AnyChannel | boolean | number>>();
   const params : Array<Role | DiscordUser | string | AnyChannel> = [];
-  const user = msg instanceof Message ? msg.author : msg.user;
+  const { user } = msg;
   const guildUserOrUser = msg.guild ? getUserGuildData(em, user, msg.guild) : getUserData(em, user);
 
-  if (msg instanceof Message) {
-    if (!msg.content) throw new Error('Message heeft geen content');
+  let command : CommandInteractionOption | CommandInteraction | AutocompleteInteraction = msg;
+  while (command instanceof CommandInteraction || command instanceof AutocompleteInteraction || command.type === ApplicationCommandOptionType.Subcommand || command.type === ApplicationCommandOptionType.SubcommandGroup) {
+    if (command instanceof CommandInteraction || command instanceof AutocompleteInteraction) { params.push(command.commandName); } else params.push(command.name);
+    const nextCommand : CommandInteractionOption | undefined = Array.isArray(command.options) ? command.options[0] : command.options?.data[0];
+    if (!nextCommand || !(nextCommand.type === ApplicationCommandOptionType.Subcommand || nextCommand.type === ApplicationCommandOptionType.SubcommandGroup)) break;
+    command = nextCommand;
+  }
 
-    const splitted = msg.content.split(' ').filter((param) => param);
-
-    splitted.shift();
-
-    if (splitted[0] && splitted[0].toLowerCase() === 'noah') splitted.shift();
-
-    const resolved = await parseParams(splitted, msg.client, msg.guild).catch(() => null);
-
-    if (!resolved) return null;
-
-    let flag : string | null = null;
-    resolved.forEach((param) => {
-      if (typeof param === 'string' && isFlag(param)) {
-        flag = param.substr(1, param.length - 1).toLowerCase();
-        flags.set(flag, []);
-        return;
-      }
-
-      if (flag) {
-        flags.get(flag)?.push(param);
-        return;
-      }
-
-      params.push(param);
-    });
-  } else {
-    let command : CommandInteractionOption | CommandInteraction | AutocompleteInteraction = msg;
-    while (command instanceof CommandInteraction || command instanceof AutocompleteInteraction || command.type === ApplicationCommandOptionType.Subcommand || command.type === ApplicationCommandOptionType.SubcommandGroup) {
-      if (command instanceof CommandInteraction || command instanceof AutocompleteInteraction) { params.push(command.commandName); } else params.push(command.name);
-      const nextCommand : CommandInteractionOption | undefined = Array.isArray(command.options) ? command.options[0] : command.options?.data[0];
-      if (!nextCommand || !(nextCommand.type === ApplicationCommandOptionType.Subcommand || nextCommand.type === ApplicationCommandOptionType.SubcommandGroup)) break;
-      command = nextCommand;
-    }
-
-    const options = Array.isArray(command.options) ? command.options : command.options?.data;
+  const options = Array.isArray(command.options) ? command.options : command.options?.data;
 
     options?.forEach((option) => {
       if (option.type === ApplicationCommandOptionType.String || option.type === ApplicationCommandOptionType.Boolean || option.type === ApplicationCommandOptionType.Integer || option.type === ApplicationCommandOptionType.Number) {
@@ -146,34 +113,35 @@ async function messageParser(msg : Message | CommandInteraction | AutocompleteIn
       if (option.user instanceof User) flags.set(option.name, [option.user]);
       if (option.role instanceof Role) flags.set(option.name, [option.role]);
     });
-  }
 
-  const awaitedGuildUserOrUser = await guildUserOrUser;
-  const language = (awaitedGuildUserOrUser instanceof GuildUser ? (awaitedGuildUserOrUser.user.language || awaitedGuildUserOrUser.guild.language) : awaitedGuildUserOrUser.language);
+    const awaitedGuildUserOrUser = await guildUserOrUser;
+    const language = (awaitedGuildUserOrUser instanceof GuildUser ? (awaitedGuildUserOrUser.user.language || awaitedGuildUserOrUser.guild.language) : awaitedGuildUserOrUser.language);
 
-  const newI18n = i18n.cloneInstance({ lng: language || 'nl' });
+    const newI18n = i18n.cloneInstance({ lng: language || 'nl' });
 
-  if (msg instanceof AutocompleteInteraction) {
-    return new LazyAutocompleteRouteInfo({
+    if (msg instanceof AutocompleteInteraction) {
+      return new LazyAutocompleteRouteInfo({
+        params,
+        msg,
+        flags,
+        em,
+        guildUserOrUser: await guildUserOrUser,
+        i18n: newI18n,
+        logger,
+      });
+    }
+
+    const routeInfo : MsgRouteInfo = new LazyMsgRouteInfo({
       params,
       msg,
       flags,
       em,
       guildUserOrUser: await guildUserOrUser,
       i18n: newI18n,
+      logger,
     });
-  }
 
-  const routeInfo : MsgRouteInfo = new LazyMsgRouteInfo({
-    params,
-    msg,
-    flags,
-    em,
-    guildUserOrUser: await guildUserOrUser,
-    i18n: newI18n,
-  });
-
-  return routeInfo;
+    return routeInfo;
 }
 
 const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : InteractionReplyOptions | null => {
@@ -318,7 +286,7 @@ class EiNoah implements IRouter {
       if (interaction.isCommand()) {
         const em = orm.em.fork();
 
-        messageParser(interaction, em, this.i18n)
+        messageParser(interaction, em, this.i18n, this.logger)
           .then((info) => {
             if (info) { return this.router.handle(info); }
             return 'Er is iets misgegaan, volgende keer beter';
@@ -345,7 +313,7 @@ class EiNoah implements IRouter {
 
       if (interaction.isAutocomplete()) {
         const em = orm.em.fork();
-        messageParser(interaction, em, this.i18n)
+        messageParser(interaction, em, this.i18n, this.logger)
           .then((info) => {
             if (!info) return [{ name: 'Er is iets misgegaan', value: 'error' }];
             return this.router.handle(info);
@@ -368,7 +336,7 @@ class EiNoah implements IRouter {
         i18n.changeLanguage(guildUserOrUser instanceof GuildUser ? guildUserOrUser.user.language || guildUserOrUser.guild.language : guildUserOrUser.language);
 
         try {
-          const handlerReturn = await handler.handler(new ContextMenuInfo(interaction, guildUserOrUser, em, i18n));
+          const handlerReturn = await handler.handler(new ContextMenuInfo(interaction, guildUserOrUser, em, i18n, this.logger));
           const defaultOptions : InteractionReplyOptions = {
             allowedMentions: {
               roles: [],

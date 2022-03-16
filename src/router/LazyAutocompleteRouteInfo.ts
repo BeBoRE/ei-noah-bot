@@ -5,6 +5,7 @@ import {
   Role, User as DiscordUser,
 } from 'discord.js';
 import { i18n as I18n } from 'i18next';
+import { Logger } from 'winston';
 import { GuildUser } from '../entity/GuildUser';
 import { User } from '../entity/User';
 import LazyRouteInfo from './LazyRouteInfo';
@@ -19,7 +20,8 @@ export default class LazyAutocompleteRouteInfo extends LazyRouteInfo implements 
     flags : Map<string, (string | AnyChannel | DiscordUser | Role | boolean | number)[]>
     em : EntityManager,
     guildUserOrUser : GuildUser | User,
-    i18n : I18n
+    i18n : I18n,
+    logger : Logger
   }) {
     super(info);
 

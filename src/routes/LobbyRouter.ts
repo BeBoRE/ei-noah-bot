@@ -15,7 +15,6 @@ import {
   CategoryChannel,
   User,
   Snowflake,
-  Message,
   ActionRow,
   ButtonComponent,
   Guild,
@@ -347,7 +346,7 @@ interface AddUsersResponse {
   alreadyInMessage: string,
   text: string
 }
-const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChannel, owner : GuildUser, client : Client, i18n : I18n) : AddUsersResponse => {
+const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChannel, owner : GuildUser, client : Client, i18n : I18n, logger : Logger) : AddUsersResponse => {
   const allowedUsers : Array<DiscordUser | Role> = [];
   const alreadyAllowedUsers : Array<DiscordUser | Role> = [];
 
@@ -382,7 +381,7 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
         if (textChannel && newChannel instanceof VoiceChannel) { updateTextChannel(newChannel, textChannel); }
       }
     })
-    .catch(() => console.log('Overwrite permission error'));
+    .catch(() => logger.error('Overwrite permission error'));
 
   let allowedUsersMessage : string;
   if (!allowedUsers.length) allowedUsersMessage = i18n.t('lobby.noUsersAdded');
@@ -402,7 +401,7 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
 };
 
 router.use('add', async ({
-  params, msg, guildUser, em, flags, i18n,
+  params, msg, guildUser, em, flags, i18n, logger,
 }) => {
   const nonUserOrRole = params
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
@@ -429,7 +428,7 @@ router.use('add', async ({
 
   if (guildUser.tempChannel.textChannelId !== msg.channel.id) return i18n.t('lobby.error.useTextChannel', { channel: guildUser.tempChannel.textChannelId });
 
-  return addUsers(userOrRole, activeChannel, guildUser, msg.client, i18n).text;
+  return addUsers(userOrRole, activeChannel, guildUser, msg.client, i18n, logger).text;
 }, HandlerType.GUILD, {
   description: 'Add a user or role to the lobby',
   options: [{
@@ -501,7 +500,7 @@ router.use('add', async ({
 });
 
 router.useContext('Add To Lobby', ApplicationCommandType.User, async ({
-  interaction, guildUser, em, i18n,
+  interaction, guildUser, em, i18n, logger,
 }) => {
   if (!guildUser) return i18n.t('error.onlyUsableOnGuild');
 
@@ -510,7 +509,7 @@ router.useContext('Add To Lobby', ApplicationCommandType.User, async ({
 
   const userToAdd = interaction.options.getUser('user', true);
 
-  const addResponse = addUsers([userToAdd], activeChannel, guildUser, interaction.client, i18n);
+  const addResponse = addUsers([userToAdd], activeChannel, guildUser, interaction.client, i18n, logger);
 
   if (interaction.channel?.id !== guildUser.tempChannel.textChannelId) {
     const textChannel = await activeTempText(interaction.client, guildUser.tempChannel);
@@ -638,7 +637,7 @@ router.use('remove', async ({
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
   const users = params.filter((param): param is DiscordUser => param instanceof DiscordUser);
   const roles = params.filter((param): param is Role => param instanceof Role);
-  const requestingUser = msg instanceof Message ? msg.author : msg.user;
+  const requestingUser = msg.user;
 
   flags.forEach((value) => {
     const [user] = value;
@@ -941,6 +940,7 @@ const changeLobby = (() => {
     interaction: MessageComponentInteraction | null,
     em: EntityManager,
     i18n : I18n,
+    logger : Logger,
   ) => {
     const deny = toDeny(changeTo);
     const currentType = getChannelType(voiceChannel);
@@ -974,7 +974,7 @@ const changeLobby = (() => {
           if (tc && voice instanceof VoiceChannel) { return updateTextChannel(voice, tc); }
           return null;
         })
-        .catch(console.error);
+        .catch((error) => logger.error(error.description, { error }));
     }
 
     const newName = generateLobbyName(changeTo, owner, tempChannel.name);
@@ -1066,9 +1066,9 @@ const changeLobby = (() => {
 })();
 
 const changeTypeHandler : GuildHandler = async ({
-  params, msg, guildUser, em, flags, i18n,
+  params, msg, guildUser, em, flags, i18n, logger,
 }) => {
-  const requestingUser = msg instanceof Message ? msg.author : msg.user;
+  const requestingUser = msg.user;
   if (msg.channel instanceof DMChannel || msg.guild === null || guildUser === null) {
     return i18n.t('error.onlyUsableOnGuild');
   }
@@ -1115,7 +1115,7 @@ const changeTypeHandler : GuildHandler = async ({
     return i18n.t('lobby.error.lobbyAlreadyType', { type: changeTo });
   }
 
-  changeLobby(changeTo, activeChannel, requestingUser, msg.guild, lobbyOwner.tempChannel, activeChannel.userLimit, true, null, em, i18n);
+  changeLobby(changeTo, activeChannel, requestingUser, msg.guild, lobbyOwner.tempChannel, activeChannel.userLimit, true, null, em, i18n, logger);
 
   return i18n.t('lobby.lobbyTypeChangedTo', { type: changeTo });
 };
@@ -1148,10 +1148,10 @@ router.use('set', changeTypeHandler, HandlerType.GUILD);
 router.use('verander', changeTypeHandler, HandlerType.GUILD);
 
 const sizeHandler : GuildHandler = async ({
-  msg, guildUser, params, em, flags, i18n,
+  msg, guildUser, params, em, flags, i18n, logger,
 }) => {
   const activeChannel = await activeTempChannel(msg.client, em, guildUser.tempChannel);
-  const requestingUser = msg instanceof Message ? msg.author : msg.user;
+  const requestingUser = msg.user;
 
   if (!guildUser.tempChannel || !activeChannel) {
     return i18n.t('lobby.error.noLobby');
@@ -1180,7 +1180,7 @@ const sizeHandler : GuildHandler = async ({
 
   const type = getChannelType(activeChannel);
 
-  await changeLobby(type, activeChannel, requestingUser, msg.guild, guildUser.tempChannel, size, false, null, em, i18n);
+  await changeLobby(type, activeChannel, requestingUser, msg.guild, guildUser.tempChannel, size, false, null, em, i18n, logger);
 
   if (size === 0) return i18n.t('lobby.limitRemoved');
 
@@ -1351,9 +1351,9 @@ router.use('bitrate', async ({
 });
 
 const nameHandler : GuildHandler = async ({
-  params, guildUser, msg, em, flags, i18n,
+  params, guildUser, msg, em, flags, i18n, logger,
 }) => {
-  const requestingUser = msg instanceof Message ? msg.author : msg.user;
+  const requestingUser = msg.user;
 
   const rawNameArray = flags.get('name') || params;
 
@@ -1376,7 +1376,7 @@ const nameHandler : GuildHandler = async ({
   const type = getChannelType(tempChannel);
 
   try {
-    const timeTillChange = await changeLobby(type, tempChannel, requestingUser, msg.guild, guildUser.tempChannel, tempChannel.userLimit, false, null, em, i18n);
+    const timeTillChange = await changeLobby(type, tempChannel, requestingUser, msg.guild, guildUser.tempChannel, tempChannel.userLimit, false, null, em, i18n, logger);
     const newName = generateLobbyName(type, requestingUser, guildUser.tempChannel.name, false);
 
     if (timeTillChange) {
@@ -1411,7 +1411,7 @@ router.use('help', helpHandler, HandlerType.BOTH, {
   description: 'Get help',
 });
 
-const createAddMessage = async (tempChannel : TempChannel, user : User, client : Client, em : EntityManager, i18n : I18n) => {
+const createAddMessage = async (tempChannel : TempChannel, user : User, client : Client, em : EntityManager, i18n : I18n, logger : Logger) => {
   if (!tempChannel.textChannelId) throw new Error('Text channel not defined');
 
   const textChannel = await client.channels.fetch(`${BigInt(tempChannel.textChannelId)}`, { cache: true });
@@ -1435,7 +1435,7 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
     const collector = msg.createMessageComponentCollector();
     collector.on('collect', async (interaction) => {
       if (interaction.user.id === tempChannel.guildUser.user.id && interaction.customId === 'add') {
-        interaction.update({ content: addUsers([user], activeChannel, tempChannel.guildUser, client, i18n).text, components: [] });
+        interaction.update({ content: addUsers([user], activeChannel, tempChannel.guildUser, client, i18n, logger).text, components: [] });
         return;
       }
 
@@ -1493,7 +1493,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
               const voiceName = generateLobbyName(currentType, interaction.user, newName, false);
               currentTempChannel.name = newName;
 
-              const duration = await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, null, em, i18n);
+              const duration = await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, null, em, i18n, logger);
 
               interaction.reply({
                 ephemeral: true,
@@ -1507,11 +1507,11 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
             }
           } else if (Number.isSafeInteger(limit)) {
             if (limit >= 0 && limit < 100 && interaction.guild) {
-              await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, limit, false, interaction, em, i18n);
+              await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, limit, false, interaction, em, i18n, logger);
             }
           } else if (interaction.isSelectMenu() && interaction.customId === 'name') {
             [currentTempChannel.name] = interaction.values;
-            await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, interaction, em, i18n);
+            await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, interaction, em, i18n, logger);
           } else if (interaction.customId === 'open-rename-modal') {
             const modal = new Modal();
             modal.setCustomId('rename-modal');
@@ -1532,7 +1532,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
             const changeTo = <ChannelType>interaction.customId;
 
             if (Object.values(ChannelType).includes(changeTo) && changeTo !== currentType && interaction.guild) {
-              await changeLobby(changeTo, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, interaction, em, i18n);
+              await changeLobby(changeTo, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, interaction, em, i18n, logger);
             }
           }
 
@@ -1604,7 +1604,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
       if (newOwner.voice.suppress) { newOwner.voice.setMute(false).catch(() => { }); }
 
       await Promise.all([
-        changeLobby(type, activeChannel, newOwner.user, newOwner.guild, tempChannel, activeChannel.userLimit, true, null, em, i18n),
+        changeLobby(type, activeChannel, newOwner.user, newOwner.guild, tempChannel, activeChannel.userLimit, true, null, em, i18n, logger),
           activeTextChannel?.send({
             allowedMentions: { users: [] },
             reply: tempChannel.controlDashboardId ? { messageReference: tempChannel.controlDashboardId } : undefined,
@@ -1622,7 +1622,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
 
     await createDashBoardCollector(client, activeChannel, tempChannel, em.fork(), i18n, logger);
 
-    await changeLobby(lobbyType, activeChannel, discordUser, activeChannel.guild, tempChannel, activeChannel.userLimit, false, null, em, i18n);
+    await changeLobby(lobbyType, activeChannel, discordUser, activeChannel.guild, tempChannel, activeChannel.userLimit, false, null, em, i18n, logger);
   }
 };
 
@@ -1733,7 +1733,7 @@ router.onInit = async (client, orm, _i18n, logger) => {
           const activeChannel = await activeTempChannel(client, em, tempChannel);
 
           if (!activeChannel?.permissionsFor(user)?.has(PermissionsBitField.Flags.Speak, true)) {
-            await createAddMessage(tempChannel, user, client, em, i18n);
+            await createAddMessage(tempChannel, user, client, em, i18n, logger);
           }
         }
       }

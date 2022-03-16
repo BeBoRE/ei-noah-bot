@@ -85,7 +85,7 @@ const handler : GuildHandler = async ({
     return i18n.t('quote.error.noUserGiven');
   }
 
-  const requestingUser = msg instanceof Message ? msg.author : msg.user;
+  const requestingUser = msg.user;
 
   let quotedUser : GuildUser;
   if (requestingUser.id === user.id) quotedUser = guildUser;
@@ -190,7 +190,7 @@ const removeHandler : GuildHandler = async ({
     return i18n.t('quote.error.noUserGiven');
   }
 
-  const requestingUser = msg instanceof Message ? msg.author : msg.user;
+  const requestingUser = msg.user;
 
   const guToRemoveFrom = requestingUser.id === user.id ? guildUser : await getUserGuildData(em, user, msg.guild);
 
