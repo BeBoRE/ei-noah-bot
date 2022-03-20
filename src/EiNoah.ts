@@ -283,7 +283,7 @@ class EiNoah implements IRouter {
     });
 
     this.client.on('interactionCreate', async (interaction) => {
-      if (interaction.isCommand()) {
+      if (interaction.isChatInputCommand()) {
         const em = orm.em.fork();
 
         messageParser(interaction, em, this.i18n, this.logger)
