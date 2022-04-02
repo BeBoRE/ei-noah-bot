@@ -49,11 +49,11 @@ import moment, { Duration } from 'moment';
 import { i18n as I18n } from 'i18next';
 import { OverwriteType } from 'discord-api-types/v9';
 import { Logger } from 'winston';
+import { createEntityCache } from '../EiNoah';
 import LobbyNameChange from '../entity/LobbyNameChange';
 import { Category } from '../entity/Category';
 import TempChannel from '../entity/TempChannel';
 import createMenu from '../createMenu';
-import { getCategoryData, getUserGuildData } from '../data';
 import { GuildUser } from '../entity/GuildUser';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 
@@ -1201,7 +1201,7 @@ router.use('limit', sizeHandler, HandlerType.GUILD, {
 router.use('userlimit', sizeHandler, HandlerType.GUILD);
 
 router.use('lobby-category', async ({
-  params, msg, em, flags, i18n,
+  params, msg, flags, i18n, getCategory,
 }) => {
   if (!msg.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return i18n.t('error.notAdmin');
@@ -1222,7 +1222,7 @@ router.use('lobby-category', async ({
   if (createCategory.guild !== msg.guild) return i18n.t('lobby.error.createNotInGuild');
   if (lobbyCategory.guild !== msg.guild) return i18n.t('lobby.error.lobbyNotInGuild');
 
-  const createCategoryData = getCategoryData(em, createCategory);
+  const createCategoryData = getCategory(createCategory);
   if ((await createCategoryData).lobbyCategory === lobbyCategory.id) {
     (await createCategoryData).lobbyCategory = undefined;
     return i18n.t('lobby.removedLobbyCategory', { category: lobbyCategory.name });
@@ -1246,7 +1246,7 @@ router.use('lobby-category', async ({
 });
 
 router.use('create-category', async ({
-  params, msg, em, flags, i18n,
+  params, msg, flags, i18n, getCategory,
 }) => {
   if (!msg.client.user) throw new Error('msg.client.user not set somehow');
 
@@ -1269,7 +1269,7 @@ router.use('create-category', async ({
     return i18n.t('lobby.error.noMovePermission');
   }
 
-  const categoryData = await getCategoryData(em, category);
+  const categoryData = await getCategory(category);
 
   if (!categoryData.publicVoice || !categoryData.muteVoice || !categoryData.privateVoice) {
     await createCreateChannels(categoryData, msg.client);
@@ -1547,6 +1547,8 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
 };
 
 const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : EntityManager, _i18n : I18n, logger : Logger) => {
+  const { getGuildUser } = createEntityCache(em);
+
   const activeChannel = await activeTempChannel(client, em, tempChannel);
   const activeTextChannel = await activeTempText(client, tempChannel);
 
@@ -1560,7 +1562,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
     em.remove(tempChannel);
   } else if (!activeChannel.members.has(`${BigInt(tempChannel.guildUser.user.id)}`)) {
     const guildUsers = await Promise.all(activeChannel.members
-      .map((member) => getUserGuildData(em, member.user, activeChannel.guild)));
+      .map((member) => getGuildUser(member.user, activeChannel.guild)));
 
     // Alleen users die toegestaan zijn in de lobby kunnen de lobby krijgen
     // Als er niemand in de lobby zit die toegang heeft, dan krijgt iemand de lobby die geen toegang heeft
@@ -1676,9 +1678,10 @@ router.onInit = async (client, orm, _i18n, logger) => {
 
     if (newState.channel && newState.channel.parent && oldState.channelId !== newState.channelId) { // Check of iemand een nieuw kanaal is gejoint
       const em = orm.em.fork();
+      const { getCategory, getGuildUser } = createEntityCache(em);
 
-      const categoryData = getCategoryData(em, newState.channel.parent);
-      const guildUserPromise = newState.member?.user ? getUserGuildData(em, newState.member.user, newState.guild) : null;
+      const categoryData = getCategory(newState.channel.parent);
+      const guildUserPromise = newState.member?.user ? getGuildUser(newState.member.user, newState.guild) : null;
 
       const user = newState.member?.user;
 
@@ -1696,7 +1699,6 @@ router.onInit = async (client, orm, _i18n, logger) => {
           channel.id === (await categoryData).publicVoice
           || channel.id === (await categoryData).muteVoice
           || channel.id === (await categoryData).privateVoice)) {
-        if (!(await guildUserPromise)?.tempChannel?.isInitialized()) await (await guildUserPromise)?.init();
         const activeChannel = await activeTempChannel(client, em, (await guildUserPromise).tempChannel);
         const guildUser = await guildUserPromise;
 
