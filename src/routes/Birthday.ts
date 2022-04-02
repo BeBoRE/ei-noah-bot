@@ -18,7 +18,6 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { createCanvas, loadImage, CanvasRenderingContext2D } from 'canvas';
 import i18next, { i18n as I18n } from 'i18next';
 import { Logger } from 'winston';
-import { getUserData } from '../data';
 import { User } from '../entity/User';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 
@@ -133,7 +132,7 @@ const getBdayEmbed = (user : DiscordUser, dbUser : User, guild : Guild | null, i
 };
 
 router.use('get', async ({
-  params, em, msg, flags, i18n,
+  params, msg, flags, i18n, getUser,
 }) => {
   const [user] = flags.get('user') || params;
 
@@ -141,7 +140,7 @@ router.use('get', async ({
     return i18n.t('birthday.error.notUser');
   }
 
-  const dbUser = await getUserData(em, user);
+  const dbUser = await getUser(user);
 
   return { embeds: [getBdayEmbed(user, dbUser, msg.guild, i18n)] };
 }, HandlerType.BOTH, {
@@ -155,7 +154,7 @@ router.use('get', async ({
 });
 
 router.useContext('Get Birthday', ApplicationCommandType.User, async ({
-  interaction, em, i18n, user,
+  interaction, i18n, user, getUser,
 }) => {
   const discUser = interaction.options.getUser('user', true);
 
@@ -163,7 +162,7 @@ router.useContext('Get Birthday', ApplicationCommandType.User, async ({
     return i18n.t('birthday.error.notUser');
   }
 
-  const dbUser = discUser.id === user.id ? user : await getUserData(em, discUser);
+  const dbUser = discUser.id === user.id ? user : await getUser(discUser);
 
   return { embeds: [getBdayEmbed(discUser, dbUser, interaction.guild, i18n)], ephemeral: true };
 });
@@ -460,7 +459,7 @@ const checkBday = async (client : Client, em : EntityManager, _i18n : I18n, logg
 
                 const url = member.user.avatarURL({ size: 256, extension: 'png' }) || member.user.defaultAvatarURL;
 
-                const ownerUser = await getUserData(em, owner.user);
+                const ownerUser = await em.findOneOrFail(User, { id: owner.user.id });
                 await i18n.changeLanguage(ownerUser.language);
 
                 owner.send({

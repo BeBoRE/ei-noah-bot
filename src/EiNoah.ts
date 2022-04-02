@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, Role, Guild, DiscordAPIError, Channel, Snowflake, Embed, MessageAttachment, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, User, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, AnyChannel, ApplicationCommandOptionType, GatewayIntentBits, Partials,
+  Client, User as DiscordUser, Role, Guild as DiscordGuild, DiscordAPIError, Channel, Snowflake, Embed, MessageAttachment, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, AnyChannel, ApplicationCommandOptionType, GatewayIntentBits, Partials, CategoryChannel,
 } from 'discord.js';
 import {
   MikroORM,
@@ -8,11 +8,10 @@ import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
 
 import { i18n as I18n } from 'i18next';
 import { Logger } from 'winston';
-import LazyAutocompleteRouteInfo from './router/LazyAutocompleteRouteInfo';
-import LazyMsgRouteInfo from './router/LazyMsgRouteInfo';
+import { Guild } from './entity/Guild';
+import { User } from './entity/User';
+import { Category } from './entity/Category';
 import { GuildUser } from './entity/GuildUser';
-import { getUserData, getUserGuildData } from './data';
-import ContextMenuInfo from './router/ContextMenuInfo';
 import Router, {
   AutocompleteRouteInfo,
   BothHandler, ContextMenuHandler, ContextMenuHandlerInfo, DMHandler, GuildHandler, HandlerReturn, HandlerType, IRouter, MsgRouteInfo,
@@ -20,7 +19,7 @@ import Router, {
 
 function mapParams(mention : string,
   client : Client,
-  guild : Guild | null) : Array<Promise<Role | DiscordUser | string | AnyChannel>> {
+  guild : DiscordGuild | null) : Array<Promise<Role | DiscordUser | string | AnyChannel>> {
   const seperated : string[] = [];
 
   const matches = mention.match(/<(@[!&]?|#)[0-9]+>/g);
@@ -66,7 +65,7 @@ function mapParams(mention : string,
   });
 }
 
-export async function parseParams(params : string[], client : Client, guild : Guild | null) {
+export async function parseParams(params : string[], client : Client, guild : DiscordGuild | null) {
   const parsed : Array<Promise<DiscordUser | AnyChannel | Role | string | null>> = [];
 
   params.forEach((param) => { parsed.push(...mapParams(param, client, guild)); });
@@ -85,13 +84,119 @@ export async function parseParams(params : string[], client : Client, guild : Gu
   return resolved;
 }
 
+const getCategoryData = async (em : EntityManager, category : CategoryChannel) => {
+  const dbCategory = await em.findOne(Category, { id: category.id });
+
+  if (dbCategory) return dbCategory;
+
+  const newCategory = em.create(Category, { id: category.id });
+
+  em.persist(newCategory);
+
+  return newCategory;
+};
+
+export const createEntityCache = (em : EntityManager) => {
+  const userMap = new Map<Snowflake, User>();
+  const getUser = async (user : DiscordUser) : Promise<User> => {
+    const cachedUser = userMap.get(user.id);
+
+    if (cachedUser) {
+      return Promise.resolve(cachedUser);
+    }
+
+    const dbUser = await em.findOne(User, { id: user.id });
+    if (dbUser) {
+      userMap.set(user.id, dbUser);
+      return dbUser;
+    }
+
+    const newUser = em.create(User, { id: user.id });
+    userMap.set(user.id, newUser);
+    em.persist(newUser);
+    return newUser;
+  };
+
+  const guildMap = new Map<Snowflake, Guild>();
+  const getGuild = async (guild : DiscordGuild) : Promise<Guild> => {
+    const cachedGuild = guildMap.get(guild.id);
+
+    if (cachedGuild) {
+      return Promise.resolve(cachedGuild);
+    }
+
+    const dbGuild = await em.findOne(Guild, guild.id);
+    if (dbGuild) {
+      guildMap.set(guild.id, dbGuild);
+      return dbGuild;
+    }
+
+    const newGuild = em.create(Guild, { id: guild.id });
+    guildMap.set(guild.id, newGuild);
+    em.persist(newGuild);
+    return newGuild;
+  };
+
+  const guildUserMap = new Map<Snowflake, GuildUser>();
+  const getGuildUser = async (user : DiscordUser, guild : DiscordGuild) : Promise<GuildUser> => {
+    const cachedGuildUser = guildUserMap.get(`${guild.id}+${user.id}`);
+
+    if (cachedGuildUser) {
+      return Promise.resolve(cachedGuildUser);
+    }
+
+    const dbGuildUser = await em.findOne(GuildUser,
+      { guild: { id: guild.id }, user: { id: user.id } },
+      { populate: { guild: true, user: true } });
+
+    if (dbGuildUser) {
+      guildUserMap.set(`${guild.id}+${user.id}`, dbGuildUser);
+      guildMap.set(guild.id, dbGuildUser.guild);
+      userMap.set(user.id, dbGuildUser.user);
+      return dbGuildUser;
+    }
+
+    const dbUser = getUser(user);
+    const dbGuild = getGuild(guild);
+
+    const newGuildUser = em.create(GuildUser, { user: await dbUser, guild: await dbGuild });
+    guildUserMap.set(`${guild.id}+${user.id}`, newGuildUser);
+    em.persist(newGuildUser);
+
+    return newGuildUser;
+  };
+
+  const categoryMap = new Map<Snowflake, Category>();
+  const getCategory = (category : CategoryChannel) : Promise<Category> => {
+    const cachedCategory = categoryMap.get(category.id);
+
+    if (cachedCategory) {
+      return Promise.resolve(cachedCategory);
+    }
+
+    return getCategoryData(em, category);
+  };
+
+  return {
+    getUser, getGuildUser, getGuild, getCategory,
+  };
+};
+
 async function messageParser(msg : AutocompleteInteraction, em: EntityManager, i18n : I18n, logger : Logger) : Promise<AutocompleteRouteInfo | null>;
 async function messageParser(msg : CommandInteraction, em: EntityManager, i18n : I18n, logger : Logger) : Promise<MsgRouteInfo | null>;
 async function messageParser(msg : CommandInteraction | AutocompleteInteraction, em: EntityManager, i18n : I18n, logger : Logger) : Promise<AutocompleteRouteInfo | MsgRouteInfo | null> {
   const flags = new Map<string, Array<Role | DiscordUser | string | AnyChannel | boolean | number>>();
   const params : Array<Role | DiscordUser | string | AnyChannel> = [];
   const { user } = msg;
-  const guildUserOrUser = msg.guild ? getUserGuildData(em, user, msg.guild) : getUserData(em, user);
+
+  const {
+    getUser, getGuild, getGuildUser, getCategory,
+  } = createEntityCache(em);
+
+  let guildUser = null;
+  if (msg.guild) guildUser = await getGuildUser(msg.user, msg.guild);
+
+  const userData = guildUser?.user || await getUser(user);
 
   let command : CommandInteractionOption | CommandInteraction | AutocompleteInteraction = msg;
   while (command instanceof CommandInteraction || command instanceof AutocompleteInteraction || command.type === ApplicationCommandOptionType.Subcommand || command.type === ApplicationCommandOptionType.SubcommandGroup) {
@@ -110,36 +215,49 @@ async function messageParser(msg : CommandInteraction | AutocompleteInteraction,
       }
 
       if (option.channel instanceof Channel) flags.set(option.name, [option.channel]);
-      if (option.user instanceof User) flags.set(option.name, [option.user]);
+      if (option.user instanceof DiscordUser) flags.set(option.name, [option.user]);
       if (option.role instanceof Role) flags.set(option.name, [option.role]);
     });
 
-    const awaitedGuildUserOrUser = await guildUserOrUser;
-    const language = (awaitedGuildUserOrUser instanceof GuildUser ? (awaitedGuildUserOrUser.user.language || awaitedGuildUserOrUser.guild.language) : awaitedGuildUserOrUser.language);
+    const language = guildUser?.user.language || guildUser?.guild.language || 'nl';
 
-    const newI18n = i18n.cloneInstance({ lng: language || 'nl' });
+    const newI18n = i18n.cloneInstance({ lng: language });
 
     if (msg instanceof AutocompleteInteraction) {
-      return new LazyAutocompleteRouteInfo({
+      const routeInfo : AutocompleteRouteInfo = {
         params,
+        absoluteParams: [...params],
         msg,
         flags,
         em,
-        guildUserOrUser: await guildUserOrUser,
+        guildUser,
+        user: userData,
         i18n: newI18n,
         logger,
-      });
+        getUser,
+        getGuild,
+        getGuildUser,
+        getCategory,
+      };
+
+      return routeInfo;
     }
 
-    const routeInfo : MsgRouteInfo = new LazyMsgRouteInfo({
+    const routeInfo : MsgRouteInfo = {
       params,
+      absoluteParams: [...params],
       msg,
       flags,
       em,
-      guildUserOrUser: await guildUserOrUser,
+      guildUser,
+      user: userData,
       i18n: newI18n,
       logger,
-    });
+      getUser,
+      getGuild,
+      getGuildUser,
+      getCategory,
+    };
 
     return routeInfo;
 }
@@ -324,7 +442,11 @@ class EiNoah implements IRouter {
 
       if (interaction.isContextMenuCommand()) {
         const em = orm.em.fork();
-        const guildUserOrUser = interaction.member instanceof GuildMember ? await getUserGuildData(em, interaction.member.user, interaction.member.guild) : await getUserData(em, interaction.user);
+        const {
+          getUser, getCategory, getGuild, getGuildUser,
+        } = createEntityCache(em);
+
+        const guildUserOrUser = interaction.member instanceof GuildMember ? await getGuildUser(interaction.member.user, interaction.member.guild) : await getUser(interaction.user);
 
         const handler = this.contextHandlers.get(interaction.commandName);
         if (!handler) {
@@ -336,7 +458,18 @@ class EiNoah implements IRouter {
         i18n.changeLanguage(guildUserOrUser instanceof GuildUser ? guildUserOrUser.user.language || guildUserOrUser.guild.language : guildUserOrUser.language);
 
         try {
-          const handlerReturn = await handler.handler(new ContextMenuInfo(interaction, guildUserOrUser, em, i18n, this.logger));
+          const handlerReturn = await handler.handler({
+            interaction,
+            guildUser: guildUserOrUser instanceof GuildUser ? guildUserOrUser : null,
+            user: guildUserOrUser instanceof GuildUser ? guildUserOrUser.user : guildUserOrUser,
+            em,
+            i18n,
+            logger: this.logger,
+            getUser,
+            getCategory,
+            getGuild,
+            getGuildUser,
+          });
           const defaultOptions : InteractionReplyOptions = {
             allowedMentions: {
               roles: [],

@@ -9,7 +9,6 @@ import { GuildUser } from 'entity/GuildUser';
 import { i18n as I18n } from 'i18next';
 import createMenu from '../createMenu';
 import Quote from '../entity/Quote';
-import { getUserGuildData } from '../data';
 import Router, { GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Onthoud al');
@@ -75,7 +74,7 @@ const addQuote = (params : (string | DiscordUser | AnyChannel | Role | number | 
 };
 
 const handler : GuildHandler = async ({
-  params, msg, em, guildUser, flags, i18n, logger,
+  params, msg, guildUser, flags, i18n, logger, getGuildUser,
 }) => {
   const [user] = flags.get('persoon') || params;
   params.shift();
@@ -89,7 +88,7 @@ const handler : GuildHandler = async ({
 
   let quotedUser : GuildUser;
   if (requestingUser.id === user.id) quotedUser = guildUser;
-  else quotedUser = await getUserGuildData(em, user, msg.guild);
+  else quotedUser = await getGuildUser(user, msg.guild);
 
   if (!quotedUser.quotes.isInitialized()) { await quotedUser.quotes.init(); }
 
@@ -157,7 +156,7 @@ router.use('add', handler, HandlerType.GUILD, {
 router.use('toevoegen', handler, HandlerType.GUILD);
 
 router.useContext('Save As Quote', ApplicationCommandType.Message, async ({
-  interaction, i18n, guildUser, em,
+  interaction, i18n, guildUser, getGuildUser,
 }) => {
   const message = interaction.options.getMessage('message');
 
@@ -171,7 +170,7 @@ router.useContext('Save As Quote', ApplicationCommandType.Message, async ({
 
   if (!message.content) return i18n.t('quote.error.noContentInMessage');
 
-  const quoted = await getUserGuildData(em, message.author, message.guild);
+  const quoted = await getGuildUser(message.author, message.guild);
 
   const quoteMessage = await addQuote(message.content.split(' '), quoted, guildUser, message.guild, i18n, message.createdAt);
 
@@ -184,7 +183,7 @@ router.useContext('Save As Quote', ApplicationCommandType.Message, async ({
 });
 
 const removeHandler : GuildHandler = async ({
-  msg, em, params, guildUser, flags, i18n, logger,
+  msg, em, params, guildUser, flags, i18n, logger, getGuildUser,
 }) => {
   const [user] = flags.get('user') || params;
   if (!(user instanceof DiscordUser)) {
@@ -193,7 +192,7 @@ const removeHandler : GuildHandler = async ({
 
   const requestingUser = msg.user;
 
-  const guToRemoveFrom = requestingUser.id === user.id ? guildUser : await getUserGuildData(em, user, msg.guild);
+  const guToRemoveFrom = requestingUser.id === user.id ? guildUser : await getGuildUser(user, msg.guild);
 
   // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is

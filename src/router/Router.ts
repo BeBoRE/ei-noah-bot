@@ -5,7 +5,7 @@ import {
   TextChannel,
   NewsChannel,
   DMChannel,
-  Guild,
+  Guild as DiscordGuild,
   GuildMember,
   CommandInteraction,
   ApplicationCommandSubCommandData,
@@ -14,6 +14,8 @@ import {
   AutocompleteInteraction,
   ApplicationCommandOptionChoice,
   ApplicationCommandOptionType,
+  CategoryChannel,
+  ContextMenuCommandInteraction,
 } from 'discord.js';
 import {
   MikroORM,
@@ -21,10 +23,23 @@ import {
 import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { i18n as I18n } from 'i18next';
 import { Logger } from 'winston';
+import { Guild } from 'entity/Guild';
 import { Category } from '../entity/Category';
 import { GuildUser } from '../entity/GuildUser';
 import { User } from '../entity/User';
-import ContextMenuInfo from './ContextMenuInfo';
+
+export interface ContextMenuInfo {
+  interaction : ContextMenuCommandInteraction;
+  em : EntityManager;
+  i18n : I18n;
+  user : User;
+  guildUser : GuildUser | null;
+  logger : Logger;
+  getUser: (user: DiscordUser) => Promise<User>
+  getGuildUser: (user: DiscordUser, guild: DiscordGuild) => Promise<GuildUser>;
+  getGuild: (guild: DiscordGuild) => Promise<Guild>;
+  getCategory: (category: CategoryChannel) => Promise<Category>;
+}
 
 export interface RouteInfo {
   msg: CommandInteraction | AutocompleteInteraction;
@@ -33,7 +48,10 @@ export interface RouteInfo {
   flags: Map<string, Array<string | DiscordUser | Role | AnyChannel | boolean | number>>;
   readonly guildUser: GuildUser | null;
   readonly user: User;
-  readonly category: Promise<Category> | null;
+  getUser: (user: DiscordUser) => Promise<User>
+  getGuildUser: (user: DiscordUser, guild: DiscordGuild) => Promise<GuildUser>;
+  getGuild: (guild: DiscordGuild) => Promise<Guild>;
+  getCategory: (category: CategoryChannel) => Promise<Category>;
   em : EntityManager;
   i18n : I18n;
   logger : Logger;
@@ -57,7 +75,6 @@ export interface DMMsgRouteInfo extends MsgRouteInfo {
     member : null
   }
   readonly guildUser: null,
-  readonly category: null,
 }
 
 export interface DMAutocompleteRouteInfo extends MsgRouteInfo {
@@ -67,27 +84,24 @@ export interface DMAutocompleteRouteInfo extends MsgRouteInfo {
     member : null
   }
   readonly guildUser: null,
-  readonly category: null,
 }
 
 export interface GuildMsgRouteInfo extends MsgRouteInfo {
   msg: CommandInteraction & {
     channel: TextChannel | NewsChannel
-    guild : Guild
+    guild : DiscordGuild
     member : GuildMember
   }
   readonly guildUser: GuildUser,
-  readonly category: null | Promise<Category>,
 }
 
 export interface GuildAutocompleteRouteInfo extends MsgRouteInfo {
   msg: CommandInteraction & {
     channel: TextChannel | NewsChannel
-    guild : Guild
+    guild : DiscordGuild
     member : GuildMember
   }
   readonly guildUser: GuildUser,
-  readonly category: null | Promise<Category>,
 }
 
 export type HandlerReturn =
