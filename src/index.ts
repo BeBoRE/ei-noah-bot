@@ -342,11 +342,11 @@ process.title = 'Ei Noah Bot';
       }, {
         name: 'top',
         description: 'Text you want to add to the top',
-        type: ApplicationCommandOptionType.User,
+        type: ApplicationCommandOptionType.String,
       }, {
         name: 'bottom',
         description: 'Text you want to add to the bottom',
-        type: ApplicationCommandOptionType.User,
+        type: ApplicationCommandOptionType.String,
       },
     ],
   });
