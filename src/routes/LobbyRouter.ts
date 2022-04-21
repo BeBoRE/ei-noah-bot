@@ -383,13 +383,11 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
     })
     .catch(() => logger.error('Overwrite permission error'));
 
-  let allowedUsersMessage : string;
-  if (!allowedUsers.length) allowedUsersMessage = i18n.t('lobby.noUsersAdded');
-  else allowedUsersMessage = `${allowedUsers.map((userOrRole) => (userOrRole instanceof DiscordUser ? userOrRole : `${userOrRole}`)).join(', ')} ${allowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? i18n.t('lobby.canPlural') : i18n.t('lobby.can')} ${i18n.t('lobby.goIn')}`;
+  const allowedUsersMessage = i18n.t('lobby.userAdded', { users: allowedUsers.map((u) => u.toString()), count: allowedUsers.length });
 
   let alreadyInMessage : string;
   if (!alreadyAllowedUsers.length) alreadyInMessage = '';
-  else alreadyInMessage = `${alreadyAllowedUsers.map((userOrRole) => (userOrRole instanceof DiscordUser ? userOrRole : `${userOrRole}`)).join(', ')} ${alreadyAllowedUsers.length > 1 || allowedUsers.some((user) => user instanceof Role) ? i18n.t('lobby.couldPlural') : i18n.t('lobby.could')} ${i18n.t('lobby.alreadyGoIn')}`;
+  else alreadyInMessage = i18n.t('lobby.userAlreadyAdded', { users: alreadyAllowedUsers.map((u) => u.toString()), count: alreadyAllowedUsers.length });
 
   return {
     allowedUsersOrRoles: allowedUsers,
@@ -590,14 +588,14 @@ const removeFromLobby = (
   if (usersGivenPermissions.length) {
     if (usersGivenPermissions.length > 1) {
       if (rolesRemoved.length > 1) {
-        message += i18n.t('lobby.rolePluralRemovalUserPluralNotRemoved', { users: usersGivenPermissions.join(', ') });
+        message += i18n.t('lobby.rolePluralRemovalUserPluralNotRemoved', { users: usersGivenPermissions.map((i) => i.toString()) });
       } else {
-        message += i18n.t('lobby.roleRemovalUserPluralNotRemoved', { users: usersGivenPermissions.join(', ') });
+        message += i18n.t('lobby.roleRemovalUserPluralNotRemoved', { users: usersGivenPermissions.map((i) => i.toString()) });
       }
     } else if (rolesRemoved.length > 1) {
-      message += i18n.t('lobby.rolePluralRemovalUserNotRemoved', { users: usersGivenPermissions.join(', ') });
+      message += i18n.t('lobby.rolePluralRemovalUserNotRemoved', { users: usersGivenPermissions.map((i) => i.toString()) });
     } else {
-      message += i18n.t('lobby.roleRemovalUserNotRemoved', { users: usersGivenPermissions.join(', ') });
+      message += i18n.t('lobby.roleRemovalUserNotRemoved', { users: usersGivenPermissions.map((i) => i.toString()) });
     }
     message += i18n.t('lobby.removeThemWith', { users: usersGivenPermissions.map((member) => `@${member.user.tag}`).join(' ') });
   }
@@ -605,19 +603,19 @@ const removeFromLobby = (
   if (notRemoved.length) {
     if (triedRemoveSelf) message += i18n.t('lobby.cantRemoveSelf');
     if (triedRemoveEi) message += i18n.t('lobby.cantRemoveEi');
-    message += i18n.t('lobby.couldntBeRemoved', { users: notRemoved.join(', '), count: notRemoved.length });
+    message += i18n.t('lobby.couldntBeRemoved', { users: notRemoved.map((i) => i.toString()), count: notRemoved.length });
   }
 
   if (removedList.length) {
-    message += i18n.t('lobby.usersRemoved', { users: removedList.join(', '), count: removedList.length });
+    message += i18n.t('lobby.usersRemoved', { users: removedList.map((i) => i.toString()), count: removedList.length });
   }
 
   if (rolesRemoved.length) {
-    message += i18n.t('lobby.rolesRemoved', { roles: rolesRemoved, count: rolesRemoved.length });
+    message += i18n.t('lobby.rolesRemoved', { roles: rolesRemoved.map((i) => i.toString()), count: rolesRemoved.length });
   }
 
   if (rolesNotRemoved.length) {
-    message += i18n.t('lobby.rolesNotRemoved', { roles: rolesNotRemoved.join(', '), count: rolesNotRemoved.length });
+    message += i18n.t('lobby.rolesNotRemoved', { roles: rolesNotRemoved.map((i) => i.toString()), count: rolesNotRemoved.length });
   }
 
   Promise.all(deletePromises).then(() => {
@@ -1092,13 +1090,15 @@ const changeTypeHandler : GuildHandler = async ({
 
   const [typeGiven] = flags.get('type') || params;
 
+  const otherTypes = Object
+    .values(ChannelType).filter((t) => t !== type)
+    .map((t) => `\`${t}\``);
+
   if (!typeGiven) {
     return i18n.t('lobby.typeOfLobbyOtherTypes', {
       currentType: type,
-      otherTypes: Object
-        .values(ChannelType).filter((t) => t !== type)
-        .map((t) => `\`${t}\``)
-        .join(` ${i18n.t('lobby.and')} `),
+      otherTypes,
+      count: otherTypes.length,
     });
   }
 
@@ -1127,18 +1127,11 @@ router.use('type', changeTypeHandler, HandlerType.GUILD, {
     {
       name: 'type',
       description: 'Type you want to change your lobby to',
-      choices: [
-        {
-          name: `${ChannelType.Mute[0].toUpperCase()}${ChannelType.Mute.substring(1)}`,
-          value: ChannelType.Mute,
-        }, {
-          name: `${ChannelType.Nojoin[0].toUpperCase()}${ChannelType.Nojoin.substring(1)}`,
-          value: ChannelType.Nojoin,
-        }, {
-          name: `${ChannelType.Public[0].toUpperCase()}${ChannelType.Public.substring(1)}`,
-          value: ChannelType.Public,
-        },
-      ],
+      choices:
+        Object.values(ChannelType).map((t) => ({
+          name: `${getIcon(t)} ${t[0].toUpperCase()}${t.substring(1)}`,
+          value: t,
+        })),
       type: ApplicationCommandOptionType.String,
       required: true,
     },

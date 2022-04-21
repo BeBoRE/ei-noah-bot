@@ -44,7 +44,7 @@
     "discord.js": "^14.0.0-dev.1646395406.6f7a366",
     "dotenv": "^8.2.0",
     "emoji-regex": "^9.2.1",
-    "i18next": "^20.6.1",
+    "i18next": "^21.6.16",
     "i18next-fs-backend": "^1.1.1",
     "markov-chains": "^1.0.2",
     "moment": "^2.29.2",

@@ -7,7 +7,7 @@ router.use('help', ({ i18n }) => i18n.t('locale.help', { joinArrays: '\n' }), Ha
   description: 'Help menu',
 });
 
-router.use('languages', ({ i18n }) => i18n.t('locale.availableLanguages', { languages: Object.keys(i18n.services.resourceStore.data).sort().join(' ') }), HandlerType.BOTH, {
+router.use('languages', ({ i18n }) => i18n.t('locale.availableLanguages', { languages: Object.keys(i18n.services.resourceStore.data).sort().map((l) => `***${l}***`) }), HandlerType.BOTH, {
   description: 'Get all available languages',
 });
 
