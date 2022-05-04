@@ -1,7 +1,7 @@
 import moment from 'moment';
 import parse from 'csv-parse/lib/sync';
 import {
-  Client, MessageAttachment, Collection, ApplicationCommandOptionType,
+  Client, MessageAttachment, Collection, ApplicationCommandOptionType, ButtonComponent, ButtonStyle, Message, ActionRow, MessageActionRowComponent,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { PostgreSqlDriver, EntityManager } from '@mikro-orm/postgresql';
@@ -13,6 +13,7 @@ import { CronJob } from 'cron';
 import { Logger } from 'winston';
 import UserCoronaRegions from '../entity/UserCoronaRegions';
 import Router, { BothAutocompleteHandler, BothHandler, HandlerType } from '../router/Router';
+import { createEntityCache } from '../EiNoah';
 import CoronaData, { CoronaInfo } from '../entity/CoronaData';
 
 // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
@@ -357,6 +358,28 @@ router.use('graph', coronaGraph, HandlerType.BOTH, {
   }],
 }, communityAutocompleteHandler);
 
+router.onInit = (client, orm) => {
+  client.on('interactionCreate', async (interaction) => {
+    const em = orm.em.fork();
+    if (!interaction.isButton()) return;
+    if (interaction.customId !== 'corona-remove-all') return;
+
+    const { getUser } = createEntityCache(em);
+
+    const user = await getUser(interaction.user);
+
+    await user.coronaRegions.init();
+    user.coronaRegions.getItems().forEach((cr) => {
+      em.remove(cr);
+    });
+
+    await em.flush();
+
+    await interaction.reply({ content: 'Voortaan krijg je geen corona updates meer', ephemeral: false });
+    if (interaction.message instanceof Message) await interaction.message.edit({ components: [] });
+  });
+};
+
 const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>, logger : Logger) => {
   const regionPopulations = await getPopulation();
 
@@ -419,9 +442,14 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
         return message;
       });
 
+      const row = new ActionRow<MessageActionRowComponent>();
+      row.addComponents(new ButtonComponent({
+        style: ButtonStyle.Secondary, customId: 'corona-remove-all', label: 'Uitschrijven van alles', emoji: { name: '❌' },
+      }));
+
       const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}\n> Cijfers liggen in werkelijkheid hoger`;
       await client.users.fetch(`${BigInt(groupedUsers[key][0].user.id)}`, { cache: true })
-        .then(async (user) => user.send({ content: report, files: await Promise.all(graphs) }))
+        .then(async (user) => user.send({ content: report, files: await Promise.all(graphs), components: [row] }))
         .catch(() => {});
     });
   };

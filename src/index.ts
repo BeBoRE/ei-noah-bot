@@ -50,7 +50,7 @@ const mentionsToText = (params : Array<string | User | Role | AnyChannel | numbe
 process.title = 'Ei Noah Bot';
 
 (async () => {
-  if (!process.env.CLIENT_TOKEN) throw new Error('Add a client token');
+  if (!process.env.CLIENT_TOKEN) throw new Error('Add bot\'s token to CLIENT_TOKEN');
 
   // Creëerd de database connectie
   const orm = await MikroORM.init<PostgreSqlDriver>().catch((err) => { logger.error({ err }); process.exit(-1); });
