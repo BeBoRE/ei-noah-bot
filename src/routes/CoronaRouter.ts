@@ -358,7 +358,7 @@ router.use('graph', coronaGraph, HandlerType.BOTH, {
   }],
 }, communityAutocompleteHandler);
 
-router.onInit = (client, orm, i18n) => {
+router.onInit = (client, orm) => {
   client.on('interactionCreate', async (interaction) => {
     const em = orm.em.fork();
     if (!interaction.isButton()) return;
@@ -368,13 +368,14 @@ router.onInit = (client, orm, i18n) => {
 
     const user = await getUser(interaction.user);
 
-    user.coronaRegions.removeAll();
+    await user.coronaRegions.init();
+    user.coronaRegions.getItems().forEach((cr) => {
+      em.remove(cr);
+    });
 
     await em.flush();
 
-    await i18n.changeLanguage(user.language || 'en');
-
-    await interaction.reply({ content: i18n.t('corona.removeAll'), ephemeral: false });
+    await interaction.reply({ content: 'Voortaan krijg je geen corona updates meer', ephemeral: false });
     if (interaction.message instanceof Message) await interaction.message.edit({ components: [] });
   });
 };
@@ -443,7 +444,7 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
 
       const row = new ActionRow<MessageActionRowComponent>();
       row.addComponents(new ButtonComponent({
-        style: ButtonStyle.Danger, customId: 'corona-remove-all', label: 'Uitschrijven van alles', emoji: { name: '❌' },
+        style: ButtonStyle.Secondary, customId: 'corona-remove-all', label: 'Uitschrijven van alles', emoji: { name: '❌' },
       }));
 
       const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}\n> Cijfers liggen in werkelijkheid hoger`;
