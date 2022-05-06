@@ -400,6 +400,10 @@ class EiNoah implements IRouter {
       this.logger.info('Client online');
     });
 
+    this.client.on('guildCreate', (guild) => {
+      this.logger.info(`Joined new guild ${guild.name}, now active on ${this.client.guilds.cache.size} guilds`);
+    });
+
     this.client.on('interactionCreate', async (interaction) => {
       if (interaction.isChatInputCommand()) {
         const em = orm.em.fork();
