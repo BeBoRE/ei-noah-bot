@@ -1,7 +1,7 @@
 import moment from 'moment';
 import parse from 'csv-parse/lib/sync';
 import {
-  Client, MessageAttachment, Collection, ApplicationCommandOptionType, ButtonComponent, ButtonStyle, Message, ActionRow, MessageActionRowComponent,
+  Client, Attachment, Collection, ApplicationCommandOptionType, ButtonStyle, Message, ActionRowBuilder, MessageActionRowComponentBuilder, ButtonBuilder,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { PostgreSqlDriver, EntityManager } from '@mikro-orm/postgresql';
@@ -322,7 +322,7 @@ const coronaGraph : BothHandler = async ({
 
   if (!data.length) return `${community} is niet een gemeente`;
 
-  return new MessageAttachment(await generateGraph({
+  return new Attachment(await generateGraph({
     data, days, displayLabels: labels, i18n, showCases, showDeaths,
   }));
 };
@@ -409,14 +409,14 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
 
     Object.keys(groupedUsers).forEach(async (key) => {
       const regions = groupedUsers[key];
-      const graphs : Promise<MessageAttachment>[] = [];
+      const graphs : Promise<Attachment>[] = [];
 
       const reports = regions.map((r) => {
         const rollingData = rollingDataPerRegion.get(r.region.toLowerCase());
         const population = regionPopulations[r.region.toLowerCase()] || regionPopulations[`${r.region.toLowerCase()} (gemeente)`];
 
         if (!rollingData || !population) return `Er is iets fout gegaan bij het weergeven van ${r.region}`;
-        graphs.push(generateGraph({ data: rollingData, days: 30, displayLabels: true }).then((buffer) => new MessageAttachment(buffer, `${r.region}_graph_${moment(rollingData[0].date).format('DD-MM-YYYY')}.png`)));
+        graphs.push(generateGraph({ data: rollingData, days: 30, displayLabels: true }).then((buffer) => new Attachment(buffer, `${r.region}_graph_${moment(rollingData[0].date).format('DD-MM-YYYY')}.png`)));
 
         const weeklyCount = rollingData[rollingData.length - 1];
 
@@ -442,10 +442,14 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
         return message;
       });
 
-      const row = new ActionRow<MessageActionRowComponent>();
-      row.addComponents(new ButtonComponent({
-        style: ButtonStyle.Secondary, customId: 'corona-remove-all', label: 'Uitschrijven van alles', emoji: { name: '❌' },
-      }));
+      const row = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+      row.addComponents([
+        new ButtonBuilder()
+          .setStyle(ButtonStyle.Secondary)
+          .setCustomId('corona-remove-all')
+          .setLabel('Uitschrijven van alles')
+          .setEmoji({ name: '❌' }),
+      ]);
 
       const report = `*Corona cijfers deze week (**dikgedrukt** betekent boven signaalwaarde)*\n${reports.join('\n')}\n> Cijfers liggen in werkelijkheid hoger`;
       await client.users.fetch(`${BigInt(groupedUsers[key][0].user.id)}`, { cache: true })

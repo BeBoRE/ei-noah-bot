@@ -15,28 +15,29 @@ import {
   CategoryChannel,
   User,
   Snowflake,
-  ActionRow,
-  ButtonComponent,
   Guild,
   MessageComponentInteraction,
   InteractionCollector,
-  SelectMenuComponent,
   MessageOptions,
-  Embed,
   AnyChannel,
   GuildPremiumTier,
-  SelectMenuOption,
   ChannelType as DiscordChannelType,
   ApplicationCommandOptionType,
   ApplicationCommandType,
   ButtonStyle,
   MessageEditOptions,
   InteractionUpdateOptions,
-  Modal,
-  TextInputComponent,
-  ModalActionRowComponent,
   TextInputStyle,
   Interaction,
+  ActionRowBuilder,
+  ButtonBuilder,
+  MessageActionRowComponentBuilder,
+  ModalActionRowComponentBuilder,
+  TextInputBuilder,
+  EmbedBuilder,
+  SelectMenuBuilder,
+  ModalBuilder,
+  SelectMenuOptionBuilder,
 } from 'discord.js';
 import {
   UniqueConstraintViolationException,
@@ -710,7 +711,7 @@ router.use('remove', async ({
         return false;
       },
       extraButtons: [
-        [new ButtonComponent({
+        [new ButtonBuilder({
           label: '❌',
           customId: 'delete',
           style: ButtonStyle.Danger,
@@ -803,7 +804,7 @@ router.use('remove', async ({
   ],
 });
 
-const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManager, guildUser : GuildUser, owner : DiscordUser, i18n : I18n) => {
+const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManager, guildUser : GuildUser, owner : DiscordUser, i18n : I18n) : Promise<ActionRowBuilder<MessageActionRowComponentBuilder>[]> => {
   const currentType = getChannelType(voiceChannel);
 
   const query = em.createQueryBuilder(LobbyNameChange, 'lnc')
@@ -816,16 +817,16 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
 
   const latestNameChanges = await em.getConnection().execute<LobbyNameChange[]>(query);
 
-  const selectMenu = new SelectMenuComponent();
+  const selectMenu = new SelectMenuBuilder();
   selectMenu.setCustomId('name');
   selectMenu.setPlaceholder(i18n.t('lobby.noNameSelected'));
-  selectMenu.addOptions(...latestNameChanges.map((ltc) : SelectMenuOption => {
+  selectMenu.addOptions(latestNameChanges.map((ltc) : SelectMenuOptionBuilder => {
     const generatedName = generateLobbyName(currentType, owner, ltc.name);
 
     if (!generatedName) throw new Error('Invalid Name');
 
     const icon = emojiRegex().exec(generatedName)?.[0];
-    const option = new SelectMenuOption();
+    const option = new SelectMenuOptionBuilder();
     if (icon) option.setEmoji({ name: icon });
     option.setLabel(icon ? generatedName.substring(icon?.length).trim() : generatedName);
     option.setValue(ltc.name);
@@ -834,34 +835,34 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
     return option;
   }));
 
-  const limitRow = new ActionRow();
+  const limitRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
 
-  limitRow.addComponents(new ButtonComponent({
+  limitRow.addComponents([new ButtonBuilder({
     customId: '0',
     label: i18n.t('lobby.none') || 'none',
     style: voiceChannel.userLimit === 0 ? ButtonStyle.Success : ButtonStyle.Secondary,
     disabled: voiceChannel.userLimit === 0,
-  }));
+  })]);
 
   for (let i = 2; i <= 5; i += 1) {
-    limitRow.addComponents(new ButtonComponent({
+    limitRow.addComponents([new ButtonBuilder({
       customId: `${i}`,
       label: `${i}`,
       style: voiceChannel.userLimit === i ? ButtonStyle.Success : ButtonStyle.Secondary,
       disabled: voiceChannel.userLimit === i,
-    }));
+    })]);
   }
 
-  const highLimitButtons = new ActionRow();
-  highLimitButtons.addComponents(...[10, 12, 15, 20, 25].map((n) => new ButtonComponent({
+  const highLimitButtons = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+  highLimitButtons.addComponents([10, 12, 15, 20, 25].map((n) => new ButtonBuilder({
     customId: `${n}`,
     label: `${n}`,
     style: voiceChannel.userLimit === n ? ButtonStyle.Success : ButtonStyle.Secondary,
     disabled: voiceChannel.userLimit === n,
   })));
 
-  const channelTypeButtons = new ActionRow();
-  channelTypeButtons.addComponents(...Object.entries(ChannelType).map(([,type]) => new ButtonComponent({
+  const channelTypeButtons = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+  channelTypeButtons.addComponents(Object.entries(ChannelType).map(([,type]) => new ButtonBuilder({
     customId: type,
     emoji: { name: getIcon(type) },
     label: `${type[0].toUpperCase()}${type.substring(1)}`,
@@ -875,20 +876,20 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
     highLimitButtons,
   ];
 
-  const selectMenuRow = new ActionRow();
-  selectMenuRow.addComponents(selectMenu);
+  const selectMenuRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+  selectMenuRow.addComponents([selectMenu]);
 
   if (latestNameChanges.length > 0) {
     actionRows.push(selectMenuRow);
   }
 
-  const renameButtonRow = new ActionRow();
-  renameButtonRow.addComponents(new ButtonComponent({
+  const renameButtonRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+  renameButtonRow.addComponents([new ButtonBuilder({
     style: ButtonStyle.Secondary,
     customId: 'open-rename-modal',
     label: i18n.t('lobby.renameButton'),
     emoji: { name: '✏' },
-  }));
+  })]);
 
   actionRows.push(renameButtonRow);
 
@@ -897,10 +898,10 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
 
 const getDashboardOptions = (i18n : I18n, guild : Guild, leader : User, timeTill ?: Duration, newName ?: string) : MessageOptions => {
   const text = `${i18n.t('lobby.dashboardText', { joinArrays: '\n' })}`;
-  const embed = new Embed();
+  const embed = new EmbedBuilder();
 
   const avatarURL = leader.displayAvatarURL({ size: 64, extension: 'webp' });
-  const color : number | undefined = guild.me?.displayColor || 0xffcc5f;
+  const color : number | undefined = guild.members.me?.displayColor || 0xffcc5f;
 
   embed.setAuthor({
     name: i18n.t('lobby.leader', { user: leader.username }),
@@ -1009,7 +1010,7 @@ const changeLobby = (() => {
               if (tc && tc instanceof TextChannel) {
                 tc.setName(newTextName)
                   .then((updatedTc) => {
-                    if (tempChannel.controlDashboardId) return updatedTc.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true });
+                    if (tempChannel.controlDashboardId) return updatedTc.messages.fetch({ message: `${BigInt(tempChannel.controlDashboardId)}`, cache: true });
 
                     return null;
                   })
@@ -1056,7 +1057,7 @@ const changeLobby = (() => {
     const content = getDashboardOptions(i18n, guild, owner, timeTillNameChange, newName);
 
     if (!(interaction && await interaction.update({ ...<InteractionUpdateOptions>content, components: await generateComponents(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).then(() => true).catch(() => false)) && tempChannel.controlDashboardId) {
-      const msg = await (await textChannel)?.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => null);
+      const msg = await (await textChannel)?.messages.fetch({ message: `${BigInt(tempChannel.controlDashboardId)}`, cache: true }).catch(() => null);
       if (msg) msg.edit({ ...<MessageEditOptions>content, components: await generateComponents(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).catch(() => {});
     }
 
@@ -1414,12 +1415,12 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
   const activeChannel = await activeTempChannel(client, em, tempChannel);
   if (!activeChannel) throw new Error('No active temp channel');
 
-  const actionRow = new ActionRow();
-  actionRow.addComponents(new ButtonComponent({
+  const actionRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+  actionRow.addComponents([new ButtonBuilder({
     customId: 'add',
     label: i18n.t('lobby.addUserButton') || 'Add User',
     style: ButtonStyle.Success,
-  }));
+  })]);
 
   textChannel.send({
     allowedMentions: { roles: [], users: [] },
@@ -1455,7 +1456,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
   const i18 = _i18n.cloneInstance({ lng: tempChannel.guildUser.user.language || tempChannel.guildUser.guild.language });
 
   if (textChannel && owner) {
-    let msg = tempChannel.controlDashboardId ? await textChannel.messages.fetch(`${BigInt(tempChannel.controlDashboardId)}`, { cache: true }).catch(() => undefined) : undefined;
+    let msg = tempChannel.controlDashboardId ? await textChannel.messages.fetch({ message: `${BigInt(tempChannel.controlDashboardId)}`, cache: true }).catch(() => undefined) : undefined;
     if (!msg) {
       msg = await textChannel.send({ ...getDashboardOptions(i18, textChannel.guild, owner), components: await generateComponents(voiceChannel, _em, tempChannel.guildUser, owner, i18) }).catch((err) => { logger.error(err.description, { error: err }); return undefined; });
       if (msg) tempChannel.controlDashboardId = msg.id;
@@ -1468,7 +1469,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
       const collector = new InteractionCollector(client, { message: msg });
       collector.on('collect', async (interaction) => {
         const em = _em.fork();
-        const currentTempChannel = await em.findOne(TempChannel, { channelId: voiceChannel.id }, { populate: { guildUser: { user: true, guild: true } } });
+        const currentTempChannel = await em.findOne(TempChannel, { channelId: voiceChannel.id }, { populate: ['guildUser.user', 'guildUser.guild'] });
 
         if ((interaction.isMessageComponent() || interaction.isModalSubmit()) && currentTempChannel && interaction.guild) {
           const i18n = _i18n.cloneInstance({ lng: currentTempChannel.guildUser.user.language || currentTempChannel.guildUser.guild.language });
@@ -1507,19 +1508,19 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
             [currentTempChannel.name] = interaction.values;
             await changeLobby(currentType, voiceChannel, interaction.user, interaction.guild, currentTempChannel, voiceChannel.userLimit, false, interaction, em, i18n, logger);
           } else if (interaction.customId === 'open-rename-modal') {
-            const modal = new Modal();
+            const modal = new ModalBuilder();
             modal.setCustomId('rename-modal');
             modal.setTitle(i18n.t('lobby.renameModal.title'));
 
-            const row = new ActionRow<ModalActionRowComponent>();
-            row.addComponents(new TextInputComponent({
+            const row = new ActionRowBuilder<ModalActionRowComponentBuilder>();
+            row.addComponents([new TextInputBuilder({
               customId: 'name',
               style: TextInputStyle.Short,
               label: i18n.t('lobby.renameModal.nameLabel'),
               maxLength: 80,
-            }));
+            })]);
 
-            modal.setComponents(row);
+            modal.setComponents([row]);
 
             interaction.showModal(modal);
           } else {
@@ -1640,12 +1641,7 @@ router.onInit = async (client, orm, _i18n, logger) => {
     const em = orm.em.fork();
 
     const usersWithTemp = await em.getRepository(TempChannel).findAll({
-      populate: {
-        guildUser: {
-          user: true,
-          guild: true,
-        },
-      },
+      populate: ['guildUser.user', 'guildUser.guild'],
     });
 
     const tempChecks = usersWithTemp.map((tcs) => checkTempChannel(client, tcs, em, _i18n, logger));
@@ -1662,7 +1658,7 @@ router.onInit = async (client, orm, _i18n, logger) => {
       const em = orm.em.fork();
       const tempChannel = await em.findOne(TempChannel, {
         channelId: oldState.channel.id,
-      }, { populate: { guildUser: { guild: true, user: true } } });
+      }, { populate: ['guildUser.user', 'guildUser.guild'] });
       if (tempChannel) {
         await checkTempChannel(client, tempChannel, em, _i18n, logger);
         await em.flush();

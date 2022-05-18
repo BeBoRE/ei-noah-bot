@@ -5,14 +5,14 @@ import {
   Client,
   Guild,
   GuildMember,
-  MessageAttachment,
-  Embed,
+  Attachment,
   MessageOptions,
   NewsChannel,
   PermissionsBitField, Role, TextChannel,
   User as DiscordUser,
   ApplicationCommandOptionType,
   ApplicationCommandType,
+  EmbedBuilder,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { createCanvas, loadImage, CanvasRenderingContext2D } from 'canvas';
@@ -118,9 +118,9 @@ router.use('ages', showAgeHandler, HandlerType.GUILD, {
 });
 
 const getBdayEmbed = (user : DiscordUser, dbUser : User, guild : Guild | null, i18n : I18n) => {
-  const embed = new Embed();
+  const embed = new EmbedBuilder();
 
-  let color = guild?.me?.displayColor;
+  let color = guild?.members.me?.displayColor;
 
   if (!color || color === 0) color = 0xffcc5f;
 
@@ -204,7 +204,7 @@ const setRoleHandler : GuildHandler = async ({
     return i18n.t('error.notAdmin');
   }
 
-  if (!msg.guild.me?.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
+  if (!msg.guild.members.me?.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
     return i18n.t('birthday.error.noGiveRolePermission');
   }
 
@@ -213,7 +213,7 @@ const setRoleHandler : GuildHandler = async ({
   const guild = await guildUser.guild.init();
 
   if (role instanceof Role) {
-    if (msg.guild && msg.guild.me && msg.guild?.me?.roles.highest.position > role.position) {
+    if (msg.guild.members.me.roles.highest.position > role.position) {
       guild.birthdayRole = role.id;
       return i18n.t('birthday.birthdayRoleSet');
     }
@@ -255,7 +255,7 @@ const colorFullText = (ctx : CanvasRenderingContext2D, text : string, _x : numbe
   ctx.restore();
 };
 
-const generateImage = async (url : string, age : string) : Promise<MessageAttachment> => {
+const generateImage = async (url : string, age : string) : Promise<Attachment> => {
   const canvas = createCanvas(800, 600);
   const ctx = canvas.getContext('2d');
 
@@ -335,7 +335,7 @@ const generateImage = async (url : string, age : string) : Promise<MessageAttach
     ctx.drawImage(confettiFull, 0, 0, width, height);
   }
 
-  return new MessageAttachment(canvas.createPNGStream());
+  return new Attachment(canvas.createPNGStream());
 };
 
 if (process.env.NODE_ENV !== 'production') {
@@ -365,10 +365,10 @@ const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChanne
   }
 
   if (permissions.has(PermissionsBitField.Flags.EmbedLinks, true)) {
-    const embed = new Embed();
+    const embed = new EmbedBuilder();
 
     let color;
-    color = member.guild.me?.displayColor;
+    color = member.guild.members.me?.displayColor;
 
     if (!color || color === 0) color = 0xffcc5f;
 
@@ -396,7 +396,7 @@ const checkBday = async (client : Client, em : EntityManager, _i18n : I18n, logg
   const today = moment().startOf('day').locale('nl').format('DD MMMM');
   const currentYear = (new Date()).getFullYear();
 
-  const users = await em.find(User, { $not: { birthday: null } }, ['guildUsers', 'guildUsers.guild']);
+  const users = await em.find(User, { $not: { birthday: null } }, { populate: ['guildUsers', 'guildUsers.guild'] });
   const discUsers = (await Promise.all(users.map((u) => client.users.fetch(`${BigInt(u.id)}`, { cache: true }).catch(() => null))))
     .filter((user) : user is DiscordUser => !!user);
 
@@ -430,7 +430,7 @@ const checkBday = async (client : Client, em : EntityManager, _i18n : I18n, logg
           }
 
           if (channel && (channel instanceof TextChannel || channel instanceof NewsChannel)) {
-            const birthdayMessage = gu.birthdayMsg ? await channel.messages.fetch(gu.birthdayMsg, { cache: true }).catch(() => null) : null;
+            const birthdayMessage = gu.birthdayMsg ? await channel.messages.fetch({ message: gu.birthdayMsg, cache: true }).catch(() => null) : null;
 
             // Post the birthday message when it's a member's birthday,
             // when there is already a birthday message only post a new message if the last one can't be deleted

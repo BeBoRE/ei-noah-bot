@@ -2,8 +2,16 @@ import {
   AnyChannel,
   Guild,
   Message,
-  ButtonComponent,
-  Embed, PermissionsBitField, Role, User as DiscordUser, InteractionReplyOptions, InteractionUpdateOptions, ApplicationCommandOptionType, ApplicationCommandType, ButtonStyle,
+  ButtonBuilder,
+  PermissionsBitField,
+  Role,
+  User as DiscordUser,
+  InteractionReplyOptions,
+  InteractionUpdateOptions,
+  ApplicationCommandOptionType,
+  ApplicationCommandType,
+  ButtonStyle,
+  EmbedBuilder,
 } from 'discord.js';
 import { GuildUser } from 'entity/GuildUser';
 import { i18n as I18n } from 'i18next';
@@ -37,9 +45,9 @@ const getQuoteOptions = async (guild : Guild, quote : Quote, i18n : I18n) : Prom
 
   if (text.match(linkRegex)) return { content: `${text}\n> - ${await quoted} ${quote.date ? `(<t:${quote.date.getTime() / 1000}:D>)` : ''}\n> ${i18n.t('quote.byUser', { user: (await owner).toString() })}` };
 
-  const embed = new Embed();
+  const embed = new EmbedBuilder();
 
-  const color : number | undefined = guild.me?.displayColor;
+  const color : number | undefined = guild.members.me?.displayColor;
 
   embed.setAuthor({
     name: (await quoted).username,
@@ -62,7 +70,7 @@ const addQuote = (params : (string | DiscordUser | AnyChannel | Role | number | 
     return param.toString();
   }).join(' ');
 
-  if (text.length > 256) {
+  if (text.length > 2000) {
     return i18n.t('quote.error.quoteSizeLimit');
   }
 
@@ -225,11 +233,10 @@ const removeHandler : GuildHandler = async ({
     },
     extraButtons: [
       [
-        new ButtonComponent({
-          style: ButtonStyle.Danger,
-          label: '❌',
-          customId: 'delete',
-        }),
+        new ButtonBuilder()
+          .setCustomId('delete')
+          .setStyle(ButtonStyle.Danger)
+          .setLabel('❌'),
         () => {
           quotesToRemove.forEach((q) => { menuEm.remove(q); });
           if (quotesToRemove.size > 0) msg.channel.send(i18n.t('quote.amountQuotesRemoved', { count: quotesToRemove.size }));
@@ -261,7 +268,7 @@ router.use('verwijderen', removeHandler, HandlerType.GUILD);
 router.use('manage', removeHandler, HandlerType.GUILD);
 
 router.use('random', async ({ msg, em, i18n }) => {
-  const quotes = await em.find(Quote, { guildUser: { guild: { id: msg.guild.id } } }, { populate: { guildUser: true, creator: true } });
+  const quotes = await em.find(Quote, { guildUser: { guild: { id: msg.guild.id } } }, { populate: ['guildUser', 'creator'] });
 
   const quote = quotes[Math.floor(Math.random() * quotes.length)];
 

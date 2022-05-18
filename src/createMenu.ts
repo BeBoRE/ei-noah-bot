@@ -2,12 +2,13 @@ import {
   CollectorOptions,
   CommandInteraction,
   Message,
-  ActionRow,
-  ButtonComponent,
   MessageComponentInteraction,
   User as DiscordUser,
   ButtonStyle,
   InteractionUpdateOptions,
+  ButtonBuilder,
+  ActionRowBuilder,
+  MessageActionRowComponentBuilder,
 } from 'discord.js';
 import { Logger } from 'winston';
 
@@ -16,7 +17,7 @@ export type ButtonReturn = boolean | Promise<boolean>
 | string | Promise<string>
 | InteractionUpdateOptions | Promise<InteractionUpdateOptions>;
 
-export type ExtraButton = [ButtonComponent, () => ButtonReturn];
+export type ExtraButton = [ButtonBuilder, () => ButtonReturn];
 
 async function createMenu<T>(
   {
@@ -39,28 +40,28 @@ async function createMenu<T>(
     logger : Logger
   },
 ) {
-  const navigationButtons : ButtonComponent[] = [
-    new ButtonComponent({
+  const navigationButtons : ButtonBuilder[] = [
+    new ButtonBuilder({
       customId: '1',
       label: '1',
       style: ButtonStyle.Primary,
       disabled: true,
-    }), new ButtonComponent({
+    }), new ButtonBuilder({
       customId: '2',
       label: '2',
       style: ButtonStyle.Primary,
       disabled: true,
-    }), new ButtonComponent({
+    }), new ButtonBuilder({
       customId: '3',
       label: '3',
       style: ButtonStyle.Primary,
       disabled: true,
-    }), new ButtonComponent({
+    }), new ButtonBuilder({
       customId: '4',
       label: '4',
       style: ButtonStyle.Primary,
       disabled: true,
-    }), new ButtonComponent({
+    }), new ButtonBuilder({
       customId: '5',
       label: '5',
       style: ButtonStyle.Primary,
@@ -68,12 +69,12 @@ async function createMenu<T>(
     }),
   ];
 
-  const pageLeft = new ButtonComponent({
+  const pageLeft = new ButtonBuilder({
     customId: 'left',
     label: '◀️',
     style: ButtonStyle.Secondary,
   });
-  const pageRight = new ButtonComponent({
+  const pageRight = new ButtonBuilder({
     customId: 'right',
     label: '▶️',
     style: ButtonStyle.Secondary,
@@ -90,7 +91,7 @@ async function createMenu<T>(
 
     for (let i = 0; i < navigationButtons.length; i += 1) {
       const item = strings[i + page * navigationButtons.length];
-      if (item) text += `\n${navigationButtons[i].label} \`${item}\``;
+      if (item) text += `\n${navigationButtons[i].data.label} \`${item}\``;
     }
 
     if (pages - 1) text += `\n\n> \`${page + 1}/${pages}\``;
@@ -99,17 +100,17 @@ async function createMenu<T>(
   };
 
   const generateButtons = () => {
-    const listButtons = new ActionRow();
+    const listButtons = new ActionRowBuilder<MessageActionRowComponentBuilder>();
 
     list.forEach((q, i) => {
       if (i < navigationButtons.length) {
         const item = list[i + page * navigationButtons.length];
         navigationButtons[i].setDisabled(!item);
-        listButtons.addComponents(navigationButtons[i]);
+        listButtons.addComponents([navigationButtons[i]]);
       }
     });
 
-    const additionalButtons : ButtonComponent[] = [];
+    const additionalButtons : ButtonBuilder[] = [];
 
     if (list.length > navigationButtons.length) {
       pageLeft.setDisabled(page === 0);
@@ -122,12 +123,12 @@ async function createMenu<T>(
       additionalButtons.push(button[0]);
     });
 
-    const rows : ActionRow[] = [listButtons];
+    const rows : ActionRowBuilder<MessageActionRowComponentBuilder>[] = [listButtons];
     for (let i = 0; i < Math.ceil(additionalButtons.length / 5); i += 1) {
-      const row = new ActionRow();
+      const row = new ActionRowBuilder<MessageActionRowComponentBuilder>();
       for (let j = 0; j < 5; j += 1) {
         const button = additionalButtons[i * 5 + j];
-        if (button) row.addComponents(button);
+        if (button) row.addComponents([button]);
       }
       rows.push(row);
     }
@@ -149,7 +150,7 @@ async function createMenu<T>(
   }
 
   // eslint-disable-next-line max-len
-  const filter : CollectorOptions<[MessageComponentInteraction]> = { filter: (i) => (navigationButtons.some((e) => e.customId === i.customId) || extraButtons.some((b) => b[0].customId === i.customId) || i.customId === pageLeft.customId || i.customId === pageRight.customId) && i.user.id === owner.id };
+  const filter : CollectorOptions<[MessageComponentInteraction]> = { filter: (i) => (navigationButtons.some((e) => 'custom_id' in e.data && e.data?.custom_id === i.customId) || extraButtons.some((b) => 'custom_id' in b[0].data && b[0].data.custom_id === i.customId) || ('custom_id' in pageLeft.data && i.customId === pageLeft.data.custom_id) || ('custom_id' in pageRight.data && i.customId === pageRight.data.custom_id)) && i.user.id === owner.id };
   const collector = message.createMessageComponentCollector(filter);
 
   const timeout = (() => {
@@ -168,7 +169,7 @@ async function createMenu<T>(
   timeout('reset');
 
   collector.on('collect', async (interaction) => {
-    const i = navigationButtons.findIndex((e) => interaction.customId === e.customId);
+    const i = navigationButtons.findIndex((e) => ('custom_id' in e.data && interaction.customId === e.data.custom_id));
     const item = list[i + page * navigationButtons.length];
 
     if (item && i !== -1) {
@@ -196,7 +197,7 @@ async function createMenu<T>(
       }
     }
 
-    const extraButton = extraButtons.find((eb) => eb[0].customId === interaction.customId);
+    const extraButton = extraButtons.find((eb) => ('custom_id' in eb[0].data && eb[0].data.custom_id === interaction.customId));
 
     if (extraButton) {
       const destroyMessage = await extraButton[1]();
@@ -218,9 +219,9 @@ async function createMenu<T>(
       }
     }
 
-    if (interaction.customId === pageLeft.customId || interaction.customId === pageRight.customId) {
-      if (interaction.customId === pageLeft.customId && page > 0) page -= 1;
-      if (interaction.customId === pageRight.customId && page < pages - 1) {
+    if (('custom_id' in pageLeft.data && interaction.customId === pageLeft.data.custom_id) || ('custom_id' in pageRight.data && interaction.customId === pageRight.data.custom_id)) {
+      if (('custom_id' in pageLeft.data && interaction.customId === pageLeft.data.custom_id) && page > 0) page -= 1;
+      if (('custom_id' in pageRight.data && interaction.customId === pageRight.data.custom_id) && page < pages - 1) {
         page += 1;
       }
 

@@ -12,7 +12,7 @@ import {
   InteractionReplyOptions,
   ApplicationCommandType,
   AutocompleteInteraction,
-  ApplicationCommandOptionChoice,
+  ApplicationCommandOptionChoiceData,
   ApplicationCommandOptionType,
   CategoryChannel,
   ContextMenuCommandInteraction,
@@ -107,7 +107,7 @@ export interface GuildAutocompleteRouteInfo extends MsgRouteInfo {
 export type HandlerReturn =
   InteractionReplyOptions | string | null;
 
-export type AutocompleteHandlerReturn = ApplicationCommandOptionChoice[];
+export type AutocompleteHandlerReturn = ApplicationCommandOptionChoiceData[];
 
 export enum HandlerType {
   DM = 'dm',

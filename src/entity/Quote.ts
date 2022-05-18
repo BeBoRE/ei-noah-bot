@@ -16,7 +16,7 @@ class Quote extends BaseEntity<Quote, 'id'> {
   @ManyToOne({ entity: 'GuildUser' })
   creator!: GuildUser;
 
-  @Property()
+  @Property({ length: 2000 })
   text!: string;
 
   @Property()

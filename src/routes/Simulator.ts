@@ -1,6 +1,6 @@
 import {
   Interaction,
-  Embed, NewsChannel, TextChannel, ThreadChannel, User, ApplicationCommandOptionType, PermissionsBitField,
+  NewsChannel, TextChannel, ThreadChannel, User, ApplicationCommandOptionType, PermissionsBitField, EmbedBuilder,
 } from 'discord.js';
 import Chain from 'markov-chains';
 import Router, { HandlerType } from '../router/Router';
@@ -109,9 +109,9 @@ router.use('user', async ({
 
   if (!generated.length) return 'Ik kon hier niks mee';
 
-  const embed = new Embed();
+  const embed = new EmbedBuilder();
   const avatarURL = user.displayAvatarURL({ size: 64 });
-  const color : number | undefined = msg.guild.me?.displayColor;
+  const color : number | undefined = msg.guild.members.me?.displayColor;
   embed.setAuthor({ name: user.username, iconURL: avatarURL });
   embed.setDescription([...fromState ?? [], ...generated].join(' '));
 

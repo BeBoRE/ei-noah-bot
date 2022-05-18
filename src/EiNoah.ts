@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, Role, Guild as DiscordGuild, DiscordAPIError, Channel, Snowflake, Embed, MessageAttachment, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, AnyChannel, ApplicationCommandOptionType, GatewayIntentBits, Partials, CategoryChannel,
+  Client, User as DiscordUser, Role, Guild as DiscordGuild, DiscordAPIError, Channel, Snowflake, Embed, Attachment, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, AnyChannel, ApplicationCommandOptionType, GatewayIntentBits, Partials, CategoryChannel,
 } from 'discord.js';
 import {
   MikroORM,
@@ -111,7 +111,7 @@ export const createEntityCache = (em : EntityManager) => {
       return dbUser;
     }
 
-    const newUser = em.create(User, { id: user.id });
+    const newUser = em.create(User, { id: user.id, count: 0 });
     userMap.set(user.id, newUser);
     em.persist(newUser);
     return newUser;
@@ -131,7 +131,7 @@ export const createEntityCache = (em : EntityManager) => {
       return dbGuild;
     }
 
-    const newGuild = em.create(Guild, { id: guild.id });
+    const newGuild = em.create(Guild, { id: guild.id, bitrate: 96000 });
     guildMap.set(guild.id, newGuild);
     em.persist(newGuild);
     return newGuild;
@@ -147,7 +147,7 @@ export const createEntityCache = (em : EntityManager) => {
 
     const dbGuildUser = await em.findOne(GuildUser,
       { guild: { id: guild.id }, user: { id: user.id } },
-      { populate: { guild: true, user: true } });
+      { populate: ['guild', 'user'] });
 
     if (dbGuildUser) {
       guildUserMap.set(`${guild.id}+${user.id}`, dbGuildUser);
@@ -266,10 +266,10 @@ const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : Interact
   if (handlerReturn) {
     if (typeof (handlerReturn) !== 'string') {
       if (handlerReturn instanceof Embed) return { embeds: [handlerReturn] };
-      if (handlerReturn instanceof MessageAttachment) return { files: [handlerReturn] };
+      if (handlerReturn instanceof Attachment) return { files: [handlerReturn] };
       if (Array.isArray(handlerReturn)) {
         const embeds : Embed[] = [];
-        const files : MessageAttachment[] = [];
+        const files : Attachment[] = [];
 
         handlerReturn.forEach((item) => {
           if (item instanceof Embed) {
@@ -291,7 +291,7 @@ const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : Interact
     }
 
     if (handlerReturn.length > 2000) {
-      const attachment = new MessageAttachment(Buffer.from(handlerReturn));
+      const attachment = new Attachment(Buffer.from(handlerReturn));
       attachment.contentType = 'txt';
       attachment.name = 'text.txt';
 
@@ -398,6 +398,7 @@ class EiNoah implements IRouter {
 
     this.client.on('ready', () => {
       this.logger.info('Client online');
+      this.logger.info(`Client active on ${this.client.guilds.cache.size} guilds`);
     });
 
     this.client.on('guildCreate', (guild) => {

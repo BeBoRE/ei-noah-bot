@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import {
-  User, Role, PresenceData, MessageAttachment, TextChannel, PermissionsBitField, DMChannel, NewsChannel, ThreadChannel, AnyChannel, ApplicationCommandOptionType, ApplicationCommandType, ActivityType,
+  User, Role, PresenceData, Attachment, TextChannel, PermissionsBitField, DMChannel, NewsChannel, ThreadChannel, AnyChannel, ApplicationCommandOptionType, ApplicationCommandType, ActivityType,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
@@ -171,7 +171,7 @@ process.title = 'Ei Noah Bot';
       await strokeTextWithTwemoji(ctx, bottom, bottomX, bottomY);
     }
 
-    return new MessageAttachment(canvas.createPNGStream());
+    return new Attachment(canvas.createPNGStream());
   };
 
   // Hier is een 'Handler' als argument in principe is dit een eindpunt van de routing.
@@ -289,7 +289,7 @@ process.title = 'Ei Noah Bot';
       await strokeTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
     }
 
-    return new MessageAttachment(canvas.createPNGStream());
+    return new Attachment(canvas.createPNGStream());
   };
 
   const hugHandler : BothHandler = async ({
