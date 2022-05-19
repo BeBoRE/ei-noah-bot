@@ -1,5 +1,5 @@
 import {
-  BaseEntity, Entity, PrimaryKey, Property,
+  BaseEntity, Entity, PrimaryKey, Property, Unique,
 } from '@mikro-orm/core';
 
 export interface CoronaInfo {
@@ -12,6 +12,7 @@ export interface CoronaInfo {
 }
 
 @Entity()
+@Unique({ properties: ['date', 'community'] })
 class CoronaData extends BaseEntity<CoronaData, 'id'> {
   constructor(coronaInfo : CoronaInfo) {
     super();
@@ -25,10 +26,10 @@ class CoronaData extends BaseEntity<CoronaData, 'id'> {
   @PrimaryKey()
   id!: number;
 
-  @Property({ unique: 'dateCommunity' })
+  @Property()
   date!: Date;
 
-  @Property({ unique: 'dateCommunity' })
+  @Property()
   community!: string;
 
   @Property()

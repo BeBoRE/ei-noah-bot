@@ -1,5 +1,5 @@
 import {
-  Entity, PrimaryKey, OneToMany, Property, Collection, BaseEntity,
+  Entity, PrimaryKey, OneToMany, Property, Collection, BaseEntity, Index,
 } from '@mikro-orm/core';
 // eslint-disable-next-line import/no-cycle
 import { GuildUser } from './GuildUser';
@@ -21,6 +21,7 @@ export class User extends BaseEntity<User, 'id'> {
   @Property()
   count: number = 0;
 
+  @Index()
   @Property()
   birthday?: Date;
 

@@ -48,6 +48,15 @@
       "schema": "public",
       "indexes": [
         {
+          "columnNames": [
+            "birthday"
+          ],
+          "composite": false,
+          "keyName": "user_birthday_index",
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "user_pkey",
           "columnNames": [
             "id"
@@ -94,20 +103,12 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "user_corona_regions_user_id_region_unique",
           "columnNames": [
-            "user_id"
-          ],
-          "composite": false,
-          "keyName": "userRegion",
-          "primary": false,
-          "unique": true
-        },
-        {
-          "columnNames": [
+            "user_id",
             "region"
           ],
-          "composite": false,
-          "keyName": "userRegion",
+          "composite": true,
           "primary": false,
           "unique": true
         },
@@ -768,20 +769,12 @@
       "schema": "public",
       "indexes": [
         {
+          "keyName": "corona_data_date_community_unique",
           "columnNames": [
-            "date"
-          ],
-          "composite": false,
-          "keyName": "dateCommunity",
-          "primary": false,
-          "unique": true
-        },
-        {
-          "columnNames": [
+            "date",
             "community"
           ],
-          "composite": false,
-          "keyName": "dateCommunity",
+          "composite": true,
           "primary": false,
           "unique": true
         },
