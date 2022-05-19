@@ -33,7 +33,7 @@ COPY . .
 COPY tsconfig.json ./
 COPY entrypoint.sh ./
 
-RUN npm i
+RUN npm ci
 RUN chmod 500 entrypoint.sh
 
 RUN sed -i 's/\r//g' entrypoint.sh

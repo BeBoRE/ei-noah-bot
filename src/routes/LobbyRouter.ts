@@ -1458,7 +1458,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
   if (textChannel && owner) {
     let msg = tempChannel.controlDashboardId ? await textChannel.messages.fetch({ message: `${BigInt(tempChannel.controlDashboardId)}`, cache: true }).catch(() => undefined) : undefined;
     if (!msg) {
-      msg = await textChannel.send({ ...getDashboardOptions(i18, textChannel.guild, owner), components: await generateComponents(voiceChannel, _em, tempChannel.guildUser, owner, i18) }).catch((err) => { logger.error(err.description, { error: err }); return undefined; });
+      msg = await textChannel.send({ ...getDashboardOptions(i18, textChannel.guild, owner), components: await generateComponents(voiceChannel, _em, tempChannel.guildUser, owner, i18).catch((error) => { logger.error(error.description, { error }); return undefined; }) }).catch((err) => { logger.error(err.description, { error: err }); return undefined; });
       if (msg) tempChannel.controlDashboardId = msg.id;
     }
 
