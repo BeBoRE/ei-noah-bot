@@ -35,9 +35,9 @@ import {
   ModalActionRowComponentBuilder,
   TextInputBuilder,
   EmbedBuilder,
-  SelectMenuBuilder,
+  // SelectMenuBuilder,
   ModalBuilder,
-  SelectMenuOptionBuilder,
+  // SelectMenuOptionBuilder,
 } from 'discord.js';
 import {
   UniqueConstraintViolationException,
@@ -807,6 +807,7 @@ router.use('remove', async ({
 const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManager, guildUser : GuildUser, owner : DiscordUser, i18n : I18n) : Promise<ActionRowBuilder<MessageActionRowComponentBuilder>[]> => {
   const currentType = getChannelType(voiceChannel);
 
+  /*
   const query = em.createQueryBuilder(LobbyNameChange, 'lnc')
     .where({ guildUser })
     .select(['name', 'max(date) as "date"'])
@@ -834,6 +835,7 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
 
     return option;
   }));
+  */
 
   const limitRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
 
@@ -876,12 +878,14 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
     highLimitButtons,
   ];
 
+  /*
   const selectMenuRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
   selectMenuRow.addComponents([selectMenu]);
 
   if (latestNameChanges.length > 0) {
     actionRows.push(selectMenuRow);
   }
+  */
 
   const renameButtonRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
   renameButtonRow.addComponents([new ButtonBuilder({
@@ -1708,9 +1712,9 @@ router.onInit = async (client, orm, _i18n, logger) => {
           textChannel = await createTextChannel(client, em, guildUser.tempChannel, user);
           guildUser.tempChannel.textChannelId = textChannel.id;
 
-          await createDashBoardCollector(client, voiceChannel, guildUser.tempChannel, em.fork(), _i18n, logger);
+          await createDashBoardCollector(client, voiceChannel, guildUser.tempChannel, em.fork(), _i18n, logger).catch((error) => { logger.error(error.discription, { error }); });
 
-          await textChannel.edit({ permissionOverwrites: getTextPermissionOverwrites(voiceChannel, client) });
+          await textChannel.edit({ permissionOverwrites: getTextPermissionOverwrites(voiceChannel, client) }).catch((error) => { logger.error(error.discription, { error }); });
         }
       } else if ( // Check of iemand een tempChannel is gejoint
         user
