@@ -35,9 +35,10 @@ import {
   ModalActionRowComponentBuilder,
   TextInputBuilder,
   EmbedBuilder,
-  // SelectMenuBuilder,
+  SelectMenuBuilder,
   ModalBuilder,
-  // SelectMenuOptionBuilder,
+  SelectMenuOptionBuilder,
+  SelectMenuComponentOptionData,
 } from 'discord.js';
 import {
   UniqueConstraintViolationException,
@@ -807,7 +808,6 @@ router.use('remove', async ({
 const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManager, guildUser : GuildUser, owner : DiscordUser, i18n : I18n) : Promise<ActionRowBuilder<MessageActionRowComponentBuilder>[]> => {
   const currentType = getChannelType(voiceChannel);
 
-  /*
   const query = em.createQueryBuilder(LobbyNameChange, 'lnc')
     .where({ guildUser })
     .select(['name', 'max(date) as "date"'])
@@ -821,21 +821,20 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
   const selectMenu = new SelectMenuBuilder();
   selectMenu.setCustomId('name');
   selectMenu.setPlaceholder(i18n.t('lobby.noNameSelected'));
-  selectMenu.addOptions(latestNameChanges.map((ltc) : SelectMenuOptionBuilder => {
+  selectMenu.addOptions(latestNameChanges.map((ltc) : SelectMenuComponentOptionData => {
     const generatedName = generateLobbyName(currentType, owner, ltc.name);
 
     if (!generatedName) throw new Error('Invalid Name');
 
     const icon = emojiRegex().exec(generatedName)?.[0];
-    const option = new SelectMenuOptionBuilder();
-    if (icon) option.setEmoji({ name: icon });
-    option.setLabel(icon ? generatedName.substring(icon?.length).trim() : generatedName);
-    option.setValue(ltc.name);
-    option.setDefault(generatedName === voiceChannel.name);
 
-    return option;
+    return {
+      emoji: { name: icon },
+      label: icon ? generatedName.substring(icon?.length).trim() : generatedName,
+      default: generatedName === voiceChannel.name,
+      value: ltc.name,
+    };
   }));
-  */
 
   const limitRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
 
@@ -878,14 +877,12 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
     highLimitButtons,
   ];
 
-  /*
   const selectMenuRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
   selectMenuRow.addComponents([selectMenu]);
 
   if (latestNameChanges.length > 0) {
     actionRows.push(selectMenuRow);
   }
-  */
 
   const renameButtonRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
   renameButtonRow.addComponents([new ButtonBuilder({
