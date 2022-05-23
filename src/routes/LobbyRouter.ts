@@ -82,7 +82,7 @@ function generateLobbyName(
 
   if (newName) {
     const result = emojiRegex().exec(newName);
-    if (result && result[0] === newName.substr(0, result[0].length)) {
+    if (result && result[0] === newName.slice(0, result[0].length)) {
       const [customIcon] = result;
 
       if (!Object.keys(ChannelType).map<string>((t) => getIcon(<ChannelType>t)).includes(customIcon) && customIcon !== '📝') {
