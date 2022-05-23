@@ -37,7 +37,6 @@ import {
   EmbedBuilder,
   SelectMenuBuilder,
   ModalBuilder,
-  SelectMenuOptionBuilder,
   SelectMenuComponentOptionData,
 } from 'discord.js';
 import {
