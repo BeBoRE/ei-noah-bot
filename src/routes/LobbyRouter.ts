@@ -1550,9 +1550,8 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
     em.remove(tempChannel);
     if (activeTextChannel?.deletable) await activeTextChannel.delete().catch(() => { });
   } else if (!activeChannel.members.filter((member) => !member.user.bot).size) {
-    await activeChannel.delete();
-
-    if (activeTextChannel) await activeTextChannel.delete();
+    // If there is no one left in the lobby remove the lobby
+    await Promise.all([activeTextChannel?.delete(), activeChannel.delete()]).catch((error) => { logger.error(error.description, { error }); });
     em.remove(tempChannel);
   } else if (!activeChannel.members.has(`${BigInt(tempChannel.guildUser.user.id)}`)) {
     const guildUsers = await Promise.all(activeChannel.members
