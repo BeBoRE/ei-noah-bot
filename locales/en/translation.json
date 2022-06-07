@@ -140,6 +140,10 @@
       "nameLabel": "Lobby name"
     },
     "leader": "Leader: {{user}}",
+    "textInVoice": {
+      "enabled": "Now using text-in-voice",
+      "disabled": "Text and voice channel are now seperate"
+    },
     "error": {
       "onlyMentions":"Only mention(s) are allowed as arguments",
       "noLobby": "You aren't the owner of a lobby\nJoin a **lobby create channel** to get one",

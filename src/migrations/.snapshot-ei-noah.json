@@ -221,6 +221,16 @@
           "primary": false,
           "nullable": true,
           "mappedType": "string"
+        },
+        "seperate_text_channel": {
+          "name": "seperate_text_channel",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
         }
       },
       "name": "guild",

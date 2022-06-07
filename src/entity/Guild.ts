@@ -41,4 +41,7 @@ export class Guild extends BaseEntity<Guild, 'id'> {
 
   @Property()
   language?: string;
+
+  @Property({ default: false })
+  seperateTextChannel!: boolean;
 }

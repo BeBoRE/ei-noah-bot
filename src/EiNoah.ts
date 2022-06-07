@@ -131,7 +131,7 @@ export const createEntityCache = (em : EntityManager) => {
       return dbGuild;
     }
 
-    const newGuild = em.create(Guild, { id: guild.id, bitrate: 96000 });
+    const newGuild = em.create(Guild, { id: guild.id, bitrate: 96000, seperateTextChannel: false });
     guildMap.set(guild.id, newGuild);
     em.persist(newGuild);
     return newGuild;

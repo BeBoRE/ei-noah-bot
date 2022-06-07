@@ -11,11 +11,9 @@ import {
   Role,
   GuildMember,
   OverwriteResolvable,
-  TextChannel,
   CategoryChannel,
   User,
   Snowflake,
-  Guild,
   MessageComponentInteraction,
   InteractionCollector,
   MessageOptions,
@@ -38,6 +36,7 @@ import {
   SelectMenuBuilder,
   ModalBuilder,
   SelectMenuComponentOptionData,
+  TextChannel,
 } from 'discord.js';
 import {
   UniqueConstraintViolationException,
@@ -54,6 +53,7 @@ import { createEntityCache } from '../EiNoah';
 import LobbyNameChange from '../entity/LobbyNameChange';
 import { Category } from '../entity/Category';
 import TempChannel from '../entity/TempChannel';
+import { Guild } from '../entity/Guild';
 import createMenu from '../createMenu';
 import { GuildUser } from '../entity/GuildUser';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
@@ -102,16 +102,17 @@ function generateLobbyName(
   return `${icon} ${newName || `${owner.username}'s Lobby`}`;
 }
 
-function toDeny(type : ChannelType) {
-  if (type === ChannelType.Mute) return [PermissionsBitField.Flags.Speak];
-  if (type === ChannelType.Nojoin) return [PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak];
-  if (type === ChannelType.Public) return [];
+function toDeny(type : ChannelType, textIsSeperate : boolean) {
+  const denyList : bigint[] = textIsSeperate ? [PermissionsBitField.Flags.SendMessages] : [];
 
-  return [];
+  if (type === ChannelType.Mute) denyList.push(PermissionsBitField.Flags.Speak);
+  else if (type === ChannelType.Nojoin) denyList.push(PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak);
+
+  return denyList;
 }
 
 function toDenyText(type : ChannelType) {
-  if (type === ChannelType.Mute) return [PermissionsBitField.Flags.SendMessages];
+  if (type === ChannelType.Mute) return [];
   if (type === ChannelType.Nojoin) return [PermissionsBitField.Flags.ViewChannel];
   if (type === ChannelType.Public) return [];
 
@@ -125,7 +126,7 @@ function getChannelType(channel : VoiceChannel) {
   } return ChannelType.Nojoin;
 }
 
-function getMaxBitrate(guild : Guild) : number {
+function getMaxBitrate(guild : DiscordGuild) : number {
   if (guild.premiumTier === GuildPremiumTier.Tier1) return 128000;
   if (guild.premiumTier === GuildPremiumTier.Tier2) return 256000;
   if (guild.premiumTier === GuildPremiumTier.Tier3) return 384000;
@@ -137,6 +138,7 @@ async function createTempChannel(
   users: Array<DiscordUser | Role>, owner: DiscordUser,
   bitrate: number,
   type: ChannelType,
+  dbGuild : Guild,
   userLimit = 0,
 ) {
   const userSnowflakes = [...new Set([...users.map((user) => user.id), owner.id])];
@@ -153,12 +155,14 @@ async function createTempChannel(
     permissionOverwrites.push({
       id: bot.id,
       allow: [
-        PermissionsBitField.Flags.Connect,
-        PermissionsBitField.Flags.Speak,
+        PermissionsBitField.Flags.SendMessages,
         PermissionsBitField.Flags.MuteMembers,
         PermissionsBitField.Flags.MoveMembers,
         PermissionsBitField.Flags.DeafenMembers,
         PermissionsBitField.Flags.ManageChannels,
+        PermissionsBitField.Flags.SendMessages,
+        PermissionsBitField.Flags.ViewChannel,
+        PermissionsBitField.Flags.Connect,
       ],
     });
   }
@@ -171,7 +175,7 @@ async function createTempChannel(
     ],
   });
 
-  const deny = toDeny(type);
+  const deny = toDeny(type, dbGuild.seperateTextChannel);
 
   permissionOverwrites.push({
     id: guild.id,
@@ -191,8 +195,8 @@ async function createTempChannel(
   });
 }
 
-async function activeTempChannel(client : Client, em : EntityManager, tempChannel ?: TempChannel) {
-  if (!tempChannel) return undefined;
+async function activeTempChannel(client : Client, em : EntityManager, tempChannel ?: TempChannel) : Promise<VoiceChannel | null> {
+  if (!tempChannel) return null;
   if (!tempChannel.isInitialized()) await tempChannel.init();
 
   try {
@@ -204,34 +208,34 @@ async function activeTempChannel(client : Client, em : EntityManager, tempChanne
     if (err instanceof DiscordAPIError) {
       if (err.status === 404) {
         em.remove(tempChannel);
-        return undefined;
+        return null;
       }
       throw Error('Unknown Discord API Error');
     }
   }
 
-  return undefined;
+  return null;
 }
 
-async function activeTempText(client : Client, tempChannel : TempChannel) {
-  if (!tempChannel || !tempChannel.textChannelId) return undefined;
+async function activeTempText(client : Client, tempChannel : TempChannel) : Promise<VoiceChannel | TextChannel | null> {
+  if (!tempChannel || !tempChannel.textChannelId) return null;
 
   try {
     const activeChannel = await client.channels.fetch(`${BigInt(tempChannel.textChannelId)}`, { cache: true });
-    if (activeChannel instanceof TextChannel) {
+    if (activeChannel instanceof VoiceChannel || activeChannel instanceof TextChannel) {
       return activeChannel;
     }
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.status === 404) {
         tempChannel.textChannelId = undefined;
-        return undefined;
+        return null;
       }
       throw Error('Unknown Discord API Error');
     }
   }
 
-  return undefined;
+  return null;
 }
 
 function getTextPermissionOverwrites(voice : VoiceChannel, client : Client) : OverwriteData[] {
@@ -268,9 +272,11 @@ async function createTextChannel(
   em : EntityManager,
   tempChannel : TempChannel,
   owner : DiscordUser,
-) : Promise<TextChannel> {
+) : Promise<VoiceChannel | TextChannel> {
   const voiceChannel = await activeTempChannel(client, em, tempChannel);
   if (!voiceChannel) throw Error('There is no active temp channel');
+
+  if (tempChannel.channelId === tempChannel.textChannelId) return voiceChannel;
 
   const permissionOverwrites : OverwriteData[] = [
     ...getTextPermissionOverwrites(voiceChannel, client),
@@ -295,7 +301,8 @@ async function createTextChannel(
   );
 }
 
-function updateTextChannel(voice : VoiceChannel, text : TextChannel) {
+function updateTextChannel(voice : VoiceChannel, text : VoiceChannel | TextChannel) {
+  if (voice.id === text.id) return Promise.resolve(null);
   return text.permissionOverwrites.set(getTextPermissionOverwrites(voice, voice.client));
 }
 
@@ -366,13 +373,17 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
     }
   });
 
+  const allow = [
+    PermissionsBitField.Flags.Speak,
+    PermissionsBitField.Flags.Connect,
+    PermissionsBitField.Flags.ViewChannel,
+  ];
+
+  if (owner.tempChannel?.textChannelId !== owner.tempChannel?.channelId) allow.push(PermissionsBitField.Flags.SendMessages);
+
   const newOverwrites : OverwriteResolvable[] = [...activeChannel.permissionOverwrites.cache.values(), ...allowedUsers.map((userOrRole) : OverwriteResolvable => ({
     id: userOrRole.id,
-    allow: [
-      PermissionsBitField.Flags.Speak,
-      PermissionsBitField.Flags.Connect,
-      PermissionsBitField.Flags.ViewChannel,
-    ],
+    allow,
   }))];
 
   activeChannel.permissionOverwrites.set(newOverwrites)
@@ -896,7 +907,7 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
   return actionRows;
 };
 
-const getDashboardOptions = (i18n : I18n, guild : Guild, leader : User, timeTill ?: Duration, newName ?: string) : MessageOptions => {
+const getDashboardOptions = (i18n : I18n, guild : DiscordGuild, leader : User, timeTill ?: Duration, newName ?: string) : MessageOptions => {
   const text = `${i18n.t('lobby.dashboardText', { joinArrays: '\n' })}`;
   const embed = new EmbedBuilder();
 
@@ -933,7 +944,7 @@ const changeLobby = (() => {
     changeTo : ChannelType,
     voiceChannel : VoiceChannel,
     owner : DiscordUser,
-    guild : Guild,
+    guild : DiscordGuild,
     tempChannel : TempChannel,
     limit: number,
     forcePermissionUpdate = false,
@@ -942,9 +953,9 @@ const changeLobby = (() => {
     i18n : I18n,
     logger : Logger,
   ) => {
-    const deny = toDeny(changeTo);
     const currentType = getChannelType(voiceChannel);
     const textChannel = activeTempText(guild.client, tempChannel);
+    const deny = toDeny(changeTo, voiceChannel.id !== (await textChannel)?.id);
 
     if (changeTo !== currentType || forcePermissionUpdate) {
       const newOverwrites = currentType === ChannelType.Public ? voiceChannel.members
@@ -1007,7 +1018,7 @@ const changeLobby = (() => {
                 })
                 .catch(() => {});
 
-              if (tc && tc instanceof TextChannel) {
+              if (tc?.isText()) {
                 tc.setName(newTextName)
                   .then((updatedTc) => {
                     if (tempChannel.controlDashboardId) return updatedTc.messages.fetch({ message: `${BigInt(tempChannel.controlDashboardId)}`, cache: true });
@@ -1072,7 +1083,7 @@ const changeTypeHandler : GuildHandler = async ({
   if (msg.channel instanceof DMChannel || msg.guild === null || guildUser === null) {
     return i18n.t('error.onlyUsableOnGuild');
   }
-  const lobbyOwner = await guildUser;
+  const lobbyOwner = guildUser;
   if (lobbyOwner.tempChannel?.isInitialized()) await lobbyOwner.tempChannel.init();
 
   const activeChannel = await activeTempChannel(msg.client, em, lobbyOwner.tempChannel);
@@ -1396,9 +1407,29 @@ router.use('name', nameHandler, HandlerType.GUILD, {
     required: true,
   }],
 });
-router.use('rename', nameHandler, HandlerType.GUILD);
-router.use('naam', nameHandler, HandlerType.GUILD);
-router.use('hernoem', nameHandler, HandlerType.GUILD);
+
+router.use('text-in-voice', ({
+  flags, msg, i18n, guildUser,
+}) => {
+  if (!msg.member.permissions.has(PermissionsBitField.Flags.Administrator)) return i18n.t('lobby.error.notAdmin');
+
+  const [enable] = flags.get('enable') || [true];
+
+  guildUser.guild.seperateTextChannel = !enable;
+
+  if (enable) return i18n.t('lobby.textInVoice.enabled');
+  return i18n.t('lobby.textInVoice.disabled');
+}, HandlerType.GUILD, {
+  description: 'Should lobbies use text-in-voice or not',
+  options: [
+    {
+      name: 'enable',
+      type: ApplicationCommandOptionType.Boolean,
+      description: 'Enable text-in-voice',
+      required: true,
+    },
+  ],
+});
 
 const helpHandler : BothHandler = ({ i18n }) => i18n.t('lobby.helpText', { joinArrays: '\n' });
 
@@ -1409,8 +1440,8 @@ router.use('help', helpHandler, HandlerType.BOTH, {
 const createAddMessage = async (tempChannel : TempChannel, user : User, client : Client, em : EntityManager, i18n : I18n, logger : Logger) => {
   if (!tempChannel.textChannelId) throw new Error('Text channel not defined');
 
-  const textChannel = await client.channels.fetch(`${BigInt(tempChannel.textChannelId)}`, { cache: true });
-  if (!textChannel || !(textChannel instanceof TextChannel)) throw new Error('Text channel not found');
+  const textChannel = await activeTempText(client, tempChannel);
+  if (!textChannel?.isTextBased()) throw new Error('Text channel not found');
 
   const activeChannel = await activeTempChannel(client, em, tempChannel);
   if (!activeChannel) throw new Error('No active temp channel');
@@ -1517,6 +1548,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
               customId: 'name',
               style: TextInputStyle.Short,
               label: i18n.t('lobby.renameModal.nameLabel'),
+              value: currentTempChannel.name,
               maxLength: 80,
             })]);
 
@@ -1551,7 +1583,7 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
     if (activeTextChannel?.deletable) await activeTextChannel.delete().catch(() => { });
   } else if (!activeChannel.members.filter((member) => !member.user.bot).size) {
     // If there is no one left in the lobby remove the lobby
-    await Promise.all([activeTextChannel?.delete(), activeChannel.delete()]).catch((error) => { logger.error(error.description, { error }); });
+    await Promise.all([activeChannel.delete(), activeChannel.id !== activeTextChannel?.id && activeTextChannel?.delete()]).catch((error) => { logger.error(error.description, { error }); });
     em.remove(tempChannel);
   } else if (!activeChannel.members.has(`${BigInt(tempChannel.guildUser.user.id)}`)) {
     const guildUsers = await Promise.all(activeChannel.members
@@ -1676,7 +1708,7 @@ router.onInit = async (client, orm, _i18n, logger) => {
       const { channel } = newState;
 
       let voiceChannel : VoiceChannel;
-      let textChannel : TextChannel;
+      let textChannel : VoiceChannel | TextChannel;
 
       // Check of iemand een create-lobby channel is gejoint
       if (
@@ -1699,17 +1731,17 @@ router.onInit = async (client, orm, _i18n, logger) => {
 
           if (!guildUser.guild.isInitialized()) await guildUser.guild.init();
 
-          voiceChannel = await createTempChannel(newState.guild, `${BigInt((await categoryData).lobbyCategory || channel.parent.id)}`, [], user, guildUser.guild.bitrate, type);
+          voiceChannel = await createTempChannel(newState.guild, `${BigInt((await categoryData).lobbyCategory || channel.parent.id)}`, [], user, guildUser.guild.bitrate, type, guildUser.guild);
           guildUser.tempChannel = new TempChannel(voiceChannel.id, guildUser);
 
           newState.setChannel(voiceChannel);
 
-          textChannel = await createTextChannel(client, em, guildUser.tempChannel, user);
+          textChannel = guildUser.guild.seperateTextChannel ? await createTextChannel(client, em, guildUser.tempChannel, user) : voiceChannel;
           guildUser.tempChannel.textChannelId = textChannel.id;
 
           await createDashBoardCollector(client, voiceChannel, guildUser.tempChannel, em.fork(), _i18n, logger).catch((error) => { logger.error(error.discription, { error }); });
 
-          await textChannel.edit({ permissionOverwrites: getTextPermissionOverwrites(voiceChannel, client) }).catch((error) => { logger.error(error.discription, { error }); });
+          if (textChannel.id !== voiceChannel.id) { await textChannel.edit({ permissionOverwrites: getTextPermissionOverwrites(voiceChannel, client) }).catch((error) => { logger.error(error.discription, { error }); }); }
         }
       } else if ( // Check of iemand een tempChannel is gejoint
         user
@@ -1732,7 +1764,7 @@ router.onInit = async (client, orm, _i18n, logger) => {
       await em.flush().catch((err) => {
         if (err instanceof UniqueConstraintViolationException) {
           if (voiceChannel.deletable) voiceChannel.delete();
-          if (textChannel.deletable) textChannel.delete();
+          if (voiceChannel.id !== textChannel.id && textChannel.deletable) textChannel.delete();
         } else {
           throw err;
         }

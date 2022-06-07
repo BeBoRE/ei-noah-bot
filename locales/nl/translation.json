@@ -140,6 +140,10 @@
       "nameLabel": "Nieuwe naam"
     },
     "leader": "Leider: {{user}}",
+    "textInVoice": {
+      "enabled": "Lobbies maken nu gebruik van text-in-voice",
+      "disabled": "Tekst- en spraakkanalen zijn nu gescheiden"
+    },
     "error": {
       "onlyMentions":"Alleen mention(s) mogelijk als argument",
       "noLobby": "Je hebt nog geen lobby aangemaakt\nJoin een **lobby aanmaak kanaal** om er een aan te maken",
