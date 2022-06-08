@@ -183,7 +183,7 @@ process.title = 'Ei Noah Bot';
     const [user] = persoon || params;
 
     if (user instanceof User) {
-      const url = user.avatarURL({ size: 256, extension: 'png' });
+      const url = user.displayAvatarURL({ size: 256, extension: 'png' });
       params.shift();
       const message : string = mentionsToText(flags.get('top') || params);
 
@@ -219,9 +219,9 @@ process.title = 'Ei Noah Bot';
   eiNoah.use('steek', stabHandler);
 
   eiNoah.useContext('Stab', ApplicationCommandType.User, async ({ interaction, i18n }) => {
-    const user = interaction.options.getUser('user', true);
+    const user = <User>interaction.options.getUser('user', true);
 
-    const url = user.displayAvatarURL({ size: 256 });
+    const url = user.displayAvatarURL({ size: 256, extension: 'png' });
 
     if (url) {
       if (
@@ -299,7 +299,7 @@ process.title = 'Ei Noah Bot';
     const [user] = persoon || params;
 
     if (user instanceof User) {
-      const url = user.avatarURL({ size: 256, extension: 'png' });
+      const url = user.displayAvatarURL({ size: 256, extension: 'png' });
       params.shift();
       const message : string = mentionsToText(flags.get('top') || params);
 
@@ -316,7 +316,7 @@ process.title = 'Ei Noah Bot';
   eiNoah.useContext('Hug', ApplicationCommandType.User, async ({ interaction, i18n }) => {
     const user = interaction.options.getUser('user', true);
 
-    const url = user.avatarURL({ size: 256, extension: 'png' });
+    const url = user.displayAvatarURL({ size: 256, extension: 'png' });
 
     if (url) {
       if (
