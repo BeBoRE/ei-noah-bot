@@ -186,12 +186,13 @@ async function createTempChannel(
 
   if (!name) throw new Error('Invalid Name');
 
-  return guild.channels.create(name, {
+  return guild.channels.create({
     type: DiscordChannelType.GuildVoice,
     permissionOverwrites,
     parent,
     bitrate: bitrate < maxBitrate ? bitrate : maxBitrate,
     userLimit,
+    name,
   });
 }
 
@@ -292,11 +293,11 @@ async function createTextChannel(
   if (!name) throw new Error('Invalid Name');
 
   return voiceChannel.guild.channels.create(
-    name,
     {
       type: DiscordChannelType.GuildText,
       parent: voiceChannel.parent || undefined,
       permissionOverwrites,
+      name,
     },
   );
 }
@@ -308,9 +309,10 @@ function updateTextChannel(voice : VoiceChannel, text : VoiceChannel | TextChann
 
 const createCreateChannel = (type : ChannelType, category : CategoryChannel) => {
   const typeName = `${type[0].toUpperCase()}${type.substring(1, type.length)}`;
-  return category.guild.channels.create(`${getIcon(type)} Create ${typeName} Lobby`, {
+  return category.guild.channels.create({
     type: DiscordChannelType.GuildVoice,
     parent: category,
+    name: `${getIcon(type)} Create ${typeName} Lobby`,
   });
 };
 
@@ -1018,7 +1020,7 @@ const changeLobby = (() => {
                 })
                 .catch(() => {});
 
-              if (tc?.isText()) {
+              if (tc?.type === DiscordChannelType.GuildText) {
                 tc.setName(newTextName)
                   .then((updatedTc) => {
                     if (tempChannel.controlDashboardId) return updatedTc.messages.fetch({ message: `${BigInt(tempChannel.controlDashboardId)}`, cache: true });
