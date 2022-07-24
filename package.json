@@ -47,7 +47,7 @@
     "i18next": "^21.6.16",
     "i18next-fs-backend": "^1.1.1",
     "markov-chains": "^1.0.2",
-    "moment": "^2.29.2",
+    "moment": "^2.29.4",
     "node-canvas-with-twemoji-and-discord-emoji": "^1.2.1",
     "node-fetch": "^3.1.1",
     "pg": "^8.3.3",
