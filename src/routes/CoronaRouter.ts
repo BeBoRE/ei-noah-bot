@@ -33,6 +33,22 @@ router.use('help', helpHandler, HandlerType.BOTH, {
   description: 'Krijg een help menu',
 });
 
+let communityList : string[] | null = null;
+const loadCommunityList = async (em : EntityManager) => {
+  if (!communityList) {
+    const newItems : {community : string}[] = (await em.createQueryBuilder(CoronaData, 'cd', 'read')
+      .select(['community'], true)
+      .execute());
+
+    if (newItems.length !== 0) {
+      communityList = newItems
+        .map((item) => item.community);
+    }
+  }
+
+  return communityList;
+};
+
 const addHandler : BothHandler = async ({
   user, params, em, flags,
 }) => {
@@ -51,35 +67,33 @@ const addHandler : BothHandler = async ({
     return 'Deze regio is al toegevoegd';
   }
 
-  const coronaReport = (await em.getRepository(CoronaData)
-    .findAll({ limit: 500 }))
-    .find((cr) => cr.community.toLowerCase() === region.toLowerCase());
+  await loadCommunityList(em);
+
+  if (!communityList) return 'Corona data is nog niet opgehaald';
+
+  const coronaReport = communityList
+    .find((c) => c.toLowerCase() === region.toLowerCase());
   if (!coronaReport) {
     return `${region} is niet een regio`;
   }
 
   const newRegion = new UserCoronaRegions();
 
-  newRegion.region = coronaReport.community;
+  newRegion.region = coronaReport;
   newRegion.user = user;
 
   em.persist(newRegion);
 
-  return `${coronaReport.community} is toegevoegd aan je dagelijkse rapport`;
+  return `${coronaReport} is toegevoegd aan je dagelijkse rapport`;
 };
 
-let communityList : string[] | null = null;
 const communityAutocompleteHandler : BothAutocompleteHandler = async ({ em, flags }) => {
   const [inputCommunity] = flags.get('region') || [];
   if (typeof inputCommunity !== 'string') return [{ name: 'Not a string', value: 'notAString' }];
+  await loadCommunityList(em);
 
   if (!communityList) {
-    const newItems : {community : string}[] = (await em.createQueryBuilder(CoronaData, 'cd', 'read')
-      .select(['community'], true)
-      .execute());
-
-    communityList = newItems
-      .map((item) => item.community);
+    return [];
   }
 
   const itemsSorted = communityList
