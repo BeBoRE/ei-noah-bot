@@ -16,8 +16,6 @@ import {
   Snowflake,
   MessageComponentInteraction,
   InteractionCollector,
-  MessageOptions,
-  AnyChannel,
   GuildPremiumTier,
   ChannelType as DiscordChannelType,
   ApplicationCommandOptionType,
@@ -26,7 +24,6 @@ import {
   MessageEditOptions,
   InteractionUpdateOptions,
   TextInputStyle,
-  Interaction,
   ActionRowBuilder,
   ButtonBuilder,
   MessageActionRowComponentBuilder,
@@ -37,6 +34,9 @@ import {
   ModalBuilder,
   SelectMenuComponentOptionData,
   TextChannel,
+  CollectedInteraction,
+  Channel,
+  BaseMessageOptions,
 } from 'discord.js';
 import {
   UniqueConstraintViolationException,
@@ -47,7 +47,7 @@ import {
 import emojiRegex from 'emoji-regex';
 import moment, { Duration } from 'moment';
 import { i18n as I18n } from 'i18next';
-import { OverwriteType } from 'discord-api-types/v9';
+import { ComponentType, OverwriteType } from 'discord-api-types/v9';
 import { Logger } from 'winston';
 import { createEntityCache } from '../EiNoah';
 import LobbyNameChange from '../entity/LobbyNameChange';
@@ -316,7 +316,7 @@ const createCreateChannel = (type : ChannelType, category : CategoryChannel) => 
   });
 };
 
-const getChannel = (client : Client, channelId ?: string) => new Promise<null | AnyChannel>(
+const getChannel = (client : Client, channelId ?: string) => new Promise<null | Channel>(
   (resolve) => {
     if (!channelId) { resolve(null); return; }
     client.channels.fetch(`${BigInt(channelId)}`, { cache: true })
@@ -909,7 +909,7 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
   return actionRows;
 };
 
-const getDashboardOptions = (i18n : I18n, guild : DiscordGuild, leader : GuildMember, timeTill ?: Duration, newName ?: string) : MessageOptions => {
+const getDashboardOptions = (i18n : I18n, guild : DiscordGuild, leader : GuildMember, timeTill ?: Duration, newName ?: string) : BaseMessageOptions => {
   const text = `${i18n.t('lobby.dashboardText', { joinArrays: '\n' })}`;
   const embed = new EmbedBuilder();
 
@@ -931,7 +931,7 @@ const getDashboardOptions = (i18n : I18n, guild : DiscordGuild, leader : GuildMe
 
   if (color) embed.setColor(color);
 
-  return { embeds: [embed], content: null };
+  return { embeds: [embed] };
 };
 
 interface NameChangeTimeout {
@@ -1285,9 +1285,9 @@ router.use('create-category', async ({
   }
 
   return Promise.all([
-    getChannel(msg.client, categoryData.publicVoice).then<AnyChannel | undefined>((channel) => channel?.delete()),
-    getChannel(msg.client, categoryData.privateVoice).then<AnyChannel | undefined>((channel) => channel?.delete()),
-    getChannel(msg.client, categoryData.muteVoice).then<AnyChannel | undefined>((channel) => channel?.delete()),
+    getChannel(msg.client, categoryData.publicVoice).then<Channel | undefined>((channel) => channel?.delete()),
+    getChannel(msg.client, categoryData.privateVoice).then<Channel | undefined>((channel) => channel?.delete()),
+    getChannel(msg.client, categoryData.muteVoice).then<Channel | undefined>((channel) => channel?.delete()),
   ])
     .then(async () => {
       categoryData.publicVoice = undefined;
@@ -1460,7 +1460,7 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
     content: i18n.t('lobby.addUserMessage', { user: user.toString() }),
     components: [actionRow],
   }).then((msg) => {
-    const collector = msg.createMessageComponentCollector();
+    const collector = msg.createMessageComponentCollector<ComponentType.Button>();
     collector.on('collect', async (interaction) => {
       if (interaction.user.id === tempChannel.guildUser.user.id && interaction.customId === 'add') {
         interaction.update({ content: addUsers([user], activeChannel, tempChannel.guildUser, client, i18n, logger).text, components: [] });
@@ -1481,7 +1481,7 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
   });
 };
 
-const msgCollectors = new Map<Snowflake, InteractionCollector<Interaction>>();
+const msgCollectors = new Map<Snowflake, InteractionCollector<CollectedInteraction>>();
 
 const createDashBoardCollector = async (client : Client, voiceChannel : VoiceChannel, tempChannel : TempChannel, _em : EntityManager, _i18n : I18n, logger : Logger) => {
   const textChannel = await activeTempText(client, tempChannel);

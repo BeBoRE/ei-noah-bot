@@ -1,5 +1,5 @@
 import {
-  Client, User as DiscordUser, Role, Guild as DiscordGuild, DiscordAPIError, Channel, Snowflake, Embed, Attachment, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, AnyChannel, ApplicationCommandOptionType, GatewayIntentBits, Partials, CategoryChannel,
+  Client, User as DiscordUser, Role, Guild as DiscordGuild, DiscordAPIError, Snowflake, Embed, Attachment, ApplicationCommandData, ApplicationCommandOptionData, CommandInteraction, CommandInteractionOption, ApplicationCommandType, ChatInputApplicationCommandData, InteractionReplyOptions, GuildMember, AutocompleteInteraction, ApplicationCommandOptionType, GatewayIntentBits, Partials, CategoryChannel, AttachmentBuilder, Channel, ChannelType,
 } from 'discord.js';
 import {
   MikroORM,
@@ -19,7 +19,7 @@ import Router, {
 
 function mapParams(mention : string,
   client : Client,
-  guild : DiscordGuild | null) : Array<Promise<Role | DiscordUser | string | AnyChannel>> {
+  guild : DiscordGuild | null) : Array<Promise<Role | DiscordUser | string | Channel>> {
   const seperated : string[] = [];
 
   const matches = mention.match(/<(@[!&]?|#)[0-9]+>/g);
@@ -66,14 +66,14 @@ function mapParams(mention : string,
 }
 
 export async function parseParams(params : string[], client : Client, guild : DiscordGuild | null) {
-  const parsed : Array<Promise<DiscordUser | AnyChannel | Role | string | null>> = [];
+  const parsed : Array<Promise<DiscordUser | Channel | Role | string | null>> = [];
 
   params.forEach((param) => { parsed.push(...mapParams(param, client, guild)); });
 
   let resolved;
 
   try {
-    resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role | string | AnyChannel => !!item));
+    resolved = (await Promise.all(parsed)).filter(((item) : item is DiscordUser | Role | string | Channel => !!item));
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.status === 404) throw new Error('Invalid Mention of User, Role or Channel');
@@ -185,8 +185,8 @@ export const createEntityCache = (em : EntityManager) => {
 async function messageParser(msg : AutocompleteInteraction, em: EntityManager, i18n : I18n, logger : Logger) : Promise<AutocompleteRouteInfo | null>;
 async function messageParser(msg : CommandInteraction, em: EntityManager, i18n : I18n, logger : Logger) : Promise<MsgRouteInfo | null>;
 async function messageParser(msg : CommandInteraction | AutocompleteInteraction, em: EntityManager, i18n : I18n, logger : Logger) : Promise<AutocompleteRouteInfo | MsgRouteInfo | null> {
-  const flags = new Map<string, Array<Role | DiscordUser | string | AnyChannel | boolean | number>>();
-  const params : Array<Role | DiscordUser | string | AnyChannel> = [];
+  const flags = new Map<string, Array<Role | DiscordUser | string | Channel | boolean | number>>();
+  const params : Array<Role | DiscordUser | string | Channel> = [];
   const { user } = msg;
 
   const {
@@ -214,9 +214,9 @@ async function messageParser(msg : CommandInteraction | AutocompleteInteraction,
         if (option.value !== undefined) flags.set(option.name, [option.value]);
       }
 
-      if (option.channel instanceof Channel) flags.set(option.name, [option.channel]);
-      if (option.user instanceof DiscordUser) flags.set(option.name, [option.user]);
-      if (option.role instanceof Role) flags.set(option.name, [option.role]);
+      if (option.channel?.type === ChannelType.GuildText) flags.set(option.name, [option.channel]);
+      if (option.user) flags.set(option.name, [option.user]);
+      if (option.role) flags.set(option.name, [option.role]);
     });
 
     const language = guildUser?.user.language || guildUser?.guild.language || 'nl';
@@ -291,8 +291,7 @@ const handlerReturnToMessageOptions = (handlerReturn : HandlerReturn) : Interact
     }
 
     if (handlerReturn.length > 2000) {
-      const attachment = new Attachment(Buffer.from(handlerReturn));
-      attachment.contentType = 'txt';
+      const attachment = new AttachmentBuilder(Buffer.from(handlerReturn));
       attachment.name = 'text.txt';
 
       return {

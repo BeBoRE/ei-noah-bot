@@ -1,6 +1,5 @@
 import {
-  Interaction,
-  NewsChannel, TextChannel, ThreadChannel, User, ApplicationCommandOptionType, PermissionsBitField, EmbedBuilder,
+  NewsChannel, TextChannel, ThreadChannel, User, ApplicationCommandOptionType, PermissionsBitField, EmbedBuilder, CommandInteraction, PrivateThreadChannel, PublicThreadChannel, VoiceChannel,
 } from 'discord.js';
 import Chain from 'markov-chains';
 import Router, { HandlerType } from '../router/Router';
@@ -40,20 +39,20 @@ router.use('user', async ({
   if (chain === null) return 'Ik ben toch bezig smeerlap';
 
   let defer;
-  if (msg instanceof Interaction) {
+  if (msg instanceof CommandInteraction) {
     if (!msg.deferred) defer = msg.deferReply();
   }
 
   if (!chain) {
     userChain.set(user.id, null);
     const spliced : string[] = new Array<string>().concat(...(await Promise.all(msg.guild.channels.cache
-      .filter((channel) : channel is (TextChannel | ThreadChannel | NewsChannel) => {
-        if (channel.isText()) {
+      .filter((channel) : channel is NewsChannel | TextChannel | PrivateThreadChannel | PublicThreadChannel<boolean> | VoiceChannel => {
+        if (channel.isTextBased()) {
           if (!(channel instanceof ThreadChannel) && channel.nsfw) return false;
         }
 
         const permissions = msg.client.user && channel.permissionsFor(msg.client.user);
-        return !!(channel.isText() && permissions?.has(PermissionsBitField.Flags.ReadMessageHistory) && permissions.has(PermissionsBitField.Flags.ViewChannel));
+        return !!(channel.isTextBased() && permissions?.has(PermissionsBitField.Flags.ReadMessageHistory) && permissions.has(PermissionsBitField.Flags.ViewChannel));
       })
       .map(async (channel) => {
         const messages : string[] = [];

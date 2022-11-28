@@ -1,7 +1,7 @@
 import moment from 'moment';
 import parse from 'csv-parse/lib/sync';
 import {
-  Client, Attachment, Collection, ApplicationCommandOptionType, ButtonStyle, Message, ActionRowBuilder, MessageActionRowComponentBuilder, ButtonBuilder,
+  Client, Collection, ApplicationCommandOptionType, ButtonStyle, Message, ActionRowBuilder, MessageActionRowComponentBuilder, ButtonBuilder, AttachmentBuilder,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { PostgreSqlDriver, EntityManager } from '@mikro-orm/postgresql';
@@ -322,9 +322,11 @@ const coronaGraph : BothHandler = async ({
 
   if (!data.length) return `${community} is niet een gemeente`;
 
-  return new Attachment(await generateGraph({
-    data, days, displayLabels: labels, i18n, showCases, showDeaths,
-  }));
+  return {
+    files: [new AttachmentBuilder(await generateGraph({
+      data, days, displayLabels: labels, i18n, showCases, showDeaths,
+    }))],
+  };
 };
 
 router.use('graph', coronaGraph, HandlerType.BOTH, {
@@ -409,14 +411,14 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
 
     Object.keys(groupedUsers).forEach(async (key) => {
       const regions = groupedUsers[key];
-      const graphs : Promise<Attachment>[] = [];
+      const graphs : Promise<AttachmentBuilder>[] = [];
 
       const reports = regions.map((r) => {
         const rollingData = rollingDataPerRegion.get(r.region.toLowerCase());
         const population = regionPopulations[r.region.toLowerCase()] || regionPopulations[`${r.region.toLowerCase()} (gemeente)`];
 
         if (!rollingData || !population) return `Er is iets fout gegaan bij het weergeven van ${r.region}`;
-        graphs.push(generateGraph({ data: rollingData, days: 30, displayLabels: true }).then((buffer) => new Attachment(buffer, `${r.region}_graph_${moment(rollingData[0].date).format('DD-MM-YYYY')}.png`)));
+        graphs.push(generateGraph({ data: rollingData, days: 30, displayLabels: true }).then((buffer) => new AttachmentBuilder(buffer, { name: `${r.region}_graph_${moment(rollingData[0].date).format('DD-MM-YYYY')}.png` })));
 
         const weeklyCount = rollingData[rollingData.length - 1];
 
