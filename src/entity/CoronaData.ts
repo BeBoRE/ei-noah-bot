@@ -24,19 +24,19 @@ class CoronaData extends BaseEntity<CoronaData, 'id'> {
   }
 
   @PrimaryKey()
-  id!: number;
+    id!: number;
 
   @Property()
-  date!: Date;
+    date!: Date;
 
   @Property()
-  community!: string;
+    community!: string;
 
   @Property()
-  totalReported!: number;
+    totalReported!: number;
 
   @Property()
-  deceased!: number;
+    deceased!: number;
 }
 
 export default CoronaData;

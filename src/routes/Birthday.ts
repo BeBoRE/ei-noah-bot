@@ -5,7 +5,6 @@ import {
   Client,
   Guild,
   GuildMember,
-  MessageOptions,
   NewsChannel,
   PermissionsBitField, Role, TextChannel,
   User as DiscordUser,
@@ -13,6 +12,7 @@ import {
   ApplicationCommandType,
   EmbedBuilder,
   AttachmentBuilder,
+  BaseMessageOptions,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { createCanvas, loadImage, CanvasRenderingContext2D } from 'canvas';
@@ -349,7 +349,7 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChannel, age : number, i18n : I18n) : Promise<MessageOptions | null> => {
+const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChannel, age : number, i18n : I18n) : Promise<BaseMessageOptions | null> => {
   const url = member.user.avatarURL({ size: 256, extension: 'png' });
   const permissionMissingText = i18n.t('birthday.error.permissionMissing');
 

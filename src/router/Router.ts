@@ -1,6 +1,6 @@
 import {
   User as DiscordUser,
-  Role, AnyChannel,
+  Role,
   Client,
   TextChannel,
   NewsChannel,
@@ -16,6 +16,7 @@ import {
   ApplicationCommandOptionType,
   CategoryChannel,
   ContextMenuCommandInteraction,
+  Channel,
 } from 'discord.js';
 import {
   MikroORM,
@@ -43,9 +44,9 @@ export interface ContextMenuInfo {
 
 export interface RouteInfo {
   msg: CommandInteraction | AutocompleteInteraction;
-  absoluteParams: Array<string | DiscordUser | Role | AnyChannel>;
-  params: Array<string | DiscordUser | Role | AnyChannel>;
-  flags: Map<string, Array<string | DiscordUser | Role | AnyChannel | boolean | number>>;
+  absoluteParams: Array<string | DiscordUser | Role | Channel>;
+  params: Array<string | DiscordUser | Role | Channel>;
+  flags: Map<string, Array<string | DiscordUser | Role | Channel | boolean | number>>;
   readonly guildUser: GuildUser | null;
   readonly user: User;
   getUser: (user: DiscordUser) => Promise<User>
@@ -112,7 +113,7 @@ export type AutocompleteHandlerReturn = ApplicationCommandOptionChoiceData[];
 export enum HandlerType {
   DM = 'dm',
   GUILD = 'guild',
-  BOTH = 'both'
+  BOTH = 'both',
 }
 
 export interface BothHandler {
@@ -199,10 +200,10 @@ export default class Router implements IRouter {
   public contextHandlers : Map<string, ContextMenuHandlerInfo> = new Map();
 
   // Met use geef je aan welk commando waarheen gaat
-  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: BothAutocompleteHandler) : void
-  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: DMAutocompleteHandler) : void
-  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: GuildAutocompleteHandler) : void
-  use(route : string, using: Router | BothHandler) : void
+  use(route : string, using: BothHandler, type ?: HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: BothAutocompleteHandler) : void;
+  use(route : string, using: DMHandler, type : HandlerType.DM, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: DMAutocompleteHandler) : void;
+  use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: GuildAutocompleteHandler) : void;
+  use(route : string, using: Router | BothHandler) : void;
   use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type: HandlerType = HandlerType.BOTH, commandData?: Omit<ApplicationCommandSubCommandData, 'name' | 'type'>, autocomplete ?: BothAutocompleteHandler | GuildAutocompleteHandler | DMAutocompleteHandler) : void {
     const newUsing = <Router | BothHandlerCombined | DMHandlerCombined | GuildHandlerCombined>using;
 
@@ -229,8 +230,8 @@ export default class Router implements IRouter {
 
   // INTERNAL
   // Zorgt dat de commando's op de goede plek terecht komen
-  public handle(info: AutocompleteRouteInfo) : Promise<AutocompleteHandlerReturn>
-  public handle(info: MsgRouteInfo) : Promise<HandlerReturn>
+  public handle(info: AutocompleteRouteInfo) : Promise<AutocompleteHandlerReturn>;
+  public handle(info: MsgRouteInfo) : Promise<HandlerReturn>;
   public handle(info: MsgRouteInfo | AutocompleteRouteInfo) : Promise<HandlerReturn | AutocompleteHandlerReturn> {
     return new Promise((resolve, reject) => {
       const currentRoute = info.params[0];

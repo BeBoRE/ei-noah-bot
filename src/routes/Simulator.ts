@@ -65,7 +65,7 @@ router.use('user', async ({
             // console.log(`---=== Fetching in ${channel.name} ${channel.parent ? `(${channel.parent.name})` : ''} ===---`);
             // eslint-disable-next-line no-await-in-loop
             const fetchedMessages = await channel.messages.fetch({ limit: 100, before: lastMessage })
-            // eslint-disable-next-line no-loop-func
+            // eslint-disable-next-line no-loop-func, @typescript-eslint/no-loop-func
               .then((msgs) => {
                 lastMessage = msgs.last()?.id !== lastMessage ? msgs.last()?.id : undefined;
                 return msgs;

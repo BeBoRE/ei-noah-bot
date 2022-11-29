@@ -74,7 +74,7 @@ const communityAutocompleteHandler : BothAutocompleteHandler = async ({ em, flag
   if (typeof inputCommunity !== 'string') return [{ name: 'Not a string', value: 'notAString' }];
 
   if (!communityList) {
-    const newItems : {community : string}[] = (await em.createQueryBuilder(CoronaData, 'cd', 'read')
+    const newItems : { community : string }[] = (await em.createQueryBuilder(CoronaData, 'cd', 'read')
       .select(['community'], true)
       .execute());
 
@@ -150,7 +150,7 @@ router.use('verwijder', removeHandler);
 router.use('delete', removeHandler);
 
 const getPopulation = async () => {
-  const population : {[key: string]: number | undefined} = {};
+  const population : { [key: string]: number | undefined } = {};
 
   const rawData = (await fetch.then(({ default: f }) => f('https://opendata.cbs.nl/CsvDownload/csv/03759ned/TypedDataSet?dl=41EB0')).then((res) => res.text()))
     .replace(/"/g, '');
@@ -168,7 +168,7 @@ enum Niveau {
   Waakzaam = 'Waakzaam',
   Zorgelijk = 'Zorgelijk',
   Ernstig = 'Ernstig',
-  ZeerErnstig = 'Zeer Ernstig'
+  ZeerErnstig = 'Zeer Ernstig',
 }
 
 interface CoronaDataManipulated {
@@ -403,7 +403,7 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
       } else rollingDataPerRegion.set(report.community.toLowerCase(), [report]);
     });
 
-    const groupedUsers : {[key : string]: UserCoronaRegions[]} = {};
+    const groupedUsers : { [key : string]: UserCoronaRegions[] } = {};
     userRegions.forEach((userRegion) => {
       if (groupedUsers[userRegion.user.id]) groupedUsers[userRegion.user.id].push(userRegion);
       else groupedUsers[userRegion.user.id] = [userRegion];
