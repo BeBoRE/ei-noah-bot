@@ -478,7 +478,7 @@ process.title = 'Ei Noah Bot';
                   if (channel === null || !channel.isTextBased()) { return Promise.resolve(null); }
 
                   return channel.send({
-                    content: 'Ringel mijn bellen teef! Ik ben ei Kerst!',
+                    content: 'Ringel mijn bellen! Ik ben ei Kerst!',
                     files: [avatar],
                   });
                 });
