@@ -8,19 +8,19 @@ import { GuildUser } from './GuildUser';
 @Entity()
 class Quote extends BaseEntity<Quote, 'id'> {
   @PrimaryKey({ serializedPrimaryKey: true })
-  id!: number;
+    id!: number;
 
   @ManyToOne({ entity: 'GuildUser' })
-  guildUser!: GuildUser;
+    guildUser!: GuildUser;
 
   @ManyToOne({ entity: 'GuildUser' })
-  creator!: GuildUser;
+    creator!: GuildUser;
 
   @Property({ length: 2000 })
-  text!: string;
+    text!: string;
 
   @Property()
-  date?: Date;
+    date?: Date;
 
   constructor(text : string, creator: GuildUser) {
     super();

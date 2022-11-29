@@ -17,28 +17,28 @@ import LobbyNameChange from './LobbyNameChange';
 // eslint-disable-next-line import/prefer-default-export
 export class GuildUser extends BaseEntity<GuildUser, 'id'> {
   @PrimaryKey()
-  id!: number;
+    id!: number;
 
   @ManyToOne({ entity: 'Guild' })
-  guild!: Guild;
+    guild!: Guild;
 
   @ManyToOne({ entity: 'User' })
-  user!: User;
+    user!: User;
 
   @OneToOne({
     entity: 'TempChannel', mappedBy: 'guildUser',
   })
-  tempChannel?: TempChannel;
+    tempChannel?: TempChannel;
 
   @OneToMany({ entity: () => Quote, mappedBy: 'guildUser' })
-  quotes = new Collection<Quote>(this);
+    quotes = new Collection<Quote>(this);
 
   @OneToMany({ entity: () => Quote, mappedBy: 'creator' })
-  createdQuotes = new Collection<Quote>(this);
+    createdQuotes = new Collection<Quote>(this);
 
   @Property({ length: 20 })
-  birthdayMsg?: string;
+    birthdayMsg?: string;
 
   @OneToMany(() => LobbyNameChange, (lnc) => lnc.guildUser)
-  lobbyNameChanges = new Collection<LobbyNameChange>(this);
+    lobbyNameChanges = new Collection<LobbyNameChange>(this);
 }

@@ -15,24 +15,24 @@ class TempChannel extends BaseEntity<TempChannel, 'channelId'> {
   }
 
   @PrimaryKey()
-  channelId!: string;
+    channelId!: string;
 
   @OneToOne({
     entity: 'GuildUser', unique: true, owner: true,
   })
-  guildUser!: GuildUser;
+    guildUser!: GuildUser;
 
   @Property()
-  createdAt!: Date;
+    createdAt!: Date;
 
   @Property({ length: 98 })
-  name?: string;
+    name?: string;
 
   @Property({ length: 24 })
-  textChannelId?: string;
+    textChannelId?: string;
 
   @Property({ length: 24 })
-  controlDashboardId?: string;
+    controlDashboardId?: string;
 }
 
 export default TempChannel;

@@ -5,14 +5,14 @@ import {
   Client,
   Guild,
   GuildMember,
-  Attachment,
-  MessageOptions,
   NewsChannel,
   PermissionsBitField, Role, TextChannel,
   User as DiscordUser,
   ApplicationCommandOptionType,
   ApplicationCommandType,
   EmbedBuilder,
+  AttachmentBuilder,
+  BaseMessageOptions,
 } from 'discord.js';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { createCanvas, loadImage, CanvasRenderingContext2D } from 'canvas';
@@ -255,7 +255,7 @@ const colorFullText = (ctx : CanvasRenderingContext2D, text : string, _x : numbe
   ctx.restore();
 };
 
-const generateImage = async (url : string, age : string) : Promise<Attachment> => {
+const generateImage = async (url : string, age : string) : Promise<AttachmentBuilder> => {
   const canvas = createCanvas(800, 600);
   const ctx = canvas.getContext('2d');
 
@@ -335,21 +335,21 @@ const generateImage = async (url : string, age : string) : Promise<Attachment> =
     ctx.drawImage(confettiFull, 0, 0, width, height);
   }
 
-  return new Attachment(canvas.createPNGStream());
+  return new AttachmentBuilder(canvas.createPNGStream());
 };
 
 if (process.env.NODE_ENV !== 'production') {
-  router.use('generate', ({ params }) => {
+  router.use('generate', async ({ params }) => {
     const [user] = params;
 
     if (!(user instanceof DiscordUser)) return 'Not gaming';
     const url = user.avatarURL({ size: 256, extension: 'png' });
     if (!url) return 'Not url';
-    return generateImage(url, '22');
+    return { files: [await generateImage(url, '22')] };
   });
 }
 
-const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChannel, age : number, i18n : I18n) : Promise<MessageOptions | null> => {
+const getMsgOptions = async (member : GuildMember, channel : BaseGuildTextChannel, age : number, i18n : I18n) : Promise<BaseMessageOptions | null> => {
   const url = member.user.avatarURL({ size: 256, extension: 'png' });
   const permissionMissingText = i18n.t('birthday.error.permissionMissing');
 

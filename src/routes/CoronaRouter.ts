@@ -1,7 +1,7 @@
 import moment from 'moment';
 import parse from 'csv-parse/lib/sync';
 import {
-  Client, Attachment, Collection, ApplicationCommandOptionType, ButtonStyle, Message, ActionRowBuilder, MessageActionRowComponentBuilder, ButtonBuilder,
+  Client, Collection, ApplicationCommandOptionType, ButtonStyle, Message, ActionRowBuilder, MessageActionRowComponentBuilder, ButtonBuilder, AttachmentBuilder,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { PostgreSqlDriver, EntityManager } from '@mikro-orm/postgresql';
@@ -36,14 +36,16 @@ router.use('help', helpHandler, HandlerType.BOTH, {
 let communityList : string[] | null = null;
 const loadCommunityList = async (em : EntityManager) => {
   if (!communityList) {
-    const newItems : {community : string}[] = (await em.createQueryBuilder(CoronaData, 'cd', 'read')
+    const newItems : string[] = (await em.createQueryBuilder(CoronaData, 'cd', 'read')
       .select(['community'], true)
-      .execute());
+      .execute())
+      .map((item) => item.community);
 
     if (newItems.length !== 0) {
-      communityList = newItems
-        .map((item) => item.community);
+      communityList = newItems;
     }
+
+    return newItems;
   }
 
   return communityList;
@@ -90,13 +92,8 @@ const addHandler : BothHandler = async ({
 const communityAutocompleteHandler : BothAutocompleteHandler = async ({ em, flags }) => {
   const [inputCommunity] = flags.get('region') || [];
   if (typeof inputCommunity !== 'string') return [{ name: 'Not a string', value: 'notAString' }];
-  await loadCommunityList(em);
 
-  if (!communityList) {
-    return [];
-  }
-
-  const itemsSorted = communityList
+  const itemsSorted = (await loadCommunityList(em))
     .sort((a, b) => stringSimilarity.compareTwoStrings(inputCommunity.toLowerCase(), b.toLowerCase()) - stringSimilarity.compareTwoStrings(inputCommunity.toLowerCase(), a.toLowerCase()));
   const collection = new Collection([...itemsSorted.entries()]);
 
@@ -164,7 +161,7 @@ router.use('verwijder', removeHandler);
 router.use('delete', removeHandler);
 
 const getPopulation = async () => {
-  const population : {[key: string]: number | undefined} = {};
+  const population : { [key: string]: number | undefined } = {};
 
   const rawData = (await fetch.then(({ default: f }) => f('https://opendata.cbs.nl/CsvDownload/csv/03759ned/TypedDataSet?dl=41EB0')).then((res) => res.text()))
     .replace(/"/g, '');
@@ -182,7 +179,7 @@ enum Niveau {
   Waakzaam = 'Waakzaam',
   Zorgelijk = 'Zorgelijk',
   Ernstig = 'Ernstig',
-  ZeerErnstig = 'Zeer Ernstig'
+  ZeerErnstig = 'Zeer Ernstig',
 }
 
 interface CoronaDataManipulated {
@@ -336,9 +333,11 @@ const coronaGraph : BothHandler = async ({
 
   if (!data.length) return `${community} is niet een gemeente`;
 
-  return new Attachment(await generateGraph({
-    data, days, displayLabels: labels, i18n, showCases, showDeaths,
-  }));
+  return {
+    files: [new AttachmentBuilder(await generateGraph({
+      data, days, displayLabels: labels, i18n, showCases, showDeaths,
+    }))],
+  };
 };
 
 router.use('graph', coronaGraph, HandlerType.BOTH, {
@@ -415,7 +414,7 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
       } else rollingDataPerRegion.set(report.community.toLowerCase(), [report]);
     });
 
-    const groupedUsers : {[key : string]: UserCoronaRegions[]} = {};
+    const groupedUsers : { [key : string]: UserCoronaRegions[] } = {};
     userRegions.forEach((userRegion) => {
       if (groupedUsers[userRegion.user.id]) groupedUsers[userRegion.user.id].push(userRegion);
       else groupedUsers[userRegion.user.id] = [userRegion];
@@ -423,14 +422,14 @@ const coronaRefresher = async (client : Client, orm : MikroORM<PostgreSqlDriver>
 
     Object.keys(groupedUsers).forEach(async (key) => {
       const regions = groupedUsers[key];
-      const graphs : Promise<Attachment>[] = [];
+      const graphs : Promise<AttachmentBuilder>[] = [];
 
       const reports = regions.map((r) => {
         const rollingData = rollingDataPerRegion.get(r.region.toLowerCase());
         const population = regionPopulations[r.region.toLowerCase()] || regionPopulations[`${r.region.toLowerCase()} (gemeente)`];
 
         if (!rollingData || !population) return `Er is iets fout gegaan bij het weergeven van ${r.region}`;
-        graphs.push(generateGraph({ data: rollingData, days: 30, displayLabels: true }).then((buffer) => new Attachment(buffer, `${r.region}_graph_${moment(rollingData[0].date).format('DD-MM-YYYY')}.png`)));
+        graphs.push(generateGraph({ data: rollingData, days: 30, displayLabels: true }).then((buffer) => new AttachmentBuilder(buffer, { name: `${r.region}_graph_${moment(rollingData[0].date).format('DD-MM-YYYY')}.png` })));
 
         const weeklyCount = rollingData[rollingData.length - 1];
 

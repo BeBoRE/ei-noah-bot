@@ -10,38 +10,38 @@ import { GuildUser } from './GuildUser';
 // eslint-disable-next-line import/prefer-default-export
 export class Guild extends BaseEntity<Guild, 'id'> {
   @PrimaryKey()
-  id!: string;
+    id!: string;
 
   @Property({ default: 96000 })
-  bitrate: number = 96000;
+    bitrate: number = 96000;
 
   @Property()
-  birthdayChannel?: string;
+    birthdayChannel?: string;
 
   @Property()
-  birthdayRole?: string;
+    birthdayRole?: string;
 
   @OneToMany(() => GuildUser, (gu) => gu.guild)
-  guildUsers = new Collection<GuildUser>(this);
+    guildUsers = new Collection<GuildUser>(this);
 
   @OneToMany(() => CustomRole, (cr) => cr.guild)
-  customRoles = new Collection<CustomRole>(this);
+    customRoles = new Collection<CustomRole>(this);
 
   @Property()
-  roleMenuId?: string;
+    roleMenuId?: string;
 
   @Property()
-  defaultColor?: string;
+    defaultColor?: string;
 
   @Property()
-  requiredRole?: string;
+    requiredRole?: string;
 
   @Property()
-  category?: string;
+    category?: string;
 
   @Property()
-  language?: string;
+    language?: string;
 
   @Property({ default: false })
-  seperateTextChannel!: boolean;
+    seperateTextChannel!: boolean;
 }

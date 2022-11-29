@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import {
-  User, Role, PresenceData, Attachment, TextChannel, PermissionsBitField, DMChannel, NewsChannel, ThreadChannel, AnyChannel, ApplicationCommandOptionType, ApplicationCommandType, ActivityType,
+  User, Role, PresenceData, TextChannel, PermissionsBitField, DMChannel, NewsChannel, ThreadChannel, ApplicationCommandOptionType, ApplicationCommandType, ActivityType, AttachmentBuilder, Channel,
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
@@ -29,7 +29,7 @@ import LocaleRouter from './routes/Locale';
 
 dotenv.config();
 
-const mentionsToText = (params : Array<string | User | Role | AnyChannel | number | boolean>, startAt = 0) : string => {
+const mentionsToText = (params : Array<string | User | Role | Channel | number | boolean>, startAt = 0) : string => {
   const messageArray : string[] = [];
   for (let i = startAt; i < params.length; i += 1) {
     const item = params[i];
@@ -171,7 +171,7 @@ process.title = 'Ei Noah Bot';
       await strokeTextWithTwemoji(ctx, bottom, bottomX, bottomY);
     }
 
-    return new Attachment(canvas.createPNGStream());
+    return new AttachmentBuilder(canvas.createPNGStream());
   };
 
   // Hier is een 'Handler' als argument in principe is dit een eindpunt van de routing.
@@ -189,7 +189,7 @@ process.title = 'Ei Noah Bot';
 
       if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(PermissionsBitField.Flags.AttachFiles)))) {
         const bottom = flags.get('bottom') || flags.get('b');
-        return generateStab(url, message, bottom ? mentionsToText(bottom) : undefined);
+        return { files: [await generateStab(url, message, bottom ? mentionsToText(bottom) : undefined)] };
       }
 
       return i18n.t('index.withPleasure', { user: user.toString() });
@@ -289,7 +289,7 @@ process.title = 'Ei Noah Bot';
       await strokeTextWithTwemoji(ctx, bottomText, bottomX, bottomY);
     }
 
-    return new Attachment(canvas.createPNGStream());
+    return new AttachmentBuilder(canvas.createPNGStream());
   };
 
   const hugHandler : BothHandler = async ({
@@ -305,7 +305,7 @@ process.title = 'Ei Noah Bot';
 
       if (url && (msg.channel instanceof DMChannel || (msg.client.user && msg.channel.permissionsFor(msg.client.user.id)?.has(PermissionsBitField.Flags.AttachFiles)))) {
         const bottom = flags.get('bottom') || flags.get('b');
-        return generateHug(url, message, bottom ? mentionsToText(bottom) : undefined);
+        return { files: [await generateHug(url, message, bottom ? mentionsToText(bottom) : undefined)] };
       }
 
       return i18n.t('index.withPleasure', { user });
@@ -440,14 +440,14 @@ process.title = 'Ei Noah Bot';
                 if (!guild.birthdayChannel) return null;
 
                 return client.channels.fetch(guild.birthdayChannel, { cache: true })
-                  .then((channel) => {
-                    if (channel === null || !channel.isText()) { return Promise.resolve(null); }
+                  .then<any>((channel) => {
+                  if (channel === null || !channel.isTextBased()) { return Promise.resolve(null); }
 
-                    return channel.send({
-                      content: 'Ik heb mijzelf in een sinter-ei veranderd, grote onthulling!\n\nIk ben ei Sint!!',
-                      files: [avatar],
-                    });
+                  return channel.send({
+                    content: 'Ik heb mijzelf in een sinter-ei veranderd, grote onthulling!\n\nIk ben ei Sint!!',
+                    files: [avatar],
                   });
+                });
               }),
             );
           })
@@ -474,14 +474,14 @@ process.title = 'Ei Noah Bot';
                 if (!guild.birthdayChannel) return null;
 
                 return client.channels.fetch(guild.birthdayChannel, { cache: true })
-                  .then((channel) => {
-                    if (channel === null || !channel.isText()) { return Promise.resolve(null); }
+                  .then<any>((channel) => {
+                  if (channel === null || !channel.isTextBased()) { return Promise.resolve(null); }
 
-                    return channel.send({
-                      content: 'ei Sint? Waar het je het over? Kom we gaan kerst vieren!',
-                      files: [avatar],
-                    });
+                  return channel.send({
+                    content: 'Ringel mijn bellen! Ik ben ei Kerst!',
+                    files: [avatar],
                   });
+                });
               }),
             );
           })

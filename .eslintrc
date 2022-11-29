@@ -1,6 +1,6 @@
 {
   "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint"],
+  "plugins": ["@typescript-eslint", "import"],
   "parserOptions": {
     "ecmaVersion": 2017,
     "project": "./tsconfig.json"
@@ -9,7 +9,7 @@
     "node": true
   },
   "extends": [
-    "airbnb-typescript"
+    "airbnb-typescript/base"
   ],
   "rules": {
     "max-len": "off"

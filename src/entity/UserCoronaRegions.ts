@@ -9,13 +9,13 @@ import { User } from './User';
 @Unique({ properties: ['user', 'region'] })
 class UserCoronaRegions extends BaseEntity<UserCoronaRegions, 'id'> {
   @PrimaryKey()
-  id!: number;
+    id!: number;
 
   @ManyToOne({ entity: 'User' })
-  user!: User;
+    user!: User;
 
   @Property()
-  region!: string;
+    region!: string;
 }
 
 export default UserCoronaRegions;

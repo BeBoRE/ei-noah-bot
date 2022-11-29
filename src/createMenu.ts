@@ -1,14 +1,15 @@
 import {
-  CollectorOptions,
   CommandInteraction,
   Message,
-  MessageComponentInteraction,
   User as DiscordUser,
   ButtonStyle,
   InteractionUpdateOptions,
   ButtonBuilder,
   ActionRowBuilder,
   MessageActionRowComponentBuilder,
+  ComponentType,
+  CollectorFilter,
+  ButtonInteraction,
 } from 'discord.js';
 import { Logger } from 'winston';
 
@@ -145,13 +146,12 @@ async function createMenu<T>(
     await msg.deferReply();
     const followup = await msg.followUp({ content: await generateText(), components });
 
-    if (!(followup instanceof Message) && !(followup instanceof CommandInteraction)) throw new TypeError('Follow up is not of type message');
     message = followup;
   }
 
   // eslint-disable-next-line max-len
-  const filter : CollectorOptions<[MessageComponentInteraction]> = { filter: (i) => (navigationButtons.some((e) => 'custom_id' in e.data && e.data?.custom_id === i.customId) || extraButtons.some((b) => 'custom_id' in b[0].data && b[0].data.custom_id === i.customId) || ('custom_id' in pageLeft.data && i.customId === pageLeft.data.custom_id) || ('custom_id' in pageRight.data && i.customId === pageRight.data.custom_id)) && i.user.id === owner.id };
-  const collector = message.createMessageComponentCollector(filter);
+  const filter : CollectorFilter<[ButtonInteraction]> = (i) => (navigationButtons.some((e) => 'custom_id' in e.data && e.data?.custom_id === i.customId) || extraButtons.some((b) => 'custom_id' in b[0].data && b[0].data.custom_id === i.customId) || ('custom_id' in pageLeft.data && i.customId === pageLeft.data.custom_id) || ('custom_id' in pageRight.data && i.customId === pageRight.data.custom_id)) && i.user.id === owner.id;
+  const collector = message.createMessageComponentCollector<ComponentType.Button>({ filter });
 
   const timeout = (() => {
     let to : NodeJS.Timeout;
@@ -180,8 +180,6 @@ async function createMenu<T>(
           interaction.update({ content: destroyMessage, components: [] }).catch((error) => logger.error(error.description, { error }));
         } else if (typeof destroyMessage === 'object') {
           interaction.update({
-            content: null,
-            embeds: null,
             components: [],
             ...destroyMessage,
           }).catch((error) => logger.error(error.description, { error }));

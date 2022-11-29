@@ -6,17 +6,17 @@ import {
 // eslint-disable-next-line import/prefer-default-export
 export class Category extends BaseEntity<Category, 'id'> {
   @PrimaryKey()
-  id!: string;
+    id!: string;
 
   @Property()
-  publicVoice?: string;
+    publicVoice?: string;
 
   @Property()
-  muteVoice?: string;
+    muteVoice?: string;
 
   @Property()
-  privateVoice?: string;
+    privateVoice?: string;
 
   @Property()
-  lobbyCategory?: string;
+    lobbyCategory?: string;
 }
