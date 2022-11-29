@@ -96,6 +96,7 @@
     "rolesNotRemoved": "\n{{roles, list}} role wasn't removed",
     "rolesNotRemoved_other": "\n{{roles, list}} roles weren't removed",
     "roleRemovalTitle": "Which user(s) or role(s) do you want to remove",
+    "addUserMenuPlaceholder": "Add user(s)",
     "none": "None",
     "noNameSelected": "No name selected",
     "typeChangeRemoval": "You have been removed from {{owner}}'s lobby, because the lobby type changed to **{{type}}** and you weren't allowed in",

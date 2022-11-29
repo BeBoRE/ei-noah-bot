@@ -15,7 +15,7 @@ const logger = winston.createLogger({
   ),
   transports: [
     new transports.Console({
-      level: process.env.NODE_ENV !== 'production' ? 'verbose' : 'info',
+      level: process.env.NODE_ENV !== 'production' ? 'debug' : 'info',
       format: format.combine(
         format.colorize({ all: true }),
         format.padLevels(),

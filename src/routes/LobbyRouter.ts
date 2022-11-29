@@ -30,13 +30,14 @@ import {
   ModalActionRowComponentBuilder,
   TextInputBuilder,
   EmbedBuilder,
-  SelectMenuBuilder,
-  ModalBuilder,
-  SelectMenuComponentOptionData,
   TextChannel,
-  CollectedInteraction,
   Channel,
   BaseMessageOptions,
+  MentionableSelectMenuBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+  CollectedInteraction,
+  ModalBuilder,
 } from 'discord.js';
 import {
   UniqueConstraintViolationException,
@@ -830,22 +831,21 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
 
   const latestNameChanges = await em.getConnection().execute<LobbyNameChange[]>(query);
 
-  const selectMenu = new SelectMenuBuilder();
+  const selectMenu = new StringSelectMenuBuilder();
   selectMenu.setCustomId('name');
   selectMenu.setPlaceholder(i18n.t('lobby.noNameSelected'));
-  selectMenu.addOptions(latestNameChanges.map((ltc) : SelectMenuComponentOptionData => {
+  selectMenu.addOptions(latestNameChanges.map((ltc) : StringSelectMenuOptionBuilder => {
     const generatedName = generateLobbyName(currentType, owner, ltc.name);
 
     if (!generatedName) throw new Error('Invalid Name');
 
     const icon = emojiRegex().exec(generatedName)?.[0];
 
-    return {
-      emoji: { name: icon },
-      label: icon ? generatedName.substring(icon?.length).trim() : generatedName,
-      default: generatedName === voiceChannel.name,
-      value: ltc.name,
-    };
+    return new StringSelectMenuOptionBuilder()
+      .setLabel(icon ? generatedName.substring(icon?.length).trim() : generatedName)
+      .setEmoji({ name: icon })
+      .setDefault(generatedName === voiceChannel.name)
+      .setValue(ltc.name);
   }));
 
   const limitRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
@@ -857,17 +857,8 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
     disabled: voiceChannel.userLimit === 0,
   })]);
 
-  for (let i = 2; i <= 5; i += 1) {
-    limitRow.addComponents([new ButtonBuilder({
-      customId: `${i}`,
-      label: `${i}`,
-      style: voiceChannel.userLimit === i ? ButtonStyle.Success : ButtonStyle.Secondary,
-      disabled: voiceChannel.userLimit === i,
-    })]);
-  }
 
-  const highLimitButtons = new ActionRowBuilder<MessageActionRowComponentBuilder>();
-  highLimitButtons.addComponents([10, 12, 15, 20, 25].map((n) => new ButtonBuilder({
+  limitRow.addComponents([2, 5, 10, 12].map((n) => new ButtonBuilder({
     customId: `${n}`,
     label: `${n}`,
     style: voiceChannel.userLimit === n ? ButtonStyle.Success : ButtonStyle.Secondary,
@@ -883,17 +874,26 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
     disabled: currentType === type,
   })));
 
+  const selectUsersRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+  const selectUser = new MentionableSelectMenuBuilder()
+    .setPlaceholder(i18n.t('lobby.addUserMenuPlaceholder'))
+    .setMaxValues(25)
+    .setCustomId('users');
+
+  selectUsersRow.addComponents([selectUser]);
+
   const actionRows = [
     channelTypeButtons,
     limitRow,
-    highLimitButtons,
+    selectUsersRow,
   ];
 
-  const selectMenuRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
-  selectMenuRow.addComponents([selectMenu]);
+
+  const selectNameRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+  selectNameRow.addComponents([selectMenu]);
 
   if (latestNameChanges.length > 0) {
-    actionRows.push(selectMenuRow);
+    actionRows.push(selectNameRow);
   }
 
   const renameButtonRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
@@ -1544,9 +1544,14 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
             if (limit >= 0 && limit < 100 && interaction.guild) {
               await changeLobby(currentType, voiceChannel, member, interaction.guild, currentTempChannel, limit, interaction, em, i18n, logger, false);
             }
-          } else if (interaction.isSelectMenu() && interaction.customId === 'name') {
+          } else if (interaction.isStringSelectMenu() && interaction.customId === 'name') {
             [currentTempChannel.name] = interaction.values;
             await changeLobby(currentType, voiceChannel, member, interaction.guild, currentTempChannel, voiceChannel.userLimit, interaction, em, i18n, logger, false);
+          } else if (interaction.isMentionableSelectMenu() && interaction.customId === 'users' && interaction.inCachedGuild()) {
+            interaction.reply({
+              content: addUsers([...interaction.users.values(), ...interaction.roles.values()], voiceChannel, currentTempChannel.guildUser, client, i18n, logger).text, 
+              ephemeral: true, 
+            });
           } else if (interaction.customId === 'open-rename-modal') {
             const modal = new ModalBuilder();
             modal.setCustomId('rename-modal');
