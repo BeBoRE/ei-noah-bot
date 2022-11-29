@@ -8,11 +8,6 @@
   "env": {
     "node": true
   },
-  "settings": {
-    "react": {
-      "version": "none"
-    }
-  },
   "extends": [
     "airbnb-typescript/base"
   ],
