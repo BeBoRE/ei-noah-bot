@@ -49,7 +49,7 @@
     "markov-chains": "^1.0.2",
     "moment": "^2.29.4",
     "node-canvas-with-twemoji-and-discord-emoji": "^1.2.1",
-    "node-fetch": "^3.1.1",
+    "node-fetch": "^3.2.10",
     "pg": "^8.3.3",
     "source-map-support": "^0.5.19",
     "string-similarity": "^4.0.4",
