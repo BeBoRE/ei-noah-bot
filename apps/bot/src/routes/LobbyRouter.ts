@@ -51,12 +51,12 @@ import { i18n as I18n } from 'i18next';
 import { ComponentType, OverwriteType } from 'discord-api-types/v9';
 import { Logger } from 'winston';
 import { createEntityCache } from '../EiNoah';
-import LobbyNameChange from '../entity/LobbyNameChange';
-import { Category } from '../entity/Category';
-import TempChannel from '../entity/TempChannel';
-import { Guild } from '../entity/Guild';
+import LobbyNameChange from '@ei/database/entity/LobbyNameChange';
+import { Category } from '@ei/database/entity/Category';
+import TempChannel from '@ei/database/entity/TempChannel';
+import { Guild } from '@ei/database/entity/Guild';
 import createMenu from '../createMenu';
-import { GuildUser } from '../entity/GuildUser';
+import { GuildUser } from '@ei/database/entity/GuildUser';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');

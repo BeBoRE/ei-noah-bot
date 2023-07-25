@@ -13,10 +13,10 @@ import {
   ButtonStyle,
   EmbedBuilder,
 } from 'discord.js';
-import { GuildUser } from 'entity/GuildUser';
+import { GuildUser } from '@ei/database/entity/GuildUser';
 import { i18n as I18n } from 'i18next';
 import createMenu from '../createMenu';
-import Quote from '../entity/Quote';
+import Quote from '@ei/database/entity/Quote';
 import Router, { GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Onthoud al');

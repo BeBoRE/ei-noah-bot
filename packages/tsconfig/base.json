@@ -1,4 +1,6 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Default",
   "compilerOptions": {
       "module": "commonjs",
       "esModuleInterop": true,
@@ -12,11 +14,8 @@
       "experimentalDecorators": true,
       "sourceMap": true,
       "strict": true,
-      "rootDir": "src",
-      "outDir": "dist",
       "skipLibCheck": true,
-      "skipDefaultLibCheck": true,
-      "typeRoots": ["./src/declarations"]
+      "skipDefaultLibCheck": true
   },
   "exclude": ["node_modules/**"]
 }

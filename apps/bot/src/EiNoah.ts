@@ -8,10 +8,10 @@ import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
 
 import { i18n as I18n } from 'i18next';
 import { Logger } from 'winston';
-import { Guild } from './entity/Guild';
-import { User } from './entity/User';
-import { Category } from './entity/Category';
-import { GuildUser } from './entity/GuildUser';
+import { Guild } from '@ei/database/entity/Guild';
+import { User } from '@ei/database/entity/User';
+import { Category } from '@ei/database/entity/Category';
+import { GuildUser } from '@ei/database/entity/GuildUser';
 import Router, {
   AutocompleteRouteInfo,
   BothHandler, ContextMenuHandler, ContextMenuHandlerInfo, DMHandler, GuildHandler, HandlerReturn, HandlerType, IRouter, MsgRouteInfo,

@@ -1,1 +1,1 @@
-npm start
+npx turbo run start --filter=@ei/bot

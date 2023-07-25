@@ -18,7 +18,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { createCanvas, loadImage, CanvasRenderingContext2D } from 'canvas';
 import i18next, { i18n as I18n } from 'i18next';
 import { Logger } from 'winston';
-import { User } from '../entity/User';
+import { User } from '@ei/database/entity/User';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Laat Ei-Noah je verjaardag bijhouden of vraag die van iemand anders op');

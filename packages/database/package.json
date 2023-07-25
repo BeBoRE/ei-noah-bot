@@ -1,0 +1,6 @@
+{
+  "name": "@ei/database",
+  "dependencies": {
+    "@ei/tsconfig": "*"
+  }
+}

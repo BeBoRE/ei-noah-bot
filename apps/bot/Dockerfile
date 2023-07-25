@@ -28,10 +28,7 @@ RUN apk --no-cache --virtual .build-deps add \
 RUN mkdir ~/.fonts
 RUN wget -qO- http://plasmasturm.org/code/vistafonts-installer/vistafonts-installer | bash
 
-COPY package*.json ./
 COPY . .
-COPY tsconfig.json ./
-COPY entrypoint.sh ./
 
 RUN npm ci
 RUN chmod 500 entrypoint.sh

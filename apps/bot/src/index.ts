@@ -15,7 +15,7 @@ import { join } from 'path';
 import { CronJob } from 'cron';
 import { readFile } from 'fs/promises';
 import logger from './logger';
-import { Guild } from './entity/Guild';
+import { Guild } from '@ei/database/entity/Guild';
 import { BothHandler, HandlerType } from './router/Router';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
