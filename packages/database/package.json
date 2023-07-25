@@ -1,5 +1,6 @@
 {
   "name": "@ei/database",
+  "main": "index.ts",
   "dependencies": {
     "@ei/tsconfig": "*"
   }

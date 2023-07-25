@@ -74,7 +74,7 @@
   "mikro-orm": {
     "useTsNode": true,
     "configPaths": [
-      "../../packages/database/mikro-orm.config.ts"
+      "./src/mikro-orm.config.ts"
     ]
   }
 }
