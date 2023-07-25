@@ -22,4 +22,7 @@ export class User extends BaseEntity<User, 'id'> {
 
   @Property()
     language?: string;
+
+  @Property()
+    timezone?: string;
 }
