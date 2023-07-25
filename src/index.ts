@@ -4,7 +4,6 @@ import {
 } from 'discord.js';
 import { MikroORM } from '@mikro-orm/core';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { fork } from 'child_process';
 import {
   CanvasRenderingContext2D, createCanvas, loadImage,
 } from 'canvas';
@@ -23,8 +22,6 @@ import LobbyRouter from './routes/LobbyRouter';
 import Counter from './routes/Counter';
 import Birthday from './routes/Birthday';
 import QuoteRouter from './routes/QuoteRouter';
-import CoronaRouter from './routes/CoronaRouter';
-import SimulatorRouter from './routes/Simulator';
 import LocaleRouter from './routes/Locale';
 
 dotenv.config();
@@ -55,14 +52,6 @@ process.title = 'Ei Noah Bot';
   // Creëerd de database connectie
   const orm = await MikroORM.init<PostgreSqlDriver>().catch((err) => { logger.error({ err }); process.exit(-1); });
   await orm.getMigrator().up();
-
-  if (process.env.CORONA_REFRESHER?.toLowerCase() !== 'false') {
-    const child = fork('./src/child.ts');
-
-    process.on('beforeExit', () => {
-      child.kill();
-    });
-  }
 
   const preloadLanguages = readdirSync(join(__dirname, '../locales')).filter((fileName) => {
     const joinedPath = join(join(__dirname, '../locales'), fileName);
@@ -379,8 +368,6 @@ process.title = 'Ei Noah Bot';
 
   eiNoah.use('quote', QuoteRouter);
 
-  eiNoah.use('simulate', SimulatorRouter);
-
   eiNoah.use('locale', LocaleRouter);
 
   eiNoah.onInit = async (client) => {
@@ -492,8 +479,6 @@ process.title = 'Ei Noah Bot';
     santaCron.start();
     sintpfpCron.start();
   };
-
-  eiNoah.use('corona', CoronaRouter);
 
   await eiNoah.start();
 })();

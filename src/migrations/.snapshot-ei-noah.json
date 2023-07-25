@@ -15,27 +15,35 @@
           "nullable": false,
           "mappedType": "string"
         },
-        "count": {
-          "name": "count",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "integer"
-        },
-        "birthday": {
-          "name": "birthday",
-          "type": "timestamptz(0)",
+        "public_voice": {
+          "name": "public_voice",
+          "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": true,
-          "length": 6,
-          "mappedType": "datetime"
+          "mappedType": "string"
         },
-        "language": {
-          "name": "language",
+        "mute_voice": {
+          "name": "mute_voice",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
+        },
+        "private_voice": {
+          "name": "private_voice",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
+        },
+        "lobby_category": {
+          "name": "lobby_category",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -44,20 +52,11 @@
           "mappedType": "string"
         }
       },
-      "name": "user",
+      "name": "category",
       "schema": "public",
       "indexes": [
         {
-          "columnNames": [
-            "birthday"
-          ],
-          "composite": false,
-          "keyName": "user_birthday_index",
-          "primary": false,
-          "unique": false
-        },
-        {
-          "keyName": "user_pkey",
+          "keyName": "category_pkey",
           "columnNames": [
             "id"
           ],
@@ -73,24 +72,6 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
-          "nullable": false,
-          "mappedType": "integer"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "string"
-        },
-        "region": {
-          "name": "region",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -99,21 +80,11 @@
           "mappedType": "string"
         }
       },
-      "name": "user_corona_regions",
+      "name": "channel",
       "schema": "public",
       "indexes": [
         {
-          "keyName": "user_corona_regions_user_id_region_unique",
-          "columnNames": [
-            "user_id",
-            "region"
-          ],
-          "composite": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "keyName": "user_corona_regions_pkey",
+          "keyName": "channel_pkey",
           "columnNames": [
             "id"
           ],
@@ -123,20 +94,7 @@
         }
       ],
       "checks": [],
-      "foreignKeys": {
-        "user_corona_regions_user_id_foreign": {
-          "constraintName": "user_corona_regions_user_id_foreign",
-          "columnNames": [
-            "user_id"
-          ],
-          "localTableName": "public.user_corona_regions",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.user",
-          "updateRule": "cascade"
-        }
-      }
+      "foreignKeys": {}
     },
     {
       "columns": {
@@ -253,6 +211,72 @@
       "columns": {
         "id": {
           "name": "id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "mappedType": "string"
+        },
+        "count": {
+          "name": "count",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "0",
+          "mappedType": "integer"
+        },
+        "birthday": {
+          "name": "birthday",
+          "type": "timestamptz(0)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 6,
+          "mappedType": "datetime"
+        },
+        "language": {
+          "name": "language",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "string"
+        }
+      },
+      "name": "user",
+      "schema": "public",
+      "indexes": [
+        {
+          "columnNames": [
+            "birthday"
+          ],
+          "composite": false,
+          "keyName": "user_birthday_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "keyName": "user_pkey",
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "primary": true,
+          "unique": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {}
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
           "type": "serial",
           "unsigned": true,
           "autoincrement": true,
@@ -342,14 +366,14 @@
     },
     {
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
+        "channel_id": {
+          "name": "channel_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
           "nullable": false,
-          "mappedType": "integer"
+          "mappedType": "string"
         },
         "guild_user_id": {
           "name": "guild_user_id",
@@ -360,18 +384,8 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "name": {
-          "name": "name",
-          "type": "varchar(99)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 99,
-          "mappedType": "string"
-        },
-        "date": {
-          "name": "date",
+        "created_at": {
+          "name": "created_at",
           "type": "timestamptz(0)",
           "unsigned": false,
           "autoincrement": false,
@@ -379,9 +393,39 @@
           "nullable": false,
           "length": 6,
           "mappedType": "datetime"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(98)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 98,
+          "mappedType": "string"
+        },
+        "text_channel_id": {
+          "name": "text_channel_id",
+          "type": "varchar(24)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 24,
+          "mappedType": "string"
+        },
+        "control_dashboard_id": {
+          "name": "control_dashboard_id",
+          "type": "varchar(24)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 24,
+          "mappedType": "string"
         }
       },
-      "name": "lobby_name_change",
+      "name": "temp_channel",
       "schema": "public",
       "indexes": [
         {
@@ -389,14 +433,14 @@
             "guild_user_id"
           ],
           "composite": false,
-          "keyName": "lobby_name_change_guild_user_id_index",
+          "keyName": "temp_channel_guild_user_id_unique",
           "primary": false,
-          "unique": false
+          "unique": true
         },
         {
-          "keyName": "lobby_name_change_pkey",
+          "keyName": "temp_channel_pkey",
           "columnNames": [
-            "id"
+            "channel_id"
           ],
           "composite": false,
           "primary": true,
@@ -405,12 +449,12 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "lobby_name_change_guild_user_id_foreign": {
-          "constraintName": "lobby_name_change_guild_user_id_foreign",
+        "temp_channel_guild_user_id_foreign": {
+          "constraintName": "temp_channel_guild_user_id_foreign",
           "columnNames": [
             "guild_user_id"
           ],
-          "localTableName": "public.lobby_name_change",
+          "localTableName": "public.temp_channel",
           "referencedColumnNames": [
             "id"
           ],
@@ -512,14 +556,14 @@
     },
     {
       "columns": {
-        "channel_id": {
-          "name": "channel_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "unsigned": true,
+          "autoincrement": true,
+          "primary": true,
           "nullable": false,
-          "mappedType": "string"
+          "mappedType": "integer"
         },
         "guild_user_id": {
           "name": "guild_user_id",
@@ -530,8 +574,18 @@
           "nullable": false,
           "mappedType": "integer"
         },
-        "created_at": {
-          "name": "created_at",
+        "name": {
+          "name": "name",
+          "type": "varchar(99)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 99,
+          "mappedType": "string"
+        },
+        "date": {
+          "name": "date",
           "type": "timestamptz(0)",
           "unsigned": false,
           "autoincrement": false,
@@ -539,39 +593,9 @@
           "nullable": false,
           "length": 6,
           "mappedType": "datetime"
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(98)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "length": 98,
-          "mappedType": "string"
-        },
-        "text_channel_id": {
-          "name": "text_channel_id",
-          "type": "varchar(24)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "length": 24,
-          "mappedType": "string"
-        },
-        "control_dashboard_id": {
-          "name": "control_dashboard_id",
-          "type": "varchar(24)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "length": 24,
-          "mappedType": "string"
         }
       },
-      "name": "temp_channel",
+      "name": "lobby_name_change",
       "schema": "public",
       "indexes": [
         {
@@ -579,14 +603,14 @@
             "guild_user_id"
           ],
           "composite": false,
-          "keyName": "temp_channel_guild_user_id_unique",
+          "keyName": "lobby_name_change_guild_user_id_index",
           "primary": false,
-          "unique": true
+          "unique": false
         },
         {
-          "keyName": "temp_channel_pkey",
+          "keyName": "lobby_name_change_pkey",
           "columnNames": [
-            "channel_id"
+            "id"
           ],
           "composite": false,
           "primary": true,
@@ -595,12 +619,12 @@
       ],
       "checks": [],
       "foreignKeys": {
-        "temp_channel_guild_user_id_foreign": {
-          "constraintName": "temp_channel_guild_user_id_foreign",
+        "lobby_name_change_guild_user_id_foreign": {
+          "constraintName": "lobby_name_change_guild_user_id_foreign",
           "columnNames": [
             "guild_user_id"
           ],
-          "localTableName": "public.temp_channel",
+          "localTableName": "public.lobby_name_change",
           "referencedColumnNames": [
             "id"
           ],
@@ -725,173 +749,6 @@
           "updateRule": "cascade"
         }
       }
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "unsigned": true,
-          "autoincrement": true,
-          "primary": true,
-          "nullable": false,
-          "mappedType": "integer"
-        },
-        "date": {
-          "name": "date",
-          "type": "timestamptz(0)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "length": 6,
-          "mappedType": "datetime"
-        },
-        "community": {
-          "name": "community",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "string"
-        },
-        "total_reported": {
-          "name": "total_reported",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "integer"
-        },
-        "deceased": {
-          "name": "deceased",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "integer"
-        }
-      },
-      "name": "corona_data",
-      "schema": "public",
-      "indexes": [
-        {
-          "keyName": "corona_data_date_community_unique",
-          "columnNames": [
-            "date",
-            "community"
-          ],
-          "composite": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "keyName": "corona_data_pkey",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {}
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "string"
-        }
-      },
-      "name": "channel",
-      "schema": "public",
-      "indexes": [
-        {
-          "keyName": "channel_pkey",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {}
-    },
-    {
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "mappedType": "string"
-        },
-        "public_voice": {
-          "name": "public_voice",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "string"
-        },
-        "mute_voice": {
-          "name": "mute_voice",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "string"
-        },
-        "private_voice": {
-          "name": "private_voice",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "string"
-        },
-        "lobby_category": {
-          "name": "lobby_category",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "mappedType": "string"
-        }
-      },
-      "name": "category",
-      "schema": "public",
-      "indexes": [
-        {
-          "keyName": "category_pkey",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {}
     }
   ]
 }
