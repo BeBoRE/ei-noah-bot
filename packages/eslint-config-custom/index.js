@@ -9,9 +9,6 @@ module.exports = {
   plugins: ['@typescript-eslint'],
   rules: {
     'max-len': 'off',
-    'import/extensions': ['error', {
-      js: 'never', jsx: 'never', ts: 'never', tsx: 'never',
-    }],
   },
   env: {
     node: true,
@@ -20,5 +17,5 @@ module.exports = {
   globals: {
     NodeJS: 'readonly',
   },
-  ignorePatterns: ['node_modules/', '.eslintrc.js'],
+  ignorePatterns: ['node_modules/', '.eslintrc.js', 'Migration*.ts', 'next.config.js', 'next-env.d.ts'],
 };

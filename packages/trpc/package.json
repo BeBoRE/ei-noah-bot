@@ -1,0 +1,23 @@
+{
+  "name": "@ei/trpc",
+  "version": "0.0.0",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "dependencies": {
+    "@ei/database": "*",
+    "@trpc/client": "^10.35.0",
+    "@trpc/server": "^10.35.0",
+    "superjson": "1.13.1",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "eslint-config-custom": "*",
+    "typescript": "5.1.6"
+  },  
+  "mikro-orm": {
+    "useTsNode": true,
+    "configPaths": [
+      "./src/mikro-orm.config.ts"
+    ]
+  }
+}
