@@ -481,17 +481,21 @@ const checkBday = async (client : Client, em : EntityManager, _i18n : I18n, logg
 };
 
 if (process.env.NODE_ENV !== 'production') {
-  router.use('check', async ({
-    em, msg, i18n, logger,
-  }) => {
-    const { client } = msg;
-    await checkBday(client, em, i18n, logger);
+  router.use(
+    'check',
+    async ({
+      em, msg, i18n, logger,
+    }) => {
+      const { client } = msg;
+      await checkBday(client, em, i18n, logger);
 
-    return 'Ohko';
-  },
-  HandlerType.BOTH, {
-    description: 'Check all birthdays',
-  });
+      return 'Ohko';
+    },
+    HandlerType.BOTH,
+    {
+      description: 'Check all birthdays',
+    },
+  );
 }
 
 router.onInit = async (client, orm, i18n, logger) => {

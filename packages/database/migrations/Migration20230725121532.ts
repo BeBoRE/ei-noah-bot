@@ -1,7 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20230725121532 extends Migration {
-
   async up(): Promise<void> {
     this.addSql('drop table if exists "user_corona_regions" cascade;');
 
@@ -23,5 +22,4 @@ export class Migration20230725121532 extends Migration {
     this.addSql('alter table "user" alter column "count" drop default;');
     this.addSql('alter table "user" alter column "count" type int using ("count"::int);');
   }
-
 }

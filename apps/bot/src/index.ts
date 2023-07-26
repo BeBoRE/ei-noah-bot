@@ -14,8 +14,8 @@ import { lstatSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { CronJob } from 'cron';
 import { readFile } from 'fs/promises';
-import logger from './logger';
 import { Guild } from '@ei/database/entity/Guild';
+import logger from './logger';
 import { BothHandler, HandlerType } from './router/Router';
 import EiNoah from './EiNoah';
 import LobbyRouter from './routes/LobbyRouter';
@@ -47,7 +47,7 @@ const mentionsToText = (params : Array<string | User | Role | Channel | number |
 process.title = 'Ei Noah Bot';
 
 (async () => {
-  if (!process.env.CLIENT_TOKEN) throw new Error('Add bot\'s token to CLIENT_TOKEN');
+  if (!process.env.CLIENT_TOKEN) throw new Error("Add bot's token to CLIENT_TOKEN");
 
   // Creëerd de database connectie
   const orm = await MikroORM.init<PostgreSqlDriver>().catch((err) => { logger.error({ err }); process.exit(-1); });
@@ -427,14 +427,14 @@ process.title = 'Ei Noah Bot';
                 if (!guild.birthdayChannel) return null;
 
                 return client.channels.fetch(guild.birthdayChannel, { cache: true })
-                  .then<any>((channel) => {
-                  if (channel === null || !channel.isTextBased()) { return Promise.resolve(null); }
+                  .then<unknown>((channel) => {
+                    if (channel === null || !channel.isTextBased()) { return Promise.resolve(null); }
 
-                  return channel.send({
-                    content: 'Ik heb mijzelf in een sinter-ei veranderd, grote onthulling!\n\nIk ben ei Sint!!',
-                    files: [avatar],
+                    return channel.send({
+                      content: 'Ik heb mijzelf in een sinter-ei veranderd, grote onthulling!\n\nIk ben ei Sint!!',
+                      files: [avatar],
+                    });
                   });
-                });
               }),
             );
           })
@@ -461,14 +461,14 @@ process.title = 'Ei Noah Bot';
                 if (!guild.birthdayChannel) return null;
 
                 return client.channels.fetch(guild.birthdayChannel, { cache: true })
-                  .then<any>((channel) => {
-                  if (channel === null || !channel.isTextBased()) { return Promise.resolve(null); }
+                  .then<unknown>((channel) => {
+                    if (channel === null || !channel.isTextBased()) { return Promise.resolve(null); }
 
-                  return channel.send({
-                    content: 'Ringel mijn bellen! Ik ben ei Kerst!',
-                    files: [avatar],
+                    return channel.send({
+                      content: 'Ringel mijn bellen! Ik ben ei Kerst!',
+                      files: [avatar],
+                    });
                   });
-                });
               }),
             );
           })

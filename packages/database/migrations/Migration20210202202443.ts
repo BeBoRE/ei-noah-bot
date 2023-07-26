@@ -1,7 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20210202202443 extends Migration {
-
   async up(): Promise<void> {
     this.addSql('alter table "guild_user" drop constraint "unique_tempchannel";');
 
@@ -11,5 +10,4 @@ export class Migration20210202202443 extends Migration {
 
     this.addSql('alter table "guild_user" add constraint "guild_user_temp_channel_unique" unique ("temp_channel");');
   }
-
 }

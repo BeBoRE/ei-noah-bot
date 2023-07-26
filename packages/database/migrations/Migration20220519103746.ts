@@ -1,7 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20220519103746 extends Migration {
-
   async up(): Promise<void> {
     this.addSql('create index "user_birthday_index" on "user" ("birthday");');
 
@@ -37,5 +36,4 @@ export class Migration20220519103746 extends Migration {
     this.addSql('alter table "user_corona_regions" add constraint "userRegion" unique ("user_id", "region");');
     this.addSql('alter table "user_corona_regions" drop constraint "user_corona_regions_user_id_region_unique";');
   }
-
 }

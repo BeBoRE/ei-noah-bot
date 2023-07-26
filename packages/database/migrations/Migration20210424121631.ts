@@ -1,7 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20210424121631 extends Migration {
-
   async up(): Promise<void> {
     this.addSql('alter table "guild" add column "role_menu_id" varchar(255) null, add column "default_color" varchar(255) null, add column "requierd_role" varchar(255) null, add column "category" varchar(255) null;');
 
@@ -10,5 +9,4 @@ export class Migration20210424121631 extends Migration {
 
     this.addSql('alter table "custom_role" add constraint "custom_role_owner_id_foreign" foreign key ("owner_id") references "guild_user" ("id") on update cascade;');
   }
-
 }

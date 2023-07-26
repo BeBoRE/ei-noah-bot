@@ -15,8 +15,8 @@ import {
 } from 'discord.js';
 import { GuildUser } from '@ei/database/entity/GuildUser';
 import { i18n as I18n } from 'i18next';
-import createMenu from '../createMenu';
 import Quote from '@ei/database/entity/Quote';
+import createMenu from '../createMenu';
 import Router, { GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Onthoud al');

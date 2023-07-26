@@ -1,4 +1,0 @@
-{
-  "extends": "@ei/tsconfig/base.json",
-  "exclude": ["node_modules"]
-}

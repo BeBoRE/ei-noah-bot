@@ -1,7 +1,6 @@
 import { Migration } from '@mikro-orm/migrations';
 
 export class Migration20200907133504 extends Migration {
-
   async up(): Promise<void> {
     this.addSql('create table "category" ("id" varchar(255) not null, "is_lobby_category" bool not null);');
     this.addSql('alter table "category" add constraint "category_pkey" primary key ("id");');
@@ -23,5 +22,4 @@ export class Migration20200907133504 extends Migration {
     this.addSql('alter table "guild_user" add constraint "guild_user_guild_id_foreign" foreign key ("guild_id") references "guild" ("id") on update cascade;');
     this.addSql('alter table "guild_user" add constraint "guild_user_user_id_foreign" foreign key ("user_id") references "user" ("id") on update cascade;');
   }
-
 }

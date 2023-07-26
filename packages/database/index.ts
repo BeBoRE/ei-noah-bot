@@ -1,3 +1,3 @@
-import options from "./mikro-orm.config";
+import options from './mikro-orm.config';
 
 export default options;

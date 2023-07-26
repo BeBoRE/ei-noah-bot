@@ -50,13 +50,13 @@ import moment, { Duration } from 'moment';
 import { i18n as I18n } from 'i18next';
 import { ComponentType, OverwriteType } from 'discord-api-types/v9';
 import { Logger } from 'winston';
-import { createEntityCache } from '../EiNoah';
 import LobbyNameChange from '@ei/database/entity/LobbyNameChange';
 import { Category } from '@ei/database/entity/Category';
 import TempChannel from '@ei/database/entity/TempChannel';
 import { Guild } from '@ei/database/entity/Guild';
-import createMenu from '../createMenu';
 import { GuildUser } from '@ei/database/entity/GuildUser';
+import createMenu from '../createMenu';
+import { createEntityCache } from '../EiNoah';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');
@@ -135,8 +135,10 @@ function getMaxBitrate(guild : DiscordGuild) : number {
 }
 
 async function createTempChannel(
-  guild: DiscordGuild, parent: Snowflake,
-  users: Array<DiscordUser | Role>, owner: GuildMember,
+  guild: DiscordGuild,
+  parent: Snowflake,
+  users: Array<DiscordUser | Role>,
+  owner: GuildMember,
   bitrate: number,
   type: ChannelType,
   dbGuild : Guild,
@@ -731,12 +733,14 @@ router.use('remove', async ({
           style: ButtonStyle.Danger,
         }), () => {
           if (guildUser.tempChannel) {
-            return removeFromLobby(activeChannel,
+            return removeFromLobby(
+              activeChannel,
               Array.from(selectedUsers),
               Array.from(selectedRoles),
               requestingUser,
               guildUser.tempChannel,
-              i18n);
+              i18n,
+            );
           }
 
           return 'Lobby bestaat niet meer';
@@ -857,7 +861,6 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
     disabled: voiceChannel.userLimit === 0,
   })]);
 
-
   limitRow.addComponents([2, 5, 10, 12].map((n) => new ButtonBuilder({
     customId: `${n}`,
     label: `${n}`,
@@ -866,7 +869,7 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
   })));
 
   const channelTypeButtons = new ActionRowBuilder<MessageActionRowComponentBuilder>();
-  channelTypeButtons.addComponents(Object.entries(ChannelType).map(([,type]) => new ButtonBuilder({
+  channelTypeButtons.addComponents(Object.entries(ChannelType).map(([, type]) => new ButtonBuilder({
     customId: type,
     emoji: { name: getIcon(type) },
     label: `${type[0].toUpperCase()}${type.substring(1)}`,
@@ -887,7 +890,6 @@ const generateComponents = async (voiceChannel : VoiceChannel, em : EntityManage
     limitRow,
     selectUsersRow,
   ];
-
 
   const selectNameRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
   selectNameRow.addComponents([selectMenu]);
@@ -1218,7 +1220,7 @@ router.use('lobby-category', async ({
   let [lobbyCategory] = flags.get('lobby-category') || [null];
 
   if (!createCategory) [createCategory] = params;
-  if (!lobbyCategory) [,lobbyCategory] = params;
+  if (!lobbyCategory) [, lobbyCategory] = params;
 
   if (typeof createCategory === 'string') createCategory = await msg.client.channels.fetch(`${BigInt(createCategory)}`, { cache: true }).catch(() => null);
   if (typeof lobbyCategory === 'string') lobbyCategory = await msg.client.channels.fetch(`${BigInt(lobbyCategory)}`, { cache: true }).catch(() => null);
@@ -1549,8 +1551,8 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
             await changeLobby(currentType, voiceChannel, member, interaction.guild, currentTempChannel, voiceChannel.userLimit, interaction, em, i18n, logger, false);
           } else if (interaction.isMentionableSelectMenu() && interaction.customId === 'users' && interaction.inCachedGuild()) {
             interaction.reply({
-              content: addUsers([...interaction.users.values(), ...interaction.roles.values()], voiceChannel, currentTempChannel.guildUser, client, i18n, logger).text, 
-              ephemeral: true, 
+              content: addUsers([...interaction.users.values(), ...interaction.roles.values()], voiceChannel, currentTempChannel.guildUser, client, i18n, logger).text,
+              ephemeral: true,
             });
           } else if (interaction.customId === 'open-rename-modal') {
             const modal = new ModalBuilder();

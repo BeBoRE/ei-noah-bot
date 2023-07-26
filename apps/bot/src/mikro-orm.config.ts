@@ -1,3 +1,3 @@
-import options from "@ei/database"
+import options from '@ei/database';
 
 export default options;

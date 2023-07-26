@@ -17,9 +17,11 @@ import Router, {
   BothHandler, ContextMenuHandler, ContextMenuHandlerInfo, DMHandler, GuildHandler, HandlerReturn, HandlerType, IRouter, MsgRouteInfo,
 } from './router/Router';
 
-function mapParams(mention : string,
+function mapParams(
+  mention : string,
   client : Client,
-  guild : DiscordGuild | null) : Array<Promise<Role | DiscordUser | string | Channel>> {
+  guild : DiscordGuild | null,
+) : Array<Promise<Role | DiscordUser | string | Channel>> {
   const seperated : string[] = [];
 
   const matches = mention.match(/<(@[!&]?|#)[0-9]+>/g);
@@ -145,9 +147,11 @@ export const createEntityCache = (em : EntityManager) => {
       return Promise.resolve(cachedGuildUser);
     }
 
-    const dbGuildUser = await em.findOne(GuildUser,
+    const dbGuildUser = await em.findOne(
+      GuildUser,
       { guild: { id: guild.id }, user: { id: user.id } },
-      { populate: ['guild', 'user'] });
+      { populate: ['guild', 'user'] },
+    );
 
     if (dbGuildUser) {
       guildUserMap.set(`${guild.id}+${user.id}`, dbGuildUser);
@@ -337,6 +341,8 @@ class EiNoah implements IRouter {
   use(route : string, using: GuildHandler, type : HandlerType.GUILD, commandData?: Omit<ChatInputApplicationCommandData, 'name' | 'type'>) : void;
   use(route : string, using: Router | BothHandler) : void;
   use(route : string, using: Router | BothHandler | DMHandler | GuildHandler, type?: HandlerType, commandData?: Omit<ChatInputApplicationCommandData, 'name' | 'type'>) : void;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   use(route: string, using: any, type: any = HandlerType.BOTH, commandData?: Omit<ChatInputApplicationCommandData, 'name' | 'type'>): void {
     this.router.use(route, using, type);
 
@@ -517,6 +523,7 @@ class EiNoah implements IRouter {
 
       this.contextHandlers.forEach((info, name) => {
         // TODO: Dit weer weghalen na release V14
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         this.applicationCommandData.push({
           name,
@@ -529,6 +536,7 @@ class EiNoah implements IRouter {
       }
     };
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     this.router.initialize(this.client, orm, this.i18n, this.logger);
 

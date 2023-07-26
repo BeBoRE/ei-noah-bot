@@ -21,7 +21,7 @@ const options : Options = {
     transactional: true,
   },
   debug: process.env.DEBUG === 'true',
-  metadataProvider: TsMorphMetadataProvider
+  metadataProvider: TsMorphMetadataProvider,
 };
 
 export default options;
