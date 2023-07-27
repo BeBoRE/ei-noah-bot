@@ -9,8 +9,9 @@
     "@mikro-orm/knex": "^5.7.13",
     "@mikro-orm/migrations": "^5.7.13",
     "@mikro-orm/postgresql": "^5.7.13",
-    "@mikro-orm/reflection": "^5.7.13"
-  }, 
+    "@mikro-orm/reflection": "^5.7.13",
+    "dotenv": "^8.2.0"
+  },
   "devDependencies": {
     "@mikro-orm/cli": "^5.7.13",
     "@mikro-orm/entity-generator": "^5.7.13"

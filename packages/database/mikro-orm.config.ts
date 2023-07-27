@@ -1,12 +1,13 @@
 import {
   Options,
 } from '@mikro-orm/core';
+import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { TsMorphMetadataProvider } from '@mikro-orm/reflection';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const options : Options = {
+const options : Options<PostgreSqlDriver> = {
   baseDir: __dirname,
   entities: ['./entity'], // path to your TS entities (source), relative to `baseDir`
   dbName: process.env.DBNAME || 'ei-noah',

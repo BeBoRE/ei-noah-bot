@@ -1,6 +1,7 @@
 {
   "extends": "@ei/tsconfig/base.json",
   "include": [
+    "**/*.tsx",
     "**/*.ts",
     ".next/types/**/*.ts"
   ],

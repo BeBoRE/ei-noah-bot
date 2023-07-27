@@ -2,8 +2,6 @@ import dotenv from 'dotenv';
 import {
   User, Role, PresenceData, TextChannel, PermissionsBitField, DMChannel, NewsChannel, ThreadChannel, ApplicationCommandOptionType, ApplicationCommandType, ActivityType, AttachmentBuilder, Channel,
 } from 'discord.js';
-import { MikroORM } from '@mikro-orm/core';
-import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import {
   CanvasRenderingContext2D, createCanvas, loadImage,
 } from 'canvas';
@@ -23,6 +21,7 @@ import Counter from './routes/Counter';
 import Birthday from './routes/Birthday';
 import QuoteRouter from './routes/QuoteRouter';
 import LocaleRouter from './routes/Locale';
+import { getOrm } from '@ei/database';
 
 dotenv.config();
 
@@ -50,7 +49,7 @@ process.title = 'Ei Noah Bot';
   if (!process.env.CLIENT_TOKEN) throw new Error("Add bot's token to CLIENT_TOKEN");
 
   // Creëerd de database connectie
-  const orm = await MikroORM.init<PostgreSqlDriver>().catch((err) => { logger.error({ err }); process.exit(-1); });
+  const orm = await getOrm();
   await orm.getMigrator().up();
 
   const preloadLanguages = readdirSync(join(__dirname, '../locales')).filter((fileName) => {

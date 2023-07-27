@@ -7,16 +7,25 @@
     "start": "next start"
   },
   "dependencies": {
-    "next": "^13.4.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@ei/trpc": "*",
+    "@tanstack/react-query": "^4.29.23",
+    "@tanstack/react-query-devtools": "^4.29.23",
+    "@tanstack/react-query-next-experimental": "5.0.0-alpha.80",
+    "@trpc/client": "^10.34.0",
+    "@trpc/next": "^10.34.0",
+    "@trpc/react-query": "^10.34.0",
+    "@trpc/server": "^10.34.0",
+    "next": "^13.4.10",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "superjson": "1.13.1"
   },
   "devDependencies": {
+    "@ei/database": "*",
+    "@ei/tsconfig": "*",
     "@types/node": "^18.16.0",
     "@types/react": "^18.2.16",
     "@types/react-dom": "^18.2.7",
-    "@ei/tsconfig": "*",
-    "@ei/database": "*",
     "typescript": "^5.1.6"
   }
 }

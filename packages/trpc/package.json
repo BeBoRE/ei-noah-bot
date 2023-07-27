@@ -5,6 +5,7 @@
   "types": "./index.ts",
   "dependencies": {
     "@ei/database": "*",
+    "@ei/tsconfig": "*",
     "@trpc/client": "^10.35.0",
     "@trpc/server": "^10.35.0",
     "superjson": "1.13.1",
