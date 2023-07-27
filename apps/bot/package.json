@@ -5,7 +5,7 @@
   "main": "./dist/index.js",
   "scripts": {
     "start": "ts-node ./src/index.ts",
-    "dev": "ts-node-dev ./src/index.ts -watch ./locales/**/*.json",
+    "dev": "ts-node-dev -T ./src/index.ts -watch ./locales/**/*.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
