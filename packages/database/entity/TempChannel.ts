@@ -2,8 +2,7 @@ import {
   BaseEntity,
   Entity, OneToOne, PrimaryKey, Property,
 } from '@mikro-orm/core';
-// eslint-disable-next-line import/no-cycle
-import { GuildUser } from './GuildUser';
+import type { GuildUser } from './GuildUser';
 
 @Entity()
 class TempChannel extends BaseEntity<TempChannel, 'channelId'> {

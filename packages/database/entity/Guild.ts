@@ -1,9 +1,7 @@
 import {
   Entity, PrimaryKey, Property, OneToMany, Collection, BaseEntity,
 } from '@mikro-orm/core';
-// eslint-disable-next-line import/no-cycle
 import CustomRole from './CustomRole';
-// eslint-disable-next-line import/no-cycle
 import { GuildUser } from './GuildUser';
 
 @Entity()

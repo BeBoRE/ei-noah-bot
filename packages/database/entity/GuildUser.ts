@@ -1,15 +1,10 @@
 import {
   Entity, ManyToOne, OneToMany, Collection, PrimaryKey, Unique, OneToOne, BaseEntity, Property,
 } from '@mikro-orm/core';
-// eslint-disable-next-line import/no-cycle
-import { User } from './User';
-// eslint-disable-next-line import/no-cycle
-import { Guild } from './Guild';
-// eslint-disable-next-line import/no-cycle
+import type { User } from './User';
+import type { Guild } from './Guild';
 import Quote from './Quote';
-// eslint-disable-next-line import/no-cycle
-import TempChannel from './TempChannel';
-// eslint-disable-next-line import/no-cycle
+import type TempChannel from './TempChannel';
 import LobbyNameChange from './LobbyNameChange';
 
 @Entity()

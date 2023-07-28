@@ -1,10 +1,8 @@
 import {
   Entity, PrimaryKey, Property, ManyToOne, BaseEntity,
 } from '@mikro-orm/core';
-// eslint-disable-next-line import/no-cycle
-import { Guild } from './Guild';
-// eslint-disable-next-line import/no-cycle
-import { GuildUser } from './GuildUser';
+import type { Guild } from './Guild';
+import type { GuildUser } from './GuildUser';
 
 @Entity()
 export default class CustomRole extends BaseEntity<CustomRole, 'id'> {

@@ -1,8 +1,7 @@
 import {
   BaseEntity, Entity, ManyToOne, PrimaryKey, Property,
 } from '@mikro-orm/core';
-// eslint-disable-next-line import/no-cycle
-import { GuildUser } from './GuildUser';
+import type { GuildUser } from './GuildUser';
 
 @Entity()
 class LobbyNameChange extends BaseEntity<LobbyNameChange, 'id'> {
