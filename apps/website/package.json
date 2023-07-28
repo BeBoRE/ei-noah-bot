@@ -7,6 +7,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ei/database": "*",
     "@ei/trpc": "*",
     "@tanstack/react-query": "^4.29.23",
     "@tanstack/react-query-devtools": "^4.29.23",
@@ -21,7 +22,6 @@
     "superjson": "1.13.1"
   },
   "devDependencies": {
-    "@ei/database": "*",
     "@ei/tsconfig": "*",
     "@types/node": "^18.16.0",
     "@types/react": "^18.2.16",

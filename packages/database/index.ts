@@ -1,4 +1,3 @@
-import { PostgreSqlMikroORM } from '@mikro-orm/postgresql/PostgreSqlMikroORM';
 import options from './mikro-orm.config';
 import {PostgreSqlDriver, MikroORM} from '@mikro-orm/postgresql';
 
@@ -8,12 +7,12 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace NodeJS {
     interface Global {
-      __MikroORM__: PostgreSqlMikroORM | undefined;
+      __MikroORM__: MikroORM | undefined;
     }
   }
 }
 
-const getOrm = async () : Promise<PostgreSqlMikroORM> => {
+const getOrm = async () : Promise<MikroORM> => {
   if(!global.__MikroORM__) {
     global.__MikroORM__ = await MikroORM.init<PostgreSqlDriver>(options).catch((err) => { console.error(err); process.exit(-1); })
   }

@@ -5,7 +5,11 @@
     "apps/*",
     "packages/*"
   ],
+  "scripts": {
+    "dev": "dotenv -- turbo dev"
+  },
   "devDependencies": {
+    "dotenv-cli": "^7.2.1",
     "eslint": "^8.28.0",
     "eslint-config-custom": "*",
     "turbo": "latest"
