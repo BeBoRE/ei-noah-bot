@@ -7,6 +7,8 @@ const externals = {};
 const externalList = [
   '@mikro-orm/better-sqlite',
   '@mikro-orm/migrations',
+  '@mikro-orm/reflection',
+  '@mikro-orm/knex',
   '@mikro-orm/entity-generator',
   '@mikro-orm/mariadb',
   '@mikro-orm/mongodb',
@@ -14,17 +16,7 @@ const externalList = [
   '@mikro-orm/seeder',
   '@mikro-orm/sqlite',
   '@mikro-orm/core',
-  '@vscode/sqlite3',
-  'sqlite3',
-  'better-sqlite3',
-  'mysql',
-  'mysql2',
-  'oracledb',
   'pg',
-  'pg-native',
-  'pg-query-stream',
-  'tedious',
-  '@ei/database',
 ]
 
 for (const devDependency of Object.keys(devDependencies)) {
