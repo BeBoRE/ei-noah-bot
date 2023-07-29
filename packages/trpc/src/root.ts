@@ -1,8 +1,10 @@
+import { lobbyRouter } from "./routes/lobby";
 import { userRouter } from "./routes/users";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
-  user: userRouter
+  user: userRouter,
+  lobby: lobbyRouter,
 });
 
 // export type definition of API
