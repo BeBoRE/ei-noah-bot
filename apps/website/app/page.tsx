@@ -1,9 +1,12 @@
+import { Suspense } from "react";
 import { Users } from "./user";
 
 export default function Page() {
   return (
     <>
-      <Users/>
+      <Suspense fallback={<span>...Loading</span>}>
+        <Users/>
+      </Suspense>
     </>
   );
 }

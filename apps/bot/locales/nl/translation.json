@@ -89,7 +89,7 @@
     "cantRemoveEi": "\nMij verwijderen is zinloos, Ei Noah is omnipresent",
     "couldntBeRemoved": "\n{{users, list}} kon niet verwijderd worden",
     "couldntBeRemoved_other": "\n{{users, list}} konden niet verwijderd worden",
-    "usersRemoved": "\n{{users. list}} is verwijderd uit de lobby",
+    "usersRemoved": "\n{{users, list}} is verwijderd uit de lobby",
     "usersRemoved_other": "\n{{users, list}} zijn verwijderd uit de lobby",
     "rolesRemoved": "\n{{roles, list}} rol is verwijderd",
     "rolesRemoved_other": "\n{{roles, list}} rollen zijn verwijderd",

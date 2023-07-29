@@ -34,6 +34,7 @@ const options : Options<PostgreSqlDriver> = {
   },
   debug: process.env.DEBUG === 'true',
   metadataProvider: TsMorphMetadataProvider,
+  validateRequired: false
 };
 
 export default options;
