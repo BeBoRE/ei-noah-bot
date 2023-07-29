@@ -73,8 +73,7 @@ module.exports = {
     config.externals = [
       ...config.externals,
       externals,
-    ]
-    
+    ]    
 
     return config;
   }
