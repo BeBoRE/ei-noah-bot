@@ -1,6 +1,6 @@
 "use client";
 
-import { RouterOutputs, api } from "./utils/api";
+import { RouterOutputs, api } from "../utils/api";
 
 export function User(props: {user: RouterOutputs["user"]["all"][number]}) {
   return (

@@ -1,8 +1,5 @@
 {
   "extends": "@ei/tsconfig/base.json",
   "include": ["**/*.ts"],
-  "exclude": ["node_modules"],
-  "compilerOptions": {
-    "module": "ESNext"
-  }
+  "exclude": ["node_modules"]
 }

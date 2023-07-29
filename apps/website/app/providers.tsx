@@ -6,7 +6,7 @@ import { ReactQueryStreamedHydration } from "@tanstack/react-query-next-experime
 import { httpBatchLink, loggerLink } from "@trpc/client";
 import superjson from "superjson";
 
-import { api } from "./utils/api";
+import { api } from "../utils/api";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 const getBaseUrl = () => {

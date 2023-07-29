@@ -4,29 +4,23 @@ import {
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { TsMorphMetadataProvider } from '@mikro-orm/reflection';
 import dotenv from 'dotenv';
-import fs from 'fs';
+import { Category } from './entity/Category';
+import { Channel } from './entity/Channel';
+import CustomRole from './entity/CustomRole';
+import { Guild } from './entity/Guild';
+import { GuildUser } from './entity/GuildUser';
+import LobbyNameChange from './entity/LobbyNameChange';
+import Quote from './entity/Quote';
+import TempChannel from './entity/TempChannel';
+import { User } from './entity/User';
 
 dotenv.config();
 
-async function getEntities(): Promise<any[]> {
-  if (process.env.WEBPACK) {
-    const modules = require.context('./entity', true, /\.ts$/);
-
-    return modules
-      .keys()
-      .map(r => modules(r))
-      .flatMap(mod => Object.keys(mod).map(className => mod[className]));
-  }
-
-  const promises = fs.readdirSync('./entity').map(file => import(`./entity/${file}`));
-  const modules = await Promise.all(promises);
-
-  return modules.flatMap(mod => Object.keys(mod).map(className => mod[className]));
-}
-
 const options : Options<PostgreSqlDriver> = {
   baseDir: __dirname,
-  entities: await getEntities(), // path to your TS entities (source), relative to `baseDir`
+  // Due to webpack we cannnot make use of the dynamic file access
+  entities: [Category, Channel, CustomRole, Guild, GuildUser, LobbyNameChange, Quote, TempChannel, User],
+  discovery: { disableDynamicFileAccess: true },
   dbName: process.env.DBNAME || 'ei-noah',
   type: 'postgresql', // one of `mongo` | `mysql` | `mariadb` | `postgresql` | `sqlite`
   host: process.env.HOST || 'localhost',
