@@ -199,9 +199,6 @@ importers:
       next:
         specifier: ^13.4.10
         version: 13.4.12(react-dom@18.2.0)(react@18.2.0)
-      pg:
-        specifier: ^8.11.1
-        version: 8.11.1
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -297,6 +294,9 @@ importers:
 
   packages/trpc:
     dependencies:
+      '@discordjs/rest':
+        specifier: ^1.7.1
+        version: 1.7.1
       '@ei/database':
         specifier: '*'
         version: link:../database
@@ -309,6 +309,9 @@ importers:
       '@trpc/server':
         specifier: ^10.35.0
         version: 10.35.0
+      discord-api-types:
+        specifier: ^0.27.3
+        version: 0.27.3
       superjson:
         specifier: 1.13.1
         version: 1.13.1

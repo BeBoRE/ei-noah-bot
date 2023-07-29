@@ -50,6 +50,9 @@ module.exports = {
   experimental: {
     serverComponentsExternalPackages: externalList
   },
+  images: {
+    domains: ['cdn.discordapp.com']
+  },
   webpack: (config, {isServer}) => {
     config.plugins.push(
       new IgnorePlugin({

@@ -1,23 +1,29 @@
 "use client";
 
+import Image from "next/image";
 import { RouterOutputs, api } from "../utils/api";
 
-export function Lobby(props: {lobby: RouterOutputs["lobby"]["all"][number]}) {
+export function Lobby(props: {data: RouterOutputs["lobby"]["all"][number]}) {
+  if(!props.data.guild.success) return <div><p>Error loading guild</p></div>
+  
+  const guild = props.data.guild.data;
+
   return (
     <div>
-      <h1>{props.lobby.channelId}</h1>
-      <p>Owner: {props.lobby.guildUser.user.id}</p>
+      {guild.icon ? <Image src={guild.icon} alt={`${guild.name}'s icon`} width={256} height={256} /> : null}
+      <h1>{guild.name}</h1>
+      <p>Owner: {props.data.channel.guildUser.user.id}</p>
     </div>
   );
 }
 
 export function Lobbies() {
-  const [users] = api.lobby.all.useSuspenseQuery();
+  const [lobbies] = api.lobby.all.useSuspenseQuery();
 
   return (
     <div>
-      {users.map((lobby) => (
-        <Lobby key={lobby.channelId} lobby={lobby} />
+      {lobbies.map((data) => (
+        <Lobby key={data.channel.channelId} data={data} />
       ))}
     </div>
   );
