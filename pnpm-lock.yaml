@@ -199,6 +199,9 @@ importers:
       next:
         specifier: ^13.4.10
         version: 13.4.12(react-dom@18.2.0)(react@18.2.0)
+      pg:
+        specifier: ^8.11.1
+        version: 8.11.1
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -888,8 +891,8 @@ packages:
       '@mikro-orm/sqlite':
         optional: true
     dependencies:
-      '@mikro-orm/entity-generator': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/migrations@5.7.13)(pg@8.11.1)
-      '@mikro-orm/migrations': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/entity-generator@5.7.13)(pg@8.11.1)
+      '@mikro-orm/entity-generator': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/migrations@5.7.13)(pg@8.3.3)
+      '@mikro-orm/migrations': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/entity-generator@5.7.13)(pg@8.3.3)
       '@mikro-orm/postgresql': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/entity-generator@5.7.13)(@mikro-orm/migrations@5.7.13)
       acorn-loose: 8.3.0
       acorn-walk: 8.2.0
@@ -973,8 +976,8 @@ packages:
         optional: true
     dependencies:
       '@mikro-orm/core': 5.7.13(@mikro-orm/entity-generator@5.7.13)(@mikro-orm/migrations@5.7.13)(@mikro-orm/postgresql@5.7.13)
-      '@mikro-orm/entity-generator': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/migrations@5.7.13)(pg@8.11.1)
-      '@mikro-orm/migrations': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/entity-generator@5.7.13)(pg@8.11.1)
+      '@mikro-orm/entity-generator': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/migrations@5.7.13)(pg@8.3.3)
+      '@mikro-orm/migrations': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/entity-generator@5.7.13)(pg@8.3.3)
       fs-extra: 11.1.1
       knex: 2.5.1(pg@8.11.1)
       pg: 8.11.1
@@ -1049,6 +1052,7 @@ packages:
       - sqlite3
       - supports-color
       - tedious
+    dev: false
 
   /@mikro-orm/migrations@5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/entity-generator@5.7.13)(pg@8.3.3):
     resolution: {integrity: sha512-AtmnXG53sWiLWrZNNqyP6RDgDORGkqLCboziAHNuYIBtA1Z/Mr5SjegAZBa+qeus5g6eN7hUhi8lxusbMeVH+Q==}
@@ -1090,9 +1094,9 @@ packages:
         optional: true
     dependencies:
       '@mikro-orm/core': 5.7.13(@mikro-orm/entity-generator@5.7.13)(@mikro-orm/migrations@5.7.13)(@mikro-orm/postgresql@5.7.13)
-      '@mikro-orm/entity-generator': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/migrations@5.7.13)(pg@8.11.1)
+      '@mikro-orm/entity-generator': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/migrations@5.7.13)(pg@8.3.3)
       '@mikro-orm/knex': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/entity-generator@5.7.13)(@mikro-orm/migrations@5.7.13)(pg@8.11.1)
-      '@mikro-orm/migrations': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/entity-generator@5.7.13)(pg@8.11.1)
+      '@mikro-orm/migrations': 5.7.13(@mikro-orm/core@5.7.13)(@mikro-orm/entity-generator@5.7.13)(pg@8.3.3)
       pg: 8.11.1
     transitivePeerDependencies:
       - better-sqlite3

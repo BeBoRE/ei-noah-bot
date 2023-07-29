@@ -16,7 +16,7 @@ const externalList = [
   '@mikro-orm/seeder',
   '@mikro-orm/sqlite',
   '@mikro-orm/core',
-  'pg',
+  'pg'
 ]
 
 for (const devDependency of Object.keys(devDependencies)) {

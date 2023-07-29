@@ -14,7 +14,7 @@ declare global {
 
 const getOrm = async () : Promise<MikroORM> => {
   if(!global.__MikroORM__) {
-    global.__MikroORM__ = await MikroORM.init<PostgreSqlDriver>(options).catch((err) => { console.error(err); process.exit(-1); })
+    global.__MikroORM__ = await MikroORM.init<PostgreSqlDriver>(options).catch((err) => { console.log(err); process.exit(-1); })
   }
 
   return global.__MikroORM__;

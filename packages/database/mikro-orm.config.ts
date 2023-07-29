@@ -23,9 +23,9 @@ const options : Options<PostgreSqlDriver> = {
   discovery: { disableDynamicFileAccess: true },
   dbName: process.env.DBNAME || 'ei-noah',
   type: 'postgresql', // one of `mongo` | `mysql` | `mariadb` | `postgresql` | `sqlite`
-  host: process.env.HOST || 'localhost',
-  password: process.env.PASSWORD || undefined,
-  port: process.env.PORT ? +process.env.PORT : 5432,
+  host: process.env.DBHOST || 'localhost',
+  password: process.env.DBPASSWORD || undefined,
+  port: process.env.DBPORT ? +process.env.DBPORT : 5432,
   user: process.env.DBUSER || 'ei-noah',
   migrations: {
     tableName: 'mikro_orm_migrations',
