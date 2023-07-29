@@ -193,9 +193,6 @@ importers:
       '@trpc/react-query':
         specifier: ^10.34.0
         version: 10.35.0(@tanstack/react-query@4.29.23)(@trpc/client@10.35.0)(@trpc/server@10.35.0)(react-dom@18.2.0)(react@18.2.0)
-      '@trpc/server':
-        specifier: ^10.34.0
-        version: 10.35.0
       next:
         specifier: ^13.4.10
         version: 13.4.12(react-dom@18.2.0)(react@18.2.0)
@@ -303,9 +300,6 @@ importers:
       '@ei/tsconfig':
         specifier: '*'
         version: link:../tsconfig
-      '@trpc/client':
-        specifier: ^10.35.0
-        version: 10.35.0(@trpc/server@10.35.0)
       '@trpc/server':
         specifier: ^10.35.0
         version: 10.35.0

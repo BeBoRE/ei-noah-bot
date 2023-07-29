@@ -7,7 +7,6 @@
     "@discordjs/rest": "^1.7.1",
     "@ei/database": "*",
     "@ei/tsconfig": "*",
-    "@trpc/client": "^10.35.0",
     "@trpc/server": "^10.35.0",
     "discord-api-types": "^0.27.3",
     "superjson": "1.13.1",
