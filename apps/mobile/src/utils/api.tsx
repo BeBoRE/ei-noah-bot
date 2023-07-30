@@ -1,11 +1,25 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Constants from "expo-constants";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { focusManager, onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import superjson from "superjson";
+import NetInfo from "@react-native-community/netinfo";
 
 import type { AppRouter } from "@ei/trpc";
+import { AppState, AppStateStatus, Platform } from "react-native";
+
+onlineManager.setEventListener(setOnline => {
+  return NetInfo.addEventListener(state => {
+    setOnline(!!state.isConnected)
+  })
+})
+
+function onAppStateChange(status: AppStateStatus) {
+  if (Platform.OS !== 'web') {
+    focusManager.setFocused(status === 'active')
+  }
+}
 
 /**
  * A set of typesafe hooks for consuming your API.
@@ -45,7 +59,7 @@ const getBaseUrl = () => {
  */
 
 export function TRPCProvider(props: { children: React.ReactNode }) {
-  const [queryClient] = React.useState(() => new QueryClient());
+  const [queryClient] = React.useState(() => new QueryClient({defaultOptions: {queries: {staleTime: 1000 * 1}}}));
   const [trpcClient] = React.useState(() =>
     api.createClient({
       transformer: superjson,
@@ -56,6 +70,12 @@ export function TRPCProvider(props: { children: React.ReactNode }) {
       ],
     }),
   );
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', onAppStateChange)
+
+    return () => subscription.remove()
+  })
 
   return (
     <api.Provider client={trpcClient} queryClient={queryClient}>

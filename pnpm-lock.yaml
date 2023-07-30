@@ -175,6 +175,9 @@ importers:
       '@expo/metro-config':
         specifier: ^0.10.6
         version: 0.10.6
+      '@react-native-community/netinfo':
+        specifier: ^9.4.1
+        version: 9.4.1(react-native@0.72.3)
       '@tanstack/react-query':
         specifier: ^4.29.23
         version: 4.29.23(react-dom@18.2.0)(react-native@0.72.3)(react@18.2.0)
@@ -3377,6 +3380,14 @@ packages:
       - encoding
       - supports-color
       - utf-8-validate
+    dev: false
+
+  /@react-native-community/netinfo@9.4.1(react-native@0.72.3):
+    resolution: {integrity: sha512-dAbY5mfw+6Kas/GJ6QX9AZyY+K+eq9ad4Su6utoph/nxyH3whp5cMSgRNgE2VhGQVRZ/OG0qq3IaD3+wzoqJXw==}
+    peerDependencies:
+      react-native: '>=0.59'
+    dependencies:
+      react-native: 0.72.3(@babel/core@7.22.9)(@babel/preset-env@7.22.9)(react@18.2.0)
     dev: false
 
   /@react-native/assets-registry@0.72.0:
