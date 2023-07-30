@@ -1,5 +1,5 @@
 const path = require("path");
-const loadConfig = require("tailwindcss/loadConfig");
+// const loadConfig = require("tailwindcss/loadConfig");
 
 let _tailwindConfig = null;
 /**

@@ -1,11 +1,12 @@
 {
   "name": "monorepo",
   "version": "1.0.0",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "engines": {
+    "node": ">=v18.17.0"
+  },
+  "packageManager": "pnpm@8.6.9",
   "scripts": {
+    "clean": "git clean -xdf node_modules",
     "dev": "dotenv -- turbo dev"
   },
   "devDependencies": {

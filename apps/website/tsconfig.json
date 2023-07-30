@@ -1,5 +1,5 @@
 {
-  "extends": "@ei/tsconfig/base.json",
+  "extends": "@ei/tsconfig/expo.json",
   "include": [
     "**/*.tsx",
     "**/*.ts",

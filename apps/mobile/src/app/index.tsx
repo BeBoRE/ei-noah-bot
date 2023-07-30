@@ -4,7 +4,7 @@ import { Text } from "react-native"
 const Index = () => {
   return (
     <SafeAreaView>
-      <Text>Hello World</Text>
+      <Text>Mobile App</Text>
     </SafeAreaView>
   )
 }
