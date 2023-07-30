@@ -17,5 +17,5 @@ module.exports = {
   globals: {
     NodeJS: 'readonly',
   },
-  ignorePatterns: ['node_modules/', '.eslintrc.js', 'Migration*.ts', 'next.config.js', 'next-env.d.ts'],
+  ignorePatterns: ['node_modules/', '.eslintrc.js', 'Migration*.ts', 'next.config.js', 'next-env.d.ts', '*.config.js'],
 };
