@@ -18,11 +18,11 @@ const RootLayout = () => {
           The Stack component displays the current page.
           It also allows you to configure your screens 
         */}
-        <ThemeProvider value={{...DarkTheme, colors: {...DarkTheme.colors, ...baseConfig.theme.colors, text: baseConfig.theme.colors.background}}}>
+        <ThemeProvider value={{...DarkTheme, colors: {...DarkTheme.colors, ...baseConfig.theme.colors, text: baseConfig.theme.colors.background, primary: baseConfig.theme.colors.primary.DEFAULT}}}>
           <Stack
             screenOptions={{
               headerStyle: {
-                backgroundColor: baseConfig.theme.colors.primary,
+                backgroundColor: baseConfig.theme.colors.primary.DEFAULT,
               },
             }}
           />
