@@ -1,4 +1,4 @@
-import { ZodType, z, SafeParseError } from 'zod'
+import { ZodType, z, SafeParseError, SafeParseReturnType } from 'zod'
 import SecureStore from 'expo-secure-store'
 import AsyncStorage, { AsyncStorageStatic } from '@react-native-async-storage/async-storage';
 import { parse, stringify } from 'superjson'
@@ -17,8 +17,9 @@ export type KeyValidatorRecord = {[key: string]: ZodType<unknown>};
 
 type StoreManager<T extends KeyValidatorRecord> = {
   get: <K extends keyof T>(key : K, param ?: string) => Promise<z.infer<T[K]> | null>,
-  set: <K extends keyof T>(key : K, value: z.input<T[K]>, param ?: string) => Promise<SafeParseError<z.infer<T[K]>>["error"] | null>,
+  set: <K extends keyof T>(key : K, value: z.input<T[K]>, param ?: string) => Promise<SafeParseReturnType<z.infer<T[K]>, z.infer<T[K]>>>,
   delete: <K extends keyof T>(key : K, param ?: string) => Promise<void>,
+  validators: T,
 }
 
 const createAnyStoreManager = <T extends KeyValidatorRecord, S extends SecureStoreType | AsyncStorageStatic>(validators: T, store : S) : StoreManager<T> => {
@@ -49,7 +50,7 @@ const createAnyStoreManager = <T extends KeyValidatorRecord, S extends SecureSto
     return validated.data;
   }
 
-  const set = async <K extends keyof T>(key : K, value: z.input<T[K]>, param ?: string) : Promise<SafeParseError<z.infer<T[K]>>["error"] | null> => {
+  const set = async <K extends keyof T>(key : K, value: z.input<T[K]>, param ?: string) : Promise<SafeParseReturnType<z.infer<T[K]>, z.infer<T[K]>>> => {
     const validator = validators[key];
 
     if(typeof key !== 'string') {
@@ -63,13 +64,13 @@ const createAnyStoreManager = <T extends KeyValidatorRecord, S extends SecureSto
     const validated = validator.safeParse(value);
 
     if(!validated.success) {
-      return validated.error;
+      return validated;
     }
 
     const stringified = stringify(value);
 
     const completeKey = getKeyWithParam(key, param);
-    return await (('setItemAsync' in store) ? store.setItemAsync(completeKey, stringified) : store.setItem(completeKey, stringified)).then(() => null);
+    return await (('setItemAsync' in store) ? store.setItemAsync(completeKey, stringified) : store.setItem(completeKey, stringified)).then(() => validated);
   }
 
   const doDelete = async <K extends keyof T>(key : K, param ?: string) : Promise<void> => {
@@ -81,7 +82,7 @@ const createAnyStoreManager = <T extends KeyValidatorRecord, S extends SecureSto
     return await (('deleteItemAsync' in store) ? store.deleteItemAsync(completeKey) : store.removeItem(completeKey));
   }
 
-  return { get, set, delete: doDelete }
+  return { get, set, delete: doDelete, validators }
 }
 
 export const createSecureStore = <T extends KeyValidatorRecord>(validators: T) => createAnyStoreManager(validators, SecureStore);
@@ -100,7 +101,7 @@ export type InputOfValidatorRecord<T extends KeyValidatorRecord, K extends keyof
 export type OutputOfValidatorRecord<T extends KeyValidatorRecord, K extends keyof T> = z.infer<T[K]>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ManagerInputs <T extends StoreManager<any>, K extends string> = T extends StoreManager<infer R> ? OutputOfValidatorRecord<R, K> : never;
+export type ManagerInputs <T extends StoreManager<any>, K extends string> = T extends StoreManager<infer R> ? InputOfValidatorRecord<R, K> : never;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ManagerOutputs <T extends StoreManager<any>, K extends string> = T extends StoreManager<infer R> ? OutputOfValidatorRecord<R, K> : never;

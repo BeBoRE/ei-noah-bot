@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { SecureStoreInput, SecureStoreOutput, secureStorage } from 'src/utils/storage/secureStorage';
 
 type AuthContextType = {
-  authInfo: SecureStoreInput<"discordOauth"> | null;
+  authInfo: SecureStoreOutput<"discordOauth"> | null;
   signIn: (info : SecureStoreInput<"discordOauth">) => void;
   signOut: () => void;
 };
@@ -20,7 +20,7 @@ export function useAuth() {
   return useContext(authContext);
 }
 
-function useProtectedRoute(token : SecureStoreInput<"discordOauth"> | null, isReady: boolean) {
+function useProtectedRoute(token : SecureStoreOutput<"discordOauth"> | null, isReady: boolean) {
   const segments = useSegments();
   const inAuthGroup = segments[0] === '(auth)';
 
@@ -52,12 +52,23 @@ export function AuthProvider({ children } : {children: React.ReactNode}) {
     });
   }, []);
 
+  const signIn = async (info : SecureStoreInput<"discordOauth">) => {
+    const result = await secureStorage.set('discordOauth', info);
+
+    if(result.success) setAuthInfo(result.data);
+  }
+
+  const signOut = async () => {
+    await secureStorage.delete('discordOauth');
+
+    setAuthInfo(null);
+  }
   
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useProtectedRoute(authInfo, isReady);
 
   return (
-    <authContext.Provider value={{authInfo: authInfo, signIn: setAuthInfo, signOut: () => setAuthInfo(null)}}>
+    <authContext.Provider value={{authInfo: authInfo, signIn, signOut}}>
       {children}
     </authContext.Provider>
   );

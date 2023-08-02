@@ -1,17 +1,17 @@
 import type { ExpoConfig } from "@expo/config";
 
 const defineConfig = (): ExpoConfig => ({
-  name: "expo",
-  slug: "expo",
-  scheme: "expo",
+  name: "ei Noah",
+  slug: "ei",
+  scheme: "ei",
   version: "1.0.0",
   orientation: "portrait",
-  icon: "./assets/icon.png",
+  icon: "./assets/ei.png",
   userInterfaceStyle: "light",
   splash: {
-    image: "./assets/icon.png",
+    image: "./assets/ei.png",
     resizeMode: "contain",
-    backgroundColor: "#0e0a01",
+    backgroundColor: "#fbefd5",
   },
   updates: {
     fallbackToCacheTimeout: 0,
@@ -23,14 +23,14 @@ const defineConfig = (): ExpoConfig => ({
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: "./assets/icon.png",
-      backgroundColor: "#0e0a01",
+      foregroundImage: "./assets/ei.png",
+      backgroundColor: "#fbefd5",
     },
   },
   extra: {
     eas: {
-      // projectId: "your-project-id",
-    },
+      projectId: "f01c56f4-e11b-41fd-a1bb-e70cca535c3c"
+    }
   },
   experiments: {
     tsconfigPaths: true,
