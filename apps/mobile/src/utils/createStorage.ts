@@ -1,4 +1,4 @@
-import { ZodType, z, SafeParseSuccess, SafeParseError } from 'zod'
+import { ZodType, z, SafeParseError } from 'zod'
 import SecureStore from 'expo-secure-store'
 import AsyncStorage, { AsyncStorageStatic } from '@react-native-async-storage/async-storage';
 import { parse, stringify } from 'superjson'
@@ -13,8 +13,16 @@ const stringifiedNull = stringify(null);
 
 const getKeyWithParam = (key: string, param ?: string) => param ? `${key}/param` : key;
 
-const createAnyStoreManager = <T extends {[key: string]: ZodType<unknown>}, S extends SecureStoreType | AsyncStorageStatic>(validators: T, store : S) => {
-  const get = async <K extends keyof T>(key : K, param ?: string) : Promise<SafeParseSuccess<z.infer<T[K]>>['data'] | null> => {
+export type KeyValidatorRecord = {[key: string]: ZodType<unknown>};
+
+type StoreManager<T extends KeyValidatorRecord> = {
+  get: <K extends keyof T>(key : K, param ?: string) => Promise<z.infer<T[K]> | null>,
+  set: <K extends keyof T>(key : K, value: z.input<T[K]>, param ?: string) => Promise<SafeParseError<z.infer<T[K]>>["error"] | null>,
+  delete: <K extends keyof T>(key : K, param ?: string) => Promise<void>,
+}
+
+const createAnyStoreManager = <T extends KeyValidatorRecord, S extends SecureStoreType | AsyncStorageStatic>(validators: T, store : S) : StoreManager<T> => {
+  const get = async <K extends keyof T>(key : K, param ?: string) : Promise<z.infer<T[K]> | null> => {
     const validator = validators[key];
 
     if(typeof key !== 'string') {
@@ -41,7 +49,7 @@ const createAnyStoreManager = <T extends {[key: string]: ZodType<unknown>}, S ex
     return validated.data;
   }
 
-  const set = async <K extends keyof T>(key : K, value: z.infer<T[K]>, param ?: string) : Promise<SafeParseError<z.infer<T[K]>>["error"] | null> => {
+  const set = async <K extends keyof T>(key : K, value: z.input<T[K]>, param ?: string) : Promise<SafeParseError<z.infer<T[K]>>["error"] | null> => {
     const validator = validators[key];
 
     if(typeof key !== 'string') {
@@ -76,5 +84,20 @@ const createAnyStoreManager = <T extends {[key: string]: ZodType<unknown>}, S ex
   return { get, set, delete: doDelete }
 }
 
-export const createSecureStore = <T extends {[key: string]: ZodType<unknown>}>(validators: T) => createAnyStoreManager(validators, SecureStore);
-export const createAsyncStorage = <T extends {[key: string]: ZodType<unknown>}>(validators: T) => createAnyStoreManager(validators, AsyncStorage);
+export const createSecureStore = <T extends KeyValidatorRecord>(validators: T) => createAnyStoreManager(validators, SecureStore);
+export const createAsyncStorage = <T extends KeyValidatorRecord>(validators: T) => createAnyStoreManager(validators, AsyncStorage);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type KeyValidatorRecordFromManager<T extends StoreManager<any>> = T extends StoreManager<infer R> ? R : never;
+
+export type KeysOfValidatorRecord<T extends KeyValidatorRecord> = keyof T;
+
+export type InputOfValidatorRecord<T extends KeyValidatorRecord, K extends keyof T> = z.input<T[K]>;
+
+export type OutputOfValidatorRecord<T extends KeyValidatorRecord, K extends keyof T> = z.infer<T[K]>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type InputFromKey <T extends StoreManager<any>, K extends keyof KeyValidatorRecordFromManager<T>> = InputOfValidatorRecord<KeyValidatorRecordFromManager<T>, K>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type OutputFromKey <T extends StoreManager<any>, K extends keyof KeyValidatorRecordFromManager<T>> = OutputOfValidatorRecord<KeyValidatorRecordFromManager<T>, K>;
