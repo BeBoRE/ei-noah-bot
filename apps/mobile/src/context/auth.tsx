@@ -1,15 +1,17 @@
-import { router, useRootNavigationState, useSegments } from 'expo-router';
+import { SplashScreen, router, useRootNavigationState, useSegments } from 'expo-router';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { SecureStoreInput } from 'src/utils/storage/secureStorage';
+import { SecureStoreInput, SecureStoreOutput, secureStorage } from 'src/utils/storage/secureStorage';
 
 type AuthContextType = {
-  token: string | null;
+  authInfo: SecureStoreInput<"discordOauth"> | null;
   signIn: (info : SecureStoreInput<"discordOauth">) => void;
   signOut: () => void;
 };
 
+SplashScreen.preventAutoHideAsync();
+
 const authContext = createContext<AuthContextType>({
-  token: null,
+  authInfo: null,
   signIn: () => {throw new Error('Cannot use signIn outside of AuthProvider')},
   signOut: () => {},
 });
@@ -18,38 +20,44 @@ export function useAuth() {
   return useContext(authContext);
 }
 
-function useProtectedRoute(token : string | null) {
+function useProtectedRoute(token : SecureStoreInput<"discordOauth"> | null, isReady: boolean) {
   const segments = useSegments();
   const inAuthGroup = segments[0] === '(auth)';
 
   const navigationState = useRootNavigationState();
 
   useEffect(() => {
-    if(!navigationState) return;
+    if(!navigationState || !isReady) return;
 
     if(!token && !inAuthGroup) {
       router.replace('/sign-in')
     } else if (token && inAuthGroup) {
       router.replace('/')
     }
-  }, [token, segments, inAuthGroup, navigationState])
+  }, [token, segments, inAuthGroup, navigationState, isReady])
 }
 
 export function AuthProvider({ children } : {children: React.ReactNode}) {
-  const [token, setToken] = useState<string | null>(null)
+  const [authInfo, setAuthInfo] = useState<SecureStoreOutput<"discordOauth"> | null>(null)
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const token = await secureStorage.get('discordOauth').catch(() => null);
+
+      setAuthInfo(token);
+    })().finally(() => {
+      setIsReady(true)
+      SplashScreen.hideAsync();
+    });
+  }, []);
+
   
-  useProtectedRoute(token);
-
-  const signIn = (info : SecureStoreInput<"discordOauth">) => {
-    setToken(info.accessToken);
-  }
-
-  const signOut = () => {
-    setToken(null);
-  }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useProtectedRoute(authInfo, isReady);
 
   return (
-    <authContext.Provider value={{token, signIn, signOut}}>
+    <authContext.Provider value={{authInfo: authInfo, signIn: setAuthInfo, signOut: () => setAuthInfo(null)}}>
       {children}
     </authContext.Provider>
   );

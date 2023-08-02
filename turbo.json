@@ -3,7 +3,7 @@
   "globalDependencies": [
     ".env"
   ],
-  "globalEnv": ["DBNAME", "DBHOST", "DBPASSWORD", "DBPORT", "DBUSER", "DEBUG", "NODE_ENV", "LOGGING_WEBHOOK", "CLIENT_TOKEN", "ERROR_CHANNEL", "VERCEL_URL", "WEBPACK"],
+  "globalEnv": ["DBNAME", "DBHOST", "DBPASSWORD", "DBPORT", "DBUSER", "DEBUG", "NODE_ENV", "LOGGING_WEBHOOK", "CLIENT_TOKEN", "ERROR_CHANNEL", "VERCEL_URL", "WEBPACK", "CLIENT_ID", "EXPO_PUBLIC_CLIENT_ID"],
   "pipeline": {
     "start": {
       "outputs": [],
