@@ -45,7 +45,7 @@ const SignIn = () => {
 
   return (
     <>
-      <Stack.Screen options={{headerTitle: ""}} />
+      <Stack.Screen options={{headerTitle: "", animation: 'slide_from_bottom', }} />
       <View className='flex-1 justify-center p-10'>
         <Image source={require('assets/ei.png')} contentFit='contain' className='w-full h-64 mb-2 gray' alt='' />
         <View>

@@ -2,8 +2,11 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { api } from "../utils/api"
 import Text from "src/components/Text";
 import { Stack } from "expo-router";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { ActivityIndicator, Pressable, TouchableWithoutFeedback, View } from "react-native";
 import { Image } from "expo-image";
+import { HeaderButton, HeaderButtons, defaultRenderVisibleButton, Item } from 'react-navigation-header-buttons'
+import tailwindConfig, { baseConfig } from "tailwind.config";
+import { useAuth } from "src/context/auth";
 
 const Screen = () => {
   const {data, isLoading, error, isRefetching, refetch} = api.lobby.all.useQuery();
@@ -48,9 +51,19 @@ const Screen = () => {
 }
 
 const Index = () => {
+  const {signOut} = useAuth();
+
   return (
   <>
-    <Stack.Screen options={{headerTitle: ""}} />
+    <Stack.Screen options={{headerTitle: "", headerRight: () => (
+      <HeaderButtons>
+        <Item
+          title="Logout"
+          onPress={() => {signOut()}}
+          color={baseConfig.theme.colors.background}
+        />
+      </HeaderButtons>
+    )}}/>
     <SafeAreaView edges={["left", "right", "bottom"]} className="flex-1">
       <Screen />
     </SafeAreaView>
