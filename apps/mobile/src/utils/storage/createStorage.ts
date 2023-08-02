@@ -92,12 +92,18 @@ export type KeyValidatorRecordFromManager<T extends StoreManager<any>> = T exten
 
 export type KeysOfValidatorRecord<T extends KeyValidatorRecord> = keyof T;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type KeysOfManager<T extends StoreManager<any>> = KeysOfValidatorRecord<KeyValidatorRecordFromManager<T>>;
+
 export type InputOfValidatorRecord<T extends KeyValidatorRecord, K extends keyof T> = z.input<T[K]>;
 
 export type OutputOfValidatorRecord<T extends KeyValidatorRecord, K extends keyof T> = z.infer<T[K]>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type InputFromKey <T extends StoreManager<any>, K extends keyof KeyValidatorRecordFromManager<T>> = InputOfValidatorRecord<KeyValidatorRecordFromManager<T>, K>;
+export type ManagerInputs <T extends StoreManager<any>, K extends string> = T extends StoreManager<infer R> ? OutputOfValidatorRecord<R, K> : never;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type OutputFromKey <T extends StoreManager<any>, K extends keyof KeyValidatorRecordFromManager<T>> = OutputOfValidatorRecord<KeyValidatorRecordFromManager<T>, K>;
+export type ManagerOutputs <T extends StoreManager<any>, K extends string> = T extends StoreManager<infer R> ? OutputOfValidatorRecord<R, K> : never;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type SetError<T extends StoreManager<any>, K extends string> = T extends StoreManager<infer R> ? SafeParseError<OutputOfValidatorRecord<R, K>>["error"] : never;
