@@ -1,5 +1,5 @@
 import { ZodType, z, SafeParseError, SafeParseReturnType } from 'zod'
-import SecureStore from 'expo-secure-store'
+import SecureStore, {getItemAsync, setItemAsync, deleteItemAsync} from 'expo-secure-store'
 import AsyncStorage, { AsyncStorageStatic } from '@react-native-async-storage/async-storage';
 import { parse, stringify } from 'superjson'
 
@@ -7,6 +7,12 @@ type SecureStoreType = {
   getItemAsync: typeof SecureStore.getItemAsync,
   setItemAsync: typeof SecureStore.setItemAsync,
   deleteItemAsync: typeof SecureStore.deleteItemAsync,
+}
+
+const secureStore : SecureStoreType = {
+  getItemAsync,
+  setItemAsync,
+  deleteItemAsync,
 }
 
 const stringifiedNull = stringify(null);
@@ -70,6 +76,7 @@ const createAnyStoreManager = <T extends KeyValidatorRecord, S extends SecureSto
     const stringified = stringify(value);
 
     const completeKey = getKeyWithParam(key, param);
+
     return await (('setItemAsync' in store) ? store.setItemAsync(completeKey, stringified) : store.setItem(completeKey, stringified)).then(() => validated);
   }
 
@@ -85,7 +92,7 @@ const createAnyStoreManager = <T extends KeyValidatorRecord, S extends SecureSto
   return { get, set, delete: doDelete, validators }
 }
 
-export const createSecureStore = <T extends KeyValidatorRecord>(validators: T) => createAnyStoreManager(validators, SecureStore);
+export const createSecureStore = <T extends KeyValidatorRecord>(validators: T) => createAnyStoreManager(validators, secureStore);
 export const createAsyncStorage = <T extends KeyValidatorRecord>(validators: T) => createAnyStoreManager(validators, AsyncStorage);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -8,6 +8,7 @@ import NetInfo from "@react-native-community/netinfo";
 
 import type { AppRouter } from "@ei/trpc";
 import { AppState, AppStateStatus, Platform } from "react-native";
+import { useAuth } from "src/context/auth";
 
 onlineManager.setEventListener(setOnline => {
   return NetInfo.addEventListener(state => {
@@ -60,15 +61,21 @@ const getBaseUrl = () => {
 
 export function TRPCProvider(props: { children: React.ReactNode }) {
   const [queryClient] = React.useState(() => new QueryClient({defaultOptions: {queries: {staleTime: 1000 * 1}}}));
-  const [trpcClient] = React.useState(() =>
+
+  const { authInfo } = useAuth();
+
+  const trpcClient = React.useMemo(() =>
     api.createClient({
       transformer: superjson,
       links: [
         httpBatchLink({
           url: `${getBaseUrl()}/api/trpc`,
+          headers: {
+            ...(authInfo ? {authorization: `Bearer ${authInfo.accessToken}`} : {})
+          }
         }),
       ],
-    }),
+    }), []
   );
 
   useEffect(() => {
