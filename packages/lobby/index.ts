@@ -18,6 +18,8 @@ export const userSchema = z.object({
   id: z.string(),
   username: z.string(),
   avatar: z.string().nullable(),
+  isAllowed: z.boolean(),
+  isKickable: z.boolean(),
 })
 
 export const lobbyChangeSchema = z.object({
@@ -36,6 +38,7 @@ export const lobbyChangeSchema = z.object({
     type: z.nativeEnum(ChannelType),
     limit: z.number().nullable(),
   }),
+  users: z.array(userSchema),
 }).optional().nullable()
 
 export function generateLobbyName(

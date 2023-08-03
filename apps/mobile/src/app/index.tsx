@@ -13,6 +13,7 @@ import { ChannelType, generateLobbyName, lobbyChangeSchema } from "@ei/lobby";
 import { CDNRoutes, ImageFormat, RouteBases } from "discord-api-types/rest/v10";
 import ChannelTypeButton from "src/components/ChannelTypeButton";
 import UserLimitButton from "src/components/UserLimitButton";
+import UsersSheet from "src/components/UsersSheet";
 
 const Screen = () => {
   const [lobby, setLobby] = useState<Zod.infer<typeof lobbyChangeSchema> | null>(null)
@@ -56,7 +57,7 @@ const Screen = () => {
   const limits = new Set([0, 2, 5, 10, lobby.channel.limit || 0])
 
   return (
-    <View className="p-5">
+    <View className="p-5 pb-0 flex-1">
       <View className="items-center">
         {guild.icon ? <Image source={guild.icon} className={[style, 'ring-4'].join(' ')} alt=""/> : <View className={`${style} bg-secondary`}/>}
         <Text className="text-center text-3xl p-3 font-bold mb-[-25px]">{generateLobbyName(lobby.channel.type, lobby.user, lobby.channel.name || undefined)}</Text>
@@ -70,6 +71,7 @@ const Screen = () => {
       <View className="bg-primary-900 h-20 rounded-full flex-row justify-around items-center px-2">
         {Array.from(limits).sort((a, b) => a - b).map(limit => <UserLimitButton limit={limit} key={limit} lobby={lobby.channel}/>)}
       </View>
+      <UsersSheet users={lobby.users}/>
     </View>
   )
 }
@@ -98,7 +100,7 @@ const Index = () => {
         <Text className="text-2xl text-background font-bold">{user?.globalName}</Text>
       </View>
     ))}}/>
-    <SafeAreaView edges={["left", "right", "bottom"]} className="flex-1 from-background to-primary-800">
+    <SafeAreaView edges={["left", "right"]} className="flex-1 from-background to-primary-800">
       <PusherProvider>
         <Screen />
       </PusherProvider>

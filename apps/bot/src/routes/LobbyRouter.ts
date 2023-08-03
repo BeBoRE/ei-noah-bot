@@ -1664,7 +1664,15 @@ const pushLobbyChangeToUser = (user : Pick<GuildMember, "id">, data : {member: G
       name: data.tempChannel.name || null,
       type: getChannelType(data.voiceChannel),
       limit: data.voiceChannel.userLimit,
-    }
+    },
+    users: data.voiceChannel.members.map((member) => ({
+      id: member.id,
+      avatar: member.user.displayAvatarURL({forceStatic: true, size: 128, extension: 'png'}),
+      username: member.displayName,
+      isAllowed: data.voiceChannel.permissionOverwrites.cache.has(member.id),
+      isKickable: member.id !== user.id && member.id !== member.client.user.id,
+    }))
+      .filter((u) => u.id !== user.id),
   } satisfies Zod.infer<typeof lobbyChangeSchema>));
 }
 
@@ -1743,6 +1751,7 @@ router.onInit = async (client, orm, _i18n, logger) => {
           guildUser.tempChannel.textChannelId = textChannel.id;
 
           await createDashBoardCollector(client, voiceChannel, guildUser.tempChannel, em.fork(), _i18n, logger).catch((error) => { logger.error(error.discription, { error }); });
+
           pushLobbyChangeToUser(member, {member, guild: newState.guild, tempChannel: guildUser.tempChannel, voiceChannel: voiceChannel});
 
           if (textChannel.id !== voiceChannel.id) { await textChannel.edit({ permissionOverwrites: getTextPermissionOverwrites(voiceChannel, client) }).catch((error) => { logger.error(error.discription, { error }); }); }
@@ -1762,6 +1771,11 @@ router.onInit = async (client, orm, _i18n, logger) => {
           if (!activeChannel?.permissionsFor(member)?.has(PermissionsBitField.Flags.Speak, true)) {
             await createAddMessage(tempChannel, member.user, client, em, i18n, logger);
           }
+
+          // Update mobile users
+
+          const owner = await newState.guild?.members.fetch({ cache: true, user: `${BigInt(tempChannel.guildUser.user.id)}` }).catch(() => null);
+          activeChannel && owner && pushLobbyChangeToUser(owner, {member: owner, guild: newState.guild, tempChannel, voiceChannel: activeChannel});
         }
       }
 
