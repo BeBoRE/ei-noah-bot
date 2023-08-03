@@ -58,50 +58,10 @@ import { GuildUser } from '@ei/database/entity/GuildUser';
 import createMenu from '../createMenu';
 import { createEntityCache } from '../EiNoah';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
+import { pusher } from '@ei/pusher-server';
+import { lobbyChangeSchema, ChannelType, getIcon, generateLobbyName } from '@ei/lobby';
 
 const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');
-
-enum ChannelType {
-  Public = 'public',
-  Mute = 'mute',
-  Nojoin = 'private',
-}
-
-function getIcon(type : ChannelType) {
-  if (type === ChannelType.Nojoin) return '🔐';
-  if (type === ChannelType.Mute) return '🙊';
-  return '🔊';
-}
-
-function generateLobbyName(
-  type : ChannelType,
-  owner : GuildMember,
-  newName ?: string,
-  textChat?: boolean,
-) : string | null {
-  const icon = getIcon(type);
-
-  if (newName) {
-    const result = emojiRegex().exec(newName);
-    if (result && result[0] === newName.slice(0, result[0].length)) {
-      const [customIcon] = result;
-
-      if (!Object.keys(ChannelType).map<string>((t) => getIcon(<ChannelType>t)).includes(customIcon) && customIcon !== '📝') {
-        const name = newName
-          .substring(result[0].length, newName.length)
-          .trim();
-
-        if (name.length <= 0 || name.length > 90) return null;
-
-        if (textChat) return `${customIcon}${name} chat`;
-        return `${customIcon} ${name}`;
-      }
-    }
-  }
-
-  if (textChat) return `📝${newName || `${owner.displayName}`} chat`;
-  return `${icon} ${newName || `${owner.displayName}'s Lobby`}`;
-}
 
 function toDeny(type : ChannelType, textIsSeperate : boolean) {
   const denyList : bigint[] = textIsSeperate ? [PermissionsBitField.Flags.SendMessages] : [];
@@ -1683,6 +1643,25 @@ const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => 
   await Promise.all(categories.map((category) => createCreateChannels(category, client).catch(() => {})));
 };
 
+const pushLobbyChangeToUser = ({user, guild, tempChannel, voiceChannel} : {user : GuildMember, guild : DiscordGuild, tempChannel : TempChannel, voiceChannel : VoiceChannel}) => {
+  pusher.sendToUser(user.id, 'lobbyChange', lobbyChangeSchema.parse({
+    user: {
+      id: user.id,
+      displayName: user.displayName,
+    },
+    guild: {
+      id: guild.id,
+      name: guild.name,
+      icon: guild.iconURL({forceStatic: true, size: 512, extension: 'png'}),
+    }, 
+    channel: {
+      id: guild.id,
+      name: tempChannel.name || null,
+      type: getChannelType(voiceChannel)
+    }
+  } satisfies Zod.infer<typeof lobbyChangeSchema>));
+}
+
 router.onInit = async (client, orm, _i18n, logger) => {
   // Check elke tempChannel om de 60 minuten
   const checkTempLobbies = async () => {
@@ -1740,6 +1719,7 @@ router.onInit = async (client, orm, _i18n, logger) => {
         const guildUser = await guildUserPromise;
 
         if (activeChannel) {
+          // Degene had al een kanaal
           newState.setChannel(activeChannel);
         } else if (channel.parent) {
           let type : ChannelType = ChannelType.Public;
@@ -1757,6 +1737,7 @@ router.onInit = async (client, orm, _i18n, logger) => {
           guildUser.tempChannel.textChannelId = textChannel.id;
 
           await createDashBoardCollector(client, voiceChannel, guildUser.tempChannel, em.fork(), _i18n, logger).catch((error) => { logger.error(error.discription, { error }); });
+          pushLobbyChangeToUser({user: member, guild: newState.guild, tempChannel: guildUser.tempChannel, voiceChannel: voiceChannel});
 
           if (textChannel.id !== voiceChannel.id) { await textChannel.edit({ permissionOverwrites: getTextPermissionOverwrites(voiceChannel, client) }).catch((error) => { logger.error(error.discription, { error }); }); }
         }

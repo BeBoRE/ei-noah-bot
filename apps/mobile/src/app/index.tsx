@@ -2,52 +2,45 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { api } from "../utils/api"
 import Text from "src/components/Text";
 import { Stack } from "expo-router";
-import { ActivityIndicator, Alert, Pressable, View } from "react-native";
+import { Alert, View } from "react-native";
 import { Image } from "expo-image";
 import { HeaderButtons, Item } from 'react-navigation-header-buttons'
 import { baseConfig } from "tailwind.config";
 import { useAuth } from "src/context/auth";
 import { PusherProvider, usePusher } from "src/context/pusher";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { lobbyChangeSchema } from "@ei/lobby";
 
 const Screen = () => {
-  const {data, isLoading, error, isRefetching, refetch} = api.lobby.all.useQuery();
+  const [lobby, setLobby] = useState<Zod.infer<typeof lobbyChangeSchema> | null>(null)
   const {data: user} = api.user.me.useQuery();
   const {pusher} = usePusher();
 
   useEffect(() => {
     if(!pusher) return;
 
-    pusher.user.bind('lobbyChange', () => {
-      Alert.alert('Lobby created', 'A new lobby has been created', [{text: 'OK'}])
-    });
+    pusher.user.bind('lobbyChange', (newData : unknown) => {
+      const result = lobbyChangeSchema.safeParse(newData);
+      if(!result.success) {
+        Alert.alert("Error", "Failed to parse lobby data");
+        return;
+      }
 
+      setLobby(result.data);
+    });
 
     return () => {
       pusher.user.unbind('lobbyChange');
     }
-  }, [pusher, refetch])
+  }, [pusher])
 
-  if(isLoading) return (
+  if(!lobby) return (
     <View className="flex-1 align-middle justify-center">
-      <ActivityIndicator size={"large"}></ActivityIndicator>
-    </View>
-  )
-
-  if(!data && error) return (
-    <View className="flex-1 align-middle justify-center">
-      <Text className="text-center text-3xl">Error loading lobbies</Text>
-    </View>
-  )
-
-  if(data && data.length === 0) return (
-    <Pressable className="flex-1 align-middle justify-center" onPress={() => {refetch()}}>
       <Text className="text-center text-3xl m-3">Please join a lobby {user?.username}</Text>
-      <ActivityIndicator className={isRefetching ? 'opacity-100' : 'opacity-0 transition-opacity'} size={"large"}></ActivityIndicator>
-    </Pressable>
+    </View>
   )
 
-  const guild = data && data[0] && data[0].guild.success ? data[0].guild.data : null;
+  const guild = lobby.guild;
 
   if(!guild) return (
     <View className="flex-1 align-middle justify-center">
@@ -67,12 +60,24 @@ const Screen = () => {
   )
 }
 
+// const getUserImageUrl = (user : {avatar : string, id : string}) => {
+
+
+ //return  cdn.avatar(user.id, user.avatar, {extension: "png", size: 128});
+// }
+
 const Index = () => {
   const {signOut} = useAuth();
+  const {data: user} = api.user.me.useQuery();
 
   return (
   <>
-    <Stack.Screen options={{headerTitle: "", headerRight: () => (
+    <Stack.Screen options={{headerTitle: user ? () => (
+        <View className="flex flex-row">
+          {/* {user.avatar && <Image source={getUserImageUrl({id: user.id, avatar: user.avatar})} className="w-10 h-10 rounded-full ring-4 outline-primary" alt=""/>} */}
+          <Text className="text-2xl text-background font-bold">{user?.globalName}</Text>
+        </View>
+      ) : "", headerRight: () => (
       <HeaderButtons>
         <Item
           title="Logout"

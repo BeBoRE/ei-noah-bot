@@ -1,0 +1,12 @@
+{
+  "name": "@ei/pusher-client",
+  "version": "0.0.1",
+  "main": "index.ts",
+  "types": "index.ts",
+  "devDependencies": {
+    "@ei/tsconfig": "*"
+  },
+  "dependencies": {
+    "pusher": "^5.1.3"
+  }
+}

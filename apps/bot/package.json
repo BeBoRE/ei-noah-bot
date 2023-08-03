@@ -25,6 +25,8 @@
   "dependencies": {
     "@digitak/esrun": "^3.2.24",
     "@ei/database": "*",
+    "@ei/pusher-server": "*",
+    "@ei/lobby": "*",
     "@mikro-orm/core": "^5.5.3",
     "@mikro-orm/knex": "^5.5.3",
     "@mikro-orm/migrations": "^5.5.3",

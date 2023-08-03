@@ -66,16 +66,14 @@ export function TRPCProvider(props: { children: React.ReactNode }) {
 
   const trpcClient = React.useMemo(() =>
     {
-      console.log(`Creating trpc client ${getBaseUrl()} (accessToken: ${authInfo?.accessToken}))`)
-
       return api.createClient({
         transformer: superjson,
         links: [
           httpBatchLink({
             url: `${getBaseUrl()}/api/trpc`,
-            headers: {
-              authorization: authInfo?.accessToken
-            }
+            headers: () => ({
+              authorization: authInfo?.accessToken,
+            })
           }),
         ],
       })

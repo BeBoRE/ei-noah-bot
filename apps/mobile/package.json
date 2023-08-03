@@ -6,6 +6,7 @@
     "dev": "expo start"
   },
   "dependencies": {
+    "@ei/lobby": "*",
     "@expo/config": "^8.1.2",
     "@expo/metro-config": "^0.10.6",
     "@react-native-async-storage/async-storage": "^1.19.1",
@@ -16,6 +17,7 @@
     "@trpc/react-query": "^10.34.0",
     "@trpc/server": "^10.34.0",
     "babel-plugin-inline-dotenv": "^1.7.0",
+    "discord-api-types": "^0.27.3",
     "eas-cli": "^3.17.1",
     "expo": "^49.0.3",
     "expo-auth-session": "~5.0.2",
