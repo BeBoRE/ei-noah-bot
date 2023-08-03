@@ -51,9 +51,9 @@ const Screen = () => {
     </View>
   )
 
-  const style = "w-40 h-40 bg-primary-900 rounded-full ring-4 outline-primary";
+  const style = "w-40 h-40 bg-primary-900 rounded-full";
 
-  console.log(lobby.channel.limit)
+  const limits = new Set([0, 2, 5, 10, lobby.channel.limit || 0])
 
   return (
     <View className="p-5">
@@ -68,10 +68,7 @@ const Screen = () => {
         <ChannelTypeButton lobbyType={ChannelType.Nojoin} lobby={lobby.channel}/>
       </View>
       <View className="bg-primary-900 h-20 rounded-full flex-row justify-around items-center px-2">
-        <UserLimitButton limit={0} lobby={lobby.channel}/>
-        <UserLimitButton limit={2} lobby={lobby.channel}/>
-        <UserLimitButton limit={5} lobby={lobby.channel}/>
-        <UserLimitButton limit={10} lobby={lobby.channel}/>
+        {Array.from(limits).sort((a, b) => a - b).map(limit => <UserLimitButton limit={limit} key={limit} lobby={lobby.channel}/>)}
       </View>
     </View>
   )
