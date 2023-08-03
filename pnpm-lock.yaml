@@ -208,6 +208,9 @@ importers:
       babel-plugin-inline-dotenv:
         specifier: ^1.7.0
         version: 1.7.0
+      discord-api-types:
+        specifier: 0.37.36-next.0d47c69.1677334692
+        version: 0.37.36-next.0d47c69.1677334692
       eas-cli:
         specifier: ^3.17.1
         version: 3.17.1(expo-modules-autolinking@1.5.0)
@@ -6310,6 +6313,10 @@ packages:
 
   /discord-api-types@0.27.3:
     resolution: {integrity: sha512-HOG64DTpZ7CB5EU9eKbjHD50H5qG1pxKG8pmFfHUMKjKvEWeLBHfw0c9xF1cruiYLnBb3+n7m3jBWxZ3H1hcgQ==}
+    dev: false
+
+  /discord-api-types@0.37.36-next.0d47c69.1677334692:
+    resolution: {integrity: sha512-43Ht5vx3cvqc8GufHHDkGBaTG42812NphmFbijSOPxgz5Blnfgo60yMD546fX/qFsFUzYpkyvhBmXctYtqoyQQ==}
     dev: false
 
   /discord-api-types@0.37.50:

@@ -17,6 +17,7 @@
     "@trpc/react-query": "^10.34.0",
     "@trpc/server": "^10.34.0",
     "babel-plugin-inline-dotenv": "^1.7.0",
+    "discord-api-types": "0.37.36-next.0d47c69.1677334692",
     "eas-cli": "^3.17.1",
     "expo": "^49.0.3",
     "expo-auth-session": "~5.0.2",
