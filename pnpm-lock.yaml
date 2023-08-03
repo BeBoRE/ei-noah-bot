@@ -460,6 +460,9 @@ importers:
       discord-api-types:
         specifier: ^0.27.3
         version: 0.27.3
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       superjson:
         specifier: 1.13.1
         version: 1.13.1
@@ -467,6 +470,9 @@ importers:
         specifier: ^3.21.4
         version: 3.21.4
     devDependencies:
+      '@types/lodash':
+        specifier: ^4.14.196
+        version: 4.14.196
       eslint-config-custom:
         specifier: '*'
         version: link:../eslint-config-custom
@@ -4170,6 +4176,10 @@ packages:
   /@types/json5@0.0.29:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
     dev: false
+
+  /@types/lodash@4.14.196:
+    resolution: {integrity: sha512-22y3o88f4a94mKljsZcanlNWPzO0uBsBdzLAngf2tp533LzZcQzb6+eZPJ+vCTt+bqF2XnvT9gejTLsAcJAJyQ==}
+    dev: true
 
   /@types/node-fetch@2.5.7:
     resolution: {integrity: sha512-o2WVNf5UhWRkxlf6eq+jMZDu7kjgpgJfl4xVNlvryc95O/6F2ld8ztKX+qu+Rjyet93WAWm5LjeX9H5FGkODvw==}

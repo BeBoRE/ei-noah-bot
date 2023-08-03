@@ -2,14 +2,15 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { api } from "../utils/api"
 import Text from "src/components/Text";
 import { Stack } from "expo-router";
-import { ActivityIndicator, Pressable, TouchableWithoutFeedback, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { Image } from "expo-image";
-import { HeaderButton, HeaderButtons, defaultRenderVisibleButton, Item } from 'react-navigation-header-buttons'
-import tailwindConfig, { baseConfig } from "tailwind.config";
+import { HeaderButtons, Item } from 'react-navigation-header-buttons'
+import { baseConfig } from "tailwind.config";
 import { useAuth } from "src/context/auth";
 
 const Screen = () => {
   const {data, isLoading, error, isRefetching, refetch} = api.lobby.all.useQuery();
+  const {data: user} = api.user.me.useQuery()
 
   if(isLoading) return (
     <View className="flex-1 align-middle justify-center">
@@ -25,7 +26,7 @@ const Screen = () => {
 
   if(data && data.length === 0) return (
     <Pressable className="flex-1 align-middle justify-center" onPress={() => {refetch()}}>
-      <Text className="text-center text-3xl m-3">Please join a lobby</Text>
+      <Text className="text-center text-3xl m-3">Please join a lobby {user?.username}</Text>
       <ActivityIndicator className={isRefetching ? 'opacity-100' : 'opacity-0 transition-opacity'} size={"large"}></ActivityIndicator>
     </Pressable>
   )

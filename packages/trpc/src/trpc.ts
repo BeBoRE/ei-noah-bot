@@ -6,11 +6,45 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end
  */
-import { initTRPC } from "@trpc/server";
+import { TRPCError, initTRPC } from "@trpc/server";
+import type { CreateNextContextOptions } from "@trpc/server/adapters/next";
 import superjson from "superjson";
-import { ZodError } from "zod";
+import { ZodError, z } from "zod";
 
 import { getOrm } from "@ei/database";
+import { REST } from "@discordjs/rest";
+import { Routes } from "discord-api-types/v10"
+
+import { camelCase, isArray, isObject, transform } from "lodash";
+
+/**
+ * User res {
+ *   id: '248143520005619713',
+ *   username: 'bebore',
+ *   avatar: '67e9aacd64bd07242e996448c0d020e4',
+ *   discriminator: '0',
+ *   public_flags: 4194304,
+ *   flags: 4194304,
+ *   banner: null,
+ *   accent_color: 15956490,
+ *   global_name: 'BeBoRE',
+ *   avatar_decoration: null,
+ *   banner_color: '#f37a0a',
+ *   mfa_enabled: true,
+ *   locale: 'en-US',
+ *   premium_type: 0
+ * }
+ */
+
+const userSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  avatar: z.string().nullable(),
+  globalName: z.string(),
+  locale: z.string(),
+});
+
+const bearerSchema = z.string().min(1)
 
 /**
  * 1. CONTEXT
@@ -21,9 +55,12 @@ import { getOrm } from "@ei/database";
  * processing a request
  *
  */
-// interface CreateContextOptions {
-// 
-//}
+interface CreateInnerContextOptions extends Partial<CreateNextContextOptions> {
+  session: {
+    user: z.infer<typeof userSchema>;
+    restUser: REST;
+  } | null;
+}
 
 /**
  * This helper generates the "internals" for a tRPC context. If you need to use
@@ -34,21 +71,63 @@ import { getOrm } from "@ei/database";
  * - trpc's `createSSGHelpers` where we don't have req/res
  * @see https://create.t3.gg/en/usage/trpc#-servertrpccontextts
  */
-const createInnerTRPCContext = async () => {
+const createInnerTRPCContext = async (opts : CreateInnerContextOptions) => {
   const em = (await getOrm()).em.fork();
+  const { session } = opts;
 
   return {
     em,
+    session
   };
 };
+
+const camelize = (obj: unknown) => {
+  if(!isObject(obj)) return obj;
+
+  return transform(
+  obj, 
+  (result: Record<string, unknown>, value: unknown, key: string, target) => {     
+    const camelKey = isArray(target) ? key : camelCase(key);      
+    result[camelKey] = isObject(value) ? camelize(value as Record<string, unknown>) : value;   
+  }
+)};
 
 /**
  * This is the actual context you'll use in your router. It will be used to
  * process every request that goes through your tRPC endpoint
  * @link https://trpc.io/docs/context
  */
-export const createTRPCContext = async () => {
-  return createInnerTRPCContext();
+export const createTRPCContext = async (opts : CreateNextContextOptions) => {
+  const { req } = opts;
+
+  const bearer = bearerSchema.safeParse(req.headers.authorization ?? "");
+
+  if(bearer.success) {
+    const rest = new REST({ version: '10', authPrefix: 'Bearer' }).setToken(bearer.data);
+
+    const userRes = await rest.get(Routes.user()).catch(() => null);
+
+    const user = userSchema.safeParse(camelize(userRes));
+
+    if(user.success) {
+      return await createInnerTRPCContext({
+        ...opts,
+        session: {
+          user: user.data,
+          restUser: rest,
+        } 
+      }); 
+    }
+
+    console.log('User schema error', user.error.flatten());
+  }
+
+  const contextInner = await createInnerTRPCContext({
+    ...opts,
+    session: null,
+  });
+
+  return contextInner;
 };
 
 /**
@@ -97,17 +176,17 @@ export const publicProcedure = t.procedure;
  * Reusable middleware that enforces users are logged in before running the
  * procedure
  */
-// const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
-//   if (!ctx.session?.user) {
-//     throw new TRPCError({ code: "UNAUTHORIZED" });
-//   }
-//   return next({
-//     ctx: {
-//       // infers the `session` as non-nullable
-//       session: { ...ctx.session, user: ctx.session.user },
-//     },
-//   });
-// });
+const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
+  if (!ctx.session?.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  return next({
+    ctx: {
+      // infers the `session` as non-nullable
+      session: { ...ctx.session, user: ctx.session.user },
+    },
+  });
+});
 
 /**
  * Protected (authed) procedure
@@ -118,4 +197,4 @@ export const publicProcedure = t.procedure;
  *
  * @see https://trpc.io/docs/procedures
  */
-// export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);

@@ -65,17 +65,21 @@ export function TRPCProvider(props: { children: React.ReactNode }) {
   const { authInfo } = useAuth();
 
   const trpcClient = React.useMemo(() =>
-    api.createClient({
-      transformer: superjson,
-      links: [
-        httpBatchLink({
-          url: `${getBaseUrl()}/api/trpc`,
-          headers: {
-            ...(authInfo ? {authorization: `Bearer ${authInfo.accessToken}`} : {})
-          }
-        }),
-      ],
-    }), []
+    {
+      console.log(`Creating trpc client ${getBaseUrl()} (accessToken: ${authInfo?.accessToken}))`)
+
+      return api.createClient({
+        transformer: superjson,
+        links: [
+          httpBatchLink({
+            url: `${getBaseUrl()}/api/trpc`,
+            headers: {
+              authorization: authInfo?.accessToken
+            }
+          }),
+        ],
+      })
+    }, [authInfo?.accessToken]
   );
 
   useEffect(() => {

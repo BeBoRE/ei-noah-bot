@@ -1,7 +1,7 @@
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import TempChannel from '@ei/database/entity/TempChannel';
 import { CDN, REST } from '@discordjs/rest';
-import { Routes, RouteBases } from "discord-api-types/v10";
+import { Routes } from "discord-api-types/v10";
 import { z } from "zod";
 
 const rest = new REST({ version: '10' }).setToken(process.env.CLIENT_TOKEN || '');
@@ -11,7 +11,7 @@ export const lobbyRouter = createTRPCRouter({
     return Promise.all((await ctx.em.getRepository(TempChannel).findAll({populate: ['guildUser', 'guildUser.user']})).map(async tc => {
       const guildRes = await rest.get(Routes.guild(tc.guildUser.guild.id)).catch(() => null);
 
-      const cdn = new CDN(RouteBases.cdn);
+      const cdn = new CDN();
 
       const guildSchema = z.object({
         id: z.string(),
