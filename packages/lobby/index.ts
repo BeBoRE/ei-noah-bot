@@ -34,8 +34,9 @@ export const lobbyChangeSchema = z.object({
     id: z.string(),
     name: z.string().nullable(),
     type: z.nativeEnum(ChannelType),
+    limit: z.number().nullable(),
   }),
-}).nullable()
+}).optional().nullable()
 
 export function generateLobbyName(
   type : ChannelType,

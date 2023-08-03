@@ -9,8 +9,10 @@ import { baseConfig } from "tailwind.config";
 import { useAuth } from "src/context/auth";
 import { PusherProvider, usePusher } from "src/context/pusher";
 import { useEffect, useState } from "react";
-import { generateLobbyName, lobbyChangeSchema } from "@ei/lobby";
+import { ChannelType, generateLobbyName, lobbyChangeSchema } from "@ei/lobby";
 import { CDNRoutes, ImageFormat, RouteBases } from "discord-api-types/rest/v10";
+import ChannelTypeButton from "src/components/ChannelTypeButton";
+import UserLimitButton from "src/components/UserLimitButton";
 
 const Screen = () => {
   const [lobby, setLobby] = useState<Zod.infer<typeof lobbyChangeSchema> | null>(null)
@@ -23,7 +25,7 @@ const Screen = () => {
     pusher.user.bind('lobbyChange', (newData : unknown) => {
       const result = lobbyChangeSchema.safeParse(newData);
       if(!result.success) {
-        Alert.alert("Error", "Failed to parse lobby data");
+        Alert.alert("Error", `Failed to parse lobby data\n${result.error.message}`);
         return;
       }
 
@@ -51,6 +53,8 @@ const Screen = () => {
 
   const style = "w-40 h-40 bg-primary-900 rounded-full ring-4 outline-primary";
 
+  console.log(lobby.channel.limit)
+
   return (
     <View className="p-5">
       <View className="items-center">
@@ -58,8 +62,16 @@ const Screen = () => {
         <Text className="text-center text-3xl p-3 font-bold mb-[-25px]">{generateLobbyName(lobby.channel.type, lobby.user, lobby.channel.name || undefined)}</Text>
         <Text className="text-center text-1xl p-3 font-medium opacity-60">{guild.name}</Text>
       </View>
-      <View className="bg-primary-900 rounded-full h-24">
-
+      <View className="bg-primary-900 h-20 rounded-full flex-row justify-around items-center px-10 mb-3">
+        <ChannelTypeButton lobbyType={ChannelType.Public} lobby={lobby.channel}/>
+        <ChannelTypeButton lobbyType={ChannelType.Mute} lobby={lobby.channel}/>
+        <ChannelTypeButton lobbyType={ChannelType.Nojoin} lobby={lobby.channel}/>
+      </View>
+      <View className="bg-primary-900 h-20 rounded-full flex-row justify-around items-center px-2">
+        <UserLimitButton limit={0} lobby={lobby.channel}/>
+        <UserLimitButton limit={2} lobby={lobby.channel}/>
+        <UserLimitButton limit={5} lobby={lobby.channel}/>
+        <UserLimitButton limit={10} lobby={lobby.channel}/>
       </View>
     </View>
   )

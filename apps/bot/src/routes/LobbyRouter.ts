@@ -1036,6 +1036,8 @@ const changeLobby = (() => {
       if (msg) msg.edit({ ...<MessageEditOptions>content, components: await generateComponents(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).catch(() => {});
     }
 
+    pushLobbyChangeToUser(owner, {member: owner, guild, tempChannel, voiceChannel})
+
     return timeTillNameChange;
   };
 })();
@@ -1560,6 +1562,9 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
   } else if (!activeChannel.members.filter((member) => !member.user.bot).size) {
     // If there is no one left in the lobby remove the lobby
     await Promise.all([activeChannel.delete(), activeChannel.id !== activeTextChannel?.id && activeTextChannel?.delete()]).catch((error) => { logger.error(error.description, { error }); });
+
+    pushLobbyChangeToUser(tempChannel.guildUser.user, null)
+
     em.remove(tempChannel);
   } else if (!activeChannel.members.has(`${BigInt(tempChannel.guildUser.user.id)}`)) {
     const guildUsers = await Promise.all(activeChannel.members
@@ -1643,21 +1648,22 @@ const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => 
   await Promise.all(categories.map((category) => createCreateChannels(category, client).catch(() => {})));
 };
 
-const pushLobbyChangeToUser = ({user, guild, tempChannel, voiceChannel} : {user : GuildMember, guild : DiscordGuild, tempChannel : TempChannel, voiceChannel : VoiceChannel}) => {
-  pusher.sendToUser(user.id, 'lobbyChange', lobbyChangeSchema.parse({
+const pushLobbyChangeToUser = (user : Pick<GuildMember, "id">, data : {member: GuildMember, guild : DiscordGuild, tempChannel : TempChannel, voiceChannel : VoiceChannel} | null) => {
+  pusher.sendToUser(user.id, 'lobbyChange', lobbyChangeSchema.parse(!data ? null : {
     user: {
       id: user.id,
-      displayName: user.displayName,
+      displayName: data.member.displayName,
     },
     guild: {
-      id: guild.id,
-      name: guild.name,
-      icon: guild.iconURL({forceStatic: true, size: 512, extension: 'png'}),
+      id: data.guild.id,
+      name: data.guild.name,
+      icon: data.guild.iconURL({forceStatic: true, size: 512, extension: 'png'}),
     }, 
     channel: {
-      id: guild.id,
-      name: tempChannel.name || null,
-      type: getChannelType(voiceChannel)
+      id: data.guild.id,
+      name: data.tempChannel.name || null,
+      type: getChannelType(data.voiceChannel),
+      limit: data.voiceChannel.userLimit,
     }
   } satisfies Zod.infer<typeof lobbyChangeSchema>));
 }
@@ -1737,7 +1743,7 @@ router.onInit = async (client, orm, _i18n, logger) => {
           guildUser.tempChannel.textChannelId = textChannel.id;
 
           await createDashBoardCollector(client, voiceChannel, guildUser.tempChannel, em.fork(), _i18n, logger).catch((error) => { logger.error(error.discription, { error }); });
-          pushLobbyChangeToUser({user: member, guild: newState.guild, tempChannel: guildUser.tempChannel, voiceChannel: voiceChannel});
+          pushLobbyChangeToUser(member, {member, guild: newState.guild, tempChannel: guildUser.tempChannel, voiceChannel: voiceChannel});
 
           if (textChannel.id !== voiceChannel.id) { await textChannel.edit({ permissionOverwrites: getTextPermissionOverwrites(voiceChannel, client) }).catch((error) => { logger.error(error.discription, { error }); }); }
         }
