@@ -235,6 +235,9 @@ importers:
       nativewind:
         specifier: ^2.0.11
         version: 2.0.11(react@18.2.0)(tailwindcss@3.3.2)
+      pusher-js:
+        specifier: ^8.3.0
+        version: 8.3.0
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -428,6 +431,16 @@ importers:
         specifier: ^1.9.3
         version: 1.9.3(eslint@8.45.0)
 
+  packages/pusher-server:
+    dependencies:
+      pusher:
+        specifier: ^5.1.3
+        version: 5.1.3
+    devDependencies:
+      '@ei/tsconfig':
+        specifier: '*'
+        version: link:../tsconfig
+
   packages/tailwind-config:
     devDependencies:
       '@ei/tsconfig':
@@ -451,6 +464,9 @@ importers:
       '@ei/database':
         specifier: '*'
         version: link:../database
+      '@ei/pusher-server':
+        specifier: '*'
+        version: link:../pusher-server
       '@ei/tsconfig':
         specifier: '*'
         version: link:../tsconfig
@@ -463,9 +479,6 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
-      pusher:
-        specifier: ^5.1.3
-        version: 5.1.3
       superjson:
         specifier: 1.13.1
         version: 1.13.1
@@ -11538,6 +11551,12 @@ packages:
   /punycode@2.3.0:
     resolution: {integrity: sha512-rRV+zQD8tVFys26lAGR9WUuS4iUAngJScM+ZRSKtvl5tKeZ2t5bvdNFdNHBW9FWR4guGHlgmsZ1G7BSm2wTbuA==}
     engines: {node: '>=6'}
+
+  /pusher-js@8.3.0:
+    resolution: {integrity: sha512-6GohP06WlVeomAQQe9qWh1IDzd3+InluWt+ZUOcecVK1SEQkg6a8uYVsvxSJm7cbccfmHhE0jDkmhKIhue8vmA==}
+    dependencies:
+      tweetnacl: 1.0.3
+    dev: false
 
   /pusher@5.1.3:
     resolution: {integrity: sha512-Bmy5guFxQsbYSFLF3CM7GA2qE1zDJYn51PnNme9QlSjGguvkqUg4nj31PbgiLVDFK2sJvxPfx4JrB2HLgM3kaw==}

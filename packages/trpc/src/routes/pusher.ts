@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { pusher } from "../utils/pusher";
+import { pusher } from "@ei/pusher-server";
 
-export const userRouter = createTRPCRouter({
+export const pusherRouter = createTRPCRouter({
   auth: protectedProcedure
     .input(z.object({
       socketId: z.string(),

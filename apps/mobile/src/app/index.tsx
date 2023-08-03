@@ -2,15 +2,31 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { api } from "../utils/api"
 import Text from "src/components/Text";
 import { Stack } from "expo-router";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, View } from "react-native";
 import { Image } from "expo-image";
 import { HeaderButtons, Item } from 'react-navigation-header-buttons'
 import { baseConfig } from "tailwind.config";
 import { useAuth } from "src/context/auth";
+import { PusherProvider, usePusher } from "src/context/pusher";
+import { useEffect } from "react";
 
 const Screen = () => {
   const {data, isLoading, error, isRefetching, refetch} = api.lobby.all.useQuery();
-  const {data: user} = api.user.me.useQuery()
+  const {data: user} = api.user.me.useQuery();
+  const {pusher} = usePusher();
+
+  useEffect(() => {
+    if(!pusher) return;
+
+    pusher.user.bind('lobbyChange', () => {
+      Alert.alert('Lobby created', 'A new lobby has been created', [{text: 'OK'}])
+    });
+
+
+    return () => {
+      pusher.user.unbind('lobbyChange');
+    }
+  }, [pusher, refetch])
 
   if(isLoading) return (
     <View className="flex-1 align-middle justify-center">
@@ -66,7 +82,9 @@ const Index = () => {
       </HeaderButtons>
     )}}/>
     <SafeAreaView edges={["left", "right", "bottom"]} className="flex-1">
-      <Screen />
+      <PusherProvider>
+        <Screen />
+      </PusherProvider>
     </SafeAreaView>
   </>
   )
