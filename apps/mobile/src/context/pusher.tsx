@@ -3,13 +3,9 @@ import { createContext, useContext, useEffect, useMemo } from 'react';
 import { useAuth } from './auth';
 import { api } from 'src/utils/api';
 
-type PusherContextProps = {
-  pusher: Pusher | null;
-}
+type PusherContextProps = Pusher | null
 
-const pusherContext = createContext<PusherContextProps>({
-  pusher: null,
-});
+const pusherContext = createContext<PusherContextProps>(null);
 
 export function usePusher() {
   return useContext(pusherContext);
@@ -23,20 +19,33 @@ export function PusherProvider({ children } : {children: React.ReactNode}) {
   if (!cluster) throw new Error('Missing EXPO_PUBLIC_PUSHER_CLUSTER');
 
   const {authInfo} = useAuth();
-  const {mutate: authPusher} = api.pusher.auth.useMutation();
+  const {mutate: authentication} = api.pusher.authentication.useMutation();
+  const {mutate: channelAuthorization} = api.pusher.authorization.useMutation();
 
   const pusher = useMemo<Pusher>(() => {
-    console.log('Creating new pusher instance')
-
     const newPusher = new Pusher(appKey, {
       cluster,
       userAuthentication: {
         transport: 'ajax',
         endpoint: '/api/pusher/auth',
         customHandler: async ({socketId}, callback) => {
-          authPusher({socketId}, {
+          authentication({socketId}, {
             onSuccess: (data) => {
-              console.log('Pusher login', data)
+              callback(null, data)
+            },
+            onError: (error) => {
+              console.error(error)
+              callback(new Error("Failed pusher auth"), null)
+            }
+          })
+        }
+      },
+      channelAuthorization: {
+        transport: 'ajax',
+        endpoint: '/api/pusher/auth',
+        customHandler: async ({channelName, socketId}, callback) => {
+          channelAuthorization({channelName, socketId}, {
+            onSuccess: (data) => {
               callback(null, data)
             },
             onError: (error) => {
@@ -49,7 +58,7 @@ export function PusherProvider({ children } : {children: React.ReactNode}) {
     },);
 
     return newPusher;
-  }, [appKey, authPusher, cluster]);
+  }, [appKey, authentication, cluster, channelAuthorization]);
 
   useEffect(() => {
     return () => {
@@ -62,7 +71,7 @@ export function PusherProvider({ children } : {children: React.ReactNode}) {
   }, [authInfo?.accessToken, pusher])
 
   return (
-    <pusherContext.Provider value={{pusher}}>
+    <pusherContext.Provider value={pusher}>
       {children}
     </pusherContext.Provider>
   )

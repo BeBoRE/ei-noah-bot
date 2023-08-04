@@ -100,7 +100,7 @@ const camelize = (obj: unknown) => {
 export const createTRPCContext = async (opts : CreateNextContextOptions) => {
   const { req } = opts;
 
-  const bearer = bearerSchema.safeParse(req.headers.authorization ?? "");
+  const bearer = bearerSchema.safeParse(req.headers.authorization);
 
   if(bearer.success) {
     const rest = new REST({ version: '10', authPrefix: 'Bearer' }).setToken(bearer.data);

@@ -43,11 +43,11 @@ import {
   UniqueConstraintViolationException,
 } from '@mikro-orm/core';
 import {
-  EntityManager,
+  EntityManager, MikroORM,
 } from '@mikro-orm/postgresql';
 import emojiRegex from 'emoji-regex';
 import moment, { Duration } from 'moment';
-import { i18n as I18n } from 'i18next';
+import i18next, { i18n as I18n } from 'i18next';
 import { ComponentType, OverwriteType } from 'discord-api-types/v9';
 import { Logger } from 'winston';
 import LobbyNameChange from '@ei/database/entity/LobbyNameChange';
@@ -59,7 +59,8 @@ import createMenu from '../createMenu';
 import { createEntityCache } from '../EiNoah';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 import { pusher } from '@ei/pusher-server';
-import { lobbyChangeSchema, ChannelType, getIcon, generateLobbyName } from '@ei/lobby';
+import { lobbyChangeSchema, ChannelType, getIcon, generateLobbyName, voiceIdToPusherChannel, addUserSchema, removeUserSchema } from '@ei/lobby';
+import pusherClient from '../utils/pusher-js';
 
 const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');
 
@@ -319,7 +320,7 @@ interface AddUsersResponse {
   alreadyInMessage: string,
   text: string
 }
-const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChannel, owner : GuildUser, client : Client, i18n : I18n, logger : Logger) : AddUsersResponse => {
+const addUsers = async (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChannel, owner : GuildUser, client : Client, i18n ?: I18n, logger ?: Logger) : Promise<AddUsersResponse> => {
   const allowedUsers : Array<DiscordUser | Role> = [];
   const alreadyAllowedUsers : Array<DiscordUser | Role> = [];
 
@@ -351,25 +352,25 @@ const addUsers = (toAllow : Array<DiscordUser | Role>, activeChannel : VoiceChan
     allow,
   }))];
 
-  activeChannel.permissionOverwrites.set(newOverwrites)
+  await activeChannel.permissionOverwrites.set(newOverwrites)
     .then(async (newChannel) => {
       if (owner.tempChannel) {
         const textChannel = await activeTempText(client, owner.tempChannel);
         if (textChannel && newChannel instanceof VoiceChannel) { updateTextChannel(newChannel, textChannel); }
       }
     })
-    .catch(() => logger.error('Overwrite permission error'));
+    .catch(() => logger && logger.error('Overwrite permission error'));
 
-  const allowedUsersMessage = i18n.t('lobby.userAdded', { users: allowedUsers.map((u) => u.toString()), count: allowedUsers.length });
+  const allowedUsersMessage = i18n?.t('lobby.userAdded', { users: allowedUsers.map((u) => u.toString()), count: allowedUsers.length });
 
   let alreadyInMessage : string;
   if (!alreadyAllowedUsers.length) alreadyInMessage = '';
-  else alreadyInMessage = i18n.t('lobby.userAlreadyAdded', { users: alreadyAllowedUsers.map((u) => u.toString()), count: alreadyAllowedUsers.length });
+  else alreadyInMessage = i18n?.t('lobby.userAlreadyAdded', { users: alreadyAllowedUsers.map((u) => u.toString()), count: alreadyAllowedUsers.length }) || '';
 
   return {
     allowedUsersOrRoles: allowedUsers,
     alreadyAllowed: alreadyAllowedUsers,
-    alreadyAllowedMessage: allowedUsersMessage,
+    alreadyAllowedMessage: allowedUsersMessage || '',
     alreadyInMessage,
     text: `${allowedUsersMessage}\n${alreadyInMessage}`,
   };
@@ -403,7 +404,7 @@ router.use('add', async ({
 
   if (guildUser.tempChannel.textChannelId !== msg.channel.id) return i18n.t('lobby.error.useTextChannel', { channel: guildUser.tempChannel.textChannelId });
 
-  return addUsers(userOrRole, activeChannel, guildUser, msg.client, i18n, logger).text;
+  return addUsers(userOrRole, activeChannel, guildUser, msg.client, i18n, logger).then(res => res.text);
 }, HandlerType.GUILD, {
   description: 'Add a user or role to the lobby',
   options: [{
@@ -484,7 +485,7 @@ router.useContext('Add To Lobby', ApplicationCommandType.User, async ({
 
   const userToAdd = interaction.options.getUser('user', true);
 
-  const addResponse = addUsers([userToAdd], activeChannel, guildUser, interaction.client, i18n, logger);
+  const addResponse = await addUsers([userToAdd], activeChannel, guildUser, interaction.client, i18n, logger);
 
   if (interaction.channel?.id !== guildUser.tempChannel.textChannelId) {
     const textChannel = await activeTempText(interaction.client, guildUser.tempChannel);
@@ -499,7 +500,7 @@ router.useContext('Add To Lobby', ApplicationCommandType.User, async ({
   return { ephemeral: !addResponse.allowedUsersOrRoles.length, content: addResponse.text };
 });
 
-const removeFromLobby = (
+const removeFromLobby = async (
   channel : VoiceChannel,
   toRemoveUsers : DiscordUser[],
   toRemoveRoles : Role[],
@@ -595,7 +596,7 @@ const removeFromLobby = (
     message += i18n.t('lobby.rolesNotRemoved', { roles: rolesNotRemoved.map((i) => i.toString()), count: rolesNotRemoved.length });
   }
 
-  Promise.all(deletePromises).then(() => {
+  await Promise.all(deletePromises).then(() => {
     if (tempChannel) {
       const tempText = activeTempText(channel.client, tempChannel);
       tempText.then((text) => { if (text) updateTextChannel(channel, text); });
@@ -1036,7 +1037,7 @@ const changeLobby = (() => {
       if (msg) msg.edit({ ...<MessageEditOptions>content, components: await generateComponents(voiceChannel, em, tempChannel.guildUser, owner, i18n) }).catch(() => {});
     }
 
-    pushLobbyChangeToUser(owner, {member: owner, guild, tempChannel, voiceChannel})
+    pushLobbyToUser(owner, {member: owner, guild, tempChannel, voiceChannel})
 
     return timeTillNameChange;
   };
@@ -1427,7 +1428,7 @@ const createAddMessage = async (tempChannel : TempChannel, user : User, client :
     const collector = msg.createMessageComponentCollector<ComponentType.Button>();
     collector.on('collect', async (interaction) => {
       if (interaction.user.id === tempChannel.guildUser.user.id && interaction.customId === 'add') {
-        interaction.update({ content: addUsers([user], activeChannel, tempChannel.guildUser, client, i18n, logger).text, components: [] });
+        interaction.update({ content: (await addUsers([user], activeChannel, tempChannel.guildUser, client, i18n, logger)).text, components: [] });
         return;
       }
 
@@ -1513,7 +1514,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
             await changeLobby(currentType, voiceChannel, member, interaction.guild, currentTempChannel, voiceChannel.userLimit, interaction, em, i18n, logger, false);
           } else if (interaction.isMentionableSelectMenu() && interaction.customId === 'users' && interaction.inCachedGuild()) {
             interaction.reply({
-              content: addUsers([...interaction.users.values(), ...interaction.roles.values()], voiceChannel, currentTempChannel.guildUser, client, i18n, logger).text,
+              content: (await addUsers([...interaction.users.values(), ...interaction.roles.values()], voiceChannel, currentTempChannel.guildUser, client, i18n, logger)).text,
               ephemeral: true,
             });
           } else if (interaction.customId === 'open-rename-modal') {
@@ -1550,7 +1551,7 @@ const createDashBoardCollector = async (client : Client, voiceChannel : VoiceCha
   }
 };
 
-const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : EntityManager, _i18n : I18n, logger : Logger) => {
+const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : EntityManager, _i18n : I18n, logger : Logger, isStartup : boolean = false) => {
   const { getGuildUser } = createEntityCache(em);
 
   const activeChannel = await activeTempChannel(client, em, tempChannel);
@@ -1561,9 +1562,10 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
     if (activeTextChannel?.deletable) await activeTextChannel.delete().catch(() => { });
   } else if (!activeChannel.members.filter((member) => !member.user.bot).size) {
     // If there is no one left in the lobby remove the lobby
+    destroyPusherSubscriptionListener(activeChannel)
     await Promise.all([activeChannel.delete(), activeChannel.id !== activeTextChannel?.id && activeTextChannel?.delete()]).catch((error) => { logger.error(error.description, { error }); });
 
-    pushLobbyChangeToUser(tempChannel.guildUser.user, null)
+    pushLobbyToUser(tempChannel.guildUser.user, null)
 
     em.remove(tempChannel);
   } else if (!activeChannel.members.has(`${BigInt(tempChannel.guildUser.user.id)}`)) {
@@ -1631,8 +1633,11 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
     const i18n = _i18n.cloneInstance({ lng: tempChannel.guildUser.user.language || tempChannel.guildUser.guild.language });
 
     await createDashBoardCollector(client, activeChannel, tempChannel, em.fork(), i18n, logger);
-
     await changeLobby(lobbyType, activeChannel, member, activeChannel.guild, tempChannel, activeChannel.userLimit, null, em, i18n, logger, false);
+
+    if (isStartup) {
+      createPusherSubscriptionListeners(em, {member, guild: activeChannel.guild, voiceChannel: activeChannel, owner: tempChannel.guildUser});
+    }
   }
 };
 
@@ -1648,7 +1653,7 @@ const checkVoiceCreateChannels = async (em : EntityManager, client : Client) => 
   await Promise.all(categories.map((category) => createCreateChannels(category, client).catch(() => {})));
 };
 
-const pushLobbyChangeToUser = (user : Pick<GuildMember, "id">, data : {member: GuildMember, guild : DiscordGuild, tempChannel : TempChannel, voiceChannel : VoiceChannel} | null) => {
+const pushLobbyToUser = (user : Pick<GuildMember, "id">, data : {member: GuildMember, guild : DiscordGuild, tempChannel : TempChannel, voiceChannel : VoiceChannel} | null) => {
   pusher.sendToUser(user.id, 'lobbyChange', lobbyChangeSchema.parse(!data ? null : {
     user: {
       id: user.id,
@@ -1676,7 +1681,73 @@ const pushLobbyChangeToUser = (user : Pick<GuildMember, "id">, data : {member: G
   } satisfies Zod.infer<typeof lobbyChangeSchema>));
 }
 
+// Listens to new subscriptions
+// When there is a new subscription it will send the current lobby state to the user
+const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwnerMember, guild, voiceChannel, owner: oldOwnerGuidUser} : {member : GuildMember, guild : DiscordGuild, voiceChannel : VoiceChannel, owner : GuildUser}) => {
+  const channelName = voiceIdToPusherChannel(voiceChannel)
+  
+  console.log('listening to channel', channelName)
+  pusherClient.subscribe(channelName).bind('pusher:subscription_count', async () => {
+    const em = _em.fork()
+
+    const tempChannel = await em.findOne(TempChannel, {channelId: voiceChannel.id}, {populate: ['guildUser.user']});
+
+    if (!tempChannel) {
+      pusherClient.unsubscribe(channelName)
+      return;
+    };
+
+    pushLobbyToUser(oldOwnerMember, {member: oldOwnerMember, guild, tempChannel, voiceChannel});
+  }).bind('client-add-user', async (data : unknown) => {
+    const parsedData = addUserSchema.safeParse(data);
+
+    if(!parsedData.success) return;
+
+    const user = await guild.members.fetch({cache: true, user: parsedData.data.user.id}).catch(() => null);
+
+    if(!user) return;
+
+    await addUsers([user.user], voiceChannel, oldOwnerGuidUser, oldOwnerMember.client);
+
+    if(oldOwnerGuidUser.tempChannel)
+      pushLobbyToUser(oldOwnerMember, {member: oldOwnerMember, guild, tempChannel: oldOwnerGuidUser.tempChannel, voiceChannel});
+  }).bind('client-remove-user', async (data : unknown) => {
+    const em = _em.fork()
+    const parsedData = removeUserSchema.safeParse(data);
+
+    if(!parsedData.success) return;
+
+    const user = await guild.members.fetch({cache: true, user: parsedData.data.user.id}).catch(() => null);
+
+    if(!user) return;
+
+    const tempChannel = await em.findOne(TempChannel, {channelId: voiceChannel.id}, {populate: ['guildUser.user']});
+
+    if (!tempChannel) {
+      pusherClient.unsubscribe(channelName)
+      return;
+    };
+
+    const currentOwner = await guild.members.fetch({cache: true, user: `${BigInt(tempChannel.guildUser.user.id)}`}).catch(() => null);
+
+    if (!currentOwner) return;
+
+    removeFromLobby(voiceChannel, [user.user], [], currentOwner.user, tempChannel, i18next)
+
+    if(oldOwnerGuidUser.tempChannel)
+      pushLobbyToUser(oldOwnerMember, {member: oldOwnerMember, guild, tempChannel: oldOwnerGuidUser.tempChannel, voiceChannel});
+  })
+}
+
+const destroyPusherSubscriptionListener = (voiceChannel : VoiceChannel) => {
+  const channelName = voiceIdToPusherChannel(voiceChannel)
+
+  pusherClient.unsubscribe(channelName)
+}
+
 router.onInit = async (client, orm, _i18n, logger) => {
+  let isFirst = true;
+
   // Check elke tempChannel om de 60 minuten
   const checkTempLobbies = async () => {
     const em = orm.em.fork();
@@ -1685,10 +1756,12 @@ router.onInit = async (client, orm, _i18n, logger) => {
       populate: ['guildUser.user', 'guildUser.guild'],
     });
 
-    const tempChecks = usersWithTemp.map((tcs) => checkTempChannel(client, tcs, em, _i18n, logger));
+    const tempChecks = usersWithTemp.map((tcs) => checkTempChannel(client, tcs, em, _i18n, logger, isFirst));
 
     await Promise.all(tempChecks).catch((err) => logger.error(err.description, { error: err }));
     await em.flush().catch((error) => logger.error(error.description, { error }));
+
+    isFirst = false;
 
     setTimeout(checkTempLobbies, 1000 * 60);
   };
@@ -1736,6 +1809,7 @@ router.onInit = async (client, orm, _i18n, logger) => {
           // Degene had al een kanaal
           newState.setChannel(activeChannel);
         } else if (channel.parent) {
+          // Creeer een nieuw kanaal
           let type : ChannelType = ChannelType.Public;
           if (channel.id === (await categoryData).privateVoice) type = ChannelType.Nojoin;
           if (channel.id === (await categoryData).muteVoice) type = ChannelType.Mute;
@@ -1752,7 +1826,8 @@ router.onInit = async (client, orm, _i18n, logger) => {
 
           await createDashBoardCollector(client, voiceChannel, guildUser.tempChannel, em.fork(), _i18n, logger).catch((error) => { logger.error(error.discription, { error }); });
 
-          pushLobbyChangeToUser(member, {member, guild: newState.guild, tempChannel: guildUser.tempChannel, voiceChannel: voiceChannel});
+          pushLobbyToUser(member, {member, guild: newState.guild, tempChannel: guildUser.tempChannel, voiceChannel: voiceChannel});
+          createPusherSubscriptionListeners(em, {member, guild: newState.guild, voiceChannel, owner: guildUser});
 
           if (textChannel.id !== voiceChannel.id) { await textChannel.edit({ permissionOverwrites: getTextPermissionOverwrites(voiceChannel, client) }).catch((error) => { logger.error(error.discription, { error }); }); }
         }
@@ -1773,9 +1848,8 @@ router.onInit = async (client, orm, _i18n, logger) => {
           }
 
           // Update mobile users
-
           const owner = await newState.guild?.members.fetch({ cache: true, user: `${BigInt(tempChannel.guildUser.user.id)}` }).catch(() => null);
-          activeChannel && owner && pushLobbyChangeToUser(owner, {member: owner, guild: newState.guild, tempChannel, voiceChannel: activeChannel});
+          activeChannel && owner && pushLobbyToUser(owner, {member: owner, guild: newState.guild, tempChannel, voiceChannel: activeChannel});
         }
       }
 

@@ -41,6 +41,14 @@ export const lobbyChangeSchema = z.object({
   users: z.array(userSchema),
 }).optional().nullable()
 
+export const addUserSchema = z.object({
+  user: z.object({
+    id: z.string(),
+  })
+})
+
+export const removeUserSchema = addUserSchema;
+
 export function generateLobbyName(
   type : ChannelType,
   owner : { displayName: string },
@@ -70,3 +78,5 @@ export function generateLobbyName(
   if (textChat) return `📝${newName || `${owner.displayName}`} chat`;
   return `${icon} ${newName || `${owner.displayName}'s Lobby`}`;
 }
+
+export const voiceIdToPusherChannel = (voiceChannel : {id : string}) => `private-channel-${voiceChannel.id}`

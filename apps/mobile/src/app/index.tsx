@@ -9,16 +9,18 @@ import { baseConfig } from "tailwind.config";
 import { useAuth } from "src/context/auth";
 import { PusherProvider, usePusher } from "src/context/pusher";
 import { useEffect, useState } from "react";
-import { ChannelType, generateLobbyName, lobbyChangeSchema } from "@ei/lobby";
+import { ChannelType, generateLobbyName, lobbyChangeSchema, voiceIdToPusherChannel } from "@ei/lobby";
 import { CDNRoutes, ImageFormat, RouteBases } from "discord-api-types/rest/v10";
 import ChannelTypeButton from "src/components/ChannelTypeButton";
 import UserLimitButton from "src/components/UserLimitButton";
 import UsersSheet from "src/components/UsersSheet";
+import useLobby from "src/hooks/useLobby";
 
 const Screen = () => {
   const [lobby, setLobby] = useState<Zod.infer<typeof lobbyChangeSchema> | null>(null)
   const {data: user} = api.user.me.useQuery();
-  const {pusher} = usePusher();
+  const activeLobby = useLobby();
+  const pusher = usePusher();
 
   useEffect(() => {
     if(!pusher) return;
@@ -37,6 +39,19 @@ const Screen = () => {
       pusher.user.unbind('lobbyChange');
     }
   }, [pusher])
+
+  useEffect(() => {
+    if (!pusher || !activeLobby?.channelId) return;
+    const channelName = voiceIdToPusherChannel({id: activeLobby.channelId})
+
+    console.log('Subscribing to channel', channelName)
+    pusher.subscribe(channelName);
+
+    return () => {
+      console.log('Unsubscribing from channel', channelName)
+      pusher.unsubscribe(channelName)
+    }
+  }, [pusher, activeLobby?.channelId])
 
   if(!lobby) return (
     <View className="flex-1 align-middle justify-center">

@@ -4,7 +4,6 @@ import baseConfig from '@ei/tailwind-config'
 import { View } from 'react-native'
 import { userSchema } from '@ei/lobby'
 import { useEffect, useRef, useState } from 'react'
-import Animated, { FadeInUp, FadeOutDown, Layout } from 'react-native-reanimated'
 
 const UsersSheet = ({users} : {users : Zod.infer<typeof userSchema>[]}) => {
   const sheetRef = useRef<BottomSheet>(null);

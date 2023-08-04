@@ -123,6 +123,9 @@ importers:
       pg:
         specifier: ^8.3.3
         version: 8.3.3
+      pusher-js:
+        specifier: ^8.3.0
+        version: 8.3.0
       source-map-support:
         specifier: ^0.5.19
         version: 0.5.19

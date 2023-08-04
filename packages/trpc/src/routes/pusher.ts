@@ -3,7 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { pusher } from "@ei/pusher-server";
 
 export const pusherRouter = createTRPCRouter({
-  auth: protectedProcedure
+  authentication: protectedProcedure
     .input(z.object({
       socketId: z.string(),
     }))
@@ -13,5 +13,16 @@ export const pusherRouter = createTRPCRouter({
       });
 
       return authResponse;
-    })
+    }),
+  authorization: protectedProcedure
+    .input(z.object({
+      socketId: z.string(),
+      channelName: z.string(),
+    }))
+    .mutation(async ({ input: {socketId, channelName} }) => {
+      // TODO: Check if user is allowed to join channel
+      const authResponse = pusher.authorizeChannel(socketId, channelName);
+
+      return authResponse;
+    }),
 });
