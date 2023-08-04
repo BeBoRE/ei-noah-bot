@@ -43,7 +43,7 @@ import {
   UniqueConstraintViolationException,
 } from '@mikro-orm/core';
 import {
-  EntityManager, MikroORM,
+  EntityManager
 } from '@mikro-orm/postgresql';
 import emojiRegex from 'emoji-regex';
 import moment, { Duration } from 'moment';
@@ -59,8 +59,9 @@ import createMenu from '../createMenu';
 import { createEntityCache } from '../EiNoah';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 import { pusher } from '@ei/pusher-server';
-import { lobbyChangeSchema, ChannelType, getIcon, generateLobbyName, voiceIdToPusherChannel, addUserSchema, removeUserSchema } from '@ei/lobby';
+import { lobbyChangeSchema, ChannelType, getIcon, generateLobbyName, voiceIdToPusherChannel, addUserSchema, removeUserSchema, clientChangeLobby } from '@ei/lobby';
 import pusherClient from '../utils/pusher-js';
+import globalLogger from '../logger';
 
 const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');
 
@@ -906,12 +907,12 @@ const changeLobby = (() => {
   const timeouts = new Map<Snowflake, NameChangeTimeout>();
 
   return async (
-    changeTo : ChannelType,
+    changeTo : ChannelType | undefined,
     voiceChannel : VoiceChannel,
     owner : GuildMember,
     guild : DiscordGuild,
     tempChannel : TempChannel,
-    limit: number,
+    limit: number | undefined,
     interaction: MessageComponentInteraction | null,
     em: EntityManager,
     i18n : I18n,
@@ -920,7 +921,7 @@ const changeLobby = (() => {
   ) => {
     const currentType = getChannelType(voiceChannel);
     const textChannel = activeTempText(guild.client, tempChannel);
-    const deny = toDeny(changeTo, voiceChannel.id !== (await textChannel)?.id);
+    const deny = toDeny(changeTo ?? currentType, voiceChannel.id !== (await textChannel)?.id);
 
     if (changeTo !== currentType || forcePermissionUpdate) {
       const newOverwrites = currentType === ChannelType.Public ? voiceChannel.members
@@ -953,7 +954,7 @@ const changeLobby = (() => {
         .catch((error) => logger.error(error.description, { error }));
     }
 
-    const newName = generateLobbyName(changeTo, owner, tempChannel.name);
+    const newName = generateLobbyName(changeTo ?? currentType, owner, tempChannel.name);
     if (!newName) throw new Error('Invalid Lobby Name');
 
     const currentName = await voiceChannel.fetch(false).then((vc) => (vc instanceof VoiceChannel && vc.name) || null).catch(() => null);
@@ -971,8 +972,8 @@ const changeLobby = (() => {
       const execute = async () => {
         await Promise.all([voiceChannel.fetch(false).catch(() => null), (await textChannel)?.fetch(false).catch(() => null)])
           .then(([vc, tc]) => {
-            const newVoiceName = generateLobbyName(changeTo, owner, tempChannel.name);
-            const newTextName = generateLobbyName(changeTo, owner, tempChannel.name, true);
+            const newVoiceName = generateLobbyName(changeTo ?? currentType, owner, tempChannel.name);
+            const newTextName = generateLobbyName(changeTo ?? currentType, owner, tempChannel.name, true);
 
             if (!newVoiceName || !newTextName) throw new Error('Invalid Name Given');
 
@@ -1026,7 +1027,7 @@ const changeLobby = (() => {
       if (timeout?.timeout) clearTimeout(timeout.timeout);
     }
 
-    if (voiceChannel.userLimit !== limit) {
+    if (limit !== undefined && voiceChannel.userLimit !== limit) {
       await voiceChannel.setUserLimit(limit);
     }
 
@@ -1665,7 +1666,7 @@ const pushLobbyToUser = (user : Pick<GuildMember, "id">, data : {member: GuildMe
       icon: data.guild.iconURL({forceStatic: true, size: 512, extension: 'png'}),
     }, 
     channel: {
-      id: data.guild.id,
+      id: data.voiceChannel.id,
       name: data.tempChannel.name || null,
       type: getChannelType(data.voiceChannel),
       limit: data.voiceChannel.userLimit,
@@ -1736,6 +1737,20 @@ const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwne
 
     if(oldOwnerGuidUser.tempChannel)
       pushLobbyToUser(oldOwnerMember, {member: oldOwnerMember, guild, tempChannel: oldOwnerGuidUser.tempChannel, voiceChannel});
+  }).bind('client-change-lobby', async (data : unknown) => { 
+    const em = _em.fork()
+    const parsedData = clientChangeLobby.safeParse(data);
+
+    if(!parsedData.success) return;
+
+    const tempChannel = await em.findOne(TempChannel, {channelId: voiceChannel.id}, {populate: ['guildUser.user']});
+
+    if (!tempChannel) {
+      pusherClient.unsubscribe(channelName)
+      return;
+    };
+
+    changeLobby(parsedData.data.type, voiceChannel, oldOwnerMember, guild, tempChannel, parsedData.data.limit, null, em, i18next, globalLogger, false)
   })
 }
 

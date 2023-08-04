@@ -47,6 +47,11 @@ export const addUserSchema = z.object({
   })
 })
 
+export const clientChangeLobby = z.object({
+  type: z.nativeEnum(ChannelType),
+  limit: z.number(),
+}).partial()
+
 export const removeUserSchema = addUserSchema;
 
 export function generateLobbyName(
