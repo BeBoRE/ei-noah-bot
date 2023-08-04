@@ -199,9 +199,15 @@ importers:
       '@react-navigation/native':
         specifier: ^6.1.7
         version: 6.1.7(react-native@0.72.3)(react@18.2.0)
+      '@tanstack/query-async-storage-persister':
+        specifier: ^4.32.5
+        version: 4.32.5
       '@tanstack/react-query':
         specifier: ^4.29.23
         version: 4.29.23(react-dom@18.2.0)(react-native@0.72.3)(react@18.2.0)
+      '@tanstack/react-query-persist-client':
+        specifier: ^4.32.5
+        version: 4.32.5(@tanstack/react-query@4.29.23)
       '@trpc/client':
         specifier: ^10.34.0
         version: 10.35.0(@trpc/server@10.35.0)
@@ -4044,8 +4050,24 @@ packages:
       remove-accents: 0.4.2
     dev: false
 
+  /@tanstack/query-async-storage-persister@4.32.5:
+    resolution: {integrity: sha512-5D8C/3RGBhuTwq6okdkUCiJQBozZzYbj8LSFNharcI74A0CYsEgxuoR/HVGVUDeQKb2T38Oj63E6olq8jZJ3Ag==}
+    dependencies:
+      '@tanstack/query-persist-client-core': 4.32.5
+    dev: false
+
   /@tanstack/query-core@4.29.23:
     resolution: {integrity: sha512-4BMHPrkfYmLP+NvqbbkV7Mk1nnphu+bNmxhhuB0+EMjKA7VfyFCfiyiTf55RRDgLaevyb9LrFK16lHW2owF52w==}
+    dev: false
+
+  /@tanstack/query-core@4.32.5:
+    resolution: {integrity: sha512-UOxiDYmzYWD21ASIUnW3w+Nq3LcW1BPFFfIyZOor6UsRl76KGLlvUhJ402/dof1JxcQFPK7nZ5iUGPVqLiT8zg==}
+    dev: false
+
+  /@tanstack/query-persist-client-core@4.32.5:
+    resolution: {integrity: sha512-+fxI9QcR8SbWoBjdnbB6M+Xbv381w0ygm4kKRLz/QKfNVMm8uTcAVz9lbnKyDO9AJ0rB8h7ps5IKGvdH0szzHA==}
+    dependencies:
+      '@tanstack/query-core': 4.32.5
     dev: false
 
   /@tanstack/react-query-devtools@4.29.23(@tanstack/react-query@4.29.23)(react-dom@18.2.0)(react@18.2.0):
@@ -4075,6 +4097,15 @@ packages:
       next: 13.4.12(react-dom@18.2.0)(react@18.2.0)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
+    dev: false
+
+  /@tanstack/react-query-persist-client@4.32.5(@tanstack/react-query@4.29.23):
+    resolution: {integrity: sha512-vq5onulghFAl5G0MXJUkeK7SRkUN/QSdJYpJYCemGYayFlmZxQOo6fF3fyn9xnZowvUdufCsCoXWgQf5duIW1A==}
+    peerDependencies:
+      '@tanstack/react-query': ^4.32.5
+    dependencies:
+      '@tanstack/query-persist-client-core': 4.32.5
+      '@tanstack/react-query': 4.29.23(react-dom@18.2.0)(react-native@0.72.3)(react@18.2.0)
     dev: false
 
   /@tanstack/react-query@4.29.23(react-dom@18.2.0)(react-native@0.72.3)(react@18.2.0):

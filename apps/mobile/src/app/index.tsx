@@ -14,6 +14,7 @@ import { CDNRoutes, ImageFormat, RouteBases } from "discord-api-types/rest/v10";
 import ChannelTypeButton from "src/components/ChannelTypeButton";
 import UserLimitButton from "src/components/UserLimitButton";
 import UsersSheet from "src/components/UsersSheet";
+import JoinLobby from "src/components/JoinLobby";
 
 const Screen = () => {
   const [lobby, setLobby] = useState<Zod.infer<typeof lobbyChangeSchema> | null>(null)
@@ -52,9 +53,7 @@ const Screen = () => {
   }, [pusher, user?.id])
 
   if(!lobby) return (
-    <View className="flex-1 align-middle justify-center">
-      <Text className="text-center text-3xl m-3">Please join a lobby {user?.globalName}</Text>
-    </View>
+    <JoinLobby />
   )
 
   const guild = lobby.guild;

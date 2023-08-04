@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import Constants from "expo-constants";
-import { focusManager, onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { focusManager, onlineManager, QueryClient } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import superjson from "superjson";
@@ -9,6 +9,9 @@ import NetInfo from "@react-native-community/netinfo";
 import type { AppRouter } from "@ei/trpc";
 import { AppState, AppStateStatus, Platform } from "react-native";
 import { useAuth } from "src/context/auth";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 
 onlineManager.setEventListener(setOnline => {
   return NetInfo.addEventListener(state => {
@@ -54,6 +57,10 @@ const getBaseUrl = () => {
   return `http://${localhost}:3000`;
 };
 
+const asyncStoragePersistor = createAsyncStoragePersister({
+  storage: AsyncStorage
+})
+
 /**
  * A wrapper for your app that provides the TRPC context.
  * Use only in _app.tsx
@@ -89,9 +96,9 @@ export function TRPCProvider(props: { children: React.ReactNode }) {
 
   return (
     <api.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider persistOptions={{persister: asyncStoragePersistor}} client={queryClient}>
         {props.children}
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </api.Provider>
   );
 }
