@@ -8,10 +8,16 @@ import { ThemeProvider, DarkTheme } from '@react-navigation/native'
 import { TRPCProvider } from "../utils/api";
 import baseConfig from "@ei/tailwind-config";
 import { AuthProvider } from "src/context/auth";
+import { useFonts } from "expo-font";
 
 // This is the main layout of the app
 // It wraps your pages with the providers they need
 const RootLayout = () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  useFonts({
+    'gg-sans': require('../../assets/fonts/ggsans-Medium.ttf')
+  })
+
   return (
     <AuthProvider>
       <TRPCProvider>

@@ -238,6 +238,9 @@ importers:
       expo-dev-client:
         specifier: ~2.4.6
         version: 2.4.6(expo@49.0.3)
+      expo-font:
+        specifier: ~11.4.0
+        version: 11.4.0(expo@49.0.3)
       expo-image:
         specifier: ^1.3.2
         version: 1.3.2(expo@49.0.3)
