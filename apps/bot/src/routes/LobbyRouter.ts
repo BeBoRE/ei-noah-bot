@@ -59,7 +59,7 @@ import createMenu from '../createMenu';
 import { createEntityCache } from '../EiNoah';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 import { pusher } from '@ei/pusher-server';
-import { lobbyChangeSchema, ChannelType, getIcon, generateLobbyName, voiceIdToPusherChannel, addUserSchema, removeUserSchema, clientChangeLobby } from '@ei/lobby';
+import { lobbyChangeSchema, ChannelType, getIcon, generateLobbyName, addUserSchema, removeUserSchema, clientChangeLobby, userIdToPusherChannel } from '@ei/lobby';
 import pusherClient from '../utils/pusher-js';
 import globalLogger from '../logger';
 
@@ -597,6 +597,8 @@ const removeFromLobby = async (
     message += i18n.t('lobby.rolesNotRemoved', { roles: rolesNotRemoved.map((i) => i.toString()), count: rolesNotRemoved.length });
   }
 
+  if(!deletePromises.length) return i18n.t('lobby.error.nothingToRemove')
+
   await Promise.all(deletePromises).then(() => {
     if (tempChannel) {
       const tempText = activeTempText(channel.client, tempChannel);
@@ -641,77 +643,6 @@ router.use('remove', async ({
     return i18n.t('lobby.error.noRemoveInPublic');
   }
 
-  await msg.guild.members.fetch();
-
-  if (!users.length && !roles.length) {
-    const removeAbleRoles = msg.guild.roles.cache
-      .filter((role) => activeChannel.permissionOverwrites.cache.has(role.id))
-      .filter((role) => role.id !== msg.guild?.id)
-      .map((role) => role);
-
-    const removeAbleUsers = msg.guild.members.cache
-      .filter((member) => {
-        if (member.id === requestingUser.id) return false;
-        if (member.id === msg.client.user?.id) return false;
-        if (activeChannel.permissionOverwrites.cache.has(member.id)) return true;
-        if (activeChannel.members.has(member.id)) return true;
-        return false;
-      })
-      .map((member) => member.user);
-
-    if (removeAbleUsers.length === 0 && removeAbleRoles.length === 0) {
-      return i18n.t('lobby.error.noUserToBeRemoved');
-    }
-
-    const selectedUsers = new Set<DiscordUser>();
-    const selectedRoles = new Set<Role>();
-
-    createMenu({
-      logger,
-      list: [...removeAbleRoles, ...removeAbleUsers],
-      owner: requestingUser,
-      msg,
-      title: i18n.t('lobby.roleRemovalTitle'),
-      mapper: (item) => {
-        if (item instanceof DiscordUser) {
-          return `${selectedUsers.has(item) ? '✅' : ''}User: ${item.username}`;
-        }
-
-        return `${selectedRoles.has(item) ? '✅' : ''}Role: ${item.name}`;
-      },
-      selectCallback: (selected) => {
-        if (selected instanceof DiscordUser) {
-          if (selectedUsers.has(selected)) selectedUsers.delete(selected);
-          else selectedUsers.add(selected);
-        } else if (selectedRoles.has(selected)) selectedRoles.delete(selected);
-        else selectedRoles.add(selected);
-
-        return false;
-      },
-      extraButtons: [
-        [new ButtonBuilder({
-          label: '❌',
-          customId: 'delete',
-          style: ButtonStyle.Danger,
-        }), () => {
-          if (guildUser.tempChannel) {
-            return removeFromLobby(
-              activeChannel,
-              Array.from(selectedUsers),
-              Array.from(selectedRoles),
-              requestingUser,
-              guildUser.tempChannel,
-              i18n,
-            );
-          }
-
-          return 'Lobby bestaat niet meer';
-        }],
-      ],
-    });
-
-    return null;
-  }
   return removeFromLobby(activeChannel, users, roles, requestingUser, guildUser.tempChannel, i18n);
 }, HandlerType.GUILD, {
   description: 'Remove selected users and roles from the lobby',
@@ -1558,12 +1489,14 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
   const activeChannel = await activeTempChannel(client, em, tempChannel);
   const activeTextChannel = await activeTempText(client, tempChannel);
 
+  const oldOwner = tempChannel.guildUser.user;
+
   if (!activeChannel) {
     em.remove(tempChannel);
     if (activeTextChannel?.deletable) await activeTextChannel.delete().catch(() => { });
   } else if (!activeChannel.members.filter((member) => !member.user.bot).size) {
     // If there is no one left in the lobby remove the lobby
-    destroyPusherSubscriptionListener(activeChannel)
+    destroyPusherSubscriptionListener(tempChannel.guildUser.user)
     await Promise.all([activeChannel.delete(), activeChannel.id !== activeTextChannel?.id && activeTextChannel?.delete()]).catch((error) => { logger.error(error.description, { error }); });
 
     pushLobbyToUser(tempChannel.guildUser.user, null)
@@ -1614,6 +1547,9 @@ const checkTempChannel = async (client : Client, tempChannel: TempChannel, em : 
         .catch((err) => logger.error(err.message, { error: err }));
 
       if (newOwner.voice.suppress) { newOwner.voice.setMute(false).catch(() => { }); }
+
+      destroyPusherSubscriptionListener(oldOwner);
+      createPusherSubscriptionListeners(em, {member: newOwner, guild: activeChannel.guild, voiceChannel: activeChannel, owner: tempChannel.guildUser});
 
       await Promise.all([
         changeLobby(type, activeChannel, newOwner, newOwner.guild, tempChannel, activeChannel.userLimit, null, em, i18n, logger, true),
@@ -1685,7 +1621,7 @@ const pushLobbyToUser = (user : Pick<GuildMember, "id">, data : {member: GuildMe
 // Listens to new subscriptions
 // When there is a new subscription it will send the current lobby state to the user
 const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwnerMember, guild, voiceChannel, owner: oldOwnerGuidUser} : {member : GuildMember, guild : DiscordGuild, voiceChannel : VoiceChannel, owner : GuildUser}) => {
-  const channelName = voiceIdToPusherChannel(voiceChannel)
+  const channelName = userIdToPusherChannel(oldOwnerMember)
   
   console.log('listening to channel', channelName)
   pusherClient.subscribe(channelName).bind('pusher:subscription_count', async () => {
@@ -1754,8 +1690,10 @@ const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwne
   })
 }
 
-const destroyPusherSubscriptionListener = (voiceChannel : VoiceChannel) => {
-  const channelName = voiceIdToPusherChannel(voiceChannel)
+const destroyPusherSubscriptionListener = (user : Pick<DiscordUser, 'id'>) => {
+  const channelName = userIdToPusherChannel(user)
+
+  pusher.sendToUser(user.id, 'lobbyChange', null)
 
   pusherClient.unsubscribe(channelName)
 }

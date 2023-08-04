@@ -84,4 +84,5 @@ export function generateLobbyName(
   return `${icon} ${newName || `${owner.displayName}'s Lobby`}`;
 }
 
-export const voiceIdToPusherChannel = (voiceChannel : {id : string}) => `private-channel-${voiceChannel.id}`
+//export const voiceIdToPusherChannel = (voiceChannel : {id : string}) => `private-channel-${voiceChannel.id}`
+export const userIdToPusherChannel = (user : {id : string}) => `private-user-${user.id}`

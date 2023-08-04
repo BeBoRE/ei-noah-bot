@@ -175,7 +175,8 @@
       "noEmojiOnly": "Lobby naam kan niet alleen uit een emoji bestaan",
       "onlyOwnerCanAllow": "Alleen de eigenaar van de lobby kan iemand binnenlaten",
       "onlyOwnerCanAllowUser": "Alleen {{user}} kan iemand binnenlaten",
-      "onlyOwner": "Alleen de lobby leider kan dit doen"
+      "onlyOwner": "Alleen de lobby leider kan dit doen",
+      "nothingToBeRemoved": "Er is niemand om te verwijderen"
     }
   }, 
   "quote": {

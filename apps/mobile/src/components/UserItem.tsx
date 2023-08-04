@@ -1,11 +1,11 @@
-import { voiceIdToPusherChannel, type userSchema } from "@ei/lobby";
+import { type userSchema, userIdToPusherChannel } from "@ei/lobby";
 import { View } from "react-native";
 import Text from "./Text";
 import { Image } from "expo-image";
 import Animated, { FadeInUp, FadeOutDown, Layout } from "react-native-reanimated";
 import { Pressable } from "react-native";
-import useLobby from "src/hooks/useLobby";
 import { usePusher } from "src/context/pusher";
+import { api } from "src/utils/api";
 
 type ButtonProps = {
   onPress: () => void;
@@ -24,19 +24,19 @@ const RejectButton = ({onPress} : ButtonProps) => {
 }
 
 const UserItem = ({ user }: { user: Zod.infer<typeof userSchema> }) => {
-  const lobby = useLobby();
   const pusher = usePusher();
+  const {data: me} = api.user.me.useQuery();
 
   const onReject = () => {
-    if (!pusher || !lobby) return;
+    if (!pusher || !me) return;
 
-    pusher.channel(voiceIdToPusherChannel({ id: lobby.channelId })).trigger('client-remove-user', { user: {id: user.id} })
+    pusher.channel(userIdToPusherChannel(me)).trigger('client-remove-user', { user: {id: user.id} })
   }
 
   const onAccept = () => {
-    if (!pusher || !lobby) return;
+    if (!pusher || !me) return;
 
-    pusher.channel(voiceIdToPusherChannel({ id: lobby.channelId })).trigger('client-add-user', { user: {id: user.id} })
+    pusher.channel(userIdToPusherChannel(me)).trigger('client-add-user', { user: {id: user.id} })
   }
 
   return (

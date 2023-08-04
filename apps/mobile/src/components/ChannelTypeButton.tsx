@@ -1,6 +1,8 @@
-import { ChannelType, lobbyChangeSchema } from "@ei/lobby"
+import { ChannelType, clientChangeLobby, lobbyChangeSchema, userIdToPusherChannel } from "@ei/lobby"
 import { Pressable } from "react-native"
 import { Image } from "expo-image"
+import { usePusher } from "src/context/pusher"
+import { api } from "src/utils/api"
 
 type Props = {
   lobbyType : ChannelType
@@ -17,9 +19,19 @@ const images = {
 
 const ChannelTypeButton = ({lobbyType, lobby} : Props) => {
   const LobbyIcon = images[lobbyType];
+  const pusher = usePusher();
+  const {data: user} = api.user.me.useQuery();
+
+  const onPress = () => {
+    if(!pusher || !user) return;
+
+    const channel = pusher.channel(userIdToPusherChannel(user))
+
+    channel.trigger('client-change-lobby', {type: lobbyType} satisfies Zod.infer<typeof clientChangeLobby>)
+  }
 
   return (
-    <Pressable className={`w-16 h-16 flex justify-center items-center rounded-full bg-secondary ${lobby.type === lobbyType ? 'border-2 border-primary' : ''}`}><LobbyIcon/></Pressable>
+    <Pressable onPress={onPress} className={`w-16 h-16 flex justify-center items-center rounded-full bg-secondary ${lobby.type === lobbyType ? 'border-2 border-primary' : ''}`}><LobbyIcon/></Pressable>
   )
 }
 

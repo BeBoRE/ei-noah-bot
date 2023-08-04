@@ -1,7 +1,8 @@
-import { clientChangeLobby, lobbyChangeSchema, voiceIdToPusherChannel } from "@ei/lobby"
+import { clientChangeLobby, lobbyChangeSchema, userIdToPusherChannel } from "@ei/lobby"
 import { Pressable } from "react-native"
 import Text from "./Text"
 import { usePusher } from "src/context/pusher"
+import { api } from "src/utils/api"
 
 type Props = {
   limit : number
@@ -10,13 +11,15 @@ type Props = {
 
 const UserLimitButton = ({limit, lobby} : Props) => {
   const pusher = usePusher();
+  const {data: user} = api.user.me.useQuery();
 
   const onPress = () => {
-    if(!pusher) return;
+    if (!pusher) return;
+    if (!user) return;
 
-    const channel = pusher.channel(voiceIdToPusherChannel(lobby))
+    const channel = pusher.channel(userIdToPusherChannel(user));
 
-    channel.trigger('client-change-lobby', {limit} satisfies Zod.infer<typeof clientChangeLobby>)
+    channel.trigger('client-change-lobby', {limit} satisfies Zod.infer<typeof clientChangeLobby>);
   }
 
   return (

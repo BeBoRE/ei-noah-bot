@@ -60,9 +60,10 @@ const getBaseUrl = () => {
  */
 
 export function TRPCProvider(props: { children: React.ReactNode }) {
-  const [queryClient] = React.useState(() => new QueryClient({defaultOptions: {queries: {staleTime: 1000 * 1}}}));
-
   const { authInfo } = useAuth();
+  const isLoggedIn = !!authInfo?.accessToken;
+  
+  const queryClient = React.useMemo(() => new QueryClient({defaultOptions: {queries: {staleTime: 1000 * 1, enabled: isLoggedIn}}}), [isLoggedIn]);
 
   const trpcClient = React.useMemo(() =>
     {
@@ -71,9 +72,9 @@ export function TRPCProvider(props: { children: React.ReactNode }) {
         links: [
           httpBatchLink({
             url: `${getBaseUrl()}/api/trpc`,
-            headers: () => ({
+            headers: authInfo?.accessToken ? {
               authorization: authInfo?.accessToken,
-            })
+            } : undefined
           }),
         ],
       })

@@ -175,7 +175,8 @@
       "noEmojiOnly": "Lobby name needs to be more than just an emoji",
       "onlyOwnerCanAllow": "Only the owner can allow someone into the lobby",
       "onlyOwnerCanAllowUser": "Only {{user}} can allow someone into the lobby",
-      "onlyOwner": "Only the lobby leader can do this"
+      "onlyOwner": "Only the lobby leader can do this",
+      "nothingToBeRemoved": "There is no one to be removed"
     }
   },
   "quote": {
