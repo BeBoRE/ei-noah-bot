@@ -28,8 +28,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: 🧪 Run Tests
-        run: |
-          cd apps/bot
+        run:
           if [ -f docker-compose.test.yml ]; then
             docker-compose --file docker-compose.test.yml build
             docker-compose --file docker-compose.test.yml run sut
