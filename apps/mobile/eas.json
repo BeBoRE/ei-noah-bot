@@ -16,7 +16,7 @@
       "channel": "preview",
       "env": {
         "EXPO_PUBLIC_PUSHER_APP_ID": "1645825",
-        "EXPO_PUBLIC_PUSHER_KEY": "4ac5b4b5d502fe5b09df",
+        "EXPO_PUBLIC_PUSHER_KEY": "e53b6fdba8cac687678b",
         "EXPO_PUBLIC_PUSHER_CLUSTER": "eu",
         "EXPO_PUBLIC_VERCEL_URL": "https://ei.sweaties.net",
         "EXPO_PUBLIC_CLIENT_ID": "730913870805336195",
@@ -27,8 +27,7 @@
       "channel": "production",
       "env": {
         "EXPO_PUBLIC_PUSHER_APP_ID": "1645825",
-        "EXPO_PUBLIC_PUSHER_KEY": "4ac5b4b5d502fe5b09df",
-        "EXPO_PUBLIC_PUSHER_SECRET": "72cdbd6ed3ab7043408a",
+        "EXPO_PUBLIC_PUSHER_KEY": "e53b6fdba8cac687678b",
         "EXPO_PUBLIC_PUSHER_CLUSTER": "eu",
         "EXPO_PUBLIC_VERCEL_URL": "https://ei.sweaties.net",
         "EXPO_PUBLIC_CLIENT_ID": "730913870805336195"
