@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Default",
+  "compilerOptions": {
+      "module": "commonjs",
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
+      "lib": ["ESNext"],
+      "target": "ESNext",
+      "noImplicitAny": true,
+      "moduleResolution": "node",
+      "baseUrl": "src",
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "sourceMap": true,
+      "strict": true,
+      "skipLibCheck": true,
+      "skipDefaultLibCheck": true
+  },
+  "exclude": ["node_modules/**"]
+}

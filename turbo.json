@@ -1,0 +1,35 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [
+    ".env"
+  ],
+  "globalEnv": [
+    "DBNAME", "DBHOST", "DBPASSWORD", "DBPORT", "DBUSER",
+    "DEBUG", 
+    "NODE_ENV", 
+    "LOGGING_WEBHOOK", 
+    "CLIENT_TOKEN", "ERROR_CHANNEL", 
+    "VERCEL_URL", 
+    "WEBPACK", 
+    "CLIENT_ID", "EXPO_PUBLIC_CLIENT_ID",
+    "PUSHER_APP_ID", "PUSHER_KEY", "PUSHER_SECRET", "PUSHER_CLUSTER",
+    "EXPO_PUBLIC_PUSHER_APP_ID", "EXPO_PUBLIC_PUSHER_CLUSTER", "EXPO_PUBLIC_PUSHER_KEY",
+    "EXPO_PUBLIC_VERCEL_URL",
+    "EXPO_TOKEN", "CI"
+  ],
+  "pipeline": {
+    "start": {
+      "outputs": [],
+      "dotEnv": [".env"]
+    },
+    "lint": {},
+    "lint:fix": {},
+    "dev": {
+      "cache": false,
+      "dotEnv": [".env"]
+    },
+    "update": {
+      "env": ["EXPO_TOKEN", "CI"]
+    }
+  }
+}

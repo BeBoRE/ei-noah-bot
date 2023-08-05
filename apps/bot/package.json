@@ -1,0 +1,86 @@
+{
+  "name": "@ei/bot",
+  "version": "1.0.0",
+  "description": "Ei Noah Bot",
+  "main": "./dist/index.js",
+  "scripts": {
+    "start": "ts-node ./src/index.ts",
+    "dev": "ts-node-dev -T ./src/index.ts -watch ./locales/**/*.json",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dotBeFoRE/ei-noah-bot.git"
+  },
+  "keywords": [
+    "discord",
+    "bot"
+  ],
+  "author": "Sweaty Try Hards",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dotBeFoRE/ei-noah-bot/issues"
+  },
+  "homepage": "https://github.com/dotBeFoRE/ei-noah-bot#readme",
+  "dependencies": {
+    "@digitak/esrun": "^3.2.24",
+    "@ei/database": "*",
+    "@ei/lobby": "*",
+    "@ei/pusher-server": "*",
+    "@mikro-orm/core": "^5.5.3",
+    "@mikro-orm/knex": "^5.5.3",
+    "@mikro-orm/migrations": "^5.5.3",
+    "@mikro-orm/postgresql": "^5.5.3",
+    "@mikro-orm/reflection": "^5.5.3",
+    "@types/chart.js": "^2.9.34",
+    "@types/cron": "^1.7.2",
+    "@types/node": "^14.0.27",
+    "@types/node-fetch": "^2.5.7",
+    "@types/source-map-support": "^0.5.3",
+    "@types/ws": "^7.2.6",
+    "canvas": "^2.10.2",
+    "chart.js": "^2.9.4",
+    "chartjs-node-canvas": "^3.2.0",
+    "cron": "^1.8.2",
+    "csv-parse": "^4.12.0",
+    "d": "^1.0.1",
+    "discord-api-types": "^0.27.3",
+    "discord.js": "^14.11.0",
+    "dotenv": "^8.2.0",
+    "emoji-regex": "^9.2.1",
+    "i18next": "^21.6.16",
+    "i18next-fs-backend": "^1.1.1",
+    "markov-chains": "^1.0.2",
+    "moment": "^2.29.4",
+    "node-canvas-with-twemoji-and-discord-emoji": "^1.2.1",
+    "node-fetch": "^3.1.1",
+    "pg": "^8.3.3",
+    "pusher-js": "^8.3.0",
+    "source-map-support": "^0.5.19",
+    "string-similarity": "^4.0.4",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.3",
+    "winston": "^3.6.0",
+    "winston-console-format": "^1.0.8",
+    "winston-discord-transport": "^1.3.0",
+    "winston-transport": "^4.5.0"
+  },
+  "devDependencies": {
+    "@ei/tsconfig": "*",
+    "@mikro-orm/cli": "^5.5.3",
+    "@mikro-orm/entity-generator": "^5.5.3",
+    "@types/emoji-regex": "^9.2.0",
+    "@types/i18next-fs-backend": "^1.0.1",
+    "@types/string-similarity": "^4.0.0",
+    "eslint": "^8.46.0",
+    "eslint-config-custom": "*",
+    "ts-node-dev": "^2.0.0"
+  },
+  "mikro-orm": {
+    "configPaths": [
+      "./src/mikro-orm.config.ts"
+    ]
+  }
+}

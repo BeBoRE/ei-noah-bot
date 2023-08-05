@@ -1,0 +1,32 @@
+{
+  "name": "@ei/trpc",
+  "version": "0.0.0",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "dependencies": {
+    "@discordjs/rest": "^1.7.1",
+    "@ei/database": "*",
+    "@ei/pusher-server": "*",
+    "@ei/tsconfig": "*",
+    "@trpc/server": "^10.35.0",
+    "discord-api-types": "^0.27.3",
+    "lodash": "^4.17.21",
+    "superjson": "1.13.1",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.196",
+    "eslint-config-custom": "*",
+    "typescript": "5.1.6"
+  },
+  "mikro-orm": {
+    "useTsNode": true,
+    "configPaths": [
+      "./src/mikro-orm.config.ts"
+    ]
+  }
+}

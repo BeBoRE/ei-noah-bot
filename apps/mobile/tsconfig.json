@@ -1,0 +1,9 @@
+{
+  "extends": "@ei/tsconfig/expo.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "jsx": "react-native",
+    "types": ["nativewind/types"]
+  },
+  "exclude": ["node_modules", "*.config.js"]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@ei/lobby",
+  "version": "1.0.0",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@ei/tsconfig": "*"
+  },
+  "dependencies": {
+    "emoji-regex": "^9.2.1",
+    "zod": "^3.21.4"
+  }
+}

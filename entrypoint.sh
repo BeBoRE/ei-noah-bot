@@ -1,1 +1,1 @@
-npm start
+pnpm bot
