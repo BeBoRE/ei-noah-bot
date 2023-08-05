@@ -7,7 +7,8 @@
   "packageManager": "pnpm@8.6.9",
   "scripts": {
     "clean": "git clean -xdf node_modules",
-    "dev": "dotenv -- turbo dev"
+    "dev": "dotenv -- turbo dev",
+    "bot": "dotenv -- turbo start --filter=bot"
   },
   "devDependencies": {
     "dotenv-cli": "^7.2.1",

@@ -30,7 +30,8 @@ RUN wget -qO- http://plasmasturm.org/code/vistafonts-installer/vistafonts-instal
 
 COPY . .
 
-RUN npm ci
+RUN npm install -g pnpm
+RUN pnpm install --config.platform=linux --config.architecture=x64
 RUN chmod 500 entrypoint.sh
 
 RUN sed -i 's/\r//g' entrypoint.sh

@@ -1,1 +1,1 @@
-npx turbo run start --filter=@ei/bot
+pnpm bot
