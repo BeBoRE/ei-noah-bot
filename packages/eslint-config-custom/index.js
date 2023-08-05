@@ -4,7 +4,7 @@ require('@rushstack/eslint-patch/modern-module-resolution');
  * @type {import('eslint').Linter.Config}
  */
 module.exports = {
-  extends: ['next', 'turbo', 'eslint:recommended', 'plugin:@typescript-eslint/recommended'],
+  extends: ['turbo', 'eslint:recommended', 'plugin:@typescript-eslint/recommended'],
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint'],
   rules: {

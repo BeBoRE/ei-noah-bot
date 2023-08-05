@@ -1,6 +1,10 @@
 {
   "name": "@ei/lobby",
   "version": "1.0.0",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
   "devDependencies": {
     "@ei/tsconfig": "*"
   },

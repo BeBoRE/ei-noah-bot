@@ -55,7 +55,6 @@ import { Category } from '@ei/database/entity/Category';
 import TempChannel from '@ei/database/entity/TempChannel';
 import { Guild } from '@ei/database/entity/Guild';
 import { GuildUser } from '@ei/database/entity/GuildUser';
-import createMenu from '../createMenu';
 import { createEntityCache } from '../EiNoah';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 import { pusher } from '@ei/pusher-server';
@@ -610,7 +609,7 @@ const removeFromLobby = async (
 };
 
 router.use('remove', async ({
-  params, msg, guildUser, em, flags, i18n, logger,
+  params, msg, guildUser, em, flags, i18n
 }) => {
   const nonUsersOrRoles = params
     .filter((param) => !(param instanceof DiscordUser || param instanceof Role));
@@ -1632,7 +1631,7 @@ const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwne
     if (!tempChannel) {
       pusherClient.unsubscribe(channelName)
       return;
-    };
+    }
 
     pushLobbyToUser(oldOwnerMember, {member: oldOwnerMember, guild, tempChannel, voiceChannel});
   }).bind('client-add-user', async (data : unknown) => {
@@ -1663,7 +1662,7 @@ const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwne
     if (!tempChannel) {
       pusherClient.unsubscribe(channelName)
       return;
-    };
+    }
 
     const currentOwner = await guild.members.fetch({cache: true, user: `${BigInt(tempChannel.guildUser.user.id)}`}).catch(() => null);
 
@@ -1684,7 +1683,7 @@ const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwne
     if (!tempChannel) {
       pusherClient.unsubscribe(channelName)
       return;
-    };
+    }
 
     changeLobby(parsedData.data.type, voiceChannel, oldOwnerMember, guild, tempChannel, parsedData.data.limit, null, em, i18next, globalLogger, false)
   })

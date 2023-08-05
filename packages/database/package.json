@@ -2,6 +2,10 @@
   "name": "@ei/database",
   "main": "index.ts",
   "types": "index.ts",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
   "dependencies": {
     "@ei/tsconfig": "*",
     "@mikro-orm/cli": "^5.7.13",

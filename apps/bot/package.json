@@ -6,7 +6,9 @@
   "scripts": {
     "start": "ts-node ./src/index.ts",
     "dev": "ts-node-dev -T ./src/index.ts -watch ./locales/**/*.json",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "repository": {
     "type": "git",

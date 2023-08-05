@@ -4,7 +4,9 @@
   "main": "index.tsx",
   "scripts": {
     "dev": "expo start",
-    "update": "eas update --auto"
+    "update": "eas update --auto",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix ."
   },
   "dependencies": {
     "@ei/lobby": "*",

@@ -23,6 +23,7 @@
       "dotEnv": [".env"]
     },
     "lint": {},
+    "lint:fix": {},
     "dev": {
       "cache": false,
       "dotEnv": [".env"]

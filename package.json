@@ -9,7 +9,9 @@
     "clean": "git clean -xdf node_modules",
     "dev": "dotenv -- turbo dev",
     "bot": "dotenv -- turbo start --filter=bot",
-    "expo-update": "dotenv -- turbo update"
+    "expo-update": "dotenv -- turbo update",
+    "lint": "dotenv -- turbo lint",
+    "lint:fix": "dotenv -- turbo lint:fix"
   },
   "devDependencies": {
     "dotenv-cli": "^7.2.1",
