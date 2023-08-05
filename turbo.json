@@ -31,7 +31,7 @@
       "env": ["EXPO_TOKEN", "CI"]
     },
     "build": {
-      "dependsOn": ["^build", "^db:generate"],
+      "dependsOn": ["^build"],
       "outputs": [".next/**", ".expo/**"]
     }
   }
