@@ -14,7 +14,10 @@ const defineConfig = (): ExpoConfig => ({
     backgroundColor: "#fbefd5",
   },
   updates: {
-    fallbackToCacheTimeout: 0,
+    "url": "https://u.expo.dev/f01c56f4-e11b-41fd-a1bb-e70cca535c3c"
+  },
+  runtimeVersion: {
+    policy: "sdkVersion"
   },
   assetBundlePatterns: ["**/*"],
   ios: {
