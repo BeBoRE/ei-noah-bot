@@ -4,7 +4,7 @@
   "main": "index.tsx",
   "scripts": {
     "dev": "expo start",
-    "update": "eas login && eas update --auto --non-interactive"
+    "update": "eas login --non-interactive && eas update --auto --non-interactive"
   },
   "dependencies": {
     "@ei/lobby": "*",
