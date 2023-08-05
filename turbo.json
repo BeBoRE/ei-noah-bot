@@ -19,8 +19,7 @@
   ],
   "pipeline": {
     "start": {
-      "outputs": [],
-      "dotEnv": [".env"]
+      "outputs": []
     },
     "lint": {},
     "lint:fix": {},
