@@ -85,7 +85,7 @@ jobs:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.PRIVATE_KEY }}
-        script: apps/bot/redeploy.sh
+        script: ./redeploy.sh
   discord:
     needs: deploy
     name: 📃 Publish Changelog
