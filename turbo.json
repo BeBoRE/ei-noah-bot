@@ -24,6 +24,7 @@
     "dev": {
       "cache": false,
       "dotEnv": [".env"]
-    }
+    },
+    "update": {}
   }
 }
