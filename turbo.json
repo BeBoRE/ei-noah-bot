@@ -29,6 +29,10 @@
     },
     "update": {
       "env": ["EXPO_TOKEN", "CI"]
+    },
+    "build": {
+      "dependsOn": ["^build", "^db:generate"],
+      "outputs": [".next/**", ".expo/**"]
     }
   }
 }
