@@ -44,4 +44,4 @@ jobs:
         run: pnpm install
 
       - name: Publish update
-        run: pnpm run update
+        run: pnpm expo-update
