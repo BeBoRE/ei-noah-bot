@@ -26,6 +26,8 @@
       "cache": false,
       "dotEnv": [".env"]
     },
-    "update": {}
+    "update": {
+      "env": ["EXPO_TOKEN", "CI"]
+    }
   }
 }
