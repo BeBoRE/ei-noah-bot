@@ -9,7 +9,6 @@ import LobbyNameChange from './LobbyNameChange';
 
 @Entity()
 @Unique({ properties: ['guild', 'user'] })
-// eslint-disable-next-line import/prefer-default-export
 export class GuildUser extends BaseEntity<GuildUser, 'id'> {
   @PrimaryKey()
     id!: number;

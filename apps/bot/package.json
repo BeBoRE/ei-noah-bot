@@ -74,6 +74,7 @@
     "@types/emoji-regex": "^9.2.0",
     "@types/i18next-fs-backend": "^1.0.1",
     "@types/string-similarity": "^4.0.0",
+    "eslint": "^8.46.0",
     "eslint-config-custom": "*",
     "ts-node-dev": "^2.0.0"
   },

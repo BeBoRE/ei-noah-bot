@@ -64,7 +64,6 @@ export function AuthProvider({ children } : {children: React.ReactNode}) {
     setAuthInfo(null);
   }
   
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useProtectedRoute(authInfo, isReady);
 
   return (
