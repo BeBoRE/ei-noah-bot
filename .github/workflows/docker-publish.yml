@@ -99,7 +99,7 @@ jobs:
           echo BODY=$(git log --format=%b -n 1 | sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g') >> $GITHUB_ENV
       - name: Send Discord Message
         uses: tsickert/discord-webhook@v1.0.1
-        if: env.BODY
+        if: env.BODY != ''
         with:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           username: ei Noah
