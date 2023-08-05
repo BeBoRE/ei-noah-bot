@@ -4,7 +4,7 @@
   "main": "index.tsx",
   "scripts": {
     "dev": "expo start",
-    "update": "eas login && eas update --auto --non-interactive"
+    "update": "eas update --auto"
   },
   "dependencies": {
     "@ei/lobby": "*",
@@ -22,8 +22,8 @@
     "@trpc/server": "^10.34.0",
     "babel-plugin-inline-dotenv": "^1.7.0",
     "discord-api-types": "0.37.36-next.0d47c69.1677334692",
-    "eas-cli": "^3.17.1",
-    "expo": "^49.0.3",
+    "eas-cli": "^3.18.3",
+    "expo": "^49.0.6",
     "expo-auth-session": "~5.0.2",
     "expo-constants": "~14.4.2",
     "expo-dev-client": "~2.4.6",
