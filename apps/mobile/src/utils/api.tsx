@@ -49,9 +49,11 @@ const getBaseUrl = () => {
   const localhost = debuggerHost?.split(":")[0];
 
   if (!localhost) {
-    // return "https://your-production-url.com";
+    if (process.env.EXPO_PUBLIC_VERCEL_URL)
+      return process.env.EXPO_PUBLIC_VERCEL_URL;
+
     throw new Error(
-      "Failed to get localhost. Please point to your production server.",
+      "Failed to get localhost. Please define your api url with EXPO_PUBLIC_VERCEL_URL.",
     );
   }
   return `http://${localhost}:3000`;
