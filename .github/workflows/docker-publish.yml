@@ -90,7 +90,7 @@ jobs:
     needs: deploy
     name: 📃 Publish Changelog
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && env.BODY
     steps:
       - uses: actions/checkout@v2
       - name: Get Body en Subject

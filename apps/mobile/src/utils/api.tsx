@@ -48,10 +48,10 @@ const getBaseUrl = () => {
   const debuggerHost = Constants.expoConfig?.hostUri;
   const localhost = debuggerHost?.split(":")[0];
 
-  if (!localhost) {
-    if (process.env.EXPO_PUBLIC_VERCEL_URL)
+  if (process.env.EXPO_PUBLIC_VERCEL_URL)
       return process.env.EXPO_PUBLIC_VERCEL_URL;
 
+  if (!localhost) {
     throw new Error(
       "Failed to get localhost. Please define your api url with EXPO_PUBLIC_VERCEL_URL.",
     );
@@ -71,6 +71,8 @@ const asyncStoragePersistor = createAsyncStoragePersister({
 export function TRPCProvider(props: { children: React.ReactNode }) {
   const { authInfo } = useAuth();
   const isLoggedIn = !!authInfo?.accessToken;
+
+  console.log('using api', getBaseUrl())
   
   const queryClient = React.useMemo(() => new QueryClient({defaultOptions: {queries: {staleTime: 1000 * 1, enabled: isLoggedIn}}}), [isLoggedIn]);
 

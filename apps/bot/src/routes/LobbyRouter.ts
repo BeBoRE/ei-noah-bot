@@ -127,6 +127,7 @@ async function createTempChannel(
         PermissionsBitField.Flags.SendMessages,
         PermissionsBitField.Flags.ViewChannel,
         PermissionsBitField.Flags.Connect,
+        PermissionsBitField.Flags.ManageRoles
       ],
     });
   }
