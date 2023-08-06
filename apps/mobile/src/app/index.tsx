@@ -83,7 +83,7 @@ const Screen = () => {
       <View className="bg-primary-900 h-20 rounded-full flex-row justify-around items-center px-2">
         {Array.from(limits).sort((a, b) => a - b).map(limit => <UserLimitButton limit={limit} key={limit} lobby={lobby.channel}/>)}
       </View>
-      <UsersSheet users={lobby.users}/>
+      <UsersSheet users={lobby.users} channelType={lobby.channel.type} />
     </View>
   )
 }
