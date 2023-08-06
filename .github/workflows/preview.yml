@@ -43,6 +43,9 @@ jobs:
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
+
+      - name: Navigate to project directory
+        run: cd apps/mobile
       
       - name: Setup EAS
         uses: expo/expo-github-action@v8
@@ -56,4 +59,4 @@ jobs:
       - name: Create preview
         uses: expo/expo-github-action/preview@v8
         with:
-          command: pnpm expo-update
+          command: eas update --auto
