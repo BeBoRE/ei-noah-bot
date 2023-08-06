@@ -197,11 +197,11 @@ importers:
         specifier: '4'
         version: 4.4.7(@types/react@18.2.16)(react-native-gesture-handler@2.12.0)(react-native-reanimated@3.3.0)(react-native@0.72.3)(react@18.2.0)
       '@react-native-async-storage/async-storage':
-        specifier: ^1.19.1
-        version: 1.19.1(react-native@0.72.3)
+        specifier: ^1.18.2
+        version: 1.18.2(react-native@0.72.3)
       '@react-native-community/netinfo':
-        specifier: ^9.4.1
-        version: 9.4.1(react-native@0.72.3)
+        specifier: ^9.3.10
+        version: 9.3.10(react-native@0.72.3)
       '@react-navigation/native':
         specifier: ^6.1.7
         version: 6.1.7(react-native@0.72.3)(react@18.2.0)
@@ -260,8 +260,8 @@ importers:
         specifier: ~12.3.1
         version: 12.3.1(expo@49.0.6)
       expo-splash-screen:
-        specifier: ~0.20.4
-        version: 0.20.4(expo-modules-autolinking@1.5.0)(expo@49.0.6)
+        specifier: ~0.20.5
+        version: 0.20.5(expo-modules-autolinking@1.5.0)(expo@49.0.6)
       expo-status-bar:
         specifier: ~1.6.0
         version: 1.6.0
@@ -3694,8 +3694,8 @@ packages:
       react: 18.2.0
     dev: false
 
-  /@react-native-async-storage/async-storage@1.19.1(react-native@0.72.3):
-    resolution: {integrity: sha512-5QXuGCtB+HL3VtKL2JN3+6t4qh8VXizK+aGDAv6Dqiq3MLrzgZHb4tjVgtEWMd8CcDtD/JqaAI1b6/EaYGtFIA==}
+  /@react-native-async-storage/async-storage@1.18.2(react-native@0.72.3):
+    resolution: {integrity: sha512-dM8AfdoeIxlh+zqgr0o5+vCTPQ0Ru1mrPzONZMsr7ufp5h+6WgNxQNza7t0r5qQ6b04AJqTlBNixTWZxqP649Q==}
     peerDependencies:
       react-native: ^0.0.0-0 || 0.60 - 0.72 || 1000.0.0
     dependencies:
@@ -3890,8 +3890,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@react-native-community/netinfo@9.4.1(react-native@0.72.3):
-    resolution: {integrity: sha512-dAbY5mfw+6Kas/GJ6QX9AZyY+K+eq9ad4Su6utoph/nxyH3whp5cMSgRNgE2VhGQVRZ/OG0qq3IaD3+wzoqJXw==}
+  /@react-native-community/netinfo@9.3.10(react-native@0.72.3):
+    resolution: {integrity: sha512-OwnqoJUp/4sa9e3ju+wQavAa8l0fiA3DheeLMKzKxtKeAe0CA7bNxWRM752JvRQ6A/igPnt1V0zSlu5owvQEuA==}
     peerDependencies:
       react-native: '>=0.59'
     dependencies:
@@ -7763,7 +7763,7 @@ packages:
       expo-constants: 14.4.2(expo@49.0.6)
       expo-head: 0.0.11(expo-constants@14.4.2)(expo@49.0.6)(react-dom@18.2.0)(react-native@0.72.3)(react@18.2.0)
       expo-linking: 5.0.2(expo@49.0.6)
-      expo-splash-screen: 0.20.4(expo-modules-autolinking@1.5.0)(expo@49.0.6)
+      expo-splash-screen: 0.20.5(expo-modules-autolinking@1.5.0)(expo@49.0.6)
       expo-status-bar: 1.6.0
       metro: 0.76.7
       query-string: 7.1.3
@@ -7791,8 +7791,8 @@ packages:
       expo: 49.0.6(@babel/core@7.22.9)
     dev: false
 
-  /expo-splash-screen@0.20.4(expo-modules-autolinking@1.5.0)(expo@49.0.6):
-    resolution: {integrity: sha512-JMfVqkb3Fbt9mdrWfSkTxaIkjd2RMJmQ19/JN+4Gk2MVEP4L1yzTQLomneH5+z/N5x48Tk3ZN+bFhtUXIlfjzg==}
+  /expo-splash-screen@0.20.5(expo-modules-autolinking@1.5.0)(expo@49.0.6):
+    resolution: {integrity: sha512-nTALYdjHpeEA30rdOWSguxn72ctv8WM8ptuUgpfRgsWyn4i6rwYds/rBXisX69XO5fg+XjHAQqijGx/b28+3tg==}
     peerDependencies:
       expo: '*'
     dependencies:
