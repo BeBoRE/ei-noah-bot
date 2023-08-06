@@ -6,6 +6,7 @@ import Text from 'src/components/Text';
 import {ResponseType, exchangeCodeAsync, makeRedirectUri, useAuthRequest } from 'expo-auth-session';
 import { useMemo } from 'react';
 import { useAuth } from 'src/context/auth';
+import config from 'src/config';
 
 const SignIn = () => {
   const redirectUri = useMemo(() => makeRedirectUri({
@@ -21,7 +22,7 @@ const SignIn = () => {
   };
 
   const [request, , promptAsync] = useAuthRequest({
-      clientId: process.env.EXPO_PUBLIC_CLIENT_ID || '',
+      clientId: config.discord.clientId,
       scopes: ['identify'],
       responseType: ResponseType.Code,
       usePKCE: true,
@@ -34,7 +35,7 @@ const SignIn = () => {
     if (res.type === 'success' && res.params.code) {
 
       exchangeCodeAsync({
-        clientId: process.env.EXPO_PUBLIC_CLIENT_ID || '',
+        clientId: config.discord.clientId,
         code: res.params.code,
         extraParams: request?.codeVerifier ? { code_verifier: request.codeVerifier } : undefined,
         redirectUri: redirectUri,

@@ -2,6 +2,7 @@ import Pusher from 'pusher-js'
 import { createContext, useContext, useEffect, useMemo } from 'react';
 import { useAuth } from './auth';
 import { api } from 'src/utils/api';
+import config from 'src/config';
 
 type PusherContextProps = Pusher | null
 
@@ -12,19 +13,13 @@ export function usePusher() {
 }
 
 export function PusherProvider({ children } : {children: React.ReactNode}) {
-  const cluster = process.env.EXPO_PUBLIC_PUSHER_CLUSTER;
-  const appKey = process.env.EXPO_PUBLIC_PUSHER_KEY;
-
-  if (!appKey) throw new Error('Missing EXPO_PUBLIC_PUSHER_KEY');
-  if (!cluster) throw new Error('Missing EXPO_PUBLIC_PUSHER_CLUSTER');
-
   const {authInfo} = useAuth();
   const {mutate: authentication} = api.pusher.authentication.useMutation();
   const {mutate: channelAuthorization} = api.pusher.authorization.useMutation();
 
   const pusher = useMemo<Pusher>(() => {
-    const newPusher = new Pusher(appKey, {
-      cluster,
+    const newPusher = new Pusher(config.pusher.appKey, {
+      cluster: config.pusher.cluster,
       userAuthentication: {
         transport: 'ajax',
         endpoint: '/api/pusher/auth',
@@ -58,7 +53,7 @@ export function PusherProvider({ children } : {children: React.ReactNode}) {
     },);
 
     return newPusher;
-  }, [appKey, authentication, cluster, channelAuthorization]);
+  }, [api.pusher, authentication, channelAuthorization]);
 
   useEffect(() => {
     return () => {
