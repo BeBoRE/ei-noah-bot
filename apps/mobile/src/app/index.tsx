@@ -37,7 +37,7 @@ const Screen = () => {
     return () => {
       pusher.user.unbind('lobbyChange');
     }
-  }, [pusher])
+  }, [pusher?.sessionID])
 
   useEffect(() => {
     if (!pusher || !user?.id) return;
@@ -50,7 +50,7 @@ const Screen = () => {
       console.log('Unsubscribing from channel', channelName)
       pusher.unsubscribe(channelName)
     }
-  }, [pusher, user?.id])
+  }, [pusher?.sessionID, user?.id])
 
   if(!lobby) return (
     <JoinLobby />
