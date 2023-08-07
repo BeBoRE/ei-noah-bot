@@ -11,7 +11,9 @@
     "bot": "dotenv -- turbo start --filter=bot",
     "expo-update": "dotenv -- turbo update",
     "lint": "dotenv -- turbo lint",
-    "lint:fix": "dotenv -- turbo lint:fix"
+    "lint:fix": "dotenv -- turbo lint:fix",
+    "db:push": "dotenv -- turbo db:push",
+    "db:create": "dotenv -- turbo db:create"
   },
   "devDependencies": {
     "dotenv-cli": "^7.2.1",

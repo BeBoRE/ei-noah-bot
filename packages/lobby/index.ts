@@ -47,6 +47,10 @@ export const addUserSchema = z.object({
   })
 })
 
+export const userAddNotificationSchema = z.object({
+  userId: z.string(),
+})
+
 export const clientChangeLobby = z.object({
   type: z.nativeEnum(ChannelType),
   limit: z.number(),

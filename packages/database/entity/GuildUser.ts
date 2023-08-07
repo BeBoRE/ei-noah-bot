@@ -4,7 +4,7 @@ import {
 import type { User } from './User';
 import type { Guild } from './Guild';
 import Quote from './Quote';
-import type TempChannel from './TempChannel';
+import TempChannel from './TempChannel';
 import LobbyNameChange from './LobbyNameChange';
 
 @Entity()

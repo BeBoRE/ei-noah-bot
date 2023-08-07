@@ -34,6 +34,9 @@ const defineConfig = (): ExpoConfig => {
     ios: {
       supportsTablet: true,
       bundleIdentifier: identifier,
+      infoPlist: {
+        UIBackgroundModes: ["remote-notification"]
+      }
     },
     android: {
       adaptiveIcon: {

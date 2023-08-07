@@ -55,12 +55,14 @@ import { Category } from '@ei/database/entity/Category';
 import TempChannel from '@ei/database/entity/TempChannel';
 import { Guild } from '@ei/database/entity/Guild';
 import { GuildUser } from '@ei/database/entity/GuildUser';
+import { User as DbUser } from '@ei/database/entity/User';
 import { createEntityCache } from '../EiNoah';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 import { pusher } from '@ei/pusher-server';
 import { lobbyChangeSchema, ChannelType, getIcon, generateLobbyName, addUserSchema, removeUserSchema, clientChangeLobby, userIdToPusherChannel } from '@ei/lobby';
 import pusherClient from '../utils/pusher-js';
 import globalLogger from '../logger';
+import Expo from 'expo-server-sdk'
 
 const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');
 
@@ -1698,6 +1700,27 @@ const destroyPusherSubscriptionListener = (user : Pick<DiscordUser, 'id'>) => {
   pusherClient.unsubscribe(channelName)
 }
 
+const expo = new Expo();
+
+const sendUserAddPushNotification = (owner : DbUser, toBeAdded : User) => {
+  const token = owner.expoPushToken;
+
+  if(!token || !Expo.isExpoPushToken(token)) return;
+
+  console.log('sending push notification to', token)
+
+  return expo.sendPushNotificationsAsync([{
+    to: token,
+    sound: 'default',
+    title: `${toBeAdded.username} joined your lobby`,
+    body: `Allow ${toBeAdded.username} to join your lobby`,
+    data: {
+      userId: toBeAdded.id,
+    },
+    categoryId: 'userAdd'
+  }])
+}
+
 router.onInit = async (client, orm, _i18n, logger) => {
   let isFirst = true;
 
@@ -1797,7 +1820,7 @@ router.onInit = async (client, orm, _i18n, logger) => {
           const activeChannel = await activeTempChannel(client, em, tempChannel);
 
           if (!activeChannel?.permissionsFor(member)?.has(PermissionsBitField.Flags.Speak, true)) {
-            await createAddMessage(tempChannel, member.user, client, em, i18n, logger);
+            Promise.all([await createAddMessage(tempChannel, member.user, client, em, i18n, logger), sendUserAddPushNotification(tempChannel.guildUser.user, member.user)]).catch((err) => logger.error(err.description, { error: err }));
           }
 
           // Update mobile users

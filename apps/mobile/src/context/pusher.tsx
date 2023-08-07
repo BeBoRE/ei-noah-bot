@@ -1,7 +1,7 @@
 import Pusher from 'pusher-js'
 import { createContext, useContext, useEffect, useMemo } from 'react';
 import { useAuth } from './auth';
-import { api } from 'src/utils/api';
+import { api, createVanillaApi } from 'src/utils/api';
 import config from 'src/config';
 
 type PusherContextProps = Pusher | null
@@ -52,7 +52,7 @@ export function PusherProvider({ children } : {children: React.ReactNode}) {
           })
         }
       }
-    },);
+    });
 
     return newPusher;
   }, [authentication, channelAuthorization]);
@@ -72,4 +72,34 @@ export function PusherProvider({ children } : {children: React.ReactNode}) {
       {children}
     </pusherContext.Provider>
   )
+}
+
+export function PusherTasks(client : ReturnType<typeof createVanillaApi>) {
+  return new Pusher(config.pusher.appKey, {
+    cluster: config.pusher.cluster,
+    userAuthentication: {
+      transport: 'ajax',
+      endpoint: '/api/pusher/auth',
+      customHandler: async ({socketId}, callback) => {
+        client.pusher.authentication.mutate({socketId}).then((data) => {
+          callback(null, data)
+        }).catch((error) => {
+          console.error(error)
+          callback(new Error("Failed pusher auth"), null)
+        })
+      }
+    },
+    channelAuthorization: {
+      transport: 'ajax',
+      endpoint: '/api/pusher/auth',
+      customHandler: async ({channelName, socketId}, callback) => {
+        client.pusher.authorization.mutate({channelName, socketId}).then((data) => {
+          callback(null, data)
+        }).catch((error) => {
+          console.error(error)
+          callback(new Error("Failed pusher auth"), null)
+        })
+      }
+    }
+  });
 }

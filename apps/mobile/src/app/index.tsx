@@ -15,11 +15,14 @@ import ChannelTypeButton from "src/components/ChannelTypeButton";
 import UserLimitButton from "src/components/UserLimitButton";
 import UsersSheet from "src/components/UsersSheet";
 import JoinLobby from "src/components/JoinLobby";
+import useNotifications from "src/hooks/useNotifications";
 
 const Screen = () => {
   const [lobby, setLobby] = useState<Zod.infer<typeof lobbyChangeSchema> | null>(null)
   const {data: user} = api.user.me.useQuery();
   const pusher = usePusher();
+
+  useNotifications();
 
   useEffect(() => {
     if(!pusher) return;

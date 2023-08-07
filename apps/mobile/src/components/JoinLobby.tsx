@@ -5,7 +5,8 @@ import { Image } from "expo-image"
 const JoinLobby = () => {
   return (
     <View className="flex-1 justify-center">
-      <Text className="text-center text-3xl m-3">Please join a lobby</Text>
+      <Text className="text-center text-primary-300 font-bold text-5xl m-3 mb-8
+      ">Please join a lobby</Text>
       <View className="px-5">
         <View className="rounded-md bg-[#2b2d31]">
           <View className="flex-row items-center p-3">

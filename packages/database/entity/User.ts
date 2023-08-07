@@ -23,4 +23,7 @@ export class User extends BaseEntity<User, 'id'> {
 
   @Property()
     timezone?: string;
+
+  @Property()
+    expoPushToken?: string;
 }
