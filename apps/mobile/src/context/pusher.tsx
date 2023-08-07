@@ -18,6 +18,8 @@ export function PusherProvider({ children } : {children: React.ReactNode}) {
   const {mutate: channelAuthorization} = api.pusher.authorization.useMutation();
 
   const pusher = useMemo<Pusher>(() => {
+    console.log('creating pusher', config.pusher.appKey, config.pusher.cluster)
+
     const newPusher = new Pusher(config.pusher.appKey, {
       cluster: config.pusher.cluster,
       userAuthentication: {
@@ -53,7 +55,7 @@ export function PusherProvider({ children } : {children: React.ReactNode}) {
     },);
 
     return newPusher;
-  }, [api.pusher, authentication, channelAuthorization]);
+  }, [authentication, channelAuthorization]);
 
   useEffect(() => {
     return () => {
