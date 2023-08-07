@@ -4,7 +4,7 @@ import { httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import superjson from "superjson";
 import NetInfo from "@react-native-community/netinfo";
-
+import Constants from "expo-constants";
 import type { AppRouter } from "@ei/trpc";
 import { AppState, AppStateStatus, Platform } from "react-native";
 import { useAuth } from "src/context/auth";

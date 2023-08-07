@@ -20,13 +20,15 @@ type DeepPartial<T> = T extends object ? {
 
 export type DevelopmentConfig = DeepPartial<Config>;
 
-let developmentConfig : Config | null = null;
+let developmentConfig : DevelopmentConfig | null = null;
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  developmentConfig = require("config.development").default;
+  developmentConfig = require("./config.development.ts").default;
 } catch (e) {
   developmentConfig = null;
 }
+
+if (developmentConfig) console.log("Using development config");
 
 const config : Config = _.merge({
   pusher: {
@@ -40,6 +42,6 @@ const config : Config = _.merge({
   discord: {
     clientId: process.env.EXPO_PUBLIC_CLIENT_ID || "730913870805336195"
   }
-}, [developmentConfig])
+}, developmentConfig)
 
 export default config;
