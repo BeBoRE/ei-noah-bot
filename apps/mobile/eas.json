@@ -11,6 +11,12 @@
         "APP_VARIANT": "development"
       }
     },
+    "developmentLocal": {
+      "extends": "development",
+      "ios": {
+        "simulator": true
+      }
+    },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
