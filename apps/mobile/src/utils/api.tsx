@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import Constants from "expo-constants";
 import { focusManager, onlineManager, QueryClient } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
