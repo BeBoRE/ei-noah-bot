@@ -8,7 +8,7 @@ type ButtonProps = PressableProps & {
 }
 
 const Button = (props : ButtonProps) => {
-  const children = typeof props.children === 'string' ? <Text className={twMerge(props.textClassName, "text-white font-bold text-center")}>{props.children}</Text> : props.children;
+  const children = typeof props.children === 'string' ? <Text className={twMerge(props.textClassName, "text-primary-100 font-bold text-center")}>{props.children}</Text> : props.children;
 
   return (
     <Pressable {...props} className={twMerge(props.className, "bg-primary rounded-md p-2")}>

@@ -3,7 +3,7 @@ import type { Config } from "tailwindcss";
 import baseConfig from "@ei/tailwind-config";
 
 export default {
-  content: ["./src/**/*.{ts,tsx}"],
+  content: ["/*.{ts,tsx}"],
   presets: [baseConfig],
 } satisfies Config;
 

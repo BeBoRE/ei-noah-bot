@@ -31,7 +31,7 @@ const ChannelTypeButton = ({lobbyType, lobby} : Props) => {
   }
 
   return (
-    <Pressable onPress={onPress} className={`w-16 h-16 flex justify-center items-center rounded-full bg-secondary ${lobby.type === lobbyType ? 'border-2 border-primary' : ''}`}><LobbyIcon/></Pressable>
+    <Pressable onPress={onPress} className={`w-16 h-16 flex justify-center items-center rounded-full bg-primary-800 ${lobby.type === lobbyType ? 'border-2 border-primary' : ''}`}><LobbyIcon/></Pressable>
   )
 }
 

@@ -103,4 +103,4 @@ jobs:
         with:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
           username: ei Noah
-          content: "**${{ env.SUBJECT }}**\\n${{ env.BODY }}"
+          content: "# ${{ env.SUBJECT }}\\n${{ env.BODY }}"

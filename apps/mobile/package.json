@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "main": "index.tsx",
   "scripts": {
-    "dev": "expo start",
+    "dev": "expo start -c",
     "update": "eas update --auto",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",

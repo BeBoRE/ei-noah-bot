@@ -500,10 +500,17 @@ importers:
         version: link:../tsconfig
 
   packages/tailwind-config:
+    dependencies:
+      color-convert:
+        specifier: ^2.0.1
+        version: 2.0.1
     devDependencies:
       '@ei/tsconfig':
         specifier: '*'
         version: link:../tsconfig
+      '@types/color-convert':
+        specifier: ^2.0.0
+        version: 2.0.0
       autoprefixer:
         specifier: ^10.4.14
         version: 10.4.14(postcss@8.4.27)
@@ -4311,6 +4318,16 @@ packages:
     dependencies:
       moment: 2.29.4
     dev: false
+
+  /@types/color-convert@2.0.0:
+    resolution: {integrity: sha512-m7GG7IKKGuJUXvkZ1qqG3ChccdIM/qBBo913z+Xft0nKCX4hAU/IxKwZBU4cpRZ7GS5kV4vOblUkILtSShCPXQ==}
+    dependencies:
+      '@types/color-name': 1.1.1
+    dev: true
+
+  /@types/color-name@1.1.1:
+    resolution: {integrity: sha512-rr+OQyAjxze7GgWrSaJwydHStIhHq2lvY3BOC2Mj7KnzI7XK0Uw1TOOdI9lDoajEbSWLiYgoo4f1R51erQfhPQ==}
+    dev: true
 
   /@types/cron@1.7.2:
     resolution: {integrity: sha512-AEpNLRcsVSc5AdseJKNHpz0d4e8+ow+abTaC0fKDbAU86rF1evoFF0oC2fV9FdqtfVXkG2LKshpLTJCFOpyvTg==}

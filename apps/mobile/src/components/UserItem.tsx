@@ -2,7 +2,7 @@ import { type userSchema, userIdToPusherChannel, ChannelType } from "@ei/lobby";
 import { View } from "react-native";
 import Text from "./Text";
 import { Image } from "expo-image";
-import Animated, { FadeInUp, FadeOutDown, Layout } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInUp, FadeOut, FadeOutDown, Layout } from "react-native-reanimated";
 import { Pressable } from "react-native";
 import { usePusher } from "src/context/pusher";
 import { api } from "src/utils/api";
@@ -15,17 +15,21 @@ type ButtonProps = {
 
 const AcceptButton = ({onPress} : ButtonProps) => {
   return (
-    <Pressable onPress={onPress} className="w-16 h-16 justify-center items-center rounded-full bg-accept">
-      <MaterialCommunityIcons name="check" size={48} color={baseConfig.theme.colors.text} />
-    </Pressable>
+    <Animated.View entering={FadeIn} exiting={FadeOut.duration(200)}>
+      <Pressable onPress={onPress} className="w-16 h-16 justify-center items-center rounded-full bg-accept">
+        <MaterialCommunityIcons name="check" size={48} color={baseConfig.theme.colors.text} />
+      </Pressable>
+    </Animated.View>
   )
 }
 
 const RejectButton = ({onPress} : ButtonProps) => {
   return (
-    <Pressable onPress={onPress} style={{transform: [{ scaleX: -1 }, {rotate: '30deg'}]}} className="w-16 h-16 justify-center items-center rounded-full bg-reject">
-      <MaterialCommunityIcons  name="shoe-cleat" size={42} color={baseConfig.theme.colors.text} />
-    </Pressable>
+    <Animated.View entering={FadeIn} exiting={FadeOut.duration(200)}>
+      <Pressable onPress={onPress} style={{transform: [{ scaleX: -1 }, {rotate: '30deg'}]}} className="w-16 h-16 justify-center items-center rounded-full bg-reject">
+        <MaterialCommunityIcons  name="shoe-cleat" size={42} color={baseConfig.theme.colors.text} />
+     </Pressable>
+    </Animated.View>
   )
 }
 

@@ -1,25 +1,27 @@
 import type { Config } from "tailwindcss";
 
+const primary = {
+  DEFAULT: '#D68B4D',
+  50: '#F8F3E2',
+  100: '#F5ECD1',
+  200: '#EDD9B0',
+  300: '#E5C38F',
+  400: '#DEA96E',
+  500: '#D68B4D',
+  600: '#BB622B',
+  700: '#89401F',
+  800: '#572414',
+  900: '#250D09',
+  950: '#0C0403'
+} as const
+
 const baseConfig = {
   content: [""],
   theme: {
     colors: {
-      text: '#fbefd5' as const,
-      background: '#0e0a01' as const,
-      primary: {
-        DEFAULT: '#ffcc5f',
-        50: '#fff7e5',
-        100: '#ffe7b3',
-        200: '#ffd680',
-        300: '#ffc64d',
-        400: '#ffb61a',
-        500: '#e69c00',
-        600: '#b37a00',
-        700: '#805700',
-        800: '#4d3400',
-        900: '#1a1100'
-    } as const,
-      secondary: '#382806' as const,
+      text: primary[100],
+      background: primary[950],
+      primary: primary,
       accent: '#e9a920' as const,
       reject: '#BF3535' as const,
       accept: '#207934' as const,

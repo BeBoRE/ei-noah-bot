@@ -109,10 +109,10 @@ const Index = () => {
     ), headerLeft: user && (() => (
       <View className="flex flex-row items-center">
         {user.avatar && <Image source={getUserImageUrl({id: user.id, avatar: user.avatar})} className="w-10 h-10 rounded-full mr-2" alt=""/>}
-        <Text className="text-2xl text-background font-bold">{user?.globalName}</Text>
+        <Text className="text-2xl text-primary-950 font-bold">{user?.globalName}</Text>
       </View>
     ))}}/>
-    <SafeAreaView edges={["left", "right"]} className="flex-1 from-background to-primary-800">
+    <SafeAreaView edges={["left", "right"]} className="flex-1 to-primary-950">
       <PusherProvider>
         <Screen />
       </PusherProvider>

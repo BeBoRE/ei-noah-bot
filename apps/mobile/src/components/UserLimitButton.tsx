@@ -23,7 +23,12 @@ const UserLimitButton = ({limit, lobby} : Props) => {
   }
 
   return (
-    <Pressable onPress={onPress} disabled={lobby.limit === limit} className={`w-16 h-16 flex justify-center items-center rounded-full bg-secondary ${lobby.limit === limit ? 'border-2 border-primary' : ''}`}><Text className="text-3xl font-bold">{limit === 0 ? '∞' : limit}</Text></Pressable>
+    <Pressable
+      onPress={onPress}
+      disabled={lobby.limit === limit}
+      className={`w-16 h-16 flex justify-center items-center rounded-full bg-primary-800 ${lobby.limit === limit ? 'border-2 border-primary' : ''}`}>
+      <Text className="text-3xl font-bold">{limit === 0 ? '∞' : limit}</Text>
+    </Pressable>
   )
 }
 
