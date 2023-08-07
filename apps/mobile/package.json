@@ -6,7 +6,9 @@
     "dev": "expo start",
     "update": "eas update --auto",
     "lint": "eslint .",
-    "lint:fix": "eslint --fix ."
+    "lint:fix": "eslint --fix .",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@ei/lobby": "*",
