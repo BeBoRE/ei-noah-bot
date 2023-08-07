@@ -37,7 +37,19 @@ export { type RouterInputs, type RouterOutputs } from "@ei/trpc";
  * setting the baseUrl to your production API URL.
  */
 const getBaseUrl = () => {
-  return config.api.url;
+  const debuggerHost = Constants.expoConfig?.hostUri;
+  const localhost = debuggerHost?.split(":")[0];
+
+  if (config.api.url)
+      return config.api.url;
+
+  if (!localhost) {
+    throw new Error(
+      "Failed to get localhost. Please define api.url in your config.",
+    );
+  }
+
+  return `http://${localhost}:3000`;
 };
 
 const asyncStoragePersistor = createAsyncStoragePersister({
