@@ -17,7 +17,7 @@ const UsersSheet = ({users, channelType} : {users : Zod.infer<typeof userSchema>
   }, [users.length, prevUserLength])
 
   return (
-    <BottomSheet ref={sheetRef} backgroundStyle={{backgroundColor: baseConfig.theme.colors.primary[900]}} snapPoints={[300, '90%']} index={users.length ? 0 : -1}>
+    <BottomSheet ref={sheetRef} backgroundStyle={{backgroundColor: baseConfig.theme.colors.primary[900]}} snapPoints={[100, 300, '90%']} index={users.length ? 1 : -1}>
       <BottomSheetView>
         <View className='px-5'>
           {users.map((user) => <UserItem key={user.id} user={user} channelType={channelType} />)}
