@@ -1710,6 +1710,7 @@ const expo = new Expo();
 
 const sendUserAddPushNotification = (owner : DbUser, toBeAdded : User) => {
   const token = owner.expoPushToken;
+  logger.info(token ? 'This user has a push token' : 'This user does not have a push token')
 
   if(!token || !Expo.isExpoPushToken(token)) return;
 
