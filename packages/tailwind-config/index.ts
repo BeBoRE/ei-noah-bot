@@ -25,6 +25,7 @@ const baseConfig = {
       accent: '#e9a920' as const,
       reject: '#BF3535' as const,
       accept: '#207934' as const,
+      discord: '#5865F2' as const,
     },
     extend: {},
   },

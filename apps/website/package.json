@@ -25,10 +25,13 @@
   },
   "devDependencies": {
     "@ei/tsconfig": "*",
+    "@ei/tailwind-config": "*",
     "@types/node": "^18.16.0",
     "@types/react": "^18.2.16",
     "@types/react-dom": "^18.2.7",
     "eslint": "^8.46.0",
+    "postcss": "^8.4.27",
+    "tailwindcss": "^3.3.3",
     "typescript": "^5.1.6"
   }
 }

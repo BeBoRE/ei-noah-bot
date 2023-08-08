@@ -402,6 +402,9 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
     devDependencies:
+      '@ei/tailwind-config':
+        specifier: '*'
+        version: link:../../packages/tailwind-config
       '@ei/tsconfig':
         specifier: '*'
         version: link:../../packages/tsconfig
@@ -417,6 +420,12 @@ importers:
       eslint:
         specifier: ^8.46.0
         version: 8.46.0
+      postcss:
+        specifier: ^8.4.27
+        version: 8.4.27
+      tailwindcss:
+        specifier: ^3.3.3
+        version: 3.3.3
       typescript:
         specifier: ^5.1.6
         version: 5.1.6

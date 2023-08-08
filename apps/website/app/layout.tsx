@@ -11,25 +11,21 @@ const fontSans = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Create T3 Turbo",
-  description: "Simple monorepo with shared backend for web & mobile apps",
+  title: "ei Noah",
+  description: "Never run out of voice channels again!",
   openGraph: {
-    title: "Create T3 Turbo",
-    description: "Simple monorepo with shared backend for web & mobile apps",
-    url: "https://create-t3-turbo.vercel.app",
-    siteName: "Create T3 Turbo",
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@jullerino",
-    creator: "@jullerino",
-  },
+    title: "ei Noah",
+    description: "Never run out of voice channels again!",
+    url: "https://ei.sweaties.net",
+    siteName: "ei Noah",
+  }
 };
 
 export default function Layout(props: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={["font-sans", fontSans.variable].join(" ")}>
+    <html lang="en" className="bg-primary-950 text-primary-50 flex min-h-screen">
+      <link rel="icon" href="/favicon.ico" sizes="any" />
+      <body className={["font-sans", fontSans.variable, 'flex-1', 'flex'].join(" ")}>
         <TRPCReactProvider>{props.children}</TRPCReactProvider>
       </body>
     </html>

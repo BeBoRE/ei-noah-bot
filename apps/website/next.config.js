@@ -53,7 +53,7 @@ module.exports = {
   images: {
     domains: ['cdn.discordapp.com']
   },
-  webpack: (config, {isServer}) => {
+  webpack: (config) => {
     config.plugins.push(
       new IgnorePlugin({
         checkResource: resource => {
