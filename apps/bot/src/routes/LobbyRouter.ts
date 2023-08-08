@@ -63,7 +63,8 @@ import { lobbyChangeSchema, ChannelType, getIcon, generateLobbyName, addUserSche
 import pusherClient from '../utils/pusher-js';
 import globalLogger from '../logger';
 import Expo from 'expo-server-sdk'
-import { getLocale } from 'utils/i18nHelper';
+import { getLocale } from '../utils/i18nHelper';
+import logger from '../logger';
 
 const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');
 
@@ -1656,7 +1657,10 @@ const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwne
     const em = _em.fork()
     const parsedData = removeUserSchema.safeParse(data);
 
-    if(!parsedData.success) return;
+    if(!parsedData.success) {
+      logger.warn('invalid remove user data', {data})
+      return
+    };
 
     const user = await guild.members.fetch({cache: true, user: parsedData.data.user.id}).catch(() => null);
 
@@ -1672,6 +1676,8 @@ const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwne
     const currentOwner = await guild.members.fetch({cache: true, user: `${BigInt(tempChannel.guildUser.user.id)}`}).catch(() => null);
 
     if (!currentOwner) return;
+
+    await removeFromLobby(voiceChannel, [user.user], [], currentOwner.user, tempChannel, i18next)
 
     if(oldOwnerGuidUser.tempChannel)
       pushLobbyToUser(oldOwnerMember, {member: oldOwnerMember, guild, tempChannel: oldOwnerGuidUser.tempChannel, voiceChannel});

@@ -16,7 +16,7 @@ import Router, {
   AutocompleteRouteInfo,
   BothHandler, ContextMenuHandler, ContextMenuHandlerInfo, DMHandler, GuildHandler, HandlerReturn, HandlerType, IRouter, MsgRouteInfo,
 } from './router/Router';
-import { getLocale } from 'utils/i18nHelper';
+import { getLocale } from './utils/i18nHelper';
 
 function mapParams(
   mention : string,

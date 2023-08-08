@@ -1,5 +1,5 @@
 import { type userSchema, userIdToPusherChannel, ChannelType } from "@ei/lobby";
-import { View } from "react-native";
+import { Alert, View } from "react-native";
 import Text from "./Text";
 import { Image } from "expo-image";
 import Animated, { FadeIn, FadeInUp, FadeOut, FadeOutDown, Layout } from "react-native-reanimated";
@@ -23,10 +23,18 @@ const AcceptButton = ({onPress} : ButtonProps) => {
   )
 }
 
-const RejectButton = ({onPress} : ButtonProps) => {
+const RejectButton = ({onPress, userName} : ButtonProps & {userName: string}) => {
   return (
     <Animated.View entering={FadeIn} exiting={FadeOut.duration(200)}>
-      <Pressable onPress={onPress} style={{transform: [{ scaleX: -1 }, {rotate: '30deg'}]}} className="w-16 h-16 justify-center items-center rounded-full bg-reject">
+      <Pressable 
+        onPress={() => Alert.alert(
+          `Removing ${userName} from lobby`,
+           `Are you sure you want to remove ${userName} from your lobby`, [
+          {text: 'Cancel', style: 'cancel'},
+          {text: 'Remove', onPress: onPress}
+        ])}
+        style={{transform: [{ scaleX: -1 }, {rotate: '30deg'}]}}
+        className="w-16 h-16 justify-center items-center rounded-full bg-reject">
         <MaterialCommunityIcons  name="shoe-cleat" size={42} color={baseConfig.theme.colors.text} />
      </Pressable>
     </Animated.View>
@@ -58,7 +66,7 @@ const UserItem = ({ user, channelType }: { user: Zod.infer<typeof userSchema>, c
         <Text className="text-2xl">{user.username}</Text>
       </View>
 
-      {showButtons && (user.isAllowed ? <RejectButton onPress={onReject} /> : <AcceptButton onPress={onAccept} />)}
+      {showButtons && (user.isAllowed ? <RejectButton userName={user.username} onPress={onReject} /> : <AcceptButton onPress={onAccept} />)}
     </Animated.View>
   )
 }

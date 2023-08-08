@@ -44,6 +44,7 @@ const defineConfig = (): ExpoConfig => {
         backgroundColor: "#fbefd5",
       },
       package: identifier,
+      googleServicesFile: appVarient ? `./google-services.${appVarient}.json` : "./google-services.json",
     },
     extra: {
       eas: {
