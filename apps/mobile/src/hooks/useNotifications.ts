@@ -27,7 +27,9 @@ const useNotifications = () => {
           isDestructive: false
         }
       }
-    ])
+    ]).catch(error => {
+      console.log(error)
+    })
   }, [])
  
   useEffect(() => {
@@ -41,29 +43,33 @@ const useNotifications = () => {
       console.log(error)
     })
 
-    addNotificationResponseReceivedListener(async (response) => {
-      if ('categoryIdentifier' in response.notification.request.content && response.notification.request.content.categoryIdentifier === 'userAdd' && response.actionIdentifier === 'accept' && me) {
-        const data = userAddNotificationSchema.safeParse(response.notification.request.content.data);
-
-        if (!data.success) return;
-        
-        const authInfo = await secureStorage.get('discordOauth')
-        if (!authInfo) return;
-
-        const client = createVanillaApi(authInfo.accessToken)
-
-        const outsidePusher = PusherTasks(client);
-
-        outsidePusher.signin()
-        outsidePusher.bind('pusher:signin_success', () => {
-          outsidePusher.subscribe(userIdToPusherChannel(me)).bind('pusher:subscription_succeeded', () => {
-            outsidePusher?.send_event('client-add-user', {
-              user: {id: data.data.userId},
-            }, userIdToPusherChannel(me))
+    try {
+      addNotificationResponseReceivedListener(async (response) => {
+        if ('categoryIdentifier' in response.notification.request.content && response.notification.request.content.categoryIdentifier === 'userAdd' && response.actionIdentifier === 'accept' && me) {
+          const data = userAddNotificationSchema.safeParse(response.notification.request.content.data);
+  
+          if (!data.success) return;
+          
+          const authInfo = await secureStorage.get('discordOauth')
+          if (!authInfo) return;
+  
+          const client = createVanillaApi(authInfo.accessToken)
+  
+          const outsidePusher = PusherTasks(client);
+  
+          outsidePusher.signin()
+          outsidePusher.bind('pusher:signin_success', () => {
+            outsidePusher.subscribe(userIdToPusherChannel(me)).bind('pusher:subscription_succeeded', () => {
+              outsidePusher?.send_event('client-add-user', {
+                user: {id: data.data.userId},
+              }, userIdToPusherChannel(me))
+            })
           })
-        })
-      }
-    })
+        }
+      })
+    } catch (error) {
+      console.log(error)
+    }
   }, [authInfo?.accessToken])
 }
 
