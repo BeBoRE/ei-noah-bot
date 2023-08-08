@@ -1,6 +1,5 @@
 import { type Guild } from "@ei/database/entity/Guild";
 import { type User } from "@ei/database/entity/User";
-import { type i18n } from "i18next";
 
 const defaultLanguage = "nl";
 

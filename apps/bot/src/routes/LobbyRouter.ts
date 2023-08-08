@@ -1660,7 +1660,7 @@ const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwne
     if(!parsedData.success) {
       logger.warn('invalid remove user data', {data})
       return
-    };
+    }
 
     const user = await guild.members.fetch({cache: true, user: parsedData.data.user.id}).catch(() => null);
 
