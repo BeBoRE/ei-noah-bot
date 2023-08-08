@@ -3,7 +3,7 @@ import ei from '../public/ei.png'
 
 export default function Page() {
   return (
-    <div className="flex flex-1 flex-col justify-center items-center">
+    <div className="flex flex-1 flex-col justify-center items-center py-5">
       <h1 className="text-center text-5xl text-primary-500 font-bold mb-5">
         ei Noah
       </h1>
