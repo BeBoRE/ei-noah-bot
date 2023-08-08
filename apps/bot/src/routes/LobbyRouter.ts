@@ -63,6 +63,7 @@ import { lobbyChangeSchema, ChannelType, getIcon, generateLobbyName, addUserSche
 import pusherClient from '../utils/pusher-js';
 import globalLogger from '../logger';
 import Expo from 'expo-server-sdk'
+import { getLocale } from 'utils/i18nHelper';
 
 const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');
 
@@ -511,6 +512,10 @@ const removeFromLobby = async (
   tempChannel : TempChannel,
   i18n: I18n,
 ) => {
+  if (getChannelType(channel) === ChannelType.Public) {
+    return i18n.t('lobby.error.noRemoveInPublic');
+  }
+
   const usersGivenPermissions : GuildMember[] = [];
 
   const rolesRemoved : Role[] = [];
@@ -641,10 +646,6 @@ router.use('remove', async ({
 
   if (guildUser.tempChannel.textChannelId !== msg.channel.id) return i18n.t('lobby.error.useTextChannel', { channel: guildUser.tempChannel.textChannelId });
 
-  if (getChannelType(activeChannel) === ChannelType.Public) {
-    return i18n.t('lobby.error.noRemoveInPublic');
-  }
-
   return removeFromLobby(activeChannel, users, roles, requestingUser, guildUser.tempChannel, i18n);
 }, HandlerType.GUILD, {
   description: 'Remove selected users and roles from the lobby',
@@ -653,6 +654,7 @@ router.use('remove', async ({
       name: 'mention',
       type: ApplicationCommandOptionType.Mentionable,
       description: 'Person or role to remove',
+      required: true,
     }, {
       name: '1',
       description: 'Person or role to remove',
@@ -1671,8 +1673,6 @@ const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwne
 
     if (!currentOwner) return;
 
-    removeFromLobby(voiceChannel, [user.user], [], currentOwner.user, tempChannel, i18next)
-
     if(oldOwnerGuidUser.tempChannel)
       pushLobbyToUser(oldOwnerMember, {member: oldOwnerMember, guild, tempChannel: oldOwnerGuidUser.tempChannel, voiceChannel});
   }).bind('client-change-lobby', async (data : unknown) => { 
@@ -1709,11 +1709,15 @@ const sendUserAddPushNotification = (owner : DbUser, toBeAdded : User) => {
 
   console.log('sending push notification to', token)
 
+  const locale = getLocale({ user: owner });
+
+  const i18n = i18next.cloneInstance({ lng: locale });
+
   return expo.sendPushNotificationsAsync([{
     to: token,
     sound: 'default',
-    title: `${toBeAdded.username} joined your lobby`,
-    body: `Allow ${toBeAdded.username} to join your lobby`,
+    title: i18n.t('lobby.notification.userAdd.title', { user: toBeAdded.username }),
+    body: i18n.t('lobby.notification.userAdd.description', { user: toBeAdded.username }),
     data: {
       userId: toBeAdded.id,
     },
