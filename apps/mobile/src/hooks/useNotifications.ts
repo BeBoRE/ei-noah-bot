@@ -37,6 +37,8 @@ const useNotifications = () => {
       if (token) {
         setToken({token})
       }
+    }).catch(error => {
+      console.log(error)
     })
 
     addNotificationResponseReceivedListener(async (response) => {
