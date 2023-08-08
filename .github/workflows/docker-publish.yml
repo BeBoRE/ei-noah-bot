@@ -109,6 +109,12 @@ jobs:
         run: pnpm install
 
       - name: Run migrations
+        env:
+          DBHOST: ${{ secrets.DBHOST }}
+          DBUSER: ${{ secrets.DBUSER }}
+          DBPASSWORD: ${{ secrets.DBPASSWORD }}
+          DBNAME: ${{ secrets.DBNAME }}
+          DEBUG: true
         run: pnpm run db:push
 
   deploy:
