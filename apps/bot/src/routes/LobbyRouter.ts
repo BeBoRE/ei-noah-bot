@@ -1832,6 +1832,7 @@ router.onInit = async (client, orm, _i18n, logger) => {
           const activeChannel = await activeTempChannel(client, em, tempChannel);
 
           if (!activeChannel?.permissionsFor(member)?.has(PermissionsBitField.Flags.Speak, true)) {
+            logger.info('User does not have permission to join this channel', { user: member.user.username, channel: channel.name });	
             Promise.all([await createAddMessage(tempChannel, member.user, client, em, i18n, logger), sendUserAddPushNotification(tempChannel.guildUser.user, member.user)]).catch((err) => logger.error(err.description, { error: err }));
           }
 
