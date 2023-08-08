@@ -1722,6 +1722,7 @@ const sendUserAddPushNotification = (owner : DbUser, toBeAdded : User) => {
   return expo.sendPushNotificationsAsync([{
     to: token,
     sound: 'default',
+    channelId: 'default',
     title: i18n.t('lobby.notification.userAdd.title', { user: toBeAdded.username }),
     body: i18n.t('lobby.notification.userAdd.description', { user: toBeAdded.username }),
     data: {
