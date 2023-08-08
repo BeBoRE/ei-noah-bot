@@ -1,7 +1,6 @@
 {
   "extends": "@ei/tsconfig/base.json",
   "compilerOptions": {
-    "baseUrl": "src",
     "rootDir": "src"
   },
   "include": ["**/*.ts"],

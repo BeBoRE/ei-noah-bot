@@ -50,6 +50,7 @@
     "discord.js": "^14.11.0",
     "dotenv": "^8.2.0",
     "emoji-regex": "^9.2.1",
+    "expo-server-sdk": "^3.7.0",
     "i18next": "^21.6.16",
     "i18next-fs-backend": "^1.1.1",
     "markov-chains": "^1.0.2",

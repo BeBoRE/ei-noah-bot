@@ -74,6 +74,12 @@
     }
   },
   "lobby": {
+    "notification": {
+      "userAdd": {
+        "title": "{{user}} wants to join your lobby",
+        "description": "Do you want to allow {{user}} into your lobby"
+      }
+    },
     "noUsersAdded": "No user(s) added",
     "userAdded": "{{users, list}} can now enter",
     "userAdded_other": "{{users, list}} can now enter",

@@ -33,6 +33,8 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": [".next/**", ".expo/**"]
-    }
+    },
+    "db:push": { "inputs": ["migrations/**"], "cache": false },
+    "db:create": { "inputs": ["entity/**"], "outputs": ["migrations/**"], "cache": false }
   }
 }

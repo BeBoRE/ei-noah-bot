@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { focusManager, onlineManager, QueryClient } from "@tanstack/react-query";
-import { httpBatchLink } from "@trpc/client";
+import { createTRPCProxyClient, httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import superjson from "superjson";
 import NetInfo from "@react-native-community/netinfo";
@@ -30,6 +30,20 @@ function onAppStateChange(status: AppStateStatus) {
  */
 export const api = createTRPCReact<AppRouter>();
 export { type RouterInputs, type RouterOutputs } from "@ei/trpc";
+
+export const createVanillaApi = (token : string) => {
+  return createTRPCProxyClient<AppRouter>({
+    transformer: superjson,
+    links: [
+      httpBatchLink({
+        url: `${getBaseUrl()}/api/trpc`,
+        headers: {
+          authorization: token,
+        }
+      }),
+    ],
+  })
+}
 
 /**
  * Extend this function when going to production by

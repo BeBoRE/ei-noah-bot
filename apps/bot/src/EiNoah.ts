@@ -16,6 +16,7 @@ import Router, {
   AutocompleteRouteInfo,
   BothHandler, ContextMenuHandler, ContextMenuHandlerInfo, DMHandler, GuildHandler, HandlerReturn, HandlerType, IRouter, MsgRouteInfo,
 } from './router/Router';
+import { getLocale } from './utils/i18nHelper';
 
 function mapParams(
   mention : string,
@@ -223,7 +224,7 @@ async function messageParser(msg : CommandInteraction | AutocompleteInteraction,
     if (option.role instanceof Role) flags.set(option.name, [option.role]);
   });
 
-  const language = guildUser?.user.language || guildUser?.guild.language || 'nl';
+  const language = getLocale({ user: userData, guild: guildUser?.guild });
 
   const newI18n = i18n.cloneInstance({ lng: language });
 

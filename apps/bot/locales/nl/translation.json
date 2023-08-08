@@ -74,6 +74,12 @@
     }
   },
   "lobby": {
+    "notification": {
+      "userAdd": {
+        "title": "{{user}} wil je lobby joinen",
+        "description": "Wil je {{user}} toelaten in je lobby?"
+      }
+    },
     "noUsersAdded": "Geen user(s) toegevoegd",
     "userAdded": "{{users, list}} mag nu naar binnen",
     "userAdded_other": "{{users, list}} mogen nu naar binnen",

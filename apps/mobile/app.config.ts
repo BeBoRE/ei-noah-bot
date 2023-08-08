@@ -34,6 +34,9 @@ const defineConfig = (): ExpoConfig => {
     ios: {
       supportsTablet: true,
       bundleIdentifier: identifier,
+      infoPlist: {
+        UIBackgroundModes: ["remote-notification"]
+      }
     },
     android: {
       adaptiveIcon: {
@@ -41,6 +44,7 @@ const defineConfig = (): ExpoConfig => {
         backgroundColor: "#fbefd5",
       },
       package: identifier,
+      googleServicesFile: "./google-services.json",
     },
     extra: {
       eas: {

@@ -4,7 +4,9 @@
   "types": "index.ts",
   "scripts": {
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "db:push": "mikro-orm migration:up",
+    "db:create": "mikro-orm migration:create"
   },
   "dependencies": {
     "@ei/tsconfig": "*",
@@ -20,6 +22,13 @@
   "devDependencies": {
     "@mikro-orm/cli": "^5.7.13",
     "@mikro-orm/entity-generator": "^5.7.13",
-    "@types/webpack-env": "^1.18.1"
+    "@types/webpack-env": "^1.18.1",
+    "ts-node": "^10.9.1"
+  },
+  "mikro-orm": {
+    "useTsNode": true,
+    "configPaths": [
+      "./mikro-orm.migrations.config.ts"
+    ]
   }
 }

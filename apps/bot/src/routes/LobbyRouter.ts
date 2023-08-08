@@ -55,12 +55,16 @@ import { Category } from '@ei/database/entity/Category';
 import TempChannel from '@ei/database/entity/TempChannel';
 import { Guild } from '@ei/database/entity/Guild';
 import { GuildUser } from '@ei/database/entity/GuildUser';
+import { User as DbUser } from '@ei/database/entity/User';
 import { createEntityCache } from '../EiNoah';
 import Router, { BothHandler, GuildHandler, HandlerType } from '../router/Router';
 import { pusher } from '@ei/pusher-server';
 import { lobbyChangeSchema, ChannelType, getIcon, generateLobbyName, addUserSchema, removeUserSchema, clientChangeLobby, userIdToPusherChannel } from '@ei/lobby';
 import pusherClient from '../utils/pusher-js';
 import globalLogger from '../logger';
+import Expo from 'expo-server-sdk'
+import { getLocale } from '../utils/i18nHelper';
+import logger from '../logger';
 
 const router = new Router('Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)');
 
@@ -509,6 +513,10 @@ const removeFromLobby = async (
   tempChannel : TempChannel,
   i18n: I18n,
 ) => {
+  if (getChannelType(channel) === ChannelType.Public) {
+    return i18n.t('lobby.error.noRemoveInPublic');
+  }
+
   const usersGivenPermissions : GuildMember[] = [];
 
   const rolesRemoved : Role[] = [];
@@ -639,10 +647,6 @@ router.use('remove', async ({
 
   if (guildUser.tempChannel.textChannelId !== msg.channel.id) return i18n.t('lobby.error.useTextChannel', { channel: guildUser.tempChannel.textChannelId });
 
-  if (getChannelType(activeChannel) === ChannelType.Public) {
-    return i18n.t('lobby.error.noRemoveInPublic');
-  }
-
   return removeFromLobby(activeChannel, users, roles, requestingUser, guildUser.tempChannel, i18n);
 }, HandlerType.GUILD, {
   description: 'Remove selected users and roles from the lobby',
@@ -651,6 +655,7 @@ router.use('remove', async ({
       name: 'mention',
       type: ApplicationCommandOptionType.Mentionable,
       description: 'Person or role to remove',
+      required: true,
     }, {
       name: '1',
       description: 'Person or role to remove',
@@ -1652,7 +1657,10 @@ const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwne
     const em = _em.fork()
     const parsedData = removeUserSchema.safeParse(data);
 
-    if(!parsedData.success) return;
+    if(!parsedData.success) {
+      logger.warn('invalid remove user data', {data})
+      return
+    }
 
     const user = await guild.members.fetch({cache: true, user: parsedData.data.user.id}).catch(() => null);
 
@@ -1669,7 +1677,7 @@ const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwne
 
     if (!currentOwner) return;
 
-    removeFromLobby(voiceChannel, [user.user], [], currentOwner.user, tempChannel, i18next)
+    await removeFromLobby(voiceChannel, [user.user], [], currentOwner.user, tempChannel, i18next)
 
     if(oldOwnerGuidUser.tempChannel)
       pushLobbyToUser(oldOwnerMember, {member: oldOwnerMember, guild, tempChannel: oldOwnerGuidUser.tempChannel, voiceChannel});
@@ -1696,6 +1704,32 @@ const destroyPusherSubscriptionListener = (user : Pick<DiscordUser, 'id'>) => {
   pusher.sendToUser(user.id, 'lobbyChange', null)
 
   pusherClient.unsubscribe(channelName)
+}
+
+const expo = new Expo();
+
+const sendUserAddPushNotification = (owner : DbUser, toBeAdded : User) => {
+  const token = owner.expoPushToken;
+
+  if(!token || !Expo.isExpoPushToken(token)) return;
+
+  console.log('sending push notification to', token)
+
+  const locale = getLocale({ user: owner });
+
+  const i18n = i18next.cloneInstance({ lng: locale });
+
+  return expo.sendPushNotificationsAsync([{
+    to: token,
+    sound: 'default',
+    channelId: 'default',
+    title: i18n.t('lobby.notification.userAdd.title', { user: toBeAdded.username }),
+    body: i18n.t('lobby.notification.userAdd.description', { user: toBeAdded.username }),
+    data: {
+      userId: toBeAdded.id,
+    },
+    categoryId: 'userAdd'
+  }])
 }
 
 router.onInit = async (client, orm, _i18n, logger) => {
@@ -1797,7 +1831,7 @@ router.onInit = async (client, orm, _i18n, logger) => {
           const activeChannel = await activeTempChannel(client, em, tempChannel);
 
           if (!activeChannel?.permissionsFor(member)?.has(PermissionsBitField.Flags.Speak, true)) {
-            await createAddMessage(tempChannel, member.user, client, em, i18n, logger);
+            Promise.all([await createAddMessage(tempChannel, member.user, client, em, i18n, logger), sendUserAddPushNotification(tempChannel.guildUser.user, member.user)]).catch((err) => logger.error(err.description, { error: err }));
           }
 
           // Update mobile users

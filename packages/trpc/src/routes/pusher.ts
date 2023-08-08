@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { pusher } from "@ei/pusher-server";
+import { TRPCError } from "@trpc/server";
 
 export const pusherRouter = createTRPCRouter({
   authentication: protectedProcedure
@@ -19,10 +20,14 @@ export const pusherRouter = createTRPCRouter({
       socketId: z.string(),
       channelName: z.string(),
     }))
-    .mutation(async ({ input: {socketId, channelName} }) => {
-      // TODO: Check if user is allowed to join channel
-      const authResponse = pusher.authorizeChannel(socketId, channelName);
+    .mutation(async ({ input: {socketId, channelName}, ctx }) => {
+      // Users can only subscribe to their own private channel
+      if (channelName === `private-user-${ctx.session.user.id}`) {
+        return pusher.authorizeChannel(socketId, channelName);
+      }
 
-      return authResponse;
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+      })
     }),
 });
