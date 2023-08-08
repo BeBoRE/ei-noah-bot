@@ -35,6 +35,8 @@ const logger = winston.createLogger({
   ],
 });
 
+logger.info('Logging initialized');
+
 if (process.env.LOGGING_WEBHOOK) {
   logger.add(new DiscordTransport({
     webhook: process.env.LOGGING_WEBHOOK,
