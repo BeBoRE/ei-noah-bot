@@ -1,29 +1,37 @@
 import { View } from "react-native";
 import Text from "./Text";
 import { Image } from "expo-image"
+import Animated, { FadeIn, FadeInDown, FadeInLeft, FadeInRight } from "react-native-reanimated";
+import { ScrollView } from "react-native-gesture-handler";
 
 const JoinLobby = () => {
   return (
-    <View className="flex-1 justify-center">
-      <Text className="text-center text-primary-300 font-bold text-5xl m-3 mb-8
-      ">Please join a lobby</Text>
-      <View className="px-5">
+    <ScrollView className="flex-1 py-5 px-2">
+      <Animated.Text entering={FadeIn.duration(1500)} className="text-center text-primary-300 font-bold text-5xl my-6
+      ">Please join a lobby create channel on <Text className="text-discord">Discord</Text></Animated.Text>
+      <Animated.Text entering={FadeIn.duration(1000).delay(1500)} className="text-center text-primary-300 font-semibold text-xl mb-2">
+        They should look something like this:
+      </Animated.Text>
+      <Animated.View entering={FadeInDown.duration(600).delay(2500)}>
         <View className="rounded-md bg-[#2b2d31]">
-          <View className="flex-row items-center p-3">
+          <Animated.View entering={FadeInLeft.duration(300).delay(3100)} className="flex-row items-center p-3">
             <Image source={require('assets/discord-speaker.svg')} className="w-8 h-8 text-[#7d818b] mr-3" alt=""/>
             <Text className="text-2xl text-[#949ba4]" style={{fontFamily: "gg-sans"}}>🔊 Create Public Lobby</Text>
-          </View>
-          <View className="flex-row items-center p-3">
+          </Animated.View>
+          <Animated.View entering={FadeInRight.duration(300).delay(3400)} className="flex-row items-center p-3">
             <Image source={require('assets/discord-speaker.svg')} className="w-8 h-8 text-[#7d818b] mr-3" alt=""/>
             <Text className="text-2xl text-[#949ba4]" style={{fontFamily: "gg-sans"}}>🙊 Create Mute Lobby</Text>
-          </View>
-          <View className="flex-row items-center p-3">
+          </Animated.View>
+          <Animated.View entering={FadeInLeft.duration(300).delay(3700)} className="flex-row items-center p-3">
             <Image source={require('assets/discord-speaker.svg')} className="w-8 h-8 text-[#7d818b] mr-3" alt=""/>
             <Text className="text-2xl text-[#949ba4]" style={{fontFamily: "gg-sans"}}>🔐 Create Private Lobby</Text>
-          </View>
+          </Animated.View>
         </View>
-      </View>
-    </View>
+      </Animated.View>
+      <Animated.Text entering={FadeIn.duration(600).delay(4600)} className="text-center text-primary-300 font-semibold text-xl mt-2">
+        Once you've joined a lobby, you can manage your lobby from here :)
+      </Animated.Text>
+    </ScrollView>
   )
 }
 
