@@ -1641,6 +1641,7 @@ const createPusherSubscriptionListeners = (_em : EntityManager, {member: oldOwne
 
     pushLobbyToUser(oldOwnerMember, {member: oldOwnerMember, guild, tempChannel, voiceChannel});
   }).bind('client-add-user', async (data : unknown) => {
+    console.log('client-add-user', data)
     const parsedData = addUserSchema.safeParse(data);
 
     if(!parsedData.success) return;
@@ -1710,11 +1711,8 @@ const expo = new Expo();
 
 const sendUserAddPushNotification = (owner : DbUser, toBeAdded : User) => {
   const token = owner.expoPushToken;
-  logger.info(token ? 'This user has a push token' : 'This user does not have a push token')
 
   if(!token || !Expo.isExpoPushToken(token)) return;
-
-  console.log('sending push notification to', token)
 
   const locale = getLocale({ user: owner });
 
@@ -1832,7 +1830,6 @@ router.onInit = async (client, orm, _i18n, logger) => {
           const activeChannel = await activeTempChannel(client, em, tempChannel);
 
           if (!activeChannel?.permissionsFor(member)?.has(PermissionsBitField.Flags.Speak, true)) {
-            logger.info('User does not have permission to join this channel', { user: member.user.username, channel: channel.name });	
             Promise.all([await createAddMessage(tempChannel, member.user, client, em, i18n, logger), sendUserAddPushNotification(tempChannel.guildUser.user, member.user)]).catch((err) => logger.error(err.description, { error: err }));
           }
 

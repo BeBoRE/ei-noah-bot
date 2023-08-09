@@ -29,7 +29,7 @@ const JoinLobby = () => {
         </View>
       </Animated.View>
       <Animated.Text entering={FadeIn.duration(600).delay(4600)} className="text-center text-primary-300 font-semibold text-xl mt-2">
-        Once you've joined a lobby, you can manage your lobby from here :)
+        Once you have a lobby, you can manage it from here :)
       </Animated.Text>
     </ScrollView>
   )

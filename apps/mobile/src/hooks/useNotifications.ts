@@ -56,13 +56,15 @@ const useNotifications = () => {
           const client = createVanillaApi(authInfo.accessToken)
   
           const outsidePusher = PusherTasks(client);
+
+          const user = await client.user.me.query()
   
           outsidePusher.signin()
           outsidePusher.bind('pusher:signin_success', () => {
-            outsidePusher.subscribe(userIdToPusherChannel(me)).bind('pusher:subscription_succeeded', () => {
+            outsidePusher.subscribe(userIdToPusherChannel(user)).bind('pusher:subscription_succeeded', () => {
               outsidePusher?.send_event('client-add-user', {
                 user: {id: data.data.userId},
-              }, userIdToPusherChannel(me))
+              }, userIdToPusherChannel(user))
             })
           })
         }
