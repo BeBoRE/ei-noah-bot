@@ -403,7 +403,7 @@ class EiNoah implements IRouter {
     const { orm } = this;
 
     this.client.on('ready', () => {
-      this.logger.info('Client online');
+      this.logger.info('Client online :)');
       this.logger.info(`Client active on ${this.client.guilds.cache.size} guilds`);
     });
 
