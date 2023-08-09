@@ -16,6 +16,7 @@ import UserLimitButton from "src/components/UserLimitButton";
 import UsersSheet from "src/components/UsersSheet";
 import JoinLobby from "src/components/JoinLobby";
 import useNotifications from "src/hooks/useNotifications";
+import Animated, { FadeInDown, FadeOutDown } from "react-native-reanimated";
 
 const Screen = () => {
   const [lobby, setLobby] = useState<Zod.infer<typeof lobbyChangeSchema> | null>(null)
@@ -72,7 +73,7 @@ const Screen = () => {
   const limits = new Set([0, 2, 5, 10, lobby.channel.limit || 0])
 
   return (
-    <View className="p-5 pb-0 flex-1">
+    <Animated.View entering={FadeInDown.duration(400).delay(200)} exiting={FadeOutDown.duration(400)} className="p-5 pb-0 flex-1">
       <View className="items-center">
         {guild.icon ? <Image source={guild.icon} className={[style, 'ring-4'].join(' ')} alt=""/> : <View className={`${style} bg-secondary`}/>}
         <Text className="text-center text-3xl p-3 font-bold mb-[-25px]">{generateLobbyName(lobby.channel.type, lobby.user, lobby.channel.name || undefined)}</Text>
@@ -87,7 +88,7 @@ const Screen = () => {
         {Array.from(limits).sort((a, b) => a - b).map(limit => <UserLimitButton limit={limit} key={limit} lobby={lobby.channel}/>)}
       </View>
       <UsersSheet users={lobby.users} channelType={lobby.channel.type} />
-    </View>
+    </Animated.View>
   )
 }
 
