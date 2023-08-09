@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function Layout(props: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="bg-primary-950 text-primary-50 flex min-h-screen">
+    <html lang="en" className="bg-primary-950 text-primary-50 flex min-h-[100dvh]">
       <link rel="icon" href="/favicon.ico" sizes="any" />
       <body className={["font-sans", fontSans.variable, 'flex-1', 'flex'].join(" ")}>
         <TRPCReactProvider>{props.children}</TRPCReactProvider>
