@@ -1,5 +1,6 @@
 import { Pressable, PressableProps } from 'react-native';
 import { ClassNameValue, twMerge } from 'tailwind-merge';
+
 import Text from './Text';
 
 type ButtonProps = PressableProps & {
@@ -8,14 +9,27 @@ type ButtonProps = PressableProps & {
   className?: ClassNameValue;
 };
 
-function Button({
-  children, textClassName, className, ...props
-} : ButtonProps) {
-  const renderedChildren = typeof children === 'string' ? <Text className={twMerge(textClassName, 'text-primary-100 font-bold text-center')}>{children}</Text> : children;
+function Button({ children, textClassName, className, ...props }: ButtonProps) {
+  const renderedChildren =
+    typeof children === 'string' ? (
+      <Text
+        className={twMerge(
+          textClassName,
+          'text-center font-bold text-primary-100',
+        )}
+      >
+        {children}
+      </Text>
+    ) : (
+      children
+    );
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
-    <Pressable {...props} className={twMerge(className, 'bg-primary rounded-md p-2')}>
+    <Pressable
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      {...props}
+      className={twMerge(className, 'rounded-md bg-primary p-2')}
+    >
       {renderedChildren}
     </Pressable>
   );

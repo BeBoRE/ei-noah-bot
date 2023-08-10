@@ -1,6 +1,6 @@
 import { DevelopmentConfig } from './config';
 
-const developmentConfig : DevelopmentConfig = {
+const developmentConfig: DevelopmentConfig = {
   pusher: {
     appId: process.env.EXPO_PUBLIC_PUSHER_APP_ID,
     appKey: process.env.EXPO_PUBLIC_PUSHER_KEY,

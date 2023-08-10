@@ -152,7 +152,7 @@
       "disabled": "Tekst- en spraakkanalen zijn nu gescheiden"
     },
     "error": {
-      "onlyMentions":"Alleen mention(s) mogelijk als argument",
+      "onlyMentions": "Alleen mention(s) mogelijk als argument",
       "noLobby": "Je hebt nog geen lobby aangemaakt\nJoin een **lobby aanmaak kanaal** om er een aan te maken",
       "useTextChannel": "Dit commando kan alleen gebruikt worden in <#{{channel}}>",
       "noRemoveInPublic": "Wat snap jij niet aan een **public** lobby smeerjoch",
@@ -184,7 +184,7 @@
       "onlyOwner": "Alleen de lobby leider kan dit doen",
       "nothingToBeRemoved": "Er is niemand om te verwijderen"
     }
-  }, 
+  },
   "quote": {
     "byUser": "Door {{user}}",
     "noQuoteFound": "{{user}} is niet populair en heeft nog geen quotes",

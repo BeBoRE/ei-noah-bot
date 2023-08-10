@@ -1,21 +1,28 @@
 import React, { useEffect } from 'react';
-import { focusManager, onlineManager, QueryClient } from '@tanstack/react-query';
+import { AppState, AppStateStatus, Platform } from 'react-native';
+import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import {
+  focusManager,
+  onlineManager,
+  QueryClient,
+} from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createTRPCProxyClient, httpBatchLink } from '@trpc/client';
 import { createTRPCReact } from '@trpc/react-query';
-import superjson from 'superjson';
-import NetInfo from '@react-native-community/netinfo';
-import Constants from 'expo-constants';
-import type { AppRouter } from '@ei/trpc';
-import { AppState, AppStateStatus, Platform } from 'react-native';
-import { useAuth } from 'src/context/auth';
-import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import config from 'src/config';
+import { useAuth } from 'src/context/auth';
+import superjson from 'superjson';
 
-onlineManager.setEventListener((setOnline) => NetInfo.addEventListener((state) => {
-  setOnline(!!state.isConnected);
-}));
+import type { AppRouter } from '@ei/trpc';
+
+onlineManager.setEventListener((setOnline) =>
+  NetInfo.addEventListener((state) => {
+    setOnline(!!state.isConnected);
+  }),
+);
 
 function onAppStateChange(status: AppStateStatus) {
   if (Platform.OS !== 'web') {
@@ -48,17 +55,18 @@ const getBaseUrl = () => {
 export const api = createTRPCReact<AppRouter>();
 export { type RouterInputs, type RouterOutputs } from '@ei/trpc';
 
-export const createVanillaApi = (token : string) => createTRPCProxyClient<AppRouter>({
-  transformer: superjson,
-  links: [
-    httpBatchLink({
-      url: `${getBaseUrl()}/api/trpc`,
-      headers: {
-        authorization: token,
-      },
-    }),
-  ],
-});
+export const createVanillaApi = (token: string) =>
+  createTRPCProxyClient<AppRouter>({
+    transformer: superjson,
+    links: [
+      httpBatchLink({
+        url: `${getBaseUrl()}/api/trpc`,
+        headers: {
+          authorization: token,
+        },
+      }),
+    ],
+  });
 
 const asyncStoragePersistor = createAsyncStoragePersister({
   storage: AsyncStorage,
@@ -72,25 +80,39 @@ type TRPCProviderProps = {
  * A wrapper for your app that provides the TRPC context.
  * Use only in _app.tsx
  */
-export function TRPCProvider({ children } : TRPCProviderProps) {
+export function TRPCProvider({ children }: TRPCProviderProps) {
   const { authInfo } = useAuth();
   const isLoggedIn = !!authInfo?.accessToken;
 
   console.log('using api', getBaseUrl());
 
-  const queryClient = React.useMemo(() => new QueryClient({ defaultOptions: { queries: { staleTime: 1000 * 1, enabled: isLoggedIn } } }), [isLoggedIn]);
-
-  const trpcClient = React.useMemo(() => api.createClient({
-    transformer: superjson,
-    links: [
-      httpBatchLink({
-        url: `${getBaseUrl()}/api/trpc`,
-        headers: authInfo?.accessToken ? {
-          authorization: authInfo?.accessToken,
-        } : undefined,
+  const queryClient = React.useMemo(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: { staleTime: 1000 * 1, enabled: isLoggedIn },
+        },
       }),
-    ],
-  }), [authInfo?.accessToken]);
+    [isLoggedIn],
+  );
+
+  const trpcClient = React.useMemo(
+    () =>
+      api.createClient({
+        transformer: superjson,
+        links: [
+          httpBatchLink({
+            url: `${getBaseUrl()}/api/trpc`,
+            headers: authInfo?.accessToken
+              ? {
+                  authorization: authInfo?.accessToken,
+                }
+              : undefined,
+          }),
+        ],
+      }),
+    [authInfo?.accessToken],
+  );
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', onAppStateChange);
@@ -100,7 +122,10 @@ export function TRPCProvider({ children } : TRPCProviderProps) {
 
   return (
     <api.Provider client={trpcClient} queryClient={queryClient}>
-      <PersistQueryClientProvider persistOptions={{ persister: asyncStoragePersistor }} client={queryClient}>
+      <PersistQueryClientProvider
+        persistOptions={{ persister: asyncStoragePersistor }}
+        client={queryClient}
+      >
         {children}
       </PersistQueryClientProvider>
     </api.Provider>

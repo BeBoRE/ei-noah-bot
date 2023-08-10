@@ -9,5 +9,5 @@ module.exports = {
   },
   rules: {
     '@typescript-eslint/indent': 'off',
-  }
+  },
 };

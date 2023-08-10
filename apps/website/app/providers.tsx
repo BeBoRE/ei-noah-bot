@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ReactQueryStreamedHydration } from '@tanstack/react-query-next-experimental';
 import { httpBatchLink, loggerLink } from '@trpc/client';
 import superjson from 'superjson';
 
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { api } from '../utils/api';
 
 const getBaseUrl = () => {
@@ -22,27 +22,31 @@ type Props = {
 
 export default function TRPCReactProvider({ children }: Props) {
   const [queryClient] = useState(
-    () => new QueryClient({
-      defaultOptions: {
-        queries: {
-          staleTime: 1 * 1000,
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 1 * 1000,
+          },
         },
-      },
-    }),
+      }),
   );
 
-  const [trpcClient] = useState(() => api.createClient({
-    transformer: superjson,
-    links: [
-      loggerLink({
-        enabled: (opts) => process.env.NODE_ENV === 'development'
-            || (opts.direction === 'down' && opts.result instanceof Error),
-      }),
-      httpBatchLink({
-        url: `${getBaseUrl()}/api/trpc`,
-      }),
-    ],
-  }));
+  const [trpcClient] = useState(() =>
+    api.createClient({
+      transformer: superjson,
+      links: [
+        loggerLink({
+          enabled: (opts) =>
+            process.env.NODE_ENV === 'development' ||
+            (opts.direction === 'down' && opts.result instanceof Error),
+        }),
+        httpBatchLink({
+          url: `${getBaseUrl()}/api/trpc`,
+        }),
+      ],
+    }),
+  );
 
   return (
     <QueryClientProvider client={queryClient}>

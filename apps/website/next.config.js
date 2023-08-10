@@ -16,8 +16,8 @@ const externalList = [
   '@mikro-orm/seeder',
   '@mikro-orm/sqlite',
   '@mikro-orm/core',
-  'pg'
-]
+  'pg',
+];
 
 for (const devDependency of Object.keys(devDependencies)) {
   externals[devDependency] = `commonjs ${devDependency}`;
@@ -32,7 +32,7 @@ externalList.forEach((external) => {
 const optionalModules = new Set([
   ...Object.keys(require('knex/package.json').browser),
   ...Object.keys(require('@mikro-orm/core/package.json').peerDependencies),
-  ...Object.keys(require('@mikro-orm/core/package.json').devDependencies || {})
+  ...Object.keys(require('@mikro-orm/core/package.json').devDependencies || {}),
 ]);
 
 /**
@@ -40,7 +40,7 @@ const optionalModules = new Set([
  */
 module.exports = {
   reactStrictMode: true,
-  transpilePackages: ["@ei/trpc", "@ei/database"],
+  transpilePackages: ['@ei/trpc', '@ei/database'],
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -48,17 +48,19 @@ module.exports = {
     ignoreDuringBuilds: true,
   },
   experimental: {
-    serverComponentsExternalPackages: externalList
+    serverComponentsExternalPackages: externalList,
   },
   images: {
-    domains: ['cdn.discordapp.com']
+    domains: ['cdn.discordapp.com'],
   },
   webpack: (config) => {
     config.plugins.push(
       new IgnorePlugin({
-        checkResource: resource => {
-          const baseResource = resource.split('/', resource[0] === '@' ? 2 : 1).join('/');
-  
+        checkResource: (resource) => {
+          const baseResource = resource
+            .split('/', resource[0] === '@' ? 2 : 1)
+            .join('/');
+
           if (optionalModules.has(baseResource)) {
             try {
               require.resolve(resource);
@@ -67,17 +69,14 @@ module.exports = {
               return true;
             }
           }
-  
+
           return false;
         },
-      })
-    )
+      }),
+    );
 
-    config.externals = [
-      ...config.externals,
-      externals,
-    ]    
+    config.externals = [...config.externals, externals];
 
     return config;
-  }
+  },
 };

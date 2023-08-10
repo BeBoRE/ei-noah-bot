@@ -11,5 +11,5 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'global-require': 'off',
     'react/require-default-props': 'off',
-  }
+  },
 };

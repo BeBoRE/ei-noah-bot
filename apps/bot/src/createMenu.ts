@@ -1,68 +1,75 @@
 import {
-  CommandInteraction,
-  Message,
-  User as DiscordUser,
-  ButtonStyle,
-  InteractionUpdateOptions,
-  ButtonBuilder,
   ActionRowBuilder,
-  MessageActionRowComponentBuilder,
-  ComponentType,
-  CollectorFilter,
+  ButtonBuilder,
   ButtonInteraction,
+  ButtonStyle,
+  CollectorFilter,
+  CommandInteraction,
+  ComponentType,
+  User as DiscordUser,
+  InteractionUpdateOptions,
+  Message,
+  MessageActionRowComponentBuilder,
 } from 'discord.js';
 import { Logger } from 'winston';
 
-export type ButtonReturn = boolean | Promise<boolean>
-| void | Promise<void>
-| string | Promise<string>
-| InteractionUpdateOptions | Promise<InteractionUpdateOptions>;
+export type ButtonReturn =
+  | boolean
+  | Promise<boolean>
+  | void
+  | Promise<void>
+  | string
+  | Promise<string>
+  | InteractionUpdateOptions
+  | Promise<InteractionUpdateOptions>;
 
 export type ExtraButton = [ButtonBuilder, () => ButtonReturn];
 
-async function createMenu<T>(
-  {
-    list,
-    owner,
-    msg,
-    title,
-    mapper,
-    selectCallback,
-    extraButtons = [],
-    logger,
-  } : {
-    list : T[],
-    owner : DiscordUser,
-    msg : Message | CommandInteraction,
-    title : string,
-    mapper : (item : T) => string | Promise<string>,
-    selectCallback : (selected : T) => ButtonReturn,
-    extraButtons ?: ExtraButton[],
-    logger : Logger
-  },
-) {
-  const navigationButtons : ButtonBuilder[] = [
+async function createMenu<T>({
+  list,
+  owner,
+  msg,
+  title,
+  mapper,
+  selectCallback,
+  extraButtons = [],
+  logger,
+}: {
+  list: T[];
+  owner: DiscordUser;
+  msg: Message | CommandInteraction;
+  title: string;
+  mapper: (item: T) => string | Promise<string>;
+  selectCallback: (selected: T) => ButtonReturn;
+  extraButtons?: ExtraButton[];
+  logger: Logger;
+}) {
+  const navigationButtons: ButtonBuilder[] = [
     new ButtonBuilder({
       customId: '1',
       label: '1',
       style: ButtonStyle.Primary,
       disabled: true,
-    }), new ButtonBuilder({
+    }),
+    new ButtonBuilder({
       customId: '2',
       label: '2',
       style: ButtonStyle.Primary,
       disabled: true,
-    }), new ButtonBuilder({
+    }),
+    new ButtonBuilder({
       customId: '3',
       label: '3',
       style: ButtonStyle.Primary,
       disabled: true,
-    }), new ButtonBuilder({
+    }),
+    new ButtonBuilder({
       customId: '4',
       label: '4',
       style: ButtonStyle.Primary,
       disabled: true,
-    }), new ButtonBuilder({
+    }),
+    new ButtonBuilder({
       customId: '5',
       label: '5',
       style: ButtonStyle.Primary,
@@ -101,7 +108,8 @@ async function createMenu<T>(
   };
 
   const generateButtons = () => {
-    const listButtons = new ActionRowBuilder<MessageActionRowComponentBuilder>();
+    const listButtons =
+      new ActionRowBuilder<MessageActionRowComponentBuilder>();
 
     list.forEach((q, i) => {
       if (i < navigationButtons.length) {
@@ -111,7 +119,7 @@ async function createMenu<T>(
       }
     });
 
-    const additionalButtons : ButtonBuilder[] = [];
+    const additionalButtons: ButtonBuilder[] = [];
 
     if (list.length > navigationButtons.length) {
       pageLeft.setDisabled(page === 0);
@@ -124,7 +132,9 @@ async function createMenu<T>(
       additionalButtons.push(button[0]);
     });
 
-    const rows : ActionRowBuilder<MessageActionRowComponentBuilder>[] = [listButtons];
+    const rows: ActionRowBuilder<MessageActionRowComponentBuilder>[] = [
+      listButtons,
+    ];
     for (let i = 0; i < Math.ceil(additionalButtons.length / 5); i += 1) {
       const row = new ActionRowBuilder<MessageActionRowComponentBuilder>();
       for (let j = 0; j < 5; j += 1) {
@@ -139,28 +149,45 @@ async function createMenu<T>(
 
   const components = generateButtons();
 
-  let message : Message;
+  let message: Message;
   if (msg instanceof Message) {
     message = await msg.reply({ content: await generateText(), components });
   } else {
     await msg.deferReply();
-    const followup = await msg.followUp({ content: await generateText(), components });
+    const followup = await msg.followUp({
+      content: await generateText(),
+      components,
+    });
 
     message = followup;
   }
 
   // eslint-disable-next-line max-len
-  const filter : CollectorFilter<[ButtonInteraction]> = (i) => (navigationButtons.some((e) => 'custom_id' in e.data && e.data?.custom_id === i.customId) || extraButtons.some((b) => 'custom_id' in b[0].data && b[0].data.custom_id === i.customId) || ('custom_id' in pageLeft.data && i.customId === pageLeft.data.custom_id) || ('custom_id' in pageRight.data && i.customId === pageRight.data.custom_id)) && i.user.id === owner.id;
-  const collector = message.createMessageComponentCollector<ComponentType.Button>({ filter });
+  const filter: CollectorFilter<[ButtonInteraction]> = (i) =>
+    (navigationButtons.some(
+      (e) => 'custom_id' in e.data && e.data?.custom_id === i.customId,
+    ) ||
+      extraButtons.some(
+        (b) => 'custom_id' in b[0].data && b[0].data.custom_id === i.customId,
+      ) ||
+      ('custom_id' in pageLeft.data &&
+        i.customId === pageLeft.data.custom_id) ||
+      ('custom_id' in pageRight.data &&
+        i.customId === pageRight.data.custom_id)) &&
+    i.user.id === owner.id;
+  const collector =
+    message.createMessageComponentCollector<ComponentType.Button>({ filter });
 
   const timeout = (() => {
-    let to : NodeJS.Timeout;
-    return (action : 'reset' | 'stop') => {
+    let to: NodeJS.Timeout;
+    return (action: 'reset' | 'stop') => {
       if (to) clearTimeout(to);
       if (action === 'reset') {
         to = setTimeout(() => {
           collector.stop();
-          message.delete().catch((error) => logger.info(error.description, { error }));
+          message
+            .delete()
+            .catch((error) => logger.info(error.description, { error }));
         }, 1000 * 30);
       }
     };
@@ -169,7 +196,9 @@ async function createMenu<T>(
   timeout('reset');
 
   collector.on('collect', async (interaction) => {
-    const i = navigationButtons.findIndex((e) => ('custom_id' in e.data && interaction.customId === e.data.custom_id));
+    const i = navigationButtons.findIndex(
+      (e) => 'custom_id' in e.data && interaction.customId === e.data.custom_id,
+    );
     const item = list[i + page * navigationButtons.length];
 
     if (item && i !== -1) {
@@ -177,53 +206,98 @@ async function createMenu<T>(
 
       if (destroyMessage || destroyMessage === undefined) {
         if (typeof destroyMessage === 'string') {
-          interaction.update({ content: destroyMessage, components: [] }).catch((error) => logger.error(error.description, { error }));
+          interaction
+            .update({ content: destroyMessage, components: [] })
+            .catch((error) => logger.error(error.description, { error }));
         } else if (typeof destroyMessage === 'object') {
-          interaction.update({
-            components: [],
-            ...destroyMessage,
-          }).catch((error) => logger.error(error.description, { error }));
+          interaction
+            .update({
+              components: [],
+              ...destroyMessage,
+            })
+            .catch((error) => logger.error(error.description, { error }));
         } else {
-          message.delete().catch(((error) => logger.error(error.description, { error })));
+          message
+            .delete()
+            .catch((error) => logger.error(error.description, { error }));
         }
 
         collector.stop();
         timeout('stop');
       } else {
         timeout('reset');
-        interaction.update({ content: await generateText(), components: generateButtons() }).catch(() => {});
+        interaction
+          .update({
+            content: await generateText(),
+            components: generateButtons(),
+          })
+          .catch(() => {});
       }
     }
 
-    const extraButton = extraButtons.find((eb) => ('custom_id' in eb[0].data && eb[0].data.custom_id === interaction.customId));
+    const extraButton = extraButtons.find(
+      (eb) =>
+        'custom_id' in eb[0].data &&
+        eb[0].data.custom_id === interaction.customId,
+    );
 
     if (extraButton) {
       const destroyMessage = await extraButton[1]();
 
       if (destroyMessage || destroyMessage === undefined) {
         if (typeof destroyMessage === 'string') {
-          interaction.update({ content: destroyMessage, components: [] }).catch((error) => logger.error(error.description, { error }));
+          interaction
+            .update({ content: destroyMessage, components: [] })
+            .catch((error) => logger.error(error.description, { error }));
         } else if (typeof destroyMessage === 'object') {
-          interaction.update({ components: [], ...destroyMessage }).catch((error) => logger.error(error.description, { error }));
+          interaction
+            .update({ components: [], ...destroyMessage })
+            .catch((error) => logger.error(error.description, { error }));
         } else {
-          message.delete().catch((error) => logger.error(error.description, { error }));
+          message
+            .delete()
+            .catch((error) => logger.error(error.description, { error }));
         }
 
         collector.stop();
         timeout('stop');
       } else {
         timeout('reset');
-        interaction.update({ content: await generateText(), components: generateButtons() }).catch(() => {});
+        interaction
+          .update({
+            content: await generateText(),
+            components: generateButtons(),
+          })
+          .catch(() => {});
       }
     }
 
-    if (('custom_id' in pageLeft.data && interaction.customId === pageLeft.data.custom_id) || ('custom_id' in pageRight.data && interaction.customId === pageRight.data.custom_id)) {
-      if (('custom_id' in pageLeft.data && interaction.customId === pageLeft.data.custom_id) && page > 0) page -= 1;
-      if (('custom_id' in pageRight.data && interaction.customId === pageRight.data.custom_id) && page < pages - 1) {
+    if (
+      ('custom_id' in pageLeft.data &&
+        interaction.customId === pageLeft.data.custom_id) ||
+      ('custom_id' in pageRight.data &&
+        interaction.customId === pageRight.data.custom_id)
+    ) {
+      if (
+        'custom_id' in pageLeft.data &&
+        interaction.customId === pageLeft.data.custom_id &&
+        page > 0
+      )
+        page -= 1;
+      if (
+        'custom_id' in pageRight.data &&
+        interaction.customId === pageRight.data.custom_id &&
+        page < pages - 1
+      ) {
         page += 1;
       }
 
-      interaction.update({ content: await generateText(), components: generateButtons() }).catch(() => {});
+      interaction
+        .update({
+          content: await generateText(),
+          components: generateButtons(),
+        })
+        .catch(() => {});
 
       timeout('reset');
     }

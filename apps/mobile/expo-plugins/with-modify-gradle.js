@@ -11,30 +11,37 @@ const defineConfig = (config) =>
   require('@expo/config-plugins').withProjectBuildGradle(
     config,
     (gradleConfig) => {
-      if (!gradleConfig.modResults.contents.includes('ext.getPackageJsonVersion =')) {
-        gradleConfig.modResults.contents = gradleConfig.modResults.contents.replace(
-          'buildscript {',
-          `buildscript {
+      if (
+        !gradleConfig.modResults.contents.includes(
+          'ext.getPackageJsonVersion =',
+        )
+      ) {
+        gradleConfig.modResults.contents =
+          gradleConfig.modResults.contents.replace(
+            'buildscript {',
+            `buildscript {
     ext.getPackageJsonVersion = { packageName ->
         new File(['node', '--print', "JSON.parse(require('fs').readFileSync(require.resolve('\${packageName}/package.json'), 'utf-8')).version"].execute(null, rootDir).text.trim())
     }`,
-        );
+          );
       }
 
       if (!gradleConfig.modResults.contents.includes('reactNativeVersion =')) {
-        gradleConfig.modResults.contents = gradleConfig.modResults.contents.replace(
-          'ext {',
-          `ext {
+        gradleConfig.modResults.contents =
+          gradleConfig.modResults.contents.replace(
+            'ext {',
+            `ext {
         reactNativeVersion = "\${ext.getPackageJsonVersion('react-native')}"`,
-        );
+          );
       }
 
       if (!gradleConfig.modResults.contents.includes('expoPackageVersion =')) {
-        gradleConfig.modResults.contents = gradleConfig.modResults.contents.replace(
-          'ext {',
-          `ext {
+        gradleConfig.modResults.contents =
+          gradleConfig.modResults.contents.replace(
+            'ext {',
+            `ext {
         expoPackageVersion = "\${ext.getPackageJsonVersion('expo')}"`,
-        );
+          );
       }
 
       return gradleConfig;

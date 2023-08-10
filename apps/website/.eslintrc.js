@@ -8,6 +8,6 @@ module.exports = {
     tsconfigRootDir: __dirname,
   },
   rules: {
-    "react/react-in-jsx-scope": "off",
-  }
+    'react/react-in-jsx-scope': 'off',
+  },
 };

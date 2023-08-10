@@ -1,27 +1,31 @@
 import {
   BaseEntity,
-  Entity, ManyToOne, PrimaryKey, Property,
+  Entity,
+  ManyToOne,
+  PrimaryKey,
+  Property,
 } from '@mikro-orm/core';
+
 import type { GuildUser } from './GuildUser';
 
 @Entity()
 class Quote extends BaseEntity<Quote, 'id'> {
   @PrimaryKey({ serializedPrimaryKey: true })
-    id!: number;
+  id!: number;
 
   @ManyToOne({ entity: 'GuildUser' })
-    guildUser!: GuildUser;
+  guildUser!: GuildUser;
 
   @ManyToOne({ entity: 'GuildUser' })
-    creator!: GuildUser;
+  creator!: GuildUser;
 
   @Property({ length: 2000 })
-    text!: string;
+  text!: string;
 
   @Property()
-    date?: Date;
+  date?: Date;
 
-  constructor(text : string, creator: GuildUser) {
+  constructor(text: string, creator: GuildUser) {
     super();
     this.text = text;
     this.creator = creator;

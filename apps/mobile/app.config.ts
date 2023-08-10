@@ -8,8 +8,12 @@ const defineConfig = (): ExpoConfig => {
   const baseName = 'ei Noah';
   const baseIdentifier = 'net.sweaties.eiapp';
 
-  const name = appVarient ? `${baseName} (${capitalize(appVarient)})` : baseName;
-  const identifier = appVarient ? `${baseIdentifier}.${appVarient}` : baseIdentifier;
+  const name = appVarient
+    ? `${baseName} (${capitalize(appVarient)})`
+    : baseName;
+  const identifier = appVarient
+    ? `${baseIdentifier}.${appVarient}`
+    : baseIdentifier;
 
   return {
     name,

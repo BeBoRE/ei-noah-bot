@@ -7,6 +7,8 @@ export class Migration20210802134554 extends Migration {
     this.addSql('alter table "guild" drop column "private_voice";');
     this.addSql('alter table "guild" drop column "lobby_category";');
 
-    this.addSql('alter table "temp_channel" add column "control_dashboard_id" varchar(24) null;');
+    this.addSql(
+      'alter table "temp_channel" add column "control_dashboard_id" varchar(24) null;',
+    );
   }
 }

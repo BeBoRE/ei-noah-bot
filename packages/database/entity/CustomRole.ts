@@ -1,32 +1,37 @@
 import {
-  Entity, PrimaryKey, Property, ManyToOne, BaseEntity,
+  BaseEntity,
+  Entity,
+  ManyToOne,
+  PrimaryKey,
+  Property,
 } from '@mikro-orm/core';
+
 import type { Guild } from './Guild';
 import type { GuildUser } from './GuildUser';
 
 @Entity()
 export default class CustomRole extends BaseEntity<CustomRole, 'id'> {
   @PrimaryKey()
-    id!: string;
+  id!: string;
 
   @ManyToOne({ entity: 'GuildUser' })
-    owner!: GuildUser;
+  owner!: GuildUser;
 
   @ManyToOne({ entity: 'Guild' })
-    guild!: Guild;
+  guild!: Guild;
 
   @Property()
-    roleName!: string;
+  roleName!: string;
 
   @Property()
-    maxUsers?: number;
+  maxUsers?: number;
 
   @Property()
-    expireDate?: Date;
+  expireDate?: Date;
 
   @Property()
-    reactionIcon!: string;
+  reactionIcon!: string;
 
   @Property()
-    channelId?: string;
+  channelId?: string;
 }

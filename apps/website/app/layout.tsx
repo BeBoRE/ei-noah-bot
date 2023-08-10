@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 
 import '../styles/globals.css';
+
 import TRPCReactProvider from './providers';
 
 const fontSans = Inter({
@@ -26,9 +27,14 @@ type Props = {
 
 export default function Layout({ children }: Props) {
   return (
-    <html lang="en" className="bg-primary-950 text-primary-50 flex min-h-[100dvh]">
+    <html
+      lang="en"
+      className="flex min-h-[100dvh] bg-primary-950 text-primary-50"
+    >
       <link rel="icon" href="/favicon.ico" sizes="any" />
-      <body className={['font-sans', fontSans.variable, 'flex-1', 'flex'].join(' ')}>
+      <body
+        className={['font-sans', fontSans.variable, 'flex-1', 'flex'].join(' ')}
+      >
         <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>
     </html>

@@ -1,83 +1,120 @@
 import { ApplicationCommandOptionType, PermissionsBitField } from 'discord.js';
+
 import Router, { HandlerType } from '../router/Router';
 
 const router = new Router('Select your language');
 
-router.use('help', ({ i18n }) => i18n.t('locale.help', { joinArrays: '\n' }), HandlerType.BOTH, {
-  description: 'Help menu',
-});
+router.use(
+  'help',
+  ({ i18n }) => i18n.t('locale.help', { joinArrays: '\n' }),
+  HandlerType.BOTH,
+  {
+    description: 'Help menu',
+  },
+);
 
-router.use('languages', ({ i18n }) => i18n.t('locale.availableLanguages', { languages: Object.keys(i18n.services.resourceStore.data).sort().map((l) => `***${l}***`) }), HandlerType.BOTH, {
-  description: 'Get all available languages',
-});
+router.use(
+  'languages',
+  ({ i18n }) =>
+    i18n.t('locale.availableLanguages', {
+      languages: Object.keys(i18n.services.resourceStore.data)
+        .sort()
+        .map((l) => `***${l}***`),
+    }),
+  HandlerType.BOTH,
+  {
+    description: 'Get all available languages',
+  },
+);
 
-router.use('user', async ({
-  i18n, user, params, flags, guildUser,
-}) => {
-  const [language] = flags.get('language') || params;
-  const availableLanguages = Object.keys(i18n.services.resourceStore.data).sort();
+router.use(
+  'user',
+  async ({ i18n, user, params, flags, guildUser }) => {
+    const [language] = flags.get('language') || params;
+    const availableLanguages = Object.keys(
+      i18n.services.resourceStore.data,
+    ).sort();
 
-  if (typeof language !== 'string') return i18n.t('locale.error.notLanguage');
+    if (typeof language !== 'string') return i18n.t('locale.error.notLanguage');
 
-  if (!availableLanguages.includes(language) && language !== 'none') return i18n.t('locale.error.notLanguage');
+    if (!availableLanguages.includes(language) && language !== 'none')
+      return i18n.t('locale.error.notLanguage');
 
-  if (language === 'none') {
+    if (language === 'none') {
+      // eslint-disable-next-line no-param-reassign
+      user.language = undefined;
+      await i18n.changeLanguage(guildUser?.guild.language);
+
+      return i18n.t('locale.userLanguageRemoved');
+    }
+
+    await i18n.changeLanguage(language);
     // eslint-disable-next-line no-param-reassign
-    user.language = undefined;
-    await i18n.changeLanguage(guildUser?.guild.language);
+    user.language = language;
 
-    return i18n.t('locale.userLanguageRemoved');
-  }
+    return i18n.t('locale.userLanguageChanged', { changedTo: language });
+  },
+  HandlerType.BOTH,
+  {
+    description: 'Change your individual language',
+    options: [
+      {
+        name: 'language',
+        type: ApplicationCommandOptionType.String,
+        description:
+          "Language you want to change to ('none removes your preference')",
+        required: true,
+      },
+    ],
+  },
+);
 
-  await i18n.changeLanguage(language);
-  // eslint-disable-next-line no-param-reassign
-  user.language = language;
+router.use(
+  'server',
+  async ({ i18n, guildUser, params, flags, msg }) => {
+    const [language] = flags.get('language') || params;
+    const { member } = msg;
+    const availableLanguages = Object.keys(
+      i18n.services.resourceStore.data,
+    ).sort();
 
-  return i18n.t('locale.userLanguageChanged', { changedTo: language });
-}, HandlerType.BOTH, {
-  description: 'Change your individual language',
-  options: [{
-    name: 'language',
-    type: ApplicationCommandOptionType.String,
-    description: "Language you want to change to ('none removes your preference')",
-    required: true,
-  }],
-});
+    if (typeof language !== 'string') return i18n.t('locale.error.notLanguage');
 
-router.use('server', async ({
-  i18n, guildUser, params, flags, msg,
-}) => {
-  const [language] = flags.get('language') || params;
-  const { member } = msg;
-  const availableLanguages = Object.keys(i18n.services.resourceStore.data).sort();
+    if (!availableLanguages.includes(language) && language !== 'none')
+      return i18n.t('locale.error.notLanguage');
+    if (
+      !member ||
+      !member.permissions.has(PermissionsBitField.Flags.Administrator)
+    )
+      return i18n.t('locale.error.notAdmin');
 
-  if (typeof language !== 'string') return i18n.t('locale.error.notLanguage');
+    if (language === 'none') {
+      // eslint-disable-next-line no-param-reassign
+      guildUser.guild.language = undefined;
+      await i18n.changeLanguage(guildUser.user.language);
 
-  if (!availableLanguages.includes(language) && language !== 'none') return i18n.t('locale.error.notLanguage');
-  if (!member || !member.permissions.has(PermissionsBitField.Flags.Administrator)) return i18n.t('locale.error.notAdmin');
+      return i18n.t('locale.guildLanguageRemoved');
+    }
 
-  if (language === 'none') {
+    await i18n.changeLanguage(language);
     // eslint-disable-next-line no-param-reassign
-    guildUser.guild.language = undefined;
-    await i18n.changeLanguage(guildUser.user.language);
+    guildUser.guild.language = language;
 
-    return i18n.t('locale.guildLanguageRemoved');
-  }
-
-  await i18n.changeLanguage(language);
-  // eslint-disable-next-line no-param-reassign
-  guildUser.guild.language = language;
-
-  return i18n.t('locale.guildLanguageChanged', { changedTo: language });
-}, HandlerType.GUILD, {
-  description: 'Change the server\'s default language',
-  options: [{
-    name: 'language',
-    type: ApplicationCommandOptionType.String,
-    description: 'Language you want to change to',
-    required: true,
-  }],
-});
+    return i18n.t('locale.guildLanguageChanged', { changedTo: language });
+  },
+  HandlerType.GUILD,
+  {
+    description: "Change the server's default language",
+    options: [
+      {
+        name: 'language',
+        type: ApplicationCommandOptionType.String,
+        description: 'Language you want to change to',
+        required: true,
+      },
+    ],
+  },
+);
 
 if (process.env.NODE_ENV !== 'production') {
   router.use('test', ({ i18n }) => i18n.t('hello'), HandlerType.BOTH, {

@@ -1,13 +1,13 @@
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-
-import { ThemeProvider, DarkTheme } from '@react-navigation/native';
+import { DarkTheme, ThemeProvider } from '@react-navigation/native';
+import { AuthProvider } from 'src/context/auth';
 
 import baseConfig from '@ei/tailwind-config';
-import { AuthProvider } from 'src/context/auth';
-import { useFonts } from 'expo-font';
+
 import { TRPCProvider } from '../utils/api';
 
 // This is the main layout of the app
@@ -26,12 +26,16 @@ function RootLayout() {
             The Stack component displays the current page.
             It also allows you to configure your screens
           */}
-          <ThemeProvider value={{
-            ...DarkTheme,
-            colors: {
-              ...DarkTheme.colors, ...baseConfig.theme.colors, text: baseConfig.theme.colors.background, primary: baseConfig.theme.colors.primary.DEFAULT,
-            },
-          }}
+          <ThemeProvider
+            value={{
+              ...DarkTheme,
+              colors: {
+                ...DarkTheme.colors,
+                ...baseConfig.theme.colors,
+                text: baseConfig.theme.colors.background,
+                primary: baseConfig.theme.colors.primary.DEFAULT,
+              },
+            }}
           >
             <Stack
               screenOptions={{

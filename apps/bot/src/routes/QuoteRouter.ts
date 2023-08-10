@@ -1,53 +1,79 @@
 import {
-  Channel,
-  Guild,
-  Message,
-  ButtonBuilder,
-  PermissionsBitField,
-  Role,
-  User as DiscordUser,
-  InteractionReplyOptions,
-  InteractionUpdateOptions,
   ApplicationCommandOptionType,
   ApplicationCommandType,
+  ButtonBuilder,
   ButtonStyle,
+  Channel,
+  User as DiscordUser,
   EmbedBuilder,
+  Guild,
+  InteractionReplyOptions,
+  InteractionUpdateOptions,
+  Message,
+  PermissionsBitField,
+  Role,
 } from 'discord.js';
-import { GuildUser } from '@ei/database/entity/GuildUser';
 import { i18n as I18n } from 'i18next';
+
+import { GuildUser } from '@ei/database/entity/GuildUser';
 import Quote from '@ei/database/entity/Quote';
+
 import createMenu from '../createMenu';
 import Router, { GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Onthoud al');
 
-router.use('help', ({ i18n }) => i18n.t('quote.help', { joinArrays: '\n' }), HandlerType.BOTH, {
-  description: 'Help menu for quote\'s',
-});
+router.use(
+  'help',
+  ({ i18n }) => i18n.t('quote.help', { joinArrays: '\n' }),
+  HandlerType.BOTH,
+  {
+    description: "Help menu for quote's",
+  },
+);
 
-const getQuoteOptions = async (guild : Guild, quote : Quote, i18n : I18n) : Promise<InteractionReplyOptions> => {
-  await Promise.all([(() => {
-    if (!quote.guildUser.isInitialized()) return quote.guildUser.init();
+const getQuoteOptions = async (
+  guild: Guild,
+  quote: Quote,
+  i18n: I18n,
+): Promise<InteractionReplyOptions> => {
+  await Promise.all([
+    (() => {
+      if (!quote.guildUser.isInitialized()) return quote.guildUser.init();
 
-    return quote.guildUser;
-  })(), (() => {
-    if (!quote.creator.isInitialized()) return quote.creator.init();
+      return quote.guildUser;
+    })(),
+    (() => {
+      if (!quote.creator.isInitialized()) return quote.creator.init();
 
-    return quote.creator;
-  })()]);
+      return quote.creator;
+    })(),
+  ]);
 
-  const quoted = guild.client.users.fetch(`${BigInt(quote.guildUser.user.id)}`, { cache: true });
-  const owner = guild.client.users.fetch(`${BigInt(quote.creator.user.id)}`, { cache: true });
+  const quoted = guild.client.users.fetch(
+    `${BigInt(quote.guildUser.user.id)}`,
+    { cache: true },
+  );
+  const owner = guild.client.users.fetch(`${BigInt(quote.creator.user.id)}`, {
+    cache: true,
+  });
 
   const text = quote.text.replace('`', '\\`');
 
-  const linkRegex = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/gm;
+  const linkRegex =
+    /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/gm;
 
-  if (text.match(linkRegex)) return { content: `${text}\n> - ${await quoted} ${quote.date ? `(<t:${quote.date.getTime() / 1000}:D>)` : ''}\n> ${i18n.t('quote.byUser', { user: (await owner).toString() })}` };
+  if (text.match(linkRegex)) {
+    return {
+      content: `${text}\n> - ${await quoted} ${
+        quote.date ? `(<t:${quote.date.getTime() / 1000}:D>)` : ''
+      }\n> ${i18n.t('quote.byUser', { user: (await owner).toString() })}`,
+    };
+  }
 
   const embed = new EmbedBuilder();
 
-  const color : number | undefined = guild.members.me?.displayColor;
+  const color: number | undefined = guild.members.me?.displayColor;
 
   embed.setAuthor({
     name: (await quoted).username,
@@ -64,11 +90,20 @@ const getQuoteOptions = async (guild : Guild, quote : Quote, i18n : I18n) : Prom
   return { embeds: [embed] };
 };
 
-const addQuote = (params : (string | DiscordUser | Channel | Role | number | boolean)[], quotedUser : GuildUser, owner : GuildUser, guild : Guild, i18n : I18n, date ?: Date) => {
-  const text = params.map((param) => {
-    if (typeof param === 'string') return param;
-    return param.toString();
-  }).join(' ');
+const addQuote = (
+  params: (string | DiscordUser | Channel | Role | number | boolean)[],
+  quotedUser: GuildUser,
+  owner: GuildUser,
+  guild: Guild,
+  i18n: I18n,
+  date?: Date,
+) => {
+  const text = params
+    .map((param) => {
+      if (typeof param === 'string') return param;
+      return param.toString();
+    })
+    .join(' ');
 
   if (text.length > 2000) {
     return i18n.t('quote.error.quoteSizeLimit');
@@ -81,8 +116,14 @@ const addQuote = (params : (string | DiscordUser | Channel | Role | number | boo
   return getQuoteOptions(guild, quote, i18n);
 };
 
-const handler : GuildHandler = async ({
-  params, msg, guildUser, flags, i18n, logger, getGuildUser,
+const handler: GuildHandler = async ({
+  params,
+  msg,
+  guildUser,
+  flags,
+  i18n,
+  logger,
+  getGuildUser,
 }) => {
   const [user] = flags.get('persoon') || params;
   params.shift();
@@ -94,11 +135,13 @@ const handler : GuildHandler = async ({
 
   const requestingUser = msg.user;
 
-  let quotedUser : GuildUser;
+  let quotedUser: GuildUser;
   if (requestingUser.id === user.id) quotedUser = guildUser;
   else quotedUser = await getGuildUser(user, msg.guild);
 
-  if (!quotedUser.quotes.isInitialized()) { await quotedUser.quotes.init(); }
+  if (!quotedUser.quotes.isInitialized()) {
+    await quotedUser.quotes.init();
+  }
 
   if (!quoteToAdd || quoteToAdd.length === 0) {
     if (quotedUser.quotes.length === 0) {
@@ -117,7 +160,9 @@ const handler : GuildHandler = async ({
       title: i18n.t('quote.quoteMenuTitle'),
       mapper: (q) => q.text,
       selectCallback: async (q) => ({
-        ...<InteractionUpdateOptions> await getQuoteOptions(msg.guild, q, i18n),
+        ...(<InteractionUpdateOptions>(
+          await getQuoteOptions(msg.guild, q, i18n)
+        )),
         allowedMentions: {
           users: [],
           roles: [],
@@ -153,7 +198,8 @@ router.use('add', handler, HandlerType.GUILD, {
       description: 'Person you want to add a quote from',
       type: ApplicationCommandOptionType.User,
       required: true,
-    }, {
+    },
+    {
       name: 'quote',
       description: 'Quote you want to add',
       type: ApplicationCommandOptionType.String,
@@ -163,35 +209,51 @@ router.use('add', handler, HandlerType.GUILD, {
 });
 router.use('toevoegen', handler, HandlerType.GUILD);
 
-router.useContext('Save As Quote', ApplicationCommandType.Message, async ({
-  interaction, i18n, guildUser, getGuildUser,
-}) => {
-  const message = interaction.options.getMessage('message');
+router.useContext(
+  'Save As Quote',
+  ApplicationCommandType.Message,
+  async ({ interaction, i18n, guildUser, getGuildUser }) => {
+    const message = interaction.options.getMessage('message');
 
-  if (!(message instanceof Message)) {
-    return 'Onmogelijk pad';
-  }
+    if (!(message instanceof Message)) {
+      return 'Onmogelijk pad';
+    }
 
-  if (!guildUser || !message.guild) {
-    return i18n.t('error.onlyUsableInGuild');
-  }
+    if (!guildUser || !message.guild) {
+      return i18n.t('error.onlyUsableInGuild');
+    }
 
-  if (!message.content) return i18n.t('quote.error.noContentInMessage');
+    if (!message.content) return i18n.t('quote.error.noContentInMessage');
 
-  const quoted = await getGuildUser(message.author, message.guild);
+    const quoted = await getGuildUser(message.author, message.guild);
 
-  const quoteMessage = await addQuote(message.content.split(' '), quoted, guildUser, message.guild, i18n, message.createdAt);
+    const quoteMessage = await addQuote(
+      message.content.split(' '),
+      quoted,
+      guildUser,
+      message.guild,
+      i18n,
+      message.createdAt,
+    );
 
-  if (typeof quoteMessage === 'string') return quoteMessage;
+    if (typeof quoteMessage === 'string') return quoteMessage;
 
-  return {
-    ...quoteMessage,
-    ephemeral: false,
-  };
-});
+    return {
+      ...quoteMessage,
+      ephemeral: false,
+    };
+  },
+);
 
-const removeHandler : GuildHandler = async ({
-  msg, em, params, guildUser, flags, i18n, logger, getGuildUser,
+const removeHandler: GuildHandler = async ({
+  msg,
+  em,
+  params,
+  guildUser,
+  flags,
+  i18n,
+  logger,
+  getGuildUser,
 }) => {
   const [user] = flags.get('user') || params;
   if (!(user instanceof DiscordUser)) {
@@ -200,14 +262,22 @@ const removeHandler : GuildHandler = async ({
 
   const requestingUser = msg.user;
 
-  const guToRemoveFrom = requestingUser.id === user.id ? guildUser : await getGuildUser(user, msg.guild);
+  const guToRemoveFrom =
+    requestingUser.id === user.id
+      ? guildUser
+      : await getGuildUser(user, msg.guild);
 
   // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
-  const constraint = guToRemoveFrom.user.id === requestingUser.id || msg.member?.permissions.has(PermissionsBitField.Flags.Administrator)
-    ? undefined : { where: { creator: guildUser } };
+  const constraint =
+    guToRemoveFrom.user.id === requestingUser.id ||
+    msg.member?.permissions.has(PermissionsBitField.Flags.Administrator)
+      ? undefined
+      : { where: { creator: guildUser } };
 
-  if (!guToRemoveFrom.quotes.isInitialized()) { await guToRemoveFrom.quotes.init(constraint); }
+  if (!guToRemoveFrom.quotes.isInitialized()) {
+    await guToRemoveFrom.quotes.init(constraint);
+  }
 
   const quotes = guToRemoveFrom.quotes.getItems();
 
@@ -215,7 +285,7 @@ const removeHandler : GuildHandler = async ({
     return i18n.t('quote.error.noQuoteFoundRemove');
   }
 
-  const quotesToRemove : Set<Quote> = new Set<Quote>();
+  const quotesToRemove: Set<Quote> = new Set<Quote>();
 
   const menuEm = em.fork();
 
@@ -238,9 +308,16 @@ const removeHandler : GuildHandler = async ({
           .setStyle(ButtonStyle.Danger)
           .setLabel('❌'),
         () => {
-          quotesToRemove.forEach((q) => { menuEm.remove(q); });
-          if (quotesToRemove.size > 0) msg.channel.send(i18n.t('quote.amountQuotesRemoved', { count: quotesToRemove.size }));
-          else msg.channel.send(i18n.t('quote.noQuotesRemoved'));
+          quotesToRemove.forEach((q) => {
+            menuEm.remove(q);
+          });
+          if (quotesToRemove.size > 0) {
+            msg.channel.send(
+              i18n.t('quote.amountQuotesRemoved', {
+                count: quotesToRemove.size,
+              }),
+            );
+          } else msg.channel.send(i18n.t('quote.noQuotesRemoved'));
           menuEm.flush();
           return true;
         },
@@ -256,7 +333,7 @@ router.use('remove', removeHandler, HandlerType.GUILD, {
   options: [
     {
       name: 'user',
-      description: 'User you wan\'t to remove a quote from',
+      description: "User you wan't to remove a quote from",
       type: ApplicationCommandOptionType.User,
       required: true,
     },
@@ -267,18 +344,27 @@ router.use('verwijder', removeHandler, HandlerType.GUILD);
 router.use('verwijderen', removeHandler, HandlerType.GUILD);
 router.use('manage', removeHandler, HandlerType.GUILD);
 
-router.use('random', async ({ msg, em, i18n }) => {
-  const quotes = await em.find(Quote, { guildUser: { guild: { id: msg.guild.id } } }, { populate: ['guildUser', 'creator'] });
+router.use(
+  'random',
+  async ({ msg, em, i18n }) => {
+    const quotes = await em.find(
+      Quote,
+      { guildUser: { guild: { id: msg.guild.id } } },
+      { populate: ['guildUser', 'creator'] },
+    );
 
-  const quote = quotes[Math.floor(Math.random() * quotes.length)];
+    const quote = quotes[Math.floor(Math.random() * quotes.length)];
 
-  if (quote) {
-    return getQuoteOptions(msg.guild, quote, i18n);
-  }
+    if (quote) {
+      return getQuoteOptions(msg.guild, quote, i18n);
+    }
 
-  return i18n.t('quote.guildNoQuotes');
-}, HandlerType.GUILD, {
-  description: 'Give a random quote from the server',
-});
+    return i18n.t('quote.guildNoQuotes');
+  },
+  HandlerType.GUILD,
+  {
+    description: 'Give a random quote from the server',
+  },
+);
 
 export default router;

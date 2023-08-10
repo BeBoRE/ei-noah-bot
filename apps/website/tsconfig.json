@@ -1,13 +1,7 @@
 {
   "extends": "@ei/tsconfig/expo.json",
-  "include": [
-    "**/*.tsx",
-    "**/*.ts",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ],
+  "include": ["**/*.tsx", "**/*.ts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"],
   "compilerOptions": {
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
@@ -15,9 +9,7 @@
     "incremental": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "lib": [
-      "dom"
-    ],
+    "lib": ["dom"],
     "jsx": "preserve",
     "plugins": [
       {

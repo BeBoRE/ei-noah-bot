@@ -1,13 +1,17 @@
-import { z } from 'zod';
-import { User } from '@ei/database/entity/User';
 import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
+
+import { User } from '@ei/database/entity/User';
+
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 
 export const notificationRouter = createTRPCRouter({
   setToken: protectedProcedure
-    .input(z.object({
-      token: z.string(),
-    }))
+    .input(
+      z.object({
+        token: z.string(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const user = await ctx.em.findOne(User, { id: ctx.session.user.id });
 

@@ -6,18 +6,15 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end
  */
-import { TRPCError, initTRPC } from '@trpc/server';
+import { REST } from '@discordjs/rest';
+import { initTRPC, TRPCError } from '@trpc/server';
 import type { CreateNextContextOptions } from '@trpc/server/adapters/next';
+import { Routes } from 'discord-api-types/v10';
+import { camelCase, isArray, isObject, transform } from 'lodash';
 import superjson from 'superjson';
-import { ZodError, z } from 'zod';
+import { z, ZodError } from 'zod';
 
 import { getOrm } from '@ei/database';
-import { REST } from '@discordjs/rest';
-import { Routes } from 'discord-api-types/v10';
-
-import {
- camelCase, isArray, isObject, transform,
-} from 'lodash';
 
 /**
  * User res {
@@ -73,7 +70,7 @@ interface CreateInnerContextOptions extends Partial<CreateNextContextOptions> {
  * - trpc's `createSSGHelpers` where we don't have req/res
  * @see https://create.t3.gg/en/usage/trpc#-servertrpccontextts
  */
-const createInnerTRPCContext = async (opts : CreateInnerContextOptions) => {
+const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
   const em = (await getOrm()).em.fork();
   const { session } = opts;
 
@@ -87,13 +84,15 @@ const camelize = (obj: unknown) => {
   if (!isObject(obj)) return obj;
 
   return transform(
-  obj,
-  (result: Record<string, unknown>, value: unknown, key: string, target) => {
-    const camelKey = isArray(target) ? key : camelCase(key);
-    // eslint-disable-next-line no-param-reassign
-    result[camelKey] = isObject(value) ? camelize(value as Record<string, unknown>) : value;
-  },
-);
+    obj,
+    (result: Record<string, unknown>, value: unknown, key: string, target) => {
+      const camelKey = isArray(target) ? key : camelCase(key);
+      // eslint-disable-next-line no-param-reassign
+      result[camelKey] = isObject(value)
+        ? camelize(value as Record<string, unknown>)
+        : value;
+    },
+  );
 };
 
 /**
@@ -101,13 +100,15 @@ const camelize = (obj: unknown) => {
  * process every request that goes through your tRPC endpoint
  * @link https://trpc.io/docs/context
  */
-export const createTRPCContext = async (opts : CreateNextContextOptions) => {
+export const createTRPCContext = async (opts: CreateNextContextOptions) => {
   const { req } = opts;
 
   const bearer = bearerSchema.safeParse(req.headers.authorization);
 
   if (bearer.success) {
-    const rest = new REST({ version: '10', authPrefix: 'Bearer' }).setToken(bearer.data);
+    const rest = new REST({ version: '10', authPrefix: 'Bearer' }).setToken(
+      bearer.data,
+    );
 
     const userRes = await rest.get(Routes.user()).catch(() => null);
 

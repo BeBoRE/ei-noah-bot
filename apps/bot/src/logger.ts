@@ -1,7 +1,7 @@
-import winston, { transports, format } from 'winston';
+import dotenv from 'dotenv';
+import winston, { format, transports } from 'winston';
 import { consoleFormat } from 'winston-console-format';
 import DiscordTransport from 'winston-discord-transport';
-import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -38,14 +38,18 @@ const logger = winston.createLogger({
 logger.info('Logging initialized');
 
 if (process.env.LOGGING_WEBHOOK) {
-  logger.add(new DiscordTransport({
-    webhook: process.env.LOGGING_WEBHOOK,
-    defaultMeta: undefined,
-    level: process.env.NODE_ENV !== 'production' ? 'verbose' : 'info',
-    format: format.errors({ stack: true }),
-  }));
+  logger.add(
+    new DiscordTransport({
+      webhook: process.env.LOGGING_WEBHOOK,
+      defaultMeta: undefined,
+      level: process.env.NODE_ENV !== 'production' ? 'verbose' : 'info',
+      format: format.errors({ stack: true }),
+    }),
+  );
 } else {
-  logger.info('Log to a guild channel by adding a webhook to it and copying the webhook to the .env file as key LOGGING_WEBHOOK');
+  logger.info(
+    'Log to a guild channel by adding a webhook to it and copying the webhook to the .env file as key LOGGING_WEBHOOK',
+  );
 }
 
 export default logger;
