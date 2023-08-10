@@ -61,7 +61,9 @@ function Screen() {
     const channelName = userIdToPusherChannel({ id: user.id });
 
     console.log('Subscribing to channel', channelName);
-    pusher.subscribe(channelName);
+    pusher.subscribe(channelName).bind('pusher:subscription_succeeded', () => {
+      pusher.channel(channelName).trigger('client-refresh', null);
+    })
 
     return () => {
       console.log('Unsubscribing from channel', channelName);

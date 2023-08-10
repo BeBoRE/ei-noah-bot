@@ -2320,29 +2320,36 @@ const createPusherSubscriptionListeners = (
 ) => {
   const channelName = userIdToPusherChannel(oldOwnerMember);
 
+  const refresh = async () => {
+    const em = _em.fork();
+
+    const tempChannel = await em.findOne(
+      TempChannel,
+      { channelId: voiceChannel.id },
+      { populate: ['guildUser.user'] },
+    );
+
+    if (!tempChannel) {
+      pusherClient.unsubscribe(channelName);
+      return;
+    }
+
+    pushLobbyToUser(oldOwnerMember, {
+      member: oldOwnerMember,
+      guild,
+      tempChannel,
+      voiceChannel,
+    });
+  }
+
   console.log('listening to channel', channelName);
   pusherClient
     .subscribe(channelName)
     .bind('pusher:subscription_count', async () => {
-      const em = _em.fork();
-
-      const tempChannel = await em.findOne(
-        TempChannel,
-        { channelId: voiceChannel.id },
-        { populate: ['guildUser.user'] },
-      );
-
-      if (!tempChannel) {
-        pusherClient.unsubscribe(channelName);
-        return;
-      }
-
-      pushLobbyToUser(oldOwnerMember, {
-        member: oldOwnerMember,
-        guild,
-        tempChannel,
-        voiceChannel,
-      });
+      refresh();
+    })
+    .bind('client-refresh', async () => {
+      refresh();
     })
     .bind('client-add-user', async (data: unknown) => {
       console.log('client-add-user', data);
