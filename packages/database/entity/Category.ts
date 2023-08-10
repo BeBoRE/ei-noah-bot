@@ -1,6 +1,7 @@
 import { BaseEntity, Entity, PrimaryKey, Property } from '@mikro-orm/core';
 
 @Entity()
+// eslint-disable-next-line import/prefer-default-export
 export class Category extends BaseEntity<Category, 'id'> {
   @PrimaryKey()
   id!: string;
@@ -17,5 +18,3 @@ export class Category extends BaseEntity<Category, 'id'> {
   @Property()
   lobbyCategory?: string;
 }
-
-export default Category;

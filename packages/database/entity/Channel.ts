@@ -1,9 +1,8 @@
 import { BaseEntity, Entity, PrimaryKey } from '@mikro-orm/core';
 
 @Entity()
+// eslint-disable-next-line import/prefer-default-export
 export class Channel extends BaseEntity<Channel, 'id'> {
   @PrimaryKey()
   id!: string;
 }
-
-export default Channel;

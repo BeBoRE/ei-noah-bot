@@ -11,6 +11,7 @@ import CustomRole from './CustomRole';
 import { GuildUser } from './GuildUser';
 
 @Entity()
+// eslint-disable-next-line import/prefer-default-export
 export class Guild extends BaseEntity<Guild, 'id'> {
   @PrimaryKey()
   id!: string;
@@ -48,5 +49,3 @@ export class Guild extends BaseEntity<Guild, 'id'> {
   @Property({ default: false })
   seperateTextChannel!: boolean;
 }
-
-export default Guild;

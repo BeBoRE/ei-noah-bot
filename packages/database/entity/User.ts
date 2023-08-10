@@ -11,6 +11,7 @@ import {
 import { GuildUser } from './GuildUser';
 
 @Entity()
+// eslint-disable-next-line import/prefer-default-export
 export class User extends BaseEntity<User, 'id'> {
   @PrimaryKey()
   id!: string;
@@ -34,5 +35,3 @@ export class User extends BaseEntity<User, 'id'> {
   @Property()
   expoPushToken?: string;
 }
-
-export default User;

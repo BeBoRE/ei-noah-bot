@@ -18,6 +18,7 @@ import type { User } from './User';
 
 @Entity()
 @Unique({ properties: ['guild', 'user'] })
+// eslint-disable-next-line import/prefer-default-export
 export class GuildUser extends BaseEntity<GuildUser, 'id'> {
   @PrimaryKey()
   id!: number;
@@ -46,5 +47,3 @@ export class GuildUser extends BaseEntity<GuildUser, 'id'> {
   @OneToMany(() => LobbyNameChange, (lnc) => lnc.guildUser)
   lobbyNameChanges = new Collection<LobbyNameChange>(this);
 }
-
-export default GuildUser;
