@@ -12,8 +12,10 @@ import baseConfig from '@ei/tailwind-config';
 
 import { TRPCProvider } from '../utils/api';
 
-const response = await getLastNotificationResponseAsync();
-onAcceptResponse(response);
+(async () => {
+  const response = await getLastNotificationResponseAsync();
+  onAcceptResponse(response);
+})()
 
 // This is the main layout of the app
 // It wraps your pages with the providers they need
