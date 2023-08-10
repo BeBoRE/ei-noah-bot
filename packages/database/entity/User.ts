@@ -1,29 +1,38 @@
 import {
-  Entity, PrimaryKey, OneToMany, Property, Collection, BaseEntity, Index,
+  BaseEntity,
+  Collection,
+  Entity,
+  Index,
+  OneToMany,
+  PrimaryKey,
+  Property,
 } from '@mikro-orm/core';
+
 import { GuildUser } from './GuildUser';
 
 @Entity()
 export class User extends BaseEntity<User, 'id'> {
   @PrimaryKey()
-    id!: string;
+  id!: string;
 
   @OneToMany(() => GuildUser, (gu) => gu.user)
-    guildUsers = new Collection<GuildUser>(this);
+  guildUsers = new Collection<GuildUser>(this);
 
   @Property()
-    count: number = 0;
+  count: number = 0;
 
   @Index()
   @Property()
-    birthday?: Date;
+  birthday?: Date;
 
   @Property()
-    language?: string;
+  language?: string;
 
   @Property()
-    timezone?: string;
+  timezone?: string;
 
   @Property()
-    expoPushToken?: string;
+  expoPushToken?: string;
 }
+
+export default User;

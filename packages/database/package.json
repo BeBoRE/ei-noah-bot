@@ -23,7 +23,9 @@
     "@mikro-orm/cli": "^5.7.13",
     "@mikro-orm/entity-generator": "^5.7.13",
     "@types/webpack-env": "^1.18.1",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "eslint": "^8.46.0",
+    "typescript": "^5.1.6"
   },
   "mikro-orm": {
     "useTsNode": true,

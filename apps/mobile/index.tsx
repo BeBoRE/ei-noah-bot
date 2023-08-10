@@ -1,2 +1,2 @@
-import "expo-dev-client"
-import "expo-router/entry"
+import 'expo-dev-client';
+import 'expo-router/entry';

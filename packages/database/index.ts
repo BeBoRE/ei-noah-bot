@@ -1,5 +1,7 @@
+/* eslint-disable no-underscore-dangle */
+import { MikroORM, PostgreSqlDriver } from '@mikro-orm/postgresql';
+
 import options from './mikro-orm.config';
-import {PostgreSqlDriver, MikroORM} from '@mikro-orm/postgresql';
 
 export default options;
 
@@ -12,12 +14,17 @@ declare global {
   }
 }
 
-const getOrm = async () : Promise<MikroORM> => {
-  if(!global.__MikroORM__) {
-    global.__MikroORM__ = await MikroORM.init<PostgreSqlDriver>(options).catch((err) => { console.log(err); process.exit(-1); })
+const getOrm = async (): Promise<MikroORM> => {
+  if (!global.__MikroORM__) {
+    global.__MikroORM__ = await MikroORM.init<PostgreSqlDriver>(options).catch(
+      (err) => {
+        console.log(err);
+        process.exit(-1);
+      },
+    );
   }
 
   return global.__MikroORM__;
-}
+};
 
 export { getOrm };

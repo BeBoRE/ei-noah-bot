@@ -28,7 +28,7 @@
       "notLanguage": "That's not a language",
       "notAdmin": "Only admins are allowed to do this"
     }
-  }, 
+  },
   "birthday": {
     "setHelperText": "your birthday by giving a date (eg. 18 november 1999) as argument",
     "setHelperChange": "Change $t(setHelperText)",
@@ -152,7 +152,7 @@
       "disabled": "Text and voice channel are now seperate"
     },
     "error": {
-      "onlyMentions":"Only mention(s) are allowed as arguments",
+      "onlyMentions": "Only mention(s) are allowed as arguments",
       "noLobby": "You aren't the owner of a lobby\nJoin a **lobby create channel** to get one",
       "useTextChannel": "This command can only be used in your text channel <#{{channel}}>",
       "noRemoveInPublic": "What don't you understand about **public** lobby",

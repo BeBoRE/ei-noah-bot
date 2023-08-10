@@ -1,8 +1,9 @@
-import { Text as NativeText, TextProps } from "react-native";
-import { twMerge } from 'tailwind-merge'
+import { Text as NativeText, TextProps } from 'react-native';
+import { twMerge } from 'tailwind-merge';
 
-const Text = (props : TextProps) => {
-  return <NativeText {...props} className={twMerge(props.className, "text-text")} />;
+function Text({ className, ...props }: TextProps) {
+  // eslint-disable-next-line react/jsx-props-no-spreading
+  return <NativeText {...props} className={twMerge(className, 'text-text')} />;
 }
 
 export default Text;

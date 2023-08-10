@@ -1,5 +1,5 @@
-const path = require("path");
-const loadConfig = require("tailwindcss/loadConfig");
+const path = require('path');
+const loadConfig = require('tailwindcss/loadConfig');
 
 let _tailwindConfig = null;
 /**
@@ -8,7 +8,7 @@ let _tailwindConfig = null;
  */
 function lazyLoadConfig() {
   return (
-    _tailwindConfig ?? loadConfig(path.join(__dirname, "tailwind.config.ts"))
+    _tailwindConfig ?? loadConfig(path.join(__dirname, 'tailwind.config.ts'))
   );
 }
 
@@ -17,16 +17,16 @@ module.exports = function (api) {
   api.cache.forever();
 
   return {
-    presets: ["babel-preset-expo"],
+    presets: ['babel-preset-expo'],
     plugins: [
       [
-        "nativewind/babel",
+        'nativewind/babel',
         {
           tailwindConfig: lazyLoadConfig(),
         },
       ],
-      require.resolve("expo-router/babel"),
-      'react-native-reanimated/plugin'
+      require.resolve('expo-router/babel'),
+      'react-native-reanimated/plugin',
     ],
   };
 };

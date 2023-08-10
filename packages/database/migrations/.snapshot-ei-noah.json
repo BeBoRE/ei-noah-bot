@@ -1,7 +1,5 @@
 {
-  "namespaces": [
-    "public"
-  ],
+  "namespaces": ["public"],
   "name": "public",
   "tables": [
     {
@@ -57,9 +55,7 @@
       "indexes": [
         {
           "keyName": "category_pkey",
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "primary": true,
           "unique": true
@@ -85,9 +81,7 @@
       "indexes": [
         {
           "keyName": "channel_pkey",
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "primary": true,
           "unique": true
@@ -196,9 +190,7 @@
       "indexes": [
         {
           "keyName": "guild_pkey",
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "primary": true,
           "unique": true
@@ -270,9 +262,7 @@
       "schema": "public",
       "indexes": [
         {
-          "columnNames": [
-            "birthday"
-          ],
+          "columnNames": ["birthday"],
           "composite": false,
           "keyName": "user_birthday_index",
           "primary": false,
@@ -280,9 +270,7 @@
         },
         {
           "keyName": "user_pkey",
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "primary": true,
           "unique": true
@@ -336,19 +324,14 @@
       "indexes": [
         {
           "keyName": "guild_user_guild_id_user_id_unique",
-          "columnNames": [
-            "guild_id",
-            "user_id"
-          ],
+          "columnNames": ["guild_id", "user_id"],
           "composite": true,
           "primary": false,
           "unique": true
         },
         {
           "keyName": "guild_user_pkey",
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "primary": true,
           "unique": true
@@ -358,25 +341,17 @@
       "foreignKeys": {
         "guild_user_guild_id_foreign": {
           "constraintName": "guild_user_guild_id_foreign",
-          "columnNames": [
-            "guild_id"
-          ],
+          "columnNames": ["guild_id"],
           "localTableName": "public.guild_user",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.guild",
           "updateRule": "cascade"
         },
         "guild_user_user_id_foreign": {
           "constraintName": "guild_user_user_id_foreign",
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["user_id"],
           "localTableName": "public.guild_user",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.user",
           "updateRule": "cascade"
         }
@@ -447,9 +422,7 @@
       "schema": "public",
       "indexes": [
         {
-          "columnNames": [
-            "guild_user_id"
-          ],
+          "columnNames": ["guild_user_id"],
           "composite": false,
           "keyName": "temp_channel_guild_user_id_unique",
           "primary": false,
@@ -457,9 +430,7 @@
         },
         {
           "keyName": "temp_channel_pkey",
-          "columnNames": [
-            "channel_id"
-          ],
+          "columnNames": ["channel_id"],
           "composite": false,
           "primary": true,
           "unique": true
@@ -469,13 +440,9 @@
       "foreignKeys": {
         "temp_channel_guild_user_id_foreign": {
           "constraintName": "temp_channel_guild_user_id_foreign",
-          "columnNames": [
-            "guild_user_id"
-          ],
+          "columnNames": ["guild_user_id"],
           "localTableName": "public.temp_channel",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.guild_user",
           "updateRule": "cascade"
         }
@@ -536,9 +503,7 @@
       "indexes": [
         {
           "keyName": "quote_pkey",
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "primary": true,
           "unique": true
@@ -548,25 +513,17 @@
       "foreignKeys": {
         "quote_guild_user_id_foreign": {
           "constraintName": "quote_guild_user_id_foreign",
-          "columnNames": [
-            "guild_user_id"
-          ],
+          "columnNames": ["guild_user_id"],
           "localTableName": "public.quote",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.guild_user",
           "updateRule": "cascade"
         },
         "quote_creator_id_foreign": {
           "constraintName": "quote_creator_id_foreign",
-          "columnNames": [
-            "creator_id"
-          ],
+          "columnNames": ["creator_id"],
           "localTableName": "public.quote",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.guild_user",
           "updateRule": "cascade"
         }
@@ -617,9 +574,7 @@
       "schema": "public",
       "indexes": [
         {
-          "columnNames": [
-            "guild_user_id"
-          ],
+          "columnNames": ["guild_user_id"],
           "composite": false,
           "keyName": "lobby_name_change_guild_user_id_index",
           "primary": false,
@@ -627,9 +582,7 @@
         },
         {
           "keyName": "lobby_name_change_pkey",
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "primary": true,
           "unique": true
@@ -639,13 +592,9 @@
       "foreignKeys": {
         "lobby_name_change_guild_user_id_foreign": {
           "constraintName": "lobby_name_change_guild_user_id_foreign",
-          "columnNames": [
-            "guild_user_id"
-          ],
+          "columnNames": ["guild_user_id"],
           "localTableName": "public.lobby_name_change",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.guild_user",
           "updateRule": "cascade"
         }
@@ -732,9 +681,7 @@
       "indexes": [
         {
           "keyName": "custom_role_pkey",
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "primary": true,
           "unique": true
@@ -744,25 +691,17 @@
       "foreignKeys": {
         "custom_role_owner_id_foreign": {
           "constraintName": "custom_role_owner_id_foreign",
-          "columnNames": [
-            "owner_id"
-          ],
+          "columnNames": ["owner_id"],
           "localTableName": "public.custom_role",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.guild_user",
           "updateRule": "cascade"
         },
         "custom_role_guild_id_foreign": {
           "constraintName": "custom_role_guild_id_foreign",
-          "columnNames": [
-            "guild_id"
-          ],
+          "columnNames": ["guild_id"],
           "localTableName": "public.custom_role",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.guild",
           "updateRule": "cascade"
         }

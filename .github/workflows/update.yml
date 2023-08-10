@@ -1,10 +1,15 @@
 name: update
-on: push
+# Run on pull_request and push
+on:
+  push:
 
 jobs:
   update:
     name: EAS Update
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Check for EXPO_TOKEN
         run: |
@@ -39,21 +44,21 @@ jobs:
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
-      
+
       - name: Navigate to project directory
         run: cd apps/mobile
-
-      - name: 🏗 Setup EAS
+      
+      - name: Setup EAS
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Navigate to root
+      - name: Navigate to root directory
         run: cd ../..
 
       - name: Install dependencies
         run: pnpm install
 
-      - name: Publish update
+      - name: Run update
         run: pnpm expo-update

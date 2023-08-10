@@ -1,21 +1,21 @@
-import {
-  PrimaryKey, Entity, Property, BaseEntity,
-} from '@mikro-orm/core';
+import { BaseEntity, Entity, PrimaryKey, Property } from '@mikro-orm/core';
 
 @Entity()
 export class Category extends BaseEntity<Category, 'id'> {
   @PrimaryKey()
-    id!: string;
+  id!: string;
 
   @Property()
-    publicVoice?: string;
+  publicVoice?: string;
 
   @Property()
-    muteVoice?: string;
+  muteVoice?: string;
 
   @Property()
-    privateVoice?: string;
+  privateVoice?: string;
 
   @Property()
-    lobbyCategory?: string;
+  lobbyCategory?: string;
 }
+
+export default Category;

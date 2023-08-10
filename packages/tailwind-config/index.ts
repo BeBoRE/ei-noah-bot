@@ -1,4 +1,4 @@
-import type { Config } from "tailwindcss";
+import type { Config } from 'tailwindcss';
 
 const primary = {
   DEFAULT: '#D68B4D',
@@ -12,11 +12,11 @@ const primary = {
   700: '#89401F',
   800: '#572414',
   900: '#250D09',
-  950: '#0C0403'
-} as const
+  950: '#0C0403',
+} as const;
 
 const baseConfig = {
-  content: [""],
+  content: [''],
   theme: {
     colors: {
       text: primary[100],
@@ -30,6 +30,6 @@ const baseConfig = {
     extend: {},
   },
   plugins: [],
-} satisfies Config
+} satisfies Config;
 
 export default baseConfig;

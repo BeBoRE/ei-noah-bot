@@ -13,12 +13,16 @@
     "lint": "dotenv -- turbo lint",
     "lint:fix": "dotenv -- turbo lint:fix",
     "db:push": "dotenv -- turbo db:push",
-    "db:create": "dotenv -- turbo db:create"
+    "db:create": "dotenv -- turbo db:create",
+    "format": "prettier --write \"**/*.{js,cjs,mjs,ts,tsx,md,json}\" --ignore-path .gitignore"
   },
   "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.1.0",
     "dotenv-cli": "^7.2.1",
     "eslint": "^8.28.0",
     "eslint-config-custom": "*",
+    "prettier": "^3.0.1",
+    "prettier-plugin-tailwindcss": "^0.4.1",
     "turbo": "latest"
   },
   "dependencies": {
