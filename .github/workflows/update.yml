@@ -1,7 +1,6 @@
-name: preview
+name: update
 # Run on pull_request and push
 on:
-  pull_request:
   push:
 
 jobs:
@@ -64,9 +63,13 @@ jobs:
       - name: Run update
         run: pnpm expo-update
 
+      - name: Navigate to project directory
+        run: cd apps/mobile
+
       - name: Create preview comment
         uses: expo/expo-github-action/preview-comment@v8
         with:
+          comment: false
           channel: ${{ github.ref }}
 
       - name: Send Discord Message
