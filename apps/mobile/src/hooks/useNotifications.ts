@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import {
+  NotificationResponse,
   setNotificationCategoryAsync,
   useLastNotificationResponse,
 } from 'expo-notifications';
@@ -10,6 +11,48 @@ import registerForPushNotificationsAsync from 'src/utils/registerForPushNotifica
 import { secureStorage } from 'src/utils/storage/secureStorage';
 
 import { userAddNotificationSchema, userIdToPusherChannel } from '@ei/lobby';
+
+export const onAcceptResponse = async (
+  response: NotificationResponse | undefined | null,
+) => {
+  if (!response) return;
+
+  if (
+    'categoryIdentifier' in response.notification.request.content &&
+    response.notification.request.content.categoryIdentifier === 'userAdd' &&
+    response.actionIdentifier === 'accept'
+  ) {
+    const data = userAddNotificationSchema.safeParse(
+      response.notification.request.content.data,
+    );
+
+    if (!data.success) return;
+
+    const actualAuthInfo = await secureStorage.get('discordOauth');
+    if (!actualAuthInfo) return;
+
+    const client = createVanillaApi(actualAuthInfo.accessToken);
+
+    const outsidePusher = PusherTasks(client);
+
+    const me = await client.user.me.query();
+
+    outsidePusher.signin();
+    outsidePusher.bind('pusher:signin_success', () => {
+      outsidePusher
+        .subscribe(userIdToPusherChannel(me))
+        .bind('pusher:subscription_succeeded', () => {
+          outsidePusher?.send_event(
+            'client-add-user',
+            {
+              user: { id: data.data.userId },
+            },
+            userIdToPusherChannel(me),
+          );
+        });
+    });
+  }
+};
 
 const useNotifications = () => {
   const { authInfo } = useAuth();
@@ -51,44 +94,7 @@ const useNotifications = () => {
   const response = useLastNotificationResponse();
   useEffect(() => {
     (async () => {
-      if (!response) return;
-
-      if (
-        'categoryIdentifier' in response.notification.request.content &&
-        response.notification.request.content.categoryIdentifier ===
-          'userAdd' &&
-        response.actionIdentifier === 'accept'
-      ) {
-        const data = userAddNotificationSchema.safeParse(
-          response.notification.request.content.data,
-        );
-
-        if (!data.success) return;
-
-        const actualAuthInfo = await secureStorage.get('discordOauth');
-        if (!actualAuthInfo) return;
-
-        const client = createVanillaApi(actualAuthInfo.accessToken);
-
-        const outsidePusher = PusherTasks(client);
-
-        const me = await client.user.me.query();
-
-        outsidePusher.signin();
-        outsidePusher.bind('pusher:signin_success', () => {
-          outsidePusher
-            .subscribe(userIdToPusherChannel(me))
-            .bind('pusher:subscription_succeeded', () => {
-              outsidePusher?.send_event(
-                'client-add-user',
-                {
-                  user: { id: data.data.userId },
-                },
-                userIdToPusherChannel(me),
-              );
-            });
-        });
-      }
+      onAcceptResponse(response);
     })();
   }, [response]);
 };

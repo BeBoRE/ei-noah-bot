@@ -1,14 +1,19 @@
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
+import { getLastNotificationResponseAsync } from 'expo-notifications';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { AuthProvider } from 'src/context/auth';
+import { onAcceptResponse } from 'src/hooks/useNotifications';
 
 import baseConfig from '@ei/tailwind-config';
 
 import { TRPCProvider } from '../utils/api';
+
+const response = await getLastNotificationResponseAsync();
+onAcceptResponse(response);
 
 // This is the main layout of the app
 // It wraps your pages with the providers they need
