@@ -6,16 +6,18 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end
  */
-import { TRPCError, initTRPC } from "@trpc/server";
-import type { CreateNextContextOptions } from "@trpc/server/adapters/next";
-import superjson from "superjson";
-import { ZodError, z } from "zod";
+import { TRPCError, initTRPC } from '@trpc/server';
+import type { CreateNextContextOptions } from '@trpc/server/adapters/next';
+import superjson from 'superjson';
+import { ZodError, z } from 'zod';
 
-import { getOrm } from "@ei/database";
-import { REST } from "@discordjs/rest";
-import { Routes } from "discord-api-types/v10"
+import { getOrm } from '@ei/database';
+import { REST } from '@discordjs/rest';
+import { Routes } from 'discord-api-types/v10';
 
-import { camelCase, isArray, isObject, transform } from "lodash";
+import {
+ camelCase, isArray, isObject, transform,
+} from 'lodash';
 
 /**
  * User res {
@@ -44,7 +46,7 @@ const userSchema = z.object({
   locale: z.string(),
 });
 
-const bearerSchema = z.string().min(1)
+const bearerSchema = z.string().min(1);
 
 /**
  * 1. CONTEXT
@@ -77,20 +79,22 @@ const createInnerTRPCContext = async (opts : CreateInnerContextOptions) => {
 
   return {
     em,
-    session
+    session,
   };
 };
 
 const camelize = (obj: unknown) => {
-  if(!isObject(obj)) return obj;
+  if (!isObject(obj)) return obj;
 
   return transform(
-  obj, 
-  (result: Record<string, unknown>, value: unknown, key: string, target) => {     
-    const camelKey = isArray(target) ? key : camelCase(key);      
-    result[camelKey] = isObject(value) ? camelize(value as Record<string, unknown>) : value;   
-  }
-)};
+  obj,
+  (result: Record<string, unknown>, value: unknown, key: string, target) => {
+    const camelKey = isArray(target) ? key : camelCase(key);
+    // eslint-disable-next-line no-param-reassign
+    result[camelKey] = isObject(value) ? camelize(value as Record<string, unknown>) : value;
+  },
+);
+};
 
 /**
  * This is the actual context you'll use in your router. It will be used to
@@ -102,21 +106,21 @@ export const createTRPCContext = async (opts : CreateNextContextOptions) => {
 
   const bearer = bearerSchema.safeParse(req.headers.authorization);
 
-  if(bearer.success) {
+  if (bearer.success) {
     const rest = new REST({ version: '10', authPrefix: 'Bearer' }).setToken(bearer.data);
 
     const userRes = await rest.get(Routes.user()).catch(() => null);
 
     const user = userSchema.safeParse(camelize(userRes));
 
-    if(user.success) {
-      return await createInnerTRPCContext({
+    if (user.success) {
+      return createInnerTRPCContext({
         ...opts,
         session: {
           user: user.data,
           restUser: rest,
-        } 
-      }); 
+        },
+      });
     }
 
     console.log('User schema error', user.error.flatten());
@@ -178,7 +182,7 @@ export const publicProcedure = t.procedure;
  */
 const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
   if (!ctx.session?.user) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
+    throw new TRPCError({ code: 'UNAUTHORIZED' });
   }
   return next({
     ctx: {

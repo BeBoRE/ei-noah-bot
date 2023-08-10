@@ -1,7 +1,7 @@
-import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { z } from 'zod';
 import { User } from '@ei/database/entity/User';
-import { TRPCError } from "@trpc/server";
+import { TRPCError } from '@trpc/server';
+import { createTRPCRouter, protectedProcedure } from '../trpc';
 
 export const notificationRouter = createTRPCRouter({
   setToken: protectedProcedure
@@ -13,12 +13,14 @@ export const notificationRouter = createTRPCRouter({
 
       if (!user) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
-        })
+          code: 'NOT_FOUND',
+          message: 'User not found',
+        });
       }
 
       user.expoPushToken = input.token;
       await ctx.em.flush();
-    })
+    }),
 });
+
+export default notificationRouter;

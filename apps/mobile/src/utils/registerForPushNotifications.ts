@@ -1,7 +1,9 @@
-import { setNotificationChannelAsync, AndroidImportance, getPermissionsAsync, requestPermissionsAsync, getExpoPushTokenAsync } from "expo-notifications";
-import { Platform } from "react-native";
-import { isDevice } from 'expo-device'
-import baseConfig from "@ei/tailwind-config";
+import {
+  setNotificationChannelAsync, AndroidImportance, getPermissionsAsync, requestPermissionsAsync, getExpoPushTokenAsync,
+} from 'expo-notifications';
+import { Platform } from 'react-native';
+import { isDevice } from 'expo-device';
+import baseConfig from '@ei/tailwind-config';
 
 async function registerForPushNotificationsAsync() {
   let token;
@@ -19,12 +21,12 @@ async function registerForPushNotificationsAsync() {
     const { status: existingStatus } = await getPermissionsAsync();
     let finalStatus = existingStatus;
     if (existingStatus !== 'granted') {
-      const { status } = await requestPermissionsAsync({ios: {allowProvisional: true}});
+      const { status } = await requestPermissionsAsync({ ios: { allowProvisional: true } });
       finalStatus = status;
     }
     if (finalStatus !== 'granted') {
       console.log('Failed to get push token for push notification!');
-      return;
+      return undefined;
     }
     token = (await getExpoPushTokenAsync()).data;
     console.log(token);

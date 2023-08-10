@@ -1,8 +1,8 @@
-import { lobbyRouter } from "./routes/lobby";
-import { notificationRouter } from "./routes/notification";
-import { pusherRouter } from "./routes/pusher";
-import { userRouter } from "./routes/users";
-import { createTRPCRouter } from "./trpc";
+import { lobbyRouter } from './routes/lobby';
+import { notificationRouter } from './routes/notification';
+import { pusherRouter } from './routes/pusher';
+import { userRouter } from './routes/users';
+import { createTRPCRouter } from './trpc';
 
 export const appRouter = createTRPCRouter({
   user: userRouter,

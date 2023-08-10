@@ -1,42 +1,44 @@
-import { ZodType, z, SafeParseError, SafeParseReturnType } from 'zod'
-import SecureStore, {getItemAsync, setItemAsync, deleteItemAsync} from 'expo-secure-store'
+import {
+  ZodType, z, SafeParseError, SafeParseReturnType,
+} from 'zod';
+import SecureStore, { getItemAsync, setItemAsync, deleteItemAsync } from 'expo-secure-store';
 import AsyncStorage, { AsyncStorageStatic } from '@react-native-async-storage/async-storage';
-import { parse, stringify } from 'superjson'
+import { parse, stringify } from 'superjson';
 
 type SecureStoreType = {
   getItemAsync: typeof SecureStore.getItemAsync,
   setItemAsync: typeof SecureStore.setItemAsync,
   deleteItemAsync: typeof SecureStore.deleteItemAsync,
-}
+};
 
 const secureStore : SecureStoreType = {
   getItemAsync,
   setItemAsync,
   deleteItemAsync,
-}
+};
 
 const stringifiedNull = stringify(null);
 
-const getKeyWithParam = (key: string, param ?: string) => param ? `${key}/param` : key;
+const getKeyWithParam = (key: string, param ?: string) => (param ? `${key}/param` : key);
 
-export type KeyValidatorRecord = {[key: string]: ZodType<unknown>};
+export type KeyValidatorRecord = { [key: string]: ZodType<unknown> };
 
 type StoreManager<T extends KeyValidatorRecord> = {
   get: <K extends keyof T>(key : K, param ?: string) => Promise<z.infer<T[K]> | null>,
   set: <K extends keyof T>(key : K, value: z.input<T[K]>, param ?: string) => Promise<SafeParseReturnType<z.infer<T[K]>, z.infer<T[K]>>>,
   delete: <K extends keyof T>(key : K, param ?: string) => Promise<void>,
   validators: T,
-}
+};
 
 const createAnyStoreManager = <T extends KeyValidatorRecord, S extends SecureStoreType | AsyncStorageStatic>(validators: T, store : S) : StoreManager<T> => {
   const get = async <K extends keyof T>(key : K, param ?: string) : Promise<z.infer<T[K]> | null> => {
     const validator = validators[key];
 
-    if(typeof key !== 'string') {
+    if (typeof key !== 'string') {
       throw new Error('Key must be a string');
     }
 
-    if(!validator) {
+    if (!validator) {
       throw new Error(`No validator found for ${key}`);
     }
 
@@ -48,28 +50,28 @@ const createAnyStoreManager = <T extends KeyValidatorRecord, S extends SecureSto
 
     const validated = validator.safeParse(parsed);
 
-    if(!validated.success) {
+    if (!validated.success) {
       console.warn(`Retrieved invalid value for ${key}`, validated.error);
       return null;
     }
 
     return validated.data;
-  }
+  };
 
   const set = async <K extends keyof T>(key : K, value: z.input<T[K]>, param ?: string) : Promise<SafeParseReturnType<z.infer<T[K]>, z.infer<T[K]>>> => {
     const validator = validators[key];
 
-    if(typeof key !== 'string') {
+    if (typeof key !== 'string') {
       throw new Error('Key must be a string');
     }
 
-    if(!validator) {
+    if (!validator) {
       throw new Error(`No validator found for ${key}`);
     }
 
     const validated = validator.safeParse(value);
 
-    if(!validated.success) {
+    if (!validated.success) {
       return validated;
     }
 
@@ -77,20 +79,22 @@ const createAnyStoreManager = <T extends KeyValidatorRecord, S extends SecureSto
 
     const completeKey = getKeyWithParam(key, param);
 
-    return await (('setItemAsync' in store) ? store.setItemAsync(completeKey, stringified) : store.setItem(completeKey, stringified)).then(() => validated);
-  }
+    return (('setItemAsync' in store) ? store.setItemAsync(completeKey, stringified) : store.setItem(completeKey, stringified)).then(() => validated);
+  };
 
   const doDelete = async <K extends keyof T>(key : K, param ?: string) : Promise<void> => {
-    if(typeof key !== 'string') {
+    if (typeof key !== 'string') {
       throw new Error('Key must be a string');
     }
 
     const completeKey = getKeyWithParam(key, param);
-    return await (('deleteItemAsync' in store) ? store.deleteItemAsync(completeKey) : store.removeItem(completeKey));
-  }
+    return (('deleteItemAsync' in store) ? store.deleteItemAsync(completeKey) : store.removeItem(completeKey));
+  };
 
-  return { get, set, delete: doDelete, validators }
-}
+  return {
+    get, set, delete: doDelete, validators,
+  };
+};
 
 export const createSecureStore = <T extends KeyValidatorRecord>(validators: T) => createAnyStoreManager(validators, secureStore);
 export const createAsyncStorage = <T extends KeyValidatorRecord>(validators: T) => createAnyStoreManager(validators, AsyncStorage);
@@ -114,4 +118,4 @@ export type ManagerInputs <T extends StoreManager<any>, K extends string> = T ex
 export type ManagerOutputs <T extends StoreManager<any>, K extends string> = T extends StoreManager<infer R> ? OutputOfValidatorRecord<R, K> : never;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type SetError<T extends StoreManager<any>, K extends string> = T extends StoreManager<infer R> ? SafeParseError<OutputOfValidatorRecord<R, K>>["error"] : never;
+export type SetError<T extends StoreManager<any>, K extends string> = T extends StoreManager<infer R> ? SafeParseError<OutputOfValidatorRecord<R, K>>['error'] : never;

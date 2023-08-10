@@ -36,3 +36,5 @@ export class GuildUser extends BaseEntity<GuildUser, 'id'> {
   @OneToMany(() => LobbyNameChange, (lnc) => lnc.guildUser)
     lobbyNameChanges = new Collection<LobbyNameChange>(this);
 }
+
+export default GuildUser;

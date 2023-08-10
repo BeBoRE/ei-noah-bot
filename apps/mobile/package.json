@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@ei/lobby": "*",
+    "@ei/tailwind-config": "*",
+    "@ei/trpc": "*",
     "@expo/config": "^8.1.2",
     "@expo/metro-config": "^0.10.6",
     "@expo/vector-icons": "^13.0.0",
@@ -42,6 +44,7 @@
     "expo-splash-screen": "~0.20.5",
     "expo-status-bar": "~1.6.0",
     "expo-updates": "^0.18.11",
+    "lodash": "^4.17.21",
     "nativewind": "^2.0.11",
     "pusher-js": "^8.3.0",
     "react": "18.2.0",
@@ -54,14 +57,13 @@
     "react-native-twemoji": "^1.0.0",
     "react-navigation-header-buttons": "^11.0.0",
     "superjson": "1.13.1",
-    "tailwind-merge": "^1.14.0"
+    "tailwind-merge": "^1.14.0",
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@babel/core": "^7.22.9",
     "@babel/preset-env": "^7.22.9",
     "@babel/runtime": "^7.22.6",
-    "@ei/tailwind-config": "*",
-    "@ei/trpc": "*",
     "@ei/tsconfig": "*",
     "@expo/config-plugins": "^7.2.5",
     "@types/babel__core": "^7.20.1",

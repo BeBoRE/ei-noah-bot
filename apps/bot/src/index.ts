@@ -1,3 +1,6 @@
+import { lstatSync, readdirSync } from 'fs';
+import { join } from 'path';
+import { readFile } from 'fs/promises';
 import dotenv from 'dotenv';
 import {
   User, Role, PresenceData, TextChannel, PermissionsBitField, DMChannel, NewsChannel, ThreadChannel, ApplicationCommandOptionType, ApplicationCommandType, ActivityType, AttachmentBuilder, Channel,
@@ -8,11 +11,9 @@ import {
 import { fillTextWithTwemoji, strokeTextWithTwemoji, measureText } from 'node-canvas-with-twemoji-and-discord-emoji';
 import i18next from 'i18next';
 import Backend from 'i18next-fs-backend';
-import { lstatSync, readdirSync } from 'fs';
-import { join } from 'path';
 import { CronJob } from 'cron';
-import { readFile } from 'fs/promises';
 import { Guild } from '@ei/database/entity/Guild';
+import { getOrm } from '@ei/database';
 import logger from './logger';
 import { BothHandler, HandlerType } from './router/Router';
 import EiNoah from './EiNoah';
@@ -21,7 +22,6 @@ import Counter from './routes/Counter';
 import Birthday from './routes/Birthday';
 import QuoteRouter from './routes/QuoteRouter';
 import LocaleRouter from './routes/Locale';
-import { getOrm } from '@ei/database';
 
 dotenv.config();
 
@@ -427,13 +427,13 @@ process.title = 'Ei Noah Bot';
 
                 return client.channels.fetch(guild.birthdayChannel, { cache: true })
                   .then<unknown>((channel) => {
-                    if (channel === null || !channel.isTextBased()) { return Promise.resolve(null); }
+                  if (channel === null || !channel.isTextBased()) { return Promise.resolve(null); }
 
-                    return channel.send({
-                      content: 'Ik heb mijzelf in een sinter-ei veranderd, grote onthulling!\n\nIk ben ei Sint!!',
-                      files: [avatar],
-                    });
+                  return channel.send({
+                    content: 'Ik heb mijzelf in een sinter-ei veranderd, grote onthulling!\n\nIk ben ei Sint!!',
+                    files: [avatar],
                   });
+                });
               }),
             );
           })
@@ -461,13 +461,13 @@ process.title = 'Ei Noah Bot';
 
                 return client.channels.fetch(guild.birthdayChannel, { cache: true })
                   .then<unknown>((channel) => {
-                    if (channel === null || !channel.isTextBased()) { return Promise.resolve(null); }
+                  if (channel === null || !channel.isTextBased()) { return Promise.resolve(null); }
 
-                    return channel.send({
-                      content: 'Ringel mijn bellen! Ik ben ei Kerst!',
-                      files: [avatar],
-                    });
+                  return channel.send({
+                    content: 'Ringel mijn bellen! Ik ben ei Kerst!',
+                    files: [avatar],
                   });
+                });
               }),
             );
           })

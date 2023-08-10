@@ -27,3 +27,5 @@ export class User extends BaseEntity<User, 'id'> {
   @Property()
     expoPushToken?: string;
 }
+
+export default User;

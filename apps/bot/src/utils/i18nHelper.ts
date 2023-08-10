@@ -1,9 +1,9 @@
-import { type Guild } from "@ei/database/entity/Guild";
-import { type User } from "@ei/database/entity/User";
+import { type Guild } from '@ei/database/entity/Guild';
+import { type User } from '@ei/database/entity/User';
 
-const defaultLanguage = "nl";
+const defaultLanguage = 'nl';
 
-export const getLocale = ({user, guild} : { user?: User, guild?: Guild}) => {
+export const getLocale = ({ user, guild } : { user?: User, guild?: Guild }) => {
   // Prioritize user locale
   if (user && user.language) {
     return user.language;
@@ -16,4 +16,6 @@ export const getLocale = ({user, guild} : { user?: User, guild?: Guild}) => {
 
   // Then default locale
   return defaultLanguage;
-}
+};
+
+export default getLocale;

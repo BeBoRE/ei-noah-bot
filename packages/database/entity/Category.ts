@@ -19,3 +19,5 @@ export class Category extends BaseEntity<Category, 'id'> {
   @Property()
     lobbyCategory?: string;
 }
+
+export default Category;

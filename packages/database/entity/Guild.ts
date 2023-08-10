@@ -42,3 +42,5 @@ export class Guild extends BaseEntity<Guild, 'id'> {
   @Property({ default: false })
     seperateTextChannel!: boolean;
 }
+
+export default Guild;

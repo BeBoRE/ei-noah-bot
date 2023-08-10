@@ -3,17 +3,19 @@ import { Stack } from 'expo-router';
 import { View } from 'react-native';
 import Button from 'src/components/Button';
 import Text from 'src/components/Text';
-import {ResponseType, exchangeCodeAsync, makeRedirectUri, useAuthRequest } from 'expo-auth-session';
+import {
+  ResponseType, exchangeCodeAsync, makeRedirectUri, useAuthRequest,
+} from 'expo-auth-session';
 import { useMemo } from 'react';
 import { useAuth } from 'src/context/auth';
 import config from 'src/config';
 
-const SignIn = () => {
+function SignIn() {
   const redirectUri = useMemo(() => makeRedirectUri({
     native: 'ei://auth',
   }), []);
 
-  const {signIn} = useAuth();
+  const { signIn } = useAuth();
 
   const discovery = {
     authorizationEndpoint: 'https://discord.com/oauth2/authorize',
@@ -21,46 +23,48 @@ const SignIn = () => {
     revocationEndpoint: 'https://discord.com/api/oauth2/token/revoke',
   };
 
-  const [request, , promptAsync] = useAuthRequest({
+  const [request, , promptAsync] = useAuthRequest(
+    {
       clientId: config.discord.clientId,
       scopes: ['identify'],
       responseType: ResponseType.Code,
       usePKCE: true,
-      redirectUri
-    }, 
-    discovery
+      redirectUri,
+    },
+    discovery,
   );
 
   const prompt = () => promptAsync().then((res) => {
     if (res.type === 'success' && res.params.code) {
-
       exchangeCodeAsync({
         clientId: config.discord.clientId,
         code: res.params.code,
         extraParams: request?.codeVerifier ? { code_verifier: request.codeVerifier } : undefined,
-        redirectUri: redirectUri,
+        redirectUri,
       }, discovery)
-        .then((res) => signIn({accessToken: res.accessToken, refreshToken: res.refreshToken, expiresAt: res.expiresIn, scope: res.scope || ''}))
+        .then((exchangeRes) => signIn({
+          accessToken: exchangeRes.accessToken, refreshToken: exchangeRes.refreshToken, expiresAt: exchangeRes.expiresIn, scope: exchangeRes.scope || '',
+        }));
     }
-  })
+  });
 
   return (
     <>
-      <Stack.Screen options={{headerTitle: "", animation: 'slide_from_bottom', }} />
-      <View className='flex-1 justify-center p-10'>
-        <Image source={require('assets/ei.png')} contentFit='contain' className='w-full h-64 mb-2 gray' alt='' />
+      <Stack.Screen options={{ headerTitle: '', animation: 'slide_from_bottom' }} />
+      <View className="flex-1 justify-center p-10">
+        <Image source={require('assets/ei.png')} contentFit="contain" className="w-full h-64 mb-2 gray" alt="" />
         <View>
-          <Text className='text-3xl text-center mb-3'>
+          <Text className="text-3xl text-center mb-3">
             Sign Into Discord
           </Text>
-          <Button disabled={!request} onPress={() => prompt()} className='bg-[#5865F2] opacity-100 active:opacity-80 disabled:opacity-50 transition-opacity justify-center items-center flex-row'>
-            <Image source={require('assets/discord-mark-white.svg')} contentFit='contain' className='w-8 h-8 mr-2' alt='' />
-            <Text className='text-center text-white font-bold text-lg'>Sign In</Text>
+          <Button disabled={!request} onPress={() => prompt()} className="bg-[#5865F2] opacity-100 active:opacity-80 disabled:opacity-50 transition-opacity justify-center items-center flex-row">
+            <Image source={require('assets/discord-mark-white.svg')} contentFit="contain" className="w-8 h-8 mr-2" alt="" />
+            <Text className="text-center text-white font-bold text-lg">Sign In</Text>
           </Button>
         </View>
       </View>
     </>
-  )
+  );
 }
 
 export default SignIn;

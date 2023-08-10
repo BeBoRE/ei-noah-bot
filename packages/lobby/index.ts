@@ -1,6 +1,5 @@
-import { z } from 'zod'
+import { z } from 'zod';
 import emojiRegex from 'emoji-regex';
-
 
 export enum ChannelType {
   Public = 'public',
@@ -20,7 +19,7 @@ export const userSchema = z.object({
   avatar: z.string().nullable(),
   isAllowed: z.boolean(),
   isKickable: z.boolean(),
-})
+});
 
 export const lobbyChangeSchema = z.object({
   user: z.object({
@@ -39,22 +38,22 @@ export const lobbyChangeSchema = z.object({
     limit: z.number().nullable(),
   }),
   users: z.array(userSchema),
-}).optional().nullable()
+}).optional().nullable();
 
 export const addUserSchema = z.object({
   user: z.object({
     id: z.string(),
-  })
-})
+  }),
+});
 
 export const userAddNotificationSchema = z.object({
   userId: z.string(),
-})
+});
 
 export const clientChangeLobby = z.object({
   type: z.nativeEnum(ChannelType),
   limit: z.number(),
-}).partial()
+}).partial();
 
 export const removeUserSchema = addUserSchema;
 
@@ -88,5 +87,5 @@ export function generateLobbyName(
   return `${icon} ${newName || `${owner.displayName}'s Lobby`}`;
 }
 
-//export const voiceIdToPusherChannel = (voiceChannel : {id : string}) => `private-channel-${voiceChannel.id}`
-export const userIdToPusherChannel = (user : {id : string}) => `private-user-${user.id}`
+// export const voiceIdToPusherChannel = (voiceChannel : {id : string}) => `private-channel-${voiceChannel.id}`
+export const userIdToPusherChannel = (user : { id : string }) => `private-user-${user.id}`;

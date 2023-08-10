@@ -1,20 +1,24 @@
-import { Pressable, PressableProps } from "react-native"
-import { ClassNameValue, twMerge } from "tailwind-merge";
-import Text from "./Text";
+import { Pressable, PressableProps } from 'react-native';
+import { ClassNameValue, twMerge } from 'tailwind-merge';
+import Text from './Text';
 
 type ButtonProps = PressableProps & {
   children: React.ReactNode;
   textClassName?: ClassNameValue;
-}
+  className?: ClassNameValue;
+};
 
-const Button = (props : ButtonProps) => {
-  const children = typeof props.children === 'string' ? <Text className={twMerge(props.textClassName, "text-primary-100 font-bold text-center")}>{props.children}</Text> : props.children;
+function Button({
+  children, textClassName, className, ...props
+} : ButtonProps) {
+  const renderedChildren = typeof children === 'string' ? <Text className={twMerge(textClassName, 'text-primary-100 font-bold text-center')}>{children}</Text> : children;
 
   return (
-    <Pressable {...props} className={twMerge(props.className, "bg-primary rounded-md p-2")}>
-      {children}
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    <Pressable {...props} className={twMerge(className, 'bg-primary rounded-md p-2')}>
+      {renderedChildren}
     </Pressable>
-  )
+  );
 }
 
 export default Button;

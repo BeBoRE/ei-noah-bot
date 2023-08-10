@@ -7,3 +7,5 @@ export class Channel extends BaseEntity<Channel, 'id'> {
   @PrimaryKey()
     id!: string;
 }
+
+export default Channel;
