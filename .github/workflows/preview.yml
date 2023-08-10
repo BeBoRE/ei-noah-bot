@@ -1,5 +1,8 @@
 name: preview
-on: pull_request
+# Run on pull_request and push
+on:
+  pull_request:
+  push:
 
 jobs:
   update:
@@ -58,8 +61,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Create preview
-        uses: expo/expo-github-action/preview@v8
+      - name: Run update
+        run: pnpm expo-update
+
+      - name: Create preview comment
+        uses: expo/expo-github-action/preview-comment@v8
         with:
-          working-directory: apps/mobile
-          command: pnpm expo-update
+          channel: ${{ github.ref }}
+
+      - name: Send Discord Message
+        uses: tsickert/discord-webhook@v1.0.1
+        with:
+          webhook-url: ${{ secrets.WEBHOOK_URL }}
+          username: ei Noah
+          content: "# EAS Update Preview: ${{ github.ref }}\n${{ steps.preview_comment.outputs.url }}\n${{ steps.preview_comment.outputs.qr_code_url }}"
