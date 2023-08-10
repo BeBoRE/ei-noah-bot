@@ -62,19 +62,3 @@ jobs:
 
       - name: Run update
         run: pnpm expo-update
-
-      - name: Navigate to project directory
-        run: cd apps/mobile
-
-      - name: Create preview comment
-        uses: expo/expo-github-action/preview-comment@v8
-        with:
-          comment: false
-          channel: ${{ github.ref }}
-
-      - name: Send Discord Message
-        uses: tsickert/discord-webhook@v1.0.1
-        with:
-          webhook-url: ${{ secrets.WEBHOOK_URL }}
-          username: ei Noah
-          content: "# EAS Update Preview: ${{ github.ref }}\n${{ steps.preview_comment.outputs.url }}\n${{ steps.preview_comment.outputs.qr_code_url }}"
