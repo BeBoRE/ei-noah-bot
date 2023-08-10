@@ -486,7 +486,7 @@ importers:
         version: 6.2.0(eslint@8.46.0)(typescript@5.1.6)
       eslint-config-airbnb:
         specifier: ^19.0.4
-        version: 19.0.4(eslint-plugin-import@2.27.5)(eslint-plugin-jsx-a11y@6.7.1)(eslint-plugin-react-hooks@4.6.0)(eslint-plugin-react@7.33.0)(eslint@8.46.0)
+        version: 19.0.4(eslint-plugin-import@2.27.5)(eslint-plugin-jsx-a11y@6.7.1)(eslint-plugin-react-hooks@4.6.0)(eslint-plugin-react@7.33.1)(eslint@8.46.0)
       eslint-config-airbnb-typescript:
         specifier: ^17.1.0
         version: 17.1.0(@typescript-eslint/eslint-plugin@6.2.0)(@typescript-eslint/parser@6.2.0)(eslint-plugin-import@2.27.5)(eslint@8.46.0)
@@ -496,6 +496,12 @@ importers:
       eslint-config-turbo:
         specifier: ^1.9.3
         version: 1.9.3(eslint@8.46.0)
+      eslint-plugin-jsx-a11y:
+        specifier: ^6.7.1
+        version: 6.7.1(eslint@8.46.0)
+      eslint-plugin-react:
+        specifier: ^7.33.1
+        version: 7.33.1(eslint@8.46.0)
       eslint-plugin-turbo:
         specifier: ^1.10.12
         version: 1.10.12(eslint@8.46.0)
@@ -7015,7 +7021,7 @@ packages:
       eslint-plugin-import: 2.27.5(@typescript-eslint/parser@6.2.0)(eslint@8.46.0)
     dev: false
 
-  /eslint-config-airbnb@19.0.4(eslint-plugin-import@2.27.5)(eslint-plugin-jsx-a11y@6.7.1)(eslint-plugin-react-hooks@4.6.0)(eslint-plugin-react@7.33.0)(eslint@8.46.0):
+  /eslint-config-airbnb@19.0.4(eslint-plugin-import@2.27.5)(eslint-plugin-jsx-a11y@6.7.1)(eslint-plugin-react-hooks@4.6.0)(eslint-plugin-react@7.33.1)(eslint@8.46.0):
     resolution: {integrity: sha512-T75QYQVQX57jiNgpF9r1KegMICE94VYwoFQyMGhrvc+lB8YF2E/M/PYDaQe1AJcWaEgqLE+ErXV1Og/+6Vyzew==}
     engines: {node: ^10.12.0 || ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -7029,7 +7035,7 @@ packages:
       eslint-config-airbnb-base: 15.0.0(eslint-plugin-import@2.27.5)(eslint@8.46.0)
       eslint-plugin-import: 2.27.5(@typescript-eslint/parser@6.2.0)(eslint@8.46.0)
       eslint-plugin-jsx-a11y: 6.7.1(eslint@8.46.0)
-      eslint-plugin-react: 7.33.0(eslint@8.46.0)
+      eslint-plugin-react: 7.33.1(eslint@8.46.0)
       eslint-plugin-react-hooks: 4.6.0(eslint@8.46.0)
       object.assign: 4.1.4
       object.entries: 1.1.6
@@ -7052,7 +7058,7 @@ packages:
       eslint-import-resolver-typescript: 3.5.5(@typescript-eslint/parser@5.62.0)(eslint-import-resolver-node@0.3.7)(eslint-plugin-import@2.27.5)(eslint@8.46.0)
       eslint-plugin-import: 2.27.5(@typescript-eslint/parser@5.62.0)(eslint-import-resolver-typescript@3.5.5)(eslint@8.46.0)
       eslint-plugin-jsx-a11y: 6.7.1(eslint@8.46.0)
-      eslint-plugin-react: 7.33.0(eslint@8.46.0)
+      eslint-plugin-react: 7.33.1(eslint@8.46.0)
       eslint-plugin-react-hooks: 4.6.0(eslint@8.46.0)
       typescript: 5.1.6
     transitivePeerDependencies:
@@ -7261,8 +7267,8 @@ packages:
     dependencies:
       eslint: 8.46.0
 
-  /eslint-plugin-react@7.33.0(eslint@8.46.0):
-    resolution: {integrity: sha512-qewL/8P34WkY8jAqdQxsiL82pDUeT7nhs8IsuXgfgnsEloKCT4miAV9N9kGtx7/KM9NH/NCGUE7Edt9iGxLXFw==}
+  /eslint-plugin-react@7.33.1(eslint@8.46.0):
+    resolution: {integrity: sha512-L093k0WAMvr6VhNwReB8VgOq5s2LesZmrpPdKz/kZElQDzqS7G7+DnKoqT+w4JwuiGeAhAvHO0fvy0Eyk4ejDA==}
     engines: {node: '>=4'}
     peerDependencies:
       eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8
@@ -12291,7 +12297,7 @@ packages:
     dependencies:
       object-assign: 4.1.1
       react: 18.2.0
-      react-is: 16.13.1
+      react-is: 18.2.0
     dev: false
 
   /react-ssr-prepass@1.5.0(react@18.2.0):
