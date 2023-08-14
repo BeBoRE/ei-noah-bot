@@ -111,15 +111,15 @@ export function generateLobbyName(
   }
 
   if (textChat) return {
-    full: `📝}${newName || `${owner.displayName}`} chat`,
+    full: `📝}${newName?.slice(icon.length).trim() || `${owner.displayName}`} chat`,
     icon: '📝',
-    name: newName || `${owner.displayName}`
+    name: newName?.slice(icon.length).trim() || `${owner.displayName}`
   } // `📝${newName || `${owner.displayName}`} chat`;
 
   return {
-    full: `${icon} ${newName || `${owner.displayName}'s Lobby`}`,
+    full: `${icon} ${newName?.slice(icon.length).trim() || `${owner.displayName}'s Lobby`}`,
     icon,
-    name: newName || `${owner.displayName}'s Lobby`
+    name: newName?.slice(icon.length).trim() || `${owner.displayName}'s Lobby`
   } // `${icon} ${newName || `${owner.displayName}'s Lobby`}`;
 }
 

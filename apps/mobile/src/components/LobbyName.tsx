@@ -38,6 +38,19 @@ function LobbyName({ lobby }: Props) {
         'Error',
         `Failed to parse lobby data\n${result.error.message}`,
       );
+      return;
+    }
+
+    if (!result.data) return;
+
+    const newNameInfo = generateLobbyName(
+      result.data.channel.type,
+      result.data.user,
+      result.data.channel.name,
+    );
+
+    if (newNameInfo?.name !== name) {
+      setName(newNameInfo?.name);
     }
   });
 
@@ -58,6 +71,8 @@ function LobbyName({ lobby }: Props) {
         autoComplete='off'
         onSubmitEditing={() => {
           const newName = generateLobbyName(lobby.channel.type, lobby.user, `${nameInfo?.icon} ${name}`, false)?.full;
+
+          console.log(newName);
 
           if (newName) {
             onNameChange(newName)
