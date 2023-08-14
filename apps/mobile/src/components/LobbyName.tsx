@@ -2,7 +2,7 @@ import { generateLobbyName, lobbyChangeSchema , lobbyNameSchema, userIdToPusherC
 import { Pressable, View, Alert, TextInput } from "react-native";
 import baseConfig from "@ei/tailwind-config";
 import EmojiPicker, {emojisByCategory} from "rn-emoji-keyboard";
-import { useState , useMemo } from "react";
+import { useState , useMemo ,useEffect} from "react";
 import { usePusher } from "src/context/pusher";
 import Text from "./Text";
 
@@ -30,29 +30,6 @@ function LobbyName({ lobby }: Props) {
       name: newName,
     } satisfies Zod.infer<typeof lobbyNameSchema>, userIdToPusherChannel(lobby.user))
   }
-
-  pusher?.channel(userIdToPusherChannel(lobby.user)).bind('lobby-change', (newData: unknown) => {
-    const result = lobbyChangeSchema.safeParse(newData);
-    if (!result.success) {
-      Alert.alert(
-        'Error',
-        `Failed to parse lobby data\n${result.error.message}`,
-      );
-      return;
-    }
-
-    if (!result.data) return;
-
-    const newNameInfo = generateLobbyName(
-      result.data.channel.type,
-      result.data.user,
-      result.data.channel.name,
-    );
-
-    if (newNameInfo?.name !== name) {
-      setName(newNameInfo?.name);
-    }
-  });
 
   return (
   <View className="bg-primary-900 mb-3 rounded-full flex flex-row p-2 items-center">
