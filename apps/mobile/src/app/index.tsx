@@ -18,11 +18,11 @@ import { baseConfig } from 'tailwind.config';
 
 import {
   ChannelType,
-  generateLobbyName,
   lobbyChangeSchema,
   userIdToPusherChannel,
 } from '@ei/lobby';
 
+import LobbyName from 'src/components/LobbyName';
 import { api } from '../utils/api';
 
 function Screen() {
@@ -96,7 +96,7 @@ function Screen() {
       exiting={FadeOutDown.duration(400)}
       className="flex-1 p-5 pb-0"
     >
-      <View className="items-center">
+      <View className='items-center mb-2'>
         {guild.icon ? (
           <Image
             source={guild.icon}
@@ -106,18 +106,12 @@ function Screen() {
         ) : (
           <View className={`${style} bg-secondary`} />
         )}
-        <Text className="mb-[-25px] p-3 text-center text-3xl font-bold">
-          {generateLobbyName(
-            lobby.channel.type,
-            lobby.user,
-            lobby.channel.name || undefined,
-          )}
-        </Text>
-        <Text className="text-1xl p-3 text-center font-medium opacity-60">
-          {guild.name}
-        </Text>
       </View>
-      <View className="mb-3 h-20 flex-row items-center justify-around rounded-full bg-primary-900 px-10">
+      <Text className="text-2xl mb-2 text-center font-medium">
+          {lobby.guild.name}
+        </Text>
+      <LobbyName lobby={lobby} />
+      <View className="mb-3 flex-row items-center justify-around rounded-full bg-primary-900 p-2 px-10">
         <ChannelTypeButton
           lobbyType={ChannelType.Public}
           lobby={lobby.channel}
@@ -128,7 +122,7 @@ function Screen() {
           lobby={lobby.channel}
         />
       </View>
-      <View className="h-20 flex-row items-center justify-around rounded-full bg-primary-900 px-2">
+      <View className="flex-row items-center justify-between rounded-full bg-primary-900 p-2">
         {Array.from(limits)
           .sort((a, b) => a - b)
           .map((limit) => (

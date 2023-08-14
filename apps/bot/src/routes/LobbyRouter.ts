@@ -61,6 +61,7 @@ import {
   generateLobbyName,
   getIcon,
   lobbyChangeSchema,
+  lobbyNameSchema,
   removeUserSchema,
   userIdToPusherChannel,
 } from '@ei/lobby';
@@ -190,7 +191,7 @@ async function createTempChannel(
     parent,
     bitrate: bitrate < maxBitrate ? bitrate : maxBitrate,
     userLimit,
-    name,
+    name: name.full
   });
 }
 
@@ -327,7 +328,7 @@ async function createTextChannel(
     type: DiscordChannelType.GuildText,
     parent: voiceChannel.parent || undefined,
     permissionOverwrites,
-    name,
+    name: name.full,
   });
 }
 
@@ -991,14 +992,14 @@ const generateComponents = async (
 
       if (!generatedName) throw new Error('Invalid Name');
 
-      const icon = emojiRegex().exec(generatedName)?.[0];
+      const icon = emojiRegex().exec(generatedName.full)?.[0];
 
       return new StringSelectMenuOptionBuilder()
         .setLabel(
-          icon ? generatedName.substring(icon?.length).trim() : generatedName,
+          icon ? generatedName.full.substring(icon?.length).trim() : generatedName.full,
         )
         .setEmoji({ name: icon })
-        .setDefault(generatedName === voiceChannel.name)
+        .setDefault(generatedName.full === voiceChannel.name)
         .setValue(ltc.name);
     }),
   );
@@ -1276,7 +1277,7 @@ const changeLobby = (() => {
       .catch(() => null);
     let timeTillNameChange: Duration | undefined;
 
-    if (newName !== currentName) {
+    if (newName.full !== currentName) {
       if (tempChannel.name) {
         const lobbyNameChange = new LobbyNameChange();
         lobbyNameChange.name = tempChannel.name;
@@ -1306,14 +1307,14 @@ const changeLobby = (() => {
             throw new Error('Invalid Name Given');
 
           if (vc && vc instanceof VoiceChannel) {
-            vc.setName(newVoiceName)
+            vc.setName(newVoiceName.full)
               .then(() => {
                 timeout?.changes.push(new Date());
               })
               .catch(() => {});
 
             if (tc?.type === DiscordChannelType.GuildText) {
-              tc.setName(newTextName)
+              tc.setName(newTextName.full)
                 .then((updatedTc) => {
                   if (tempChannel.controlDashboardId) {
                     return updatedTc.messages.fetch({
@@ -1387,7 +1388,7 @@ const changeLobby = (() => {
       guild,
       owner,
       timeTillNameChange,
-      newName,
+      newName.full,
     );
 
     if (
@@ -1908,7 +1909,7 @@ const nameHandler: GuildHandler = async ({
       requestingUser,
       guildUser.tempChannel.name,
       false,
-    );
+    )?.full;
 
     if (timeTillChange) {
       return await i18n.t('lobby.lobbyNameChangeTimeLimit', {
@@ -2153,7 +2154,7 @@ const createDashBoardCollector = async (
                 member,
                 newName,
                 false,
-              );
+              )?.full;
               currentTempChannel.name = newName;
 
               const duration = await changeLobby(
@@ -2462,7 +2463,43 @@ const createPusherSubscriptionListeners = (
         globalLogger,
         false,
       );
-    });
+    })
+    .bind('client-change-name', async (data: unknown) => {
+      const em = _em.fork();
+      const parsedData = lobbyNameSchema.safeParse(data);
+
+      if (!parsedData.success) return;
+
+      const tempChannel = await em.findOne(
+        TempChannel,
+        { channelId: voiceChannel.id },
+        { populate: ['guildUser.user'] },
+      );
+
+      if (!tempChannel) {
+        pusherClient.unsubscribe(channelName);
+        return;
+      }
+
+      tempChannel.name = parsedData.data.name;
+
+      changeLobby(
+        getChannelType(voiceChannel),
+        voiceChannel,
+        oldOwnerMember,
+        guild,
+        tempChannel,
+        voiceChannel.userLimit,
+        null,
+        em,
+        i18next,
+        globalLogger,
+        false,
+      )
+
+      await em.flush();
+    }  
+    );
 };
 
 const checkTempChannel = async (

@@ -62,12 +62,22 @@ export const clientChangeLobby = z
 
 export const removeUserSchema = addUserSchema;
 
+type LobbyNameInfo = {
+  icon: string;
+  name: string;
+  full: string;
+}
+
+export const lobbyNameSchema = z.object({
+  name: z.string(),
+});
+
 export function generateLobbyName(
   type: ChannelType,
   owner: { displayName: string },
-  newName?: string,
+  newName?: string | null,
   textChat?: boolean,
-): string | null {
+): LobbyNameInfo | null {
   const icon = getIcon(type);
 
   if (newName) {
@@ -85,14 +95,32 @@ export function generateLobbyName(
 
         if (name.length <= 0 || name.length > 90) return null;
 
-        if (textChat) return `${customIcon}${name} chat`;
-        return `${customIcon} ${name}`;
+        if (textChat) return {
+          full: `${customIcon}${name} chat`,
+          icon: customIcon,
+          name
+        };
+        
+        return {
+          full: `${customIcon} ${name}`,
+          icon: customIcon,
+          name
+        };
       }
     }
   }
 
-  if (textChat) return `📝${newName || `${owner.displayName}`} chat`;
-  return `${icon} ${newName || `${owner.displayName}'s Lobby`}`;
+  if (textChat) return {
+    full: `📝}${newName || `${owner.displayName}`} chat`,
+    icon: '📝',
+    name: newName || `${owner.displayName}`
+  } // `📝${newName || `${owner.displayName}`} chat`;
+
+  return {
+    full: `${icon} ${newName || `${owner.displayName}'s Lobby`}`,
+    icon,
+    name: newName || `${owner.displayName}'s Lobby`
+  } // `${icon} ${newName || `${owner.displayName}'s Lobby`}`;
 }
 
 // export const voiceIdToPusherChannel = (voiceChannel : {id : string}) => `private-channel-${voiceChannel.id}`
