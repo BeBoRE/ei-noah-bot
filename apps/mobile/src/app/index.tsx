@@ -8,6 +8,7 @@ import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/rest/v10';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 import ChannelTypeButton from 'src/components/ChannelTypeButton';
 import JoinLobby from 'src/components/JoinLobby';
+import LobbyName from 'src/components/LobbyName';
 import Text from 'src/components/Text';
 import UserLimitButton from 'src/components/UserLimitButton';
 import UsersSheet from 'src/components/UsersSheet';
@@ -22,7 +23,6 @@ import {
   userIdToPusherChannel,
 } from '@ei/lobby';
 
-import LobbyName from 'src/components/LobbyName';
 import { api } from '../utils/api';
 
 function Screen() {
@@ -63,7 +63,7 @@ function Screen() {
     console.log('Subscribing to channel', channelName);
     pusher.subscribe(channelName).bind('pusher:subscription_succeeded', () => {
       pusher.channel(channelName).trigger('client-refresh', null);
-    })
+    });
 
     return () => {
       console.log('Unsubscribing from channel', channelName);
@@ -96,7 +96,7 @@ function Screen() {
       exiting={FadeOutDown.duration(400)}
       className="flex-1 p-5 pb-0"
     >
-      <View className='items-center mb-2'>
+      <View className="mb-2 items-center">
         {guild.icon ? (
           <Image
             source={guild.icon}
@@ -107,9 +107,9 @@ function Screen() {
           <View className={`${style} bg-secondary`} />
         )}
       </View>
-      <Text className="text-2xl mb-2 text-center font-medium">
-          {lobby.guild.name}
-        </Text>
+      <Text className="mb-2 text-center text-2xl font-medium">
+        {lobby.guild.name}
+      </Text>
       <LobbyName lobby={lobby} />
       <View className="mb-3 flex-row items-center justify-around rounded-full bg-primary-900 p-2 px-10">
         <ChannelTypeButton

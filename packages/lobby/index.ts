@@ -66,7 +66,7 @@ type LobbyNameInfo = {
   icon: string;
   name: string;
   full: string;
-}
+};
 
 export const lobbyNameSchema = z.object({
   name: z.string(),
@@ -78,13 +78,14 @@ export function generateLobbyName(
   newName?: string | null,
   textChat?: boolean,
 ): LobbyNameInfo | null {
-  const icon = getIcon(type);
+  const lobbyTypeIcon = getIcon(type);
 
   if (newName) {
     const result = emojiRegex().exec(newName);
     if (result && result[0] === newName.slice(0, result[0].length)) {
       const [customIcon] = result;
 
+      // Checks if custom icon is not a voice channel icon
       if (
         !Object.keys(ChannelType)
           .map<string>((t) => getIcon(<ChannelType>t))
@@ -95,32 +96,58 @@ export function generateLobbyName(
 
         if (name.length <= 0 || name.length > 90) return null;
 
-        if (textChat) return {
-          full: `${customIcon}${name} chat`,
-          icon: customIcon,
-          name
-        };
-        
+        if (textChat)
+          return {
+            full: `${customIcon}${name} chat`,
+            icon: customIcon,
+            name,
+          };
+
         return {
           full: `${customIcon} ${name}`,
           icon: customIcon,
-          name
+          name,
+        };
+      }
+
+      // Checks if custom icon is current lobby type icon
+      if (customIcon === lobbyTypeIcon) {
+        const name = newName.trim().slice(lobbyTypeIcon.length).trim();
+
+        if (name.length <= 0 || name.length > 90) return null;
+
+        if (textChat)
+          return {
+            full: `${customIcon}${name} chat`,
+            icon: customIcon,
+            name,
+          };
+
+        return {
+          full: `${customIcon} ${name}`,
+          icon: customIcon,
+          name,
         };
       }
     }
   }
 
-  if (textChat) return {
-    full: `📝}${newName?.slice(icon.length).trim() || `${owner.displayName}`} chat`,
-    icon: '📝',
-    name: newName?.slice(icon.length).trim() || `${owner.displayName}`
-  } // `📝${newName || `${owner.displayName}`} chat`;
+  // Runs if no custom icon is set, or if custom icon is a voice channel icon but not the current lobby type icon
+  if (textChat)
+    return {
+      full: `📝}${newName?.trim() || `${owner.displayName}`} chat`,
+      icon: '📝',
+      name:
+        newName?.slice(lobbyTypeIcon.length).trim() || `${owner.displayName}`,
+    }; // `📝${newName || `${owner.displayName}`} chat`;
 
   return {
-    full: `${icon} ${newName?.slice(icon.length).trim() || `${owner.displayName}'s Lobby`}`,
-    icon,
-    name: newName?.slice(icon.length).trim() || `${owner.displayName}'s Lobby`
-  } // `${icon} ${newName || `${owner.displayName}'s Lobby`}`;
+    full: `${lobbyTypeIcon} ${
+      newName?.trim() || `${owner.displayName}'s Lobby`
+    }`,
+    icon: lobbyTypeIcon,
+    name: newName?.trim() || `${owner.displayName}'s Lobby`,
+  }; // `${icon} ${newName || `${owner.displayName}'s Lobby`}`;
 }
 
 // export const voiceIdToPusherChannel = (voiceChannel : {id : string}) => `private-channel-${voiceChannel.id}`

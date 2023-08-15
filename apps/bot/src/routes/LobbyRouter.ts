@@ -191,7 +191,7 @@ async function createTempChannel(
     parent,
     bitrate: bitrate < maxBitrate ? bitrate : maxBitrate,
     userLimit,
-    name: name.full
+    name: name.full,
   });
 }
 
@@ -996,7 +996,9 @@ const generateComponents = async (
 
       return new StringSelectMenuOptionBuilder()
         .setLabel(
-          icon ? generatedName.full.substring(icon?.length).trim() : generatedName.full,
+          icon
+            ? generatedName.full.substring(icon?.length).trim()
+            : generatedName.full,
         )
         .setEmoji({ name: icon })
         .setDefault(generatedName.full === voiceChannel.name)
@@ -2341,7 +2343,7 @@ const createPusherSubscriptionListeners = (
       tempChannel,
       voiceChannel,
     });
-  }
+  };
 
   console.log('listening to channel', channelName);
   pusherClient
@@ -2495,11 +2497,10 @@ const createPusherSubscriptionListeners = (
         i18next,
         globalLogger,
         false,
-      )
+      );
 
       await em.flush();
-    }  
-    );
+    });
 };
 
 const checkTempChannel = async (
