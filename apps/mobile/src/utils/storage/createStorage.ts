@@ -21,8 +21,6 @@ const secureStore: SecureStoreType = {
   deleteItemAsync,
 };
 
-const stringifiedNull = stringify(null);
-
 const getKeyWithParam = (key: string, param?: string) =>
   param ? `${key}/param` : key;
 
@@ -68,7 +66,12 @@ const createAnyStoreManager = <
     const value =
       (await ('getItemAsync' in store
         ? store.getItemAsync(completeKey)
-        : store.getItem(completeKey))) || stringifiedNull;
+        : store.getItem(completeKey)));
+
+    if (value === null) {
+      console.log(`Retrieved null value for ${key}`);
+      return null;
+    }
 
     const parsed = parse(value);
 

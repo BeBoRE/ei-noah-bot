@@ -1,9 +1,6 @@
-import { useMemo } from 'react';
 import { View } from 'react-native';
 import {
   exchangeCodeAsync,
-  makeRedirectUri,
-  ResponseType,
   useAuthRequest,
 } from 'expo-auth-session';
 import { Image } from 'expo-image';
@@ -12,32 +9,13 @@ import Button from 'src/components/Button';
 import Text from 'src/components/Text';
 import config from 'src/config';
 import { useAuth } from 'src/context/auth';
+import { authConfig, discovery, expiresAt, redirectUri } from 'src/utils/auth';
 
 function SignIn() {
-  const redirectUri = useMemo(
-    () =>
-      makeRedirectUri({
-        native: 'ei://auth',
-      }),
-    [],
-  );
-
   const { signIn } = useAuth();
 
-  const discovery = {
-    authorizationEndpoint: 'https://discord.com/oauth2/authorize',
-    tokenEndpoint: 'https://discord.com/api/oauth2/token',
-    revocationEndpoint: 'https://discord.com/api/oauth2/token/revoke',
-  };
-
   const [request, , promptAsync] = useAuthRequest(
-    {
-      clientId: config.discord.clientId,
-      scopes: ['identify'],
-      responseType: ResponseType.Code,
-      usePKCE: true,
-      redirectUri,
-    },
+    authConfig,
     discovery,
   );
 
@@ -58,7 +36,7 @@ function SignIn() {
           signIn({
             accessToken: exchangeRes.accessToken,
             refreshToken: exchangeRes.refreshToken,
-            expiresAt: exchangeRes.expiresIn,
+            expiresAt: exchangeRes.expiresIn && expiresAt(exchangeRes.expiresIn),
             scope: exchangeRes.scope || '',
           }),
         );

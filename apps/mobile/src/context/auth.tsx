@@ -17,6 +17,7 @@ import {
   SecureStoreInput,
   SecureStoreOutput,
 } from 'src/utils/storage/secureStorage';
+import { refreshToken } from 'src/utils/auth';
 
 type AuthContextType = {
   authInfo: SecureStoreOutput<'discordOauth'> | null;
@@ -63,16 +64,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useState<SecureStoreOutput<'discordOauth'> | null>(null);
   const [isReady, setIsReady] = useState(false);
 
+  // Get token from storage on app start
   useEffect(() => {
     (async () => {
-      const token = await secureStorage.get('discordOauth').catch(() => null);
+      const info = await secureStorage.get('discordOauth').catch(() => null);
+      const refreshed = await refreshToken(info);
 
-      setAuthInfo(token);
+      setAuthInfo(refreshed);
     })().finally(() => {
       setIsReady(true);
       SplashScreen.hideAsync();
     });
   }, []);
+
+  // Refresh token when it expires
+  useEffect(() => {
+    if (!authInfo || !authInfo.expiresAt) return undefined;
+
+    const timeout = setTimeout(async () => {
+      const newToken = await refreshToken(authInfo);
+
+      setAuthInfo(newToken);
+    }, authInfo.expiresAt.getTime() - Date.now());
+
+    return () => clearTimeout(timeout);
+  }, [authInfo])
 
   const signIn = useCallback(async (info: SecureStoreInput<'discordOauth'>) => {
     const result = await secureStorage.set('discordOauth', info);
