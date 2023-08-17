@@ -109,33 +109,30 @@ export function generateLobbyName(
           name,
         };
       }
+      
+      const name = newName.trim().slice(customIcon.length).trim();
 
-      // Checks if custom icon is current lobby type icon
-      if (customIcon === lobbyTypeIcon) {
-        const name = newName.trim().slice(lobbyTypeIcon.length).trim();
+      if (name.length <= 0 || name.length > 90) return null;
 
-        if (name.length <= 0 || name.length > 90) return null;
-
-        if (textChat)
-          return {
-            full: `${customIcon}${name} chat`,
-            icon: customIcon,
-            name,
-          };
-
+      if (textChat)
         return {
-          full: `${customIcon} ${name}`,
-          icon: customIcon,
+          full: `📝${name} chat`,
+          icon: lobbyTypeIcon,
           name,
         };
-      }
+
+      return {
+        full: `${lobbyTypeIcon} ${name}`,
+        icon: lobbyTypeIcon,
+        name,
+      };
     }
   }
 
   // Runs if no custom icon is set, or if custom icon is a voice channel icon but not the current lobby type icon
   if (textChat)
     return {
-      full: `📝}${newName?.trim() || `${owner.displayName}`} chat`,
+      full: `📝${newName?.trim() || `${owner.displayName}`} chat`,
       icon: '📝',
       name:
         newName?.slice(lobbyTypeIcon.length).trim() || `${owner.displayName}`,
