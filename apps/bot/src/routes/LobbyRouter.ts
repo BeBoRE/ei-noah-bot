@@ -2345,9 +2345,15 @@ const createPusherSubscriptionListeners = (
     });
   };
 
-  console.log('listening to channel', channelName);
+  globalLogger.log('subscribing to channel', channelName);
   pusherClient
     .subscribe(channelName)
+    .bind('pusher:subscription_succeeded', async () => {
+      globalLogger.log('subscribed to channel', channelName);
+    })
+    .bind('pusher:subscription_error', async (err : unknown) => {
+      globalLogger.error('subscription error', err);
+    })
     .bind('pusher:subscription_count', async () => {
       refresh();
     })
@@ -2355,7 +2361,7 @@ const createPusherSubscriptionListeners = (
       refresh();
     })
     .bind('client-add-user', async (data: unknown) => {
-      console.log('client-add-user', data);
+      globalLogger.log('client-add-user', data);
       const parsedData = addUserSchema.safeParse(data);
 
       if (!parsedData.success) return;
