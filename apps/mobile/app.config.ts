@@ -58,7 +58,16 @@ const defineConfig = (): ExpoConfig => {
     experiments: {
       tsconfigPaths: true,
     },
-    plugins: ['./expo-plugins/with-modify-gradle.js'],
+    plugins: [
+      './expo-plugins/with-modify-gradle.js',
+      [
+        'expo-build-properties', {
+          ios: {
+            deploymentTarget: '13.0',
+          }
+        }
+      ]
+    ],
   };
 };
 

@@ -244,6 +244,9 @@ importers:
       babel-plugin-inline-dotenv:
         specifier: ^1.7.0
         version: 1.7.0
+      burnt:
+        specifier: ^0.11.7
+        version: 0.11.7(expo@49.0.6)(react-dom@18.2.0)(react-native@0.72.3)(react@18.2.0)
       discord-api-types:
         specifier: 0.37.36-next.0d47c69.1677334692
         version: 0.37.36-next.0d47c69.1677334692
@@ -256,6 +259,9 @@ importers:
       expo-auth-session:
         specifier: ~5.0.2
         version: 5.0.2(expo@49.0.6)
+      expo-build-properties:
+        specifier: ~0.8.3
+        version: 0.8.3(expo@49.0.6)
       expo-constants:
         specifier: ~14.4.2
         version: 14.4.2(expo@49.0.6)
@@ -5703,6 +5709,22 @@ packages:
       safe-json-stringify: 1.2.0
     dev: false
 
+  /burnt@0.11.7(expo@49.0.6)(react-dom@18.2.0)(react-native@0.72.3)(react@18.2.0):
+    resolution: {integrity: sha512-Td70Axu53eDdEFDehCW1IvBY6xopdgcIISHMDKhQQFKAuoxdYHsensfXIzOAsjqTaNFA8NFmnYfLdQhAoPc9MA==}
+    peerDependencies:
+      expo: '*'
+      react: '*'
+      react-native: '*'
+    dependencies:
+      expo: 49.0.6(@babel/core@7.22.9)
+      react: 18.2.0
+      react-native: 0.72.3(@babel/core@7.22.9)(@babel/preset-env@7.22.9)(react@18.2.0)
+      sf-symbols-typescript: 1.0.0
+      sonner: 0.3.5(react-dom@18.2.0)(react@18.2.0)
+    transitivePeerDependencies:
+      - react-dom
+    dev: false
+
   /busboy@1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
     engines: {node: '>=10.16.0'}
@@ -7757,6 +7779,16 @@ packages:
     transitivePeerDependencies:
       - expo
       - supports-color
+    dev: false
+
+  /expo-build-properties@0.8.3(expo@49.0.6):
+    resolution: {integrity: sha512-kEDDuAadHqJTkvCGK4fXYHVrePiJO1DjyW95AicmwuGwQvGJydYFbuoauf9ybAU+4UH4arhbce8gHI3ZpIj3Jw==}
+    peerDependencies:
+      expo: '*'
+    dependencies:
+      ajv: 8.12.0
+      expo: 49.0.6(@babel/core@7.22.9)
+      semver: 7.5.4
     dev: false
 
   /expo-constants@14.4.2(expo@49.0.6):
@@ -13035,6 +13067,11 @@ packages:
     resolution: {integrity: sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==}
     dev: false
 
+  /sf-symbols-typescript@1.0.0:
+    resolution: {integrity: sha512-DkS7q3nN68dEMb4E18HFPDAvyrjDZK9YAQQF2QxeFu9gp2xRDXFMF8qLJ1EmQ/qeEGQmop4lmMM1WtYJTIcCMw==}
+    engines: {node: '>=10'}
+    dev: false
+
   /sha.js@2.2.6:
     resolution: {integrity: sha512-GC+qN4sf/O6bDwz6CHaz8HVQfLbbNyIsXpTZLiD5c1badnWA63WVAH1msoCq+fXcV0dZ50jxTqKA8seu40845A==}
     hasBin: true
@@ -13170,6 +13207,16 @@ packages:
       use: 3.1.1
     transitivePeerDependencies:
       - supports-color
+    dev: false
+
+  /sonner@0.3.5(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-yIwaQ4dftMvFApuruto2t7wGyyaPRpj5qYBWYJIz4Z7uGcVn0IfqI/hWN0JyJN4izNbZFuCYZISf3fOGnvSlNQ==}
+    peerDependencies:
+      react: ^18.0.0
+      react-dom: ^18.0.0
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
     dev: false
 
   /sort-keys@2.0.0:
