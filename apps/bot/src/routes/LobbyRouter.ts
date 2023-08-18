@@ -2345,11 +2345,11 @@ const createPusherSubscriptionListeners = (
     });
   };
 
-  globalLogger.log('subscribing to channel', channelName);
+  globalLogger.info('subscribing to channel', channelName);
   pusherClient
     .subscribe(channelName)
     .bind('pusher:subscription_succeeded', async () => {
-      globalLogger.log('subscribed to channel', channelName);
+      globalLogger.info('subscribed to channel', channelName);
     })
     .bind('pusher:subscription_error', async (err : unknown) => {
       globalLogger.error('subscription error', err);
