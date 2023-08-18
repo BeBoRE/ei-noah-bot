@@ -2334,6 +2334,7 @@ const createPusherSubscriptionListeners = (
 
     if (!tempChannel) {
       pusherClient.unsubscribe(channelName);
+      globalLogger.info(`unsubscribed from channel ${channelName}`);
       return;
     }
 
@@ -2345,13 +2346,13 @@ const createPusherSubscriptionListeners = (
     });
   };
 
-  globalLogger.info('subscribing to channel', channelName);
+  globalLogger.info(`subscribing to channel${channelName}`);
   pusherClient
     .subscribe(channelName)
     .bind('pusher:subscription_succeeded', async () => {
-      globalLogger.info('subscribed to channel', channelName);
+      globalLogger.info(`subscribed to channel ${channelName}`);
     })
-    .bind('pusher:subscription_error', async (err : unknown) => {
+    .bind('pusher:subscription_error', async (err: unknown) => {
       globalLogger.error('subscription error', err);
     })
     .bind('pusher:subscription_count', async () => {

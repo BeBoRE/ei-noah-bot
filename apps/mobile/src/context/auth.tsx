@@ -12,12 +12,12 @@ import {
   useRootNavigationState,
   useSegments,
 } from 'expo-router';
+import { refreshToken } from 'src/utils/auth';
 import {
   secureStorage,
   SecureStoreInput,
   SecureStoreOutput,
 } from 'src/utils/storage/secureStorage';
-import { refreshToken } from 'src/utils/auth';
 
 type AuthContextType = {
   authInfo: SecureStoreOutput<'discordOauth'> | null;
@@ -88,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, authInfo.expiresAt.getTime() - Date.now());
 
     return () => clearTimeout(timeout);
-  }, [authInfo])
+  }, [authInfo]);
 
   const signIn = useCallback(async (info: SecureStoreInput<'discordOauth'>) => {
     const result = await secureStorage.set('discordOauth', info);

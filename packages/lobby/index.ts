@@ -109,7 +109,7 @@ export function generateLobbyName(
           name,
         };
       }
-      
+
       const name = newName.trim().slice(customIcon.length).trim();
 
       if (name.length <= 0 || name.length > 90) return null;

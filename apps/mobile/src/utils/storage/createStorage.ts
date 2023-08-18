@@ -63,10 +63,9 @@ const createAnyStoreManager = <
 
     const completeKey = getKeyWithParam(key, param);
 
-    const value =
-      (await ('getItemAsync' in store
-        ? store.getItemAsync(completeKey)
-        : store.getItem(completeKey)));
+    const value = await ('getItemAsync' in store
+      ? store.getItemAsync(completeKey)
+      : store.getItem(completeKey));
 
     if (value === null) {
       console.log(`Retrieved null value for ${key}`);

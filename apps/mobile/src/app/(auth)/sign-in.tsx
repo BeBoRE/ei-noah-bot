@@ -1,8 +1,5 @@
 import { View } from 'react-native';
-import {
-  exchangeCodeAsync,
-  useAuthRequest,
-} from 'expo-auth-session';
+import { exchangeCodeAsync, useAuthRequest } from 'expo-auth-session';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import Button from 'src/components/Button';
@@ -14,10 +11,7 @@ import { authConfig, discovery, expiresAt, redirectUri } from 'src/utils/auth';
 function SignIn() {
   const { signIn } = useAuth();
 
-  const [request, , promptAsync] = useAuthRequest(
-    authConfig,
-    discovery,
-  );
+  const [request, , promptAsync] = useAuthRequest(authConfig, discovery);
 
   const prompt = () =>
     promptAsync().then((res) => {
@@ -36,7 +30,8 @@ function SignIn() {
           signIn({
             accessToken: exchangeRes.accessToken,
             refreshToken: exchangeRes.refreshToken,
-            expiresAt: exchangeRes.expiresIn && expiresAt(exchangeRes.expiresIn),
+            expiresAt:
+              exchangeRes.expiresIn && expiresAt(exchangeRes.expiresIn),
             scope: exchangeRes.scope || '',
           }),
         );
