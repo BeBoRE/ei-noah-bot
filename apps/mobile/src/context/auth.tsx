@@ -13,7 +13,6 @@ import {
   useRootNavigationState,
   useSegments,
 } from 'expo-router';
-import { api } from 'src/utils/api';
 import { refreshToken } from 'src/utils/auth';
 import {
   secureStorage,
@@ -83,7 +82,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authInfo, setAuthInfo] =
     useState<SecureStoreOutput<'discordOauth'> | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const context = api.useContext();
 
   // Get token from storage on app start
   useEffect(() => {
@@ -119,10 +117,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     await secureStorage.delete('discordOauth');
-    context.invalidate();
 
     setAuthInfo(null);
-  }, [context]);
+  }, []);
 
   useProtectedRoute(authInfo, isReady);
 
