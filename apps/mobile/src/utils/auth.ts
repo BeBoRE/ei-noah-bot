@@ -1,6 +1,7 @@
 import {
   AuthRequestConfig,
   DiscoveryDocument,
+  loadAsync,
   makeRedirectUri,
   refreshAsync,
   ResponseType,
@@ -35,15 +36,30 @@ export const authConfig: AuthRequestConfig = {
 export const expiresAt = (expiresIn: number) =>
   new Date(Date.now() + expiresIn * 1000);
 
+export const isTokenExpired = (
+  loginInfo: SecureStoreOutput<'discordOauth'> | null,
+) => {
+  if (
+    loginInfo &&
+    loginInfo.expiresAt &&
+    loginInfo.expiresAt?.getTime() > Date.now()
+  ) {
+    return false;
+  }
+  
+  return true;
+};
+
 // Refreshes the token if it's expired
 export const refreshToken = async (
   loginInfo: SecureStoreOutput<'discordOauth'> | null,
+  alwaysRefresh = false,
 ): Promise<SecureStoreOutput<'discordOauth'> | null> => {
   console.log('Checking if token is expired');
   if (
     loginInfo &&
     loginInfo.expiresAt &&
-    loginInfo.expiresAt?.getTime() > Date.now()
+    !isTokenExpired(loginInfo)
   ) {
     // Print the time left until the token expires devided into either days, hours, minutes or seconds
     const timeLeft = loginInfo.expiresAt.getTime() - Date.now();
@@ -60,17 +76,23 @@ export const refreshToken = async (
   if (
     loginInfo &&
     loginInfo.expiresAt &&
-    loginInfo.expiresAt.getTime() < Date.now()
+    loginInfo.refreshToken &&
+    (alwaysRefresh || isTokenExpired(loginInfo))
   ) {
-    console.log('Token is expired, refreshing');
+    if (alwaysRefresh && !(isTokenExpired(loginInfo)))
+      console.log('Forced to refresh token');
+    else console.log('Token is expired, refreshing');
+
+    const authRequest = await loadAsync(authConfig, discovery);
 
     const response = await refreshAsync(
       {
-        ...tokenRequestConfig,
+        ...authConfig,
         refreshToken: loginInfo.refreshToken,
-      },
-      discovery,
-    ).catch(() => null);
+        extraParams: authRequest?.codeVerifier
+              ? { code_verifier: authRequest.codeVerifier }
+              : undefined,
+      }, discovery);
 
     console.log('Got response', response);
 

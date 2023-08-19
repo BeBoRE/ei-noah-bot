@@ -13,7 +13,7 @@ import {
   useRootNavigationState,
   useSegments,
 } from 'expo-router';
-import { refreshToken } from 'src/utils/auth';
+import { isTokenExpired, refreshToken } from 'src/utils/auth';
 import {
   secureStorage,
   SecureStoreInput,
@@ -40,7 +40,7 @@ registerDevMenuItems([
     callback: async () => {
       const info = await secureStorage.get('discordOauth').catch(() => null);
       console.log(info);
-      const refreshed = await refreshToken(info);
+      const refreshed = await refreshToken(info, true);
       console.log(refreshed);
     },
   },
@@ -88,6 +88,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       const info = await secureStorage.get('discordOauth').catch(() => null);
       // const refreshed = await refreshToken(info);
+
+      if (isTokenExpired(info)) {
+        setAuthInfo(null);
+        return;
+      }
 
       setAuthInfo(info);
     })().finally(() => {
