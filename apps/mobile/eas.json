@@ -33,8 +33,5 @@
     "production": {
       "channel": "production"
     }
-  },
-  "submit": {
-    "production": {}
   }
 }

@@ -57,7 +57,11 @@ export const refreshToken = async (
     );
   }
 
-  if (loginInfo && loginInfo.expiresAt) {
+  if (
+    loginInfo &&
+    loginInfo.expiresAt &&
+    loginInfo.expiresAt.getTime() < Date.now()
+  ) {
     console.log('Token is expired, refreshing');
 
     const response = await refreshAsync(

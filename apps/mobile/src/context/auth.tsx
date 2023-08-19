@@ -13,13 +13,13 @@ import {
   useRootNavigationState,
   useSegments,
 } from 'expo-router';
+import { api } from 'src/utils/api';
 import { refreshToken } from 'src/utils/auth';
 import {
   secureStorage,
   SecureStoreInput,
   SecureStoreOutput,
 } from 'src/utils/storage/secureStorage';
-import { api } from 'src/utils/api';
 
 type AuthContextType = {
   authInfo: SecureStoreOutput<'discordOauth'> | null;
