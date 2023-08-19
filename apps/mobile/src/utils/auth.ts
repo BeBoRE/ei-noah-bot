@@ -4,6 +4,7 @@ import {
   makeRedirectUri,
   refreshAsync,
   ResponseType,
+  TokenRequestConfig,
 } from 'expo-auth-session';
 import config from 'src/config';
 
@@ -19,9 +20,13 @@ export const redirectUri = makeRedirectUri({
   native: 'ei://auth',
 });
 
-export const authConfig: AuthRequestConfig = {
+const tokenRequestConfig: TokenRequestConfig = {
   clientId: config.discord.clientId,
-  scopes: ['identify'],
+  scopes: ['identify', 'email'],
+};
+
+export const authConfig: AuthRequestConfig = {
+  ...tokenRequestConfig,
   responseType: ResponseType.Code,
   usePKCE: true,
   redirectUri,
@@ -33,7 +38,7 @@ export const expiresAt = (expiresIn: number) =>
 // Refreshes the token if it's expired
 export const refreshToken = async (
   loginInfo: SecureStoreOutput<'discordOauth'> | null,
-) => {
+): Promise<SecureStoreOutput<'discordOauth'> | null> => {
   console.log('Checking if token is expired');
   if (
     loginInfo &&
@@ -52,19 +57,18 @@ export const refreshToken = async (
     );
   }
 
-  if (
-    loginInfo &&
-    loginInfo.expiresAt &&
-    loginInfo.expiresAt?.getTime() < Date.now()
-  ) {
+  if (loginInfo && loginInfo.expiresAt) {
     console.log('Token is expired, refreshing');
+
     const response = await refreshAsync(
       {
-        ...authConfig,
+        ...tokenRequestConfig,
         refreshToken: loginInfo.refreshToken,
       },
       discovery,
     ).catch(() => null);
+
+    console.log('Got response', response);
 
     if (response) {
       const newInfo = await secureStorage
@@ -88,6 +92,9 @@ export const refreshToken = async (
       console.log('Failed to save or validate new token');
       return null;
     }
+
+    console.log('Failed to refresh token');
+    return null;
   }
 
   if (!loginInfo) console.log('No token found');

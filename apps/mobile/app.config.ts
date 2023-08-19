@@ -61,12 +61,13 @@ const defineConfig = (): ExpoConfig => {
     plugins: [
       './expo-plugins/with-modify-gradle.js',
       [
-        'expo-build-properties', {
+        'expo-build-properties',
+        {
           ios: {
             deploymentTarget: '13.0',
-          }
-        }
-      ]
+          },
+        },
+      ],
     ],
   };
 };

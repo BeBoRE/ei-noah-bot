@@ -82,7 +82,7 @@ type TRPCProviderProps = {
  */
 export function TRPCProvider({ children }: TRPCProviderProps) {
   const { authInfo } = useAuth();
-  const isLoggedIn = !!authInfo?.accessToken;
+  const isLoggedIn = authInfo !== null;
 
   console.log('using api', getBaseUrl());
 

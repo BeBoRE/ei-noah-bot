@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { registerDevMenuItems } from 'expo-dev-menu';
 import {
   router,
   SplashScreen,
@@ -18,6 +19,7 @@ import {
   SecureStoreInput,
   SecureStoreOutput,
 } from 'src/utils/storage/secureStorage';
+import { api } from 'src/utils/api';
 
 type AuthContextType = {
   authInfo: SecureStoreOutput<'discordOauth'> | null;
@@ -26,6 +28,24 @@ type AuthContextType = {
 };
 
 SplashScreen.preventAutoHideAsync();
+
+registerDevMenuItems([
+  {
+    name: 'Sign out',
+    callback: async () => {
+      await secureStorage.delete('discordOauth');
+    },
+  },
+  {
+    name: 'Refresh token',
+    callback: async () => {
+      const info = await secureStorage.get('discordOauth').catch(() => null);
+      console.log(info);
+      const refreshed = await refreshToken(info);
+      console.log(refreshed);
+    },
+  },
+]);
 
 const authContext = createContext<AuthContextType>({
   authInfo: null,
@@ -63,14 +83,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authInfo, setAuthInfo] =
     useState<SecureStoreOutput<'discordOauth'> | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const context = api.useContext();
 
   // Get token from storage on app start
   useEffect(() => {
     (async () => {
       const info = await secureStorage.get('discordOauth').catch(() => null);
-      const refreshed = await refreshToken(info);
+      // const refreshed = await refreshToken(info);
 
-      setAuthInfo(refreshed);
+      setAuthInfo(info);
     })().finally(() => {
       setIsReady(true);
       SplashScreen.hideAsync();
@@ -98,9 +119,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     await secureStorage.delete('discordOauth');
+    context.invalidate();
 
     setAuthInfo(null);
-  }, []);
+  }, [context]);
 
   useProtectedRoute(authInfo, isReady);
 
