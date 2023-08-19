@@ -4,6 +4,7 @@ import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
+import { useNetInfo } from '@react-native-community/netinfo';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/rest/v10';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 import ChannelTypeButton from 'src/components/ChannelTypeButton';
@@ -56,21 +57,33 @@ function Screen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pusher?.sessionID]);
 
+  const { isInternetReachable } = useNetInfo();
+
   useEffect(() => {
     if (!pusher || !user?.id) return undefined;
     const channelName = userIdToPusherChannel({ id: user.id });
 
-    console.log('Subscribing to channel', channelName);
-    pusher.subscribe(channelName).bind('pusher:subscription_succeeded', () => {
-      pusher.channel(channelName).trigger('client-refresh', null);
-    });
+    if (isInternetReachable) {
+      console.log('Connecting to channel', channelName);
+      pusher
+        .subscribe(channelName)
+        .bind('pusher:subscription_succeeded', () => {
+          pusher.send_event('client-refresh', {}, channelName);
+        });
+    } else {
+      console.log(
+        'Not connecting to channel',
+        channelName,
+        'because the internet is not reachable',
+      );
+    }
 
     return () => {
       console.log('Unsubscribing from channel', channelName);
       pusher.unsubscribe(channelName);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pusher?.sessionID, user?.id]);
+  }, [pusher?.sessionID, user?.id, isInternetReachable]);
 
   if (!lobby) {
     return <JoinLobby />;

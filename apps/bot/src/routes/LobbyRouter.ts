@@ -2355,9 +2355,6 @@ const createPusherSubscriptionListeners = (
     .bind('pusher:subscription_error', async (err: unknown) => {
       globalLogger.error('subscription error', err);
     })
-    .bind('pusher:subscription_count', async () => {
-      refresh();
-    })
     .bind('client-refresh', async () => {
       refresh();
     })

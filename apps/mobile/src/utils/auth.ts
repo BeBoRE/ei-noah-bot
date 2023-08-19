@@ -46,7 +46,7 @@ export const isTokenExpired = (
   ) {
     return false;
   }
-  
+
   return true;
 };
 
@@ -56,11 +56,7 @@ export const refreshToken = async (
   alwaysRefresh = false,
 ): Promise<SecureStoreOutput<'discordOauth'> | null> => {
   console.log('Checking if token is expired');
-  if (
-    loginInfo &&
-    loginInfo.expiresAt &&
-    !isTokenExpired(loginInfo)
-  ) {
+  if (loginInfo && loginInfo.expiresAt && !isTokenExpired(loginInfo)) {
     // Print the time left until the token expires devided into either days, hours, minutes or seconds
     const timeLeft = loginInfo.expiresAt.getTime() - Date.now();
     const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
@@ -79,7 +75,7 @@ export const refreshToken = async (
     loginInfo.refreshToken &&
     (alwaysRefresh || isTokenExpired(loginInfo))
   ) {
-    if (alwaysRefresh && !(isTokenExpired(loginInfo)))
+    if (alwaysRefresh && !isTokenExpired(loginInfo))
       console.log('Forced to refresh token');
     else console.log('Token is expired, refreshing');
 
@@ -90,9 +86,11 @@ export const refreshToken = async (
         ...authConfig,
         refreshToken: loginInfo.refreshToken,
         extraParams: authRequest?.codeVerifier
-              ? { code_verifier: authRequest.codeVerifier }
-              : undefined,
-      }, discovery);
+          ? { code_verifier: authRequest.codeVerifier }
+          : undefined,
+      },
+      discovery,
+    );
 
     console.log('Got response', response);
 
