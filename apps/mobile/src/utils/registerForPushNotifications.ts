@@ -26,9 +26,7 @@ async function registerForPushNotificationsAsync() {
     const { status: existingStatus } = await getPermissionsAsync();
     let finalStatus = existingStatus;
     if (existingStatus !== 'granted') {
-      const { status } = await requestPermissionsAsync({
-        ios: { allowProvisional: true },
-      });
+      const { status } = await requestPermissionsAsync();
       finalStatus = status;
     }
     if (finalStatus !== 'granted') {
