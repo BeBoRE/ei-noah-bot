@@ -35,13 +35,15 @@ import { getOrm } from '@ei/database';
  * }
  */
 
-const userSchema = z.object({
+export const userSchema = z.object({
   id: z.string(),
   username: z.string(),
   avatar: z.string().nullable(),
   globalName: z.string(),
   locale: z.string(),
 });
+
+export type User = z.infer<typeof userSchema>;
 
 const bearerSchema = z.string().min(1);
 
@@ -70,7 +72,7 @@ interface CreateInnerContextOptions extends Partial<CreateNextContextOptions> {
  * - trpc's `createSSGHelpers` where we don't have req/res
  * @see https://create.t3.gg/en/usage/trpc#-servertrpccontextts
  */
-const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
+export const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
   const em = (await getOrm()).em.fork();
   const { session } = opts;
 
