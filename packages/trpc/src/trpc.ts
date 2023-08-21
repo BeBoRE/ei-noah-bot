@@ -57,7 +57,7 @@ const bearerSchema = z.string().min(1);
 interface CreateInnerContextOptions extends Partial<CreateNextContextOptions> {
   session: {
     user: z.infer<typeof userSchema>;
-    restUser: REST;
+    userRestClient: REST;
   } | null;
 }
 
@@ -112,6 +112,13 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
 
     const userRes = await rest.get(Routes.user()).catch(() => null);
 
+    if (!userRes) {
+      return createInnerTRPCContext({
+        ...opts,
+        session: null,
+      });
+    }
+
     const user = userSchema.safeParse(camelize(userRes));
 
     if (user.success) {
@@ -119,7 +126,7 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
         ...opts,
         session: {
           user: user.data,
-          restUser: rest,
+          userRestClient: rest,
         },
       });
     }

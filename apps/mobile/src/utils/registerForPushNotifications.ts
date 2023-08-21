@@ -6,6 +6,7 @@ import {
   getPermissionsAsync,
   requestPermissionsAsync,
   setNotificationChannelAsync,
+  deleteNotificationChannelAsync
 } from 'expo-notifications';
 
 import baseConfig from '@ei/tailwind-config';
@@ -14,8 +15,11 @@ async function registerForPushNotificationsAsync() {
   let token;
 
   if (Platform.OS === 'android') {
-    await setNotificationChannelAsync('default', {
-      name: 'default',
+    // Delete the default channel
+    await deleteNotificationChannelAsync('default');
+
+    await setNotificationChannelAsync('addUser', {
+      name: 'Add user notification',
       importance: AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: `${baseConfig.theme.colors.primary.DEFAULT}CA`,
@@ -26,9 +30,7 @@ async function registerForPushNotificationsAsync() {
     const { status: existingStatus } = await getPermissionsAsync();
     let finalStatus = existingStatus;
     if (existingStatus !== 'granted') {
-      const { status } = await requestPermissionsAsync({
-        ios: { allowProvisional: true },
-      });
+      const { status } = await requestPermissionsAsync();
       finalStatus = status;
     }
     if (finalStatus !== 'granted') {

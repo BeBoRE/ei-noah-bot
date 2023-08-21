@@ -4,9 +4,12 @@ import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useNetInfo } from '@react-native-community/netinfo';
+import { toast } from 'burnt';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/rest/v10';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
+import type { SFSymbol } from 'sf-symbols-typescript';
 import ChannelTypeButton from 'src/components/ChannelTypeButton';
 import JoinLobby from 'src/components/JoinLobby';
 import LobbyName from 'src/components/LobbyName';
@@ -32,6 +35,7 @@ function Screen() {
   > | null>(null);
   const { data: user } = api.user.me.useQuery();
   const pusher = usePusher();
+  const [firstConnection, setFirstConnection] = useState(true);
 
   useNotifications();
 
@@ -69,13 +73,42 @@ function Screen() {
         .subscribe(channelName)
         .bind('pusher:subscription_succeeded', () => {
           pusher.send_event('client-refresh', {}, channelName);
+
+          if (firstConnection) {
+            setFirstConnection(false);
+            return;
+          }
+
+          toast({
+            duration: 1,
+            title: 'Reconnected',
+            preset: 'custom',
+            icon: {
+              ios: {
+                name: 'wifi' satisfies SFSymbol,
+                color: baseConfig.theme.colors.accept,
+              },
+            },
+          });
         });
-    } else {
+    } else if (isInternetReachable === false) {
       console.log(
         'Not connecting to channel',
         channelName,
         'because the internet is not reachable',
       );
+
+      toast({
+        title: 'Lost connection',
+        message: 'Please connect to the internet',
+        preset: 'custom',
+        icon: {
+          ios: {
+            name: 'wifi.slash' satisfies SFSymbol,
+            color: baseConfig.theme.colors.reject,
+          },
+        },
+      });
     }
 
     return () => {
@@ -201,6 +234,7 @@ function Index() {
         <PusherProvider>
           <Screen />
         </PusherProvider>
+        <StatusBar style="dark" />
       </SafeAreaView>
     </>
   );

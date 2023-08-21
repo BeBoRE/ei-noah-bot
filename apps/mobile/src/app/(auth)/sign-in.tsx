@@ -1,7 +1,9 @@
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { exchangeCodeAsync, useAuthRequest } from 'expo-auth-session';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import Button from 'src/components/Button';
 import Text from 'src/components/Text';
 import config from 'src/config';
@@ -12,6 +14,8 @@ function SignIn() {
   const { signIn } = useAuth();
 
   const [request, , promptAsync] = useAuthRequest(authConfig, discovery);
+
+  const insets = useSafeAreaInsets();
 
   const prompt = () =>
     promptAsync().then((res) => {
@@ -43,7 +47,10 @@ function SignIn() {
       <Stack.Screen
         options={{ headerTitle: '', animation: 'slide_from_bottom' }}
       />
-      <View className="flex-1 justify-center p-10">
+      <View
+        className="flex-1 justify-center p-10"
+        style={{ paddingBottom: insets.bottom }}
+      >
         <Image
           source={require('assets/ei.png')}
           contentFit="contain"
@@ -68,6 +75,7 @@ function SignIn() {
             </Text>
           </Button>
         </View>
+        <StatusBar style="dark" />
       </View>
     </>
   );

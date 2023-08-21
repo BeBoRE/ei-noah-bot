@@ -22,7 +22,7 @@ const defineConfig = (): ExpoConfig => {
     version: '1.0.0',
     orientation: 'portrait',
     icon: './assets/ei.png',
-    userInterfaceStyle: 'light',
+    userInterfaceStyle: 'dark',
     splash: {
       image: './assets/ei.png',
       resizeMode: 'contain',
@@ -40,7 +40,9 @@ const defineConfig = (): ExpoConfig => {
       bundleIdentifier: identifier,
       infoPlist: {
         UIBackgroundModes: ['remote-notification'],
+        UIStatusBarStyle: 'UIStatusBarStyleLightContent',
       },
+      buildNumber: '2',
     },
     android: {
       adaptiveIcon: {

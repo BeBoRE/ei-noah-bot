@@ -2734,7 +2734,7 @@ const sendUserAddPushNotification = (owner: DbUser, toBeAdded: User) => {
     {
       to: token,
       sound: 'default',
-      channelId: 'default',
+      channelId: 'addUser',
       title: i18n.t('lobby.notification.userAdd.title', {
         user: toBeAdded.username,
       }),
