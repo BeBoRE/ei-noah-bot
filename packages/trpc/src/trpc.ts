@@ -112,6 +112,13 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
 
     const userRes = await rest.get(Routes.user()).catch(() => null);
 
+    if (!userRes) {
+      return createInnerTRPCContext({
+        ...opts,
+        session: null,
+      });
+    }
+
     const user = userSchema.safeParse(camelize(userRes));
 
     if (user.success) {
