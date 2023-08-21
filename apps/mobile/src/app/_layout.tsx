@@ -26,36 +26,38 @@ function RootLayout() {
   });
 
   return (
-    <AuthProvider>
-      <TRPCProvider>
-        <SafeAreaProvider>
-          {/*
+    <>
+      <AuthProvider>
+        <TRPCProvider>
+          <SafeAreaProvider>
+            {/*
             The Stack component displays the current page.
             It also allows you to configure your screens
           */}
-          <ThemeProvider
-            value={{
-              ...DarkTheme,
-              colors: {
-                ...DarkTheme.colors,
-                ...baseConfig.theme.colors,
-                text: baseConfig.theme.colors.background,
-                primary: baseConfig.theme.colors.primary.DEFAULT,
-              },
-            }}
-          >
-            <Stack
-              screenOptions={{
-                headerStyle: {
-                  backgroundColor: baseConfig.theme.colors.primary.DEFAULT,
+            <ThemeProvider
+              value={{
+                ...DarkTheme,
+                colors: {
+                  ...DarkTheme.colors,
+                  ...baseConfig.theme.colors,
+                  text: baseConfig.theme.colors.background,
+                  primary: baseConfig.theme.colors.primary.DEFAULT,
                 },
               }}
-            />
-          </ThemeProvider>
-          <StatusBar />
-        </SafeAreaProvider>
-      </TRPCProvider>
-    </AuthProvider>
+            >
+              <Stack
+                screenOptions={{
+                  headerStyle: {
+                    backgroundColor: baseConfig.theme.colors.primary.DEFAULT,
+                  },
+                }}
+              />
+            </ThemeProvider>
+          </SafeAreaProvider>
+        </TRPCProvider>
+      </AuthProvider>
+      <StatusBar style="dark" />
+    </>
   );
 }
 
