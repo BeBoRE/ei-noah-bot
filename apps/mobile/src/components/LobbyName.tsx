@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { forwardRef, useMemo, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import EmojiPicker, { emojisByCategory } from 'rn-emoji-keyboard';
 import { usePusher } from 'src/context/pusher';
 
@@ -17,7 +18,7 @@ type Props = {
   lobby: NonNullable<Zod.infer<typeof lobbyChangeSchema>>;
 };
 
-function LobbyName({ lobby }: Props) {
+const LobbyName = forwardRef<View, Props>(({ lobby }: Props, ref) => {
   const nameInfo = generateLobbyName(
     lobby.channel.type,
     lobby.user,
@@ -49,7 +50,10 @@ function LobbyName({ lobby }: Props) {
   };
 
   return (
-    <View className="mb-3 flex flex-row items-center rounded-full bg-primary-900 p-2">
+    <View
+      ref={ref}
+      className="mb-3 flex flex-row items-center rounded-full bg-primary-900 p-2"
+    >
       <Pressable
         onPress={() => setEmojiOpen(true)}
         className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-800"
@@ -127,6 +131,8 @@ function LobbyName({ lobby }: Props) {
       />
     </View>
   );
-}
+});
+
+export const AnimatedLobbyName = Animated.createAnimatedComponent(LobbyName);
 
 export default LobbyName;

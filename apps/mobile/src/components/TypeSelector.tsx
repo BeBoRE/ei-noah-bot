@@ -1,3 +1,7 @@
+import { forwardRef } from 'react';
+import type { View } from 'react-native';
+import Animated from 'react-native-reanimated';
+
 import { ChannelType } from '@ei/lobby';
 
 import ChannelTypeButton from './ChannelTypeButton';
@@ -8,9 +12,10 @@ type Props = {
   onTypeChange: (type: ChannelType) => void;
 };
 
-function TypeSelector({ currentType, onTypeChange }: Props) {
-  return (
+const TypeSelector = forwardRef<View, Props>(
+  ({ currentType, onTypeChange }: Props, ref) => (
     <Options
+      ref={ref}
       items={[
         {
           onPress: () => onTypeChange(ChannelType.Public),
@@ -33,7 +38,10 @@ function TypeSelector({ currentType, onTypeChange }: Props) {
       ]}
       className="mb-3"
     />
-  );
-}
+  ),
+);
+
+export const AnimatedTypeSelector =
+  Animated.createAnimatedComponent(TypeSelector);
 
 export default TypeSelector;

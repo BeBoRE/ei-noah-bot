@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, View } from 'react-native';
-import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
@@ -11,10 +11,10 @@ import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/rest/v10';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import JoinLobby from 'src/components/JoinLobby';
-import LobbyName from 'src/components/LobbyName';
-import Text from 'src/components/Text';
-import TypeSelector from 'src/components/TypeSelector';
-import UserLimitSelector from 'src/components/UserLimits';
+import { AnimatedLobbyName } from 'src/components/LobbyName';
+import Text, { AnimatedText } from 'src/components/Text';
+import { AnimatedTypeSelector } from 'src/components/TypeSelector';
+import { AnimatedUserLimitSelector } from 'src/components/UserLimits';
 import UsersSheet from 'src/components/UsersSheet';
 import { useAuth } from 'src/context/auth';
 import { PusherProvider, usePusher } from 'src/context/pusher';
@@ -138,6 +138,21 @@ function Screen() {
   const changedChannelType = (type: ChannelType) => {
     if (!pusher || !user) return;
 
+    if(isInternetReachable !== false) {
+      // Optimistic update
+      setLobby((prev) => {
+        if (!prev) return prev;
+  
+        return {
+          ...prev,
+          channel: {
+            ...prev.channel,
+            type,
+          }
+        };
+      });
+    }
+
     const channel = pusher.channel(userIdToPusherChannel(user));
 
     channel.trigger('client-change-lobby', {
@@ -149,6 +164,21 @@ function Screen() {
     if (!pusher) return;
     if (!user) return;
 
+    if(isInternetReachable !== false) {    
+      // Optimistic update
+      setLobby((prev) => {
+        if (!prev) return prev;
+  
+        return {
+          ...prev,
+          channel: {
+            ...prev.channel,
+            limit,
+          }
+        };
+      });
+    }
+
     const channel = pusher.channel(userIdToPusherChannel(user));
 
     channel.trigger('client-change-lobby', { limit } satisfies Zod.infer<
@@ -158,11 +188,13 @@ function Screen() {
 
   return (
     <Animated.View
-      entering={FadeInDown.duration(400).delay(200)}
-      exiting={FadeOutDown.duration(400)}
       className="flex-1 p-5 pb-0"
+      exiting={FadeOutUp.duration(200)}
     >
-      <View className="mb-2 items-center">
+      <Animated.View
+        className="mb-2 items-center"
+        entering={FadeInDown.duration(200).delay(200)}
+      >
         {guild.icon ? (
           <Image
             source={guild.icon}
@@ -172,18 +204,26 @@ function Screen() {
         ) : (
           <View className={`${style} bg-secondary`} />
         )}
-      </View>
-      <Text className="mb-2 text-center text-2xl font-medium">
+      </Animated.View>
+      <AnimatedText
+        className="mb-2 text-center text-2xl font-medium"
+        entering={FadeInDown.duration(200).delay(400)}
+      >
         {lobby.guild.name}
-      </Text>
-      <LobbyName lobby={lobby} />
-      <TypeSelector
+      </AnimatedText>
+      <AnimatedLobbyName
+        lobby={lobby}
+        entering={FadeInDown.duration(200).delay(600)}
+      />
+      <AnimatedTypeSelector
         currentType={lobby.channel.type}
         onTypeChange={changedChannelType}
+        entering={FadeInDown.duration(200).delay(800)}
       />
-      <UserLimitSelector
+      <AnimatedUserLimitSelector
         currentLimit={lobby.channel.limit}
         onLimitChange={changeLimit}
+        entering={FadeInDown.duration(200).delay(1000)}
       />
       <UsersSheet users={lobby.users} channelType={lobby.channel.type} />
     </Animated.View>

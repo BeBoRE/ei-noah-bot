@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import {
   LayoutRectangle,
   Pressable,
@@ -6,8 +6,9 @@ import {
   View,
   ViewProps,
 } from 'react-native';
-import { twMerge } from 'tailwind-merge';
+import Animated from 'react-native-reanimated';
 import { MotiView } from 'moti';
+import { twMerge } from 'tailwind-merge';
 
 type ItemProps = PressableProps & {
   onActive: (ref: LayoutRectangle) => void;
@@ -50,46 +51,53 @@ type Props = ViewProps & {
   }>;
 };
 
-function Options({ className, items, ...props }: Props) {
-  const [activeLayout, setActiveLayout] = useState<LayoutRectangle | null>();
+const Options = forwardRef<View, Props>(
+  ({ className, items, ...props }: Props, ref) => {
+    const [activeLayout, setActiveLayout] = useState<LayoutRectangle | null>();
 
-  return (
-    <View
-      // eslint-disable-next-line react/jsx-props-no-spreading
-      {...props}
-      className={twMerge(
-        'flex-row items-center justify-around rounded-full bg-primary-900 p-2 relative',
-        className,
-      )}
-    >
-      {activeLayout && <MotiView
-        animate={{
-          left: (activeLayout.x),
-          top: (activeLayout.y),
-          width: activeLayout.width,
-          height: activeLayout.height,
-        }}
-        transition={{
-          type: 'spring',
-          damping: 40,
-          stiffness: 400
-        }}
-        className="absolute rounded-full bg-primary-800"
-      />}
-      {items.map(({ id, onPress: onSelect, children, active }) => (
-        <Item
-          key={id}
-          onActive={(layout) => {
-            setActiveLayout(layout);
-          }}
-          onPress={onSelect}
-          active={active}
-        >
-          {children}
-        </Item>
-      ))}
-    </View>
-  );
-}
+    return (
+      <View
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        {...props}
+        ref={ref}
+        className={twMerge(
+          'relative flex-row items-center justify-around rounded-full bg-primary-900 p-2',
+          className,
+        )}
+      >
+        {activeLayout && (
+          <MotiView
+            animate={{
+              left: activeLayout.x,
+              top: activeLayout.y,
+              width: activeLayout.width,
+              height: activeLayout.height,
+            }}
+            transition={{
+              type: 'spring',
+              damping: 40,
+              stiffness: 400,
+            }}
+            className="absolute rounded-full bg-primary-800"
+          />
+        )}
+        {items.map(({ id, onPress: onSelect, children, active }) => (
+          <Item
+            key={id}
+            onActive={(layout) => {
+              setActiveLayout(layout);
+            }}
+            onPress={onSelect}
+            active={active}
+          >
+            {children}
+          </Item>
+        ))}
+      </View>
+    );
+  },
+);
+
+export const AnimatedOptions = Animated.createAnimatedComponent(Options);
 
 export default Options;

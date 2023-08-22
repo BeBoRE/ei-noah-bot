@@ -1,3 +1,7 @@
+import { forwardRef } from 'react';
+import { View } from 'react-native';
+import Animated from 'react-native-reanimated';
+
 import Options from './Options';
 import Text from './Text';
 
@@ -16,21 +20,27 @@ type Props = {
   onLimitChange: (limit: number) => void;
 };
 
-function UserLimitSelector({ currentLimit, onLimitChange }: Props) {
-  const limits = new Set([0, 2, 5, 10, currentLimit || 0]);
+const UserLimitSelector = forwardRef<View, Props>(
+  ({ currentLimit, onLimitChange }: Props, ref) => {
+    const limits = new Set([0, 2, 5, 10, currentLimit || 0]);
 
-  return (
-    <Options
-      items={Array.from(limits)
-        .sort((a, b) => a - b)
-        .map((limit) => ({
-          onPress: () => onLimitChange(limit),
-          children: <UserLimitButton limit={limit} />,
-          active: limit === currentLimit,
-          id: limit.toString(),
-        }))}
-    />
-  );
-}
+    return (
+      <Options
+        ref={ref}
+        items={Array.from(limits)
+          .sort((a, b) => a - b)
+          .map((limit) => ({
+            onPress: () => onLimitChange(limit),
+            children: <UserLimitButton limit={limit} />,
+            active: limit === currentLimit,
+            id: limit.toString(),
+          }))}
+      />
+    );
+  },
+);
+
+export const AnimatedUserLimitSelector =
+  Animated.createAnimatedComponent(UserLimitSelector);
 
 export default UserLimitSelector;

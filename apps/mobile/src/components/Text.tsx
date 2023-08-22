@@ -1,9 +1,19 @@
+import { forwardRef } from 'react';
 import { Text as NativeText, TextProps } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { twMerge } from 'tailwind-merge';
 
-function Text({ className, ...props }: TextProps) {
-  // eslint-disable-next-line react/jsx-props-no-spreading
-  return <NativeText {...props} className={twMerge(className, 'text-text')} />;
-}
+const Text = forwardRef<NativeText, TextProps>(
+  ({ className, ...props }: TextProps, ref) => (
+    // eslint-disable-next-line react/jsx-props-no-spreading
+    <NativeText
+      ref={ref}
+      {...props}
+      className={twMerge(className, 'text-text')}
+    />
+  ),
+);
+
+export const AnimatedText = Animated.createAnimatedComponent(Text);
 
 export default Text;

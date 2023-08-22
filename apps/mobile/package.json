@@ -39,6 +39,7 @@
     "expo-dev-menu": "^3.1.8",
     "expo-device": "^5.4.0",
     "expo-font": "~11.4.0",
+    "expo-haptics": "~12.4.0",
     "expo-image": "^1.3.2",
     "expo-linking": "~5.0.2",
     "expo-notifications": "^0.20.1",
@@ -64,6 +65,7 @@
     "rn-emoji-keyboard": "^1.5.0",
     "superjson": "1.13.1",
     "tailwind-merge": "^1.14.0",
+    "use-optimistic-update": "^0.0.4",
     "zod": "^3.21.4"
   },
   "devDependencies": {
