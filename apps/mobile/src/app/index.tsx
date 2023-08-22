@@ -189,7 +189,7 @@ function Screen() {
     >);
   };
 
-  const style = 'w-32 h-32 bg-primary-900 rounded-full';
+  const style = 'w-24 h-24 bg-primary-900 rounded-full';
 
   return (
     <Animated.View
