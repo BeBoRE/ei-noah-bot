@@ -10,26 +10,29 @@ type Props = {
 
 function TypeSelector({ currentType, onTypeChange }: Props) {
   return (
-    <Options className="mb-3">
-      <Options.Item
-        onPress={() => onTypeChange(ChannelType.Public)}
-        active={currentType === ChannelType.Public}
-      >
-        <ChannelTypeButton type={ChannelType.Public} />
-      </Options.Item>
-      <Options.Item
-        onPress={() => onTypeChange(ChannelType.Mute)}
-        active={currentType === ChannelType.Mute}
-      >
-        <ChannelTypeButton type={ChannelType.Mute} />
-      </Options.Item>
-      <Options.Item
-        onPress={() => onTypeChange(ChannelType.Nojoin)}
-        active={currentType === ChannelType.Nojoin}
-      >
-        <ChannelTypeButton type={ChannelType.Nojoin} />
-      </Options.Item>
-    </Options>
+    <Options
+      items={[
+        {
+          onPress: () => onTypeChange(ChannelType.Public),
+          children: <ChannelTypeButton type={ChannelType.Public} />,
+          active: currentType === ChannelType.Public,
+          id: ChannelType.Public,
+        },
+        {
+          onPress: () => onTypeChange(ChannelType.Mute),
+          children: <ChannelTypeButton type={ChannelType.Mute} />,
+          active: currentType === ChannelType.Mute,
+          id: ChannelType.Mute,
+        },
+        {
+          onPress: () => onTypeChange(ChannelType.Nojoin),
+          children: <ChannelTypeButton type={ChannelType.Nojoin} />,
+          active: currentType === ChannelType.Nojoin,
+          id: ChannelType.Nojoin,
+        },
+      ]}
+      className="mb-3"
+    />
   );
 }
 
