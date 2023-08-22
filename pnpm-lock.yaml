@@ -301,6 +301,9 @@ importers:
       expo-status-bar:
         specifier: ~1.6.0
         version: 1.6.0
+      expo-system-ui:
+        specifier: ~2.4.0
+        version: 2.4.0(expo@49.0.6)
       expo-updates:
         specifier: ^0.18.11
         version: 0.18.11(expo@49.0.6)
@@ -8158,6 +8161,18 @@ packages:
 
   /expo-structured-headers@3.3.0:
     resolution: {integrity: sha512-t+h5Zqaukd3Tn97LaWPpibVsmiC/TFP8F+8sAUliwCSMzgcb5TATRs2NcAB+JcIr8EP3JJDyYXJrZle1cjs4mQ==}
+    dev: false
+
+  /expo-system-ui@2.4.0(expo@49.0.6):
+    resolution: {integrity: sha512-uaBAYeQtFzyE8WVcch2V3G243xvOf7vJkLzrIJ3rJ8NA3uZRmxF0lMMe75oMrAaLVXyr1Z+ZE6UZwh7x49FuIg==}
+    peerDependencies:
+      expo: '*'
+    dependencies:
+      '@react-native/normalize-color': 2.1.0
+      debug: 4.3.4(supports-color@8.1.1)
+      expo: 49.0.6(@babel/core@7.22.9)
+    transitivePeerDependencies:
+      - supports-color
     dev: false
 
   /expo-updates-interface@0.10.1(expo@49.0.6):

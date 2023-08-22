@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Alert, View } from 'react-native';
-import Animated, { FadeInDown, FadeInLeft, FadeInRight, FadeOutUp } from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  FadeInLeft,
+  FadeInRight,
+  FadeOutUp,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
@@ -188,30 +193,33 @@ function Screen() {
 
   return (
     <Animated.View
-      className="flex flex-col flex-1 p-5"
+      className="flex flex-1 flex-col p-5"
       exiting={FadeOutUp.duration(200)}
       style={{
-        gap: 10
+        gap: 10,
       }}
     >
       <Animated.View
-        className="gap-4 items-center justify-center flex flex-row"
+        className="flex flex-row items-center justify-center gap-4"
         entering={FadeInDown.duration(200).delay(200)}
       >
-      <Animated.View
-        entering={FadeInLeft.duration(200).delay(200)}
-      >
-        {guild.icon ? (
-          <Image
-            source={guild.icon}
-            className={[style, 'ring-4'].join(' ')}
-            alt=""
-          />
-        ) : (
-          <View className={`${style} bg-secondary`} />
-        )}
-      </Animated.View>
-        <AnimatedText entering={FadeInRight.duration(200).delay(200)} className="text-4xl font-bold">{guild.name}</AnimatedText>
+        <Animated.View entering={FadeInLeft.duration(200).delay(200)}>
+          {guild.icon ? (
+            <Image
+              source={guild.icon}
+              className={[style, 'ring-4'].join(' ')}
+              alt=""
+            />
+          ) : (
+            <View className={`${style} bg-secondary`} />
+          )}
+        </Animated.View>
+        <AnimatedText
+          entering={FadeInRight.duration(200).delay(200)}
+          className="text-4xl font-bold"
+        >
+          {guild.name}
+        </AnimatedText>
       </Animated.View>
       <AnimatedLobbyName
         lobby={lobby}
