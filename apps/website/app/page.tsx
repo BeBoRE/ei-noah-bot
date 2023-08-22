@@ -13,7 +13,7 @@ export default function Page() {
         The best in class lobby manager for Discord
       </q>
       <h2 className="text-center text-3xl text-primary-300">- obamna</h2>
-      <a href="https://discord.com/api/oauth2/authorize?client_id=730913870805336195&permissions=1133901047824&scope=bot">
+      <a href="https://discord.com/api/oauth2/authorize?client_id=730913870805336195&permissions=8&scope=bot">
         <button
           type="button"
           className="mt-5 rounded bg-discord px-4 py-2 text-xl font-semibold text-primary-50 hover:bg-discord"
