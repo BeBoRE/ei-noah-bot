@@ -1,4 +1,3 @@
-import { Pressable } from 'react-native';
 import { usePusher } from 'src/context/pusher';
 import { api } from 'src/utils/api';
 
@@ -8,6 +7,7 @@ import {
   userIdToPusherChannel,
 } from '@ei/lobby';
 
+import Options from './Options';
 import Text from './Text';
 
 type Props = {
@@ -30,16 +30,12 @@ function UserLimitButton({ limit, lobby }: Props) {
     >);
   };
 
+  const isActive = lobby.limit === limit;
+
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={lobby.limit === limit}
-      className={`flex h-16 w-16 items-center justify-center rounded-full bg-primary-800 ${
-        lobby.limit === limit ? 'border-2 border-primary' : ''
-      }`}
-    >
+    <Options.Item onPress={onPress} disabled={isActive} active={isActive}>
       <Text className="text-3xl font-bold">{limit === 0 ? '∞' : limit}</Text>
-    </Pressable>
+    </Options.Item>
   );
 }
 

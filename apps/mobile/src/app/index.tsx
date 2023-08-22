@@ -10,11 +10,11 @@ import { toast } from 'burnt';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/rest/v10';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 import type { SFSymbol } from 'sf-symbols-typescript';
-import ChannelTypeButton from 'src/components/ChannelTypeButton';
 import JoinLobby from 'src/components/JoinLobby';
 import LobbyName from 'src/components/LobbyName';
 import Text from 'src/components/Text';
-import UserLimitButton from 'src/components/UserLimitButton';
+import TypeSelector from 'src/components/TypeSelector';
+import UserLimitSelector from 'src/components/UserLimits';
 import UsersSheet from 'src/components/UsersSheet';
 import { useAuth } from 'src/context/auth';
 import { PusherProvider, usePusher } from 'src/context/pusher';
@@ -23,6 +23,7 @@ import { baseConfig } from 'tailwind.config';
 
 import {
   ChannelType,
+  clientChangeLobby,
   lobbyChangeSchema,
   userIdToPusherChannel,
 } from '@ei/lobby';
@@ -134,7 +135,26 @@ function Screen() {
 
   const style = 'w-40 h-40 bg-primary-900 rounded-full';
 
-  const limits = new Set([0, 2, 5, 10, lobby.channel.limit || 0]);
+  const changedChannelType = (type: ChannelType) => {
+    if (!pusher || !user) return;
+
+    const channel = pusher.channel(userIdToPusherChannel(user));
+
+    channel.trigger('client-change-lobby', {
+      type,
+    } satisfies Zod.infer<typeof clientChangeLobby>);
+  };
+
+  const changeLimit = (limit: number) => {
+    if (!pusher) return;
+    if (!user) return;
+
+    const channel = pusher.channel(userIdToPusherChannel(user));
+
+    channel.trigger('client-change-lobby', { limit } satisfies Zod.infer<
+      typeof clientChangeLobby
+    >);
+  };
 
   return (
     <Animated.View
@@ -157,24 +177,14 @@ function Screen() {
         {lobby.guild.name}
       </Text>
       <LobbyName lobby={lobby} />
-      <View className="mb-3 flex-row items-center justify-around rounded-full bg-primary-900 p-2 px-10">
-        <ChannelTypeButton
-          lobbyType={ChannelType.Public}
-          lobby={lobby.channel}
-        />
-        <ChannelTypeButton lobbyType={ChannelType.Mute} lobby={lobby.channel} />
-        <ChannelTypeButton
-          lobbyType={ChannelType.Nojoin}
-          lobby={lobby.channel}
-        />
-      </View>
-      <View className="flex-row items-center justify-between rounded-full bg-primary-900 p-2">
-        {Array.from(limits)
-          .sort((a, b) => a - b)
-          .map((limit) => (
-            <UserLimitButton limit={limit} key={limit} lobby={lobby.channel} />
-          ))}
-      </View>
+      <TypeSelector
+        currentType={lobby.channel.type}
+        onTypeChange={changedChannelType}
+      />
+      <UserLimitSelector
+        currentLimit={lobby.channel.limit}
+        onLimitChange={changeLimit}
+      />
       <UsersSheet users={lobby.users} channelType={lobby.channel.type} />
     </Animated.View>
   );

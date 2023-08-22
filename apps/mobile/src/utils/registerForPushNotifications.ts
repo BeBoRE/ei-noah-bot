@@ -2,11 +2,11 @@ import { Platform } from 'react-native';
 import { isDevice } from 'expo-device';
 import {
   AndroidImportance,
+  deleteNotificationChannelAsync,
   getExpoPushTokenAsync,
   getPermissionsAsync,
   requestPermissionsAsync,
   setNotificationChannelAsync,
-  deleteNotificationChannelAsync
 } from 'expo-notifications';
 
 import baseConfig from '@ei/tailwind-config';
