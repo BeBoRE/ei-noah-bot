@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, View } from 'react-native';
-import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInLeft, FadeInRight, FadeOutUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
@@ -133,22 +133,20 @@ function Screen() {
     );
   }
 
-  const style = 'w-40 h-40 bg-primary-900 rounded-full';
-
   const changedChannelType = (type: ChannelType) => {
     if (!pusher || !user) return;
 
-    if(isInternetReachable !== false) {
+    if (isInternetReachable !== false) {
       // Optimistic update
       setLobby((prev) => {
         if (!prev) return prev;
-  
+
         return {
           ...prev,
           channel: {
             ...prev.channel,
             type,
-          }
+          },
         };
       });
     }
@@ -164,17 +162,17 @@ function Screen() {
     if (!pusher) return;
     if (!user) return;
 
-    if(isInternetReachable !== false) {    
+    if (isInternetReachable !== false) {
       // Optimistic update
       setLobby((prev) => {
         if (!prev) return prev;
-  
+
         return {
           ...prev,
           channel: {
             ...prev.channel,
             limit,
-          }
+          },
         };
       });
     }
@@ -186,14 +184,22 @@ function Screen() {
     >);
   };
 
+  const style = 'w-32 h-32 bg-primary-900 rounded-full';
+
   return (
     <Animated.View
-      className="flex-1 p-5 pb-0"
+      className="flex flex-col flex-1 p-5"
       exiting={FadeOutUp.duration(200)}
+      style={{
+        gap: 10
+      }}
     >
       <Animated.View
-        className="mb-2 items-center"
+        className="gap-4 items-center justify-center flex flex-row"
         entering={FadeInDown.duration(200).delay(200)}
+      >
+      <Animated.View
+        entering={FadeInLeft.duration(200).delay(200)}
       >
         {guild.icon ? (
           <Image
@@ -205,25 +211,21 @@ function Screen() {
           <View className={`${style} bg-secondary`} />
         )}
       </Animated.View>
-      <AnimatedText
-        className="mb-2 text-center text-2xl font-medium"
-        entering={FadeInDown.duration(200).delay(400)}
-      >
-        {lobby.guild.name}
-      </AnimatedText>
+        <AnimatedText entering={FadeInRight.duration(200).delay(200)} className="text-4xl font-bold">{guild.name}</AnimatedText>
+      </Animated.View>
       <AnimatedLobbyName
         lobby={lobby}
-        entering={FadeInDown.duration(200).delay(600)}
+        entering={FadeInDown.duration(200).delay(400)}
       />
       <AnimatedTypeSelector
         currentType={lobby.channel.type}
         onTypeChange={changedChannelType}
-        entering={FadeInDown.duration(200).delay(800)}
+        entering={FadeInDown.duration(200).delay(600)}
       />
       <AnimatedUserLimitSelector
         currentLimit={lobby.channel.limit}
         onLimitChange={changeLimit}
-        entering={FadeInDown.duration(200).delay(1000)}
+        entering={FadeInDown.duration(200).delay(800)}
       />
       <UsersSheet users={lobby.users} channelType={lobby.channel.type} />
     </Animated.View>

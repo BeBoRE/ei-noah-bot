@@ -52,7 +52,7 @@ const LobbyName = forwardRef<View, Props>(({ lobby }: Props, ref) => {
   return (
     <View
       ref={ref}
-      className="mb-3 flex flex-row items-center rounded-full bg-primary-900 p-2"
+      className="flex flex-row items-center rounded-full bg-primary-900 p-2"
     >
       <Pressable
         onPress={() => setEmojiOpen(true)}

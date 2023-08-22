@@ -5,9 +5,9 @@ import { twMerge } from 'tailwind-merge';
 
 const Text = forwardRef<NativeText, TextProps>(
   ({ className, ...props }: TextProps, ref) => (
-    // eslint-disable-next-line react/jsx-props-no-spreading
     <NativeText
       ref={ref}
+      // eslint-disable-next-line react/jsx-props-no-spreading
       {...props}
       className={twMerge(className, 'text-text')}
     />

@@ -36,7 +36,6 @@ const TypeSelector = forwardRef<View, Props>(
           id: ChannelType.Nojoin,
         },
       ]}
-      className="mb-3"
     />
   ),
 );
