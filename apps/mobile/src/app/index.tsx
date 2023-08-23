@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { Alert, AppState, View } from 'react-native';
 import Animated, {
   FadeInDown,
   FadeInLeft,
@@ -69,34 +69,48 @@ function Screen() {
 
   const { isInternetReachable } = useNetInfo();
 
+  const refresh = useCallback((callback?: () => void) => {
+    if (!pusher || !user) return;
+
+    const channelName = userIdToPusherChannel(user);
+
+    pusher.subscribe(channelName).bind('pusher:subscription_succeeded', () => {
+      pusher.send_event('client-refresh', {}, channelName);
+      callback?.();
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pusher?.sessionID, user]);
+
   useEffect(() => {
     if (!pusher || !user?.id) return undefined;
     const channelName = userIdToPusherChannel({ id: user.id });
 
+    const appStateListener = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        refresh();
+      }
+    });
+
     if (isInternetReachable) {
       console.log('Connecting to channel', channelName);
-      pusher
-        .subscribe(channelName)
-        .bind('pusher:subscription_succeeded', () => {
-          pusher.send_event('client-refresh', {}, channelName);
+      refresh(() => {
+        if (firstConnection) {
+          setFirstConnection(false);
+          return;
+        }
 
-          if (firstConnection) {
-            setFirstConnection(false);
-            return;
-          }
-
-          toast({
-            duration: 1,
-            title: 'Reconnected',
-            preset: 'custom',
-            icon: {
-              ios: {
-                name: 'wifi' satisfies SFSymbol,
-                color: baseConfig.theme.colors.accept,
-              },
+        toast({
+          duration: 1,
+          title: 'Reconnected',
+          preset: 'custom',
+          icon: {
+            ios: {
+              name: 'wifi' satisfies SFSymbol,
+              color: baseConfig.theme.colors.accept,
             },
-          });
+          },
         });
+      });
     } else if (isInternetReachable === false) {
       console.log(
         'Not connecting to channel',
@@ -120,6 +134,7 @@ function Screen() {
     return () => {
       console.log('Unsubscribing from channel', channelName);
       pusher.unsubscribe(channelName);
+      appStateListener.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pusher?.sessionID, user?.id, isInternetReachable]);

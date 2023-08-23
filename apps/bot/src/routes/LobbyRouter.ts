@@ -2350,7 +2350,7 @@ const createPusherSubscriptionListeners = (
   pusherClient
     .subscribe(channelName)
     .bind('pusher:subscription_succeeded', async () => {
-      globalLogger.info(`subscribed to channel ${channelName}`);
+      globalLogger.debug(`subscribed to channel ${channelName}`);
     })
     .bind('pusher:subscription_error', async (err: unknown) => {
       globalLogger.error('subscription error', err);
