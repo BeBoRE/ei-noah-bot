@@ -37,6 +37,7 @@ export function useLobby() {
 export function LobbyProvider({ children }: { children: React.ReactNode }) {
   const { pusher, connectionState } = usePusher();
   const [lobby, setLobby] = useState<LobbyChange | null>(null);
+  const [subscribed, setSubscribed] = useState(false);
   const { data: user } = api.user.me.useQuery();
 
   // Listen for connection state changes
@@ -67,8 +68,9 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
 
     const channel = pusher.subscribe(channelName);
 
+    console.log('subscribing to', channelName);
     channel.bind('pusher:subscription_succeeded', () => {
-      pusher.send_event('client-refresh', {}, channelName);
+      setSubscribed(true);
     });
 
     return () => {
@@ -80,6 +82,7 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!pusher) return undefined;
 
+    console.log('listening for lobby changes');
     pusher.user.bind('lobbyChange', (newData: unknown) => {
       const result = lobbyChangeSchema.safeParse(newData);
       if (!result.success) {
@@ -104,8 +107,7 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
     return () => {
       pusher.user.unbind('lobbyChange');
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pusher?.sessionID]);
+  }, [pusher]);
 
   // When connection state changes refresh the lobby
   useEffect(() => {
@@ -113,10 +115,10 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
 
     const channelName = userIdToPusherChannel(user);
 
-    if (connectionState === 'connected') {
+    if (connectionState === 'connected' && subscribed) {
       pusher.send_event('client-refresh', {}, channelName);
     }
-  }, [pusher, user, connectionState]);
+  }, [pusher, user, connectionState, subscribed]);
 
   const props = useMemo(
     () => ({
