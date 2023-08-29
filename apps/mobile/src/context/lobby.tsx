@@ -114,6 +114,7 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (connectionState !== 'connected' && subscribed) {
+      setLobby(null);
       setSubscribed(false);
     }
   }, [pusher, user, connectionState, subscribed]);
