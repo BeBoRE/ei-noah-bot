@@ -12,6 +12,7 @@ import {
 } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
+import { Channel } from 'pusher-js';
 import { usePusher } from './pusher';
 
 type LobbyContextProps = {
@@ -60,24 +61,6 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
     }
   }, [connectionState]);
 
-  // Subscribe to lobby channel
-  useEffect(() => {
-    if (!pusher || !user) return undefined;
-
-    const channelName = userIdToPusherChannel(user);
-
-    const channel = pusher.subscribe(channelName);
-
-    console.log('subscribing to', channelName);
-    channel.bind('pusher:subscription_succeeded', () => {
-      setSubscribed(true);
-    });
-
-    return () => {
-      pusher.unsubscribe(userIdToPusherChannel(user));
-    };
-  }, [pusher, user]);
-
   // Listen for lobby changes
   useEffect(() => {
     if (!pusher) return undefined;
@@ -113,10 +96,25 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!pusher || !user) return;
 
+    let channel : Channel | undefined;
+
     const channelName = userIdToPusherChannel(user);
 
     if (connectionState === 'connected' && subscribed) {
+      console.log('refreshing lobby');
       pusher.send_event('client-refresh', {}, channelName);
+    }
+
+    if(connectionState === 'connected' && !subscribed) {
+      channel = pusher.subscribe(channelName);
+      channel.bind('pusher:subscription_succeeded', () => {
+        console.log('subscribed to channel', channelName);
+        setSubscribed(true);
+      });
+    }
+
+    if (connectionState !== 'connected' && subscribed) {
+      setSubscribed(false);
     }
   }, [pusher, user, connectionState, subscribed]);
 
