@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { alert, toast } from 'burnt';
+import { Channel } from 'pusher-js';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { api } from 'src/utils/api';
 
@@ -12,7 +13,6 @@ import {
 } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
-import { Channel } from 'pusher-js';
 import { usePusher } from './pusher';
 
 type LobbyContextProps = {
@@ -96,7 +96,7 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!pusher || !user) return;
 
-    let channel : Channel | undefined;
+    let channel: Channel | undefined;
 
     const channelName = userIdToPusherChannel(user);
 
@@ -105,7 +105,7 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
       pusher.send_event('client-refresh', {}, channelName);
     }
 
-    if(connectionState === 'connected' && !subscribed) {
+    if (connectionState === 'connected' && !subscribed) {
       channel = pusher.subscribe(channelName);
       channel.bind('pusher:subscription_succeeded', () => {
         console.log('subscribed to channel', channelName);

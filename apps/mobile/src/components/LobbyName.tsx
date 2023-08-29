@@ -1,6 +1,6 @@
 import { forwardRef, useMemo, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import EmojiPicker, { emojisByCategory } from 'rn-emoji-keyboard';
 import { usePusher } from 'src/context/pusher';
 
@@ -12,7 +12,7 @@ import {
 } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
-import Text from './Text';
+import { AnimatedText } from './Text';
 
 type Props = {
   lobby: NonNullable<Zod.infer<typeof lobbyChangeSchema>>;
@@ -58,7 +58,7 @@ const LobbyName = forwardRef<View, Props>(({ lobby }: Props, ref) => {
         onPress={() => setEmojiOpen(true)}
         className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-800"
       >
-        <Text className="text-4xl">{nameInfo?.icon}</Text>
+        <AnimatedText key={nameInfo?.icon} entering={FadeInDown.duration(200)} exiting={FadeOutUp.duration(200)} className="text-4xl">{nameInfo?.icon}</AnimatedText>
       </Pressable>
       <View className="flex-1">
         <TextInput

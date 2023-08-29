@@ -34,15 +34,22 @@ function Screen() {
   const { connectionState } = usePusher();
 
   console.log('connectionState', connectionState);
-  if (connectionState === 'connecting' || !connectionState ) {
+  if (connectionState === 'connecting' || !connectionState) {
     return (
-      <Animated.View className='flex flex-1' entering={FadeIn.duration(200).delay(500)}>
-        <SafeAreaView edges={['bottom']} className='flex flex-1'>
+      <Animated.View
+        key="connecting"
+        className="flex flex-1"
+        entering={FadeIn.duration(200).delay(500)}
+      >
+        <SafeAreaView edges={['bottom']} className="flex flex-1">
           <Animated.View className="flex flex-1 items-center justify-center">
-            <Text className="text-2xl font-bold text-primary-300 mb-3">
+            <Text className="mb-3 text-2xl font-bold text-primary-300">
               Connecting
             </Text>
-            <ActivityIndicator size="large" color={baseConfig.theme.colors.primary[300]} />
+            <ActivityIndicator
+              size="large"
+              color={baseConfig.theme.colors.primary[300]}
+            />
           </Animated.View>
         </SafeAreaView>
       </Animated.View>
@@ -51,8 +58,13 @@ function Screen() {
 
   if (connectionState === 'unavailable' || connectionState === 'failed') {
     return (
-      <Animated.View className='flex flex-1' entering={FadeInDown.duration(200)} exiting={FadeOutUp.duration(200)}>
-        <SafeAreaView edges={['bottom']} className='flex flex-1'>
+      <Animated.View
+        key="unavailable"
+        className="flex flex-1"
+        entering={FadeInDown.duration(200)}
+        exiting={FadeOutUp.duration(200)}
+      >
+        <SafeAreaView edges={['bottom']} className="flex flex-1">
           <View className="flex flex-1 items-center justify-center">
             <View className="m-5 flex items-center justify-center rounded bg-primary-900 p-6">
               <AntDesign
@@ -61,8 +73,8 @@ function Screen() {
                 color={baseConfig.theme.colors.reject}
               />
               <Text className="mt-3 text-center text-2xl font-bold text-primary-300">
-                Cannot connect to server, please check your internet connection or
-                try again later.
+                Cannot connect to server, please check your internet connection
+                or try again later.
               </Text>
             </View>
           </View>
@@ -79,6 +91,7 @@ function Screen() {
 
   return (
     <Animated.View
+      key={lobby.channel.id}
       className="flex flex-1 flex-col p-5"
       exiting={FadeOutUp.duration(200)}
       style={{
