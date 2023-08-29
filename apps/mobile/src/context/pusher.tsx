@@ -1,13 +1,19 @@
-import { createContext, useContext, useEffect, useMemo } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import Pusher from 'pusher-js';
 import config from 'src/config';
 import { api, createVanillaApi } from 'src/utils/api';
 
 import { useAuth } from './auth';
 
-type PusherContextProps = Pusher | null;
+type PusherContextProps = {
+  pusher: Pusher | null;
+  connectionState: string | null;
+};
 
-const pusherContext = createContext<PusherContextProps>(null);
+const pusherContext = createContext<PusherContextProps>({
+  pusher: null,
+  connectionState: null,
+});
 
 export function usePusher() {
   return useContext(pusherContext);
@@ -18,6 +24,7 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
   const { mutate: authentication } = api.pusher.authentication.useMutation();
   const { mutate: channelAuthorization } =
     api.pusher.authorization.useMutation();
+  const [connectionState, setConnectionState] = useState<string | null>(null);
 
   const pusher = useMemo<Pusher>(() => {
     console.log('creating pusher', config.pusher.appKey, config.pusher.cluster);
@@ -62,22 +69,27 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
       },
     });
 
+    newPusher.connection.bind(
+      'state_change',
+      (states: { current: string; previous: string }) => {
+        setConnectionState(states.current);
+      },
+    );
+
     return newPusher;
   }, [authentication, channelAuthorization]);
-
-  useEffect(
-    () => () => {
-      pusher?.disconnect();
-    },
-    [pusher],
-  );
 
   useEffect(() => {
     pusher.signin();
   }, [authInfo?.accessToken, pusher]);
 
+  const props = useMemo(
+    () => ({ pusher, connectionState }),
+    [pusher, connectionState],
+  );
+
   return (
-    <pusherContext.Provider value={pusher}>{children}</pusherContext.Provider>
+    <pusherContext.Provider value={props}>{children}</pusherContext.Provider>
   );
 }
 

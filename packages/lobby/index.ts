@@ -43,6 +43,8 @@ export const lobbyChangeSchema = z
   .optional()
   .nullable();
 
+export type LobbyChange = z.infer<typeof lobbyChangeSchema>;
+
 export const addUserSchema = z.object({
   user: z.object({
     id: z.string(),

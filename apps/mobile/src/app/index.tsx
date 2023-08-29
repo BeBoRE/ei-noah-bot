@@ -1,5 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Alert, AppState, View } from 'react-native';
+import { View } from 'react-native';
 import Animated, {
   FadeInDown,
   FadeInLeft,
@@ -10,11 +9,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useNetInfo } from '@react-native-community/netinfo';
-import { toast } from 'burnt';
+import { AntDesign } from '@expo/vector-icons';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/rest/v10';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
-import type { SFSymbol } from 'sf-symbols-typescript';
 import JoinLobby from 'src/components/JoinLobby';
 import { AnimatedLobbyName } from 'src/components/LobbyName';
 import Text, { AnimatedText } from 'src/components/Text';
@@ -22,187 +19,40 @@ import { AnimatedTypeSelector } from 'src/components/TypeSelector';
 import { AnimatedUserLimitSelector } from 'src/components/UserLimits';
 import UsersSheet from 'src/components/UsersSheet';
 import { useAuth } from 'src/context/auth';
+import { LobbyProvider, useLobby } from 'src/context/lobby';
 import { PusherProvider, usePusher } from 'src/context/pusher';
 import useNotifications from 'src/hooks/useNotifications';
 import { baseConfig } from 'tailwind.config';
 
-import {
-  ChannelType,
-  clientChangeLobby,
-  lobbyChangeSchema,
-  userIdToPusherChannel,
-} from '@ei/lobby';
-
 import { api } from '../utils/api';
 
 function Screen() {
-  const [lobby, setLobby] = useState<Zod.infer<
-    typeof lobbyChangeSchema
-  > | null>(null);
-  const { data: user } = api.user.me.useQuery();
-  const pusher = usePusher();
-  const [firstConnection, setFirstConnection] = useState(true);
-
   useNotifications();
 
-  useEffect(() => {
-    if (!pusher) return undefined;
+  const { lobby, changeChannelType, changeUserLimit } = useLobby();
+  const { connectionState } = usePusher();
 
-    pusher.user.bind('lobbyChange', (newData: unknown) => {
-      const result = lobbyChangeSchema.safeParse(newData);
-      if (!result.success) {
-        Alert.alert(
-          'Error',
-          `Failed to parse lobby data\n${result.error.message}`,
-        );
-        return;
-      }
-
-      setLobby(result.data);
-    });
-
-    return () => {
-      pusher.user.unbind('lobbyChange');
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pusher?.sessionID]);
-
-  const { isInternetReachable } = useNetInfo();
-
-  const refresh = useCallback((callback?: () => void) => {
-    if (!pusher || !user) return;
-
-    const channelName = userIdToPusherChannel(user);
-
-    pusher.subscribe(channelName).bind('pusher:subscription_succeeded', () => {
-      pusher.send_event('client-refresh', {}, channelName);
-      callback?.();
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pusher?.sessionID, user]);
-
-  useEffect(() => {
-    if (!pusher || !user?.id) return undefined;
-    const channelName = userIdToPusherChannel({ id: user.id });
-
-    const appStateListener = AppState.addEventListener('change', (state) => {
-      if (state === 'active') {
-        refresh();
-      }
-    });
-
-    if (isInternetReachable) {
-      console.log('Connecting to channel', channelName);
-      refresh(() => {
-        if (firstConnection) {
-          setFirstConnection(false);
-          return;
-        }
-
-        toast({
-          duration: 1,
-          title: 'Reconnected',
-          preset: 'custom',
-          icon: {
-            ios: {
-              name: 'wifi' satisfies SFSymbol,
-              color: baseConfig.theme.colors.accept,
-            },
-          },
-        });
-      });
-    } else if (isInternetReachable === false) {
-      console.log(
-        'Not connecting to channel',
-        channelName,
-        'because the internet is not reachable',
-      );
-
-      toast({
-        title: 'Lost connection',
-        message: 'Please connect to the internet',
-        preset: 'custom',
-        icon: {
-          ios: {
-            name: 'wifi.slash' satisfies SFSymbol,
-            color: baseConfig.theme.colors.reject,
-          },
-        },
-      });
-    }
-
-    return () => {
-      console.log('Unsubscribing from channel', channelName);
-      pusher.unsubscribe(channelName);
-      appStateListener.remove();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pusher?.sessionID, user?.id, isInternetReachable]);
-
-  if (!lobby) {
-    return <JoinLobby />;
-  }
-
-  const { guild } = lobby;
-
-  if (!guild) {
+  if (connectionState === 'unavailable') {
     return (
-      <View className="flex-1 justify-center align-middle">
-        <Text className="text-center text-3xl">Error contacting Discord</Text>
+      <View className="flex flex-1">
+        <View className="m-5 flex items-center justify-center rounded bg-primary-900 p-6">
+          <AntDesign
+            name="disconnect"
+            size={32}
+            color={baseConfig.theme.colors.reject}
+          />
+          <Text className="mt-2 text-center text-2xl font-bold text-primary-300">
+            Cannot connect to server, please check your internet connection or
+            try again later.
+          </Text>
+        </View>
       </View>
     );
   }
 
-  const changedChannelType = (type: ChannelType) => {
-    if (!pusher || !user) return;
-
-    if (isInternetReachable !== false) {
-      // Optimistic update
-      setLobby((prev) => {
-        if (!prev) return prev;
-
-        return {
-          ...prev,
-          channel: {
-            ...prev.channel,
-            type,
-          },
-        };
-      });
-    }
-
-    const channel = pusher.channel(userIdToPusherChannel(user));
-
-    channel.trigger('client-change-lobby', {
-      type,
-    } satisfies Zod.infer<typeof clientChangeLobby>);
-  };
-
-  const changeLimit = (limit: number) => {
-    if (!pusher) return;
-    if (!user) return;
-
-    if (isInternetReachable !== false) {
-      // Optimistic update
-      setLobby((prev) => {
-        if (!prev) return prev;
-
-        return {
-          ...prev,
-          channel: {
-            ...prev.channel,
-            limit,
-          },
-        };
-      });
-    }
-
-    const channel = pusher.channel(userIdToPusherChannel(user));
-
-    channel.trigger('client-change-lobby', { limit } satisfies Zod.infer<
-      typeof clientChangeLobby
-    >);
-  };
+  if (!lobby) {
+    return <JoinLobby />;
+  }
 
   const style = 'w-24 h-24 bg-primary-900 rounded-full';
 
@@ -219,9 +69,9 @@ function Screen() {
         entering={FadeInDown.duration(200).delay(200)}
       >
         <Animated.View entering={FadeInLeft.duration(200).delay(200)}>
-          {guild.icon ? (
+          {lobby.guild.icon ? (
             <Image
-              source={guild.icon}
+              source={lobby.guild.icon}
               className={[style, 'ring-4'].join(' ')}
               alt=""
             />
@@ -233,7 +83,7 @@ function Screen() {
           entering={FadeInRight.duration(200).delay(200)}
           className="text-4xl font-bold"
         >
-          {guild.name}
+          {lobby.guild.name}
         </AnimatedText>
       </Animated.View>
       <AnimatedLobbyName
@@ -242,12 +92,12 @@ function Screen() {
       />
       <AnimatedTypeSelector
         currentType={lobby.channel.type}
-        onTypeChange={changedChannelType}
+        onTypeChange={changeChannelType}
         entering={FadeInDown.duration(200).delay(600)}
       />
       <AnimatedUserLimitSelector
         currentLimit={lobby.channel.limit}
-        onLimitChange={changeLimit}
+        onLimitChange={changeUserLimit}
         entering={FadeInDown.duration(200).delay(800)}
       />
       <UsersSheet users={lobby.users} channelType={lobby.channel.type} />
@@ -307,7 +157,9 @@ function Index() {
       />
       <SafeAreaView edges={['left', 'right']} className="flex-1 to-primary-950">
         <PusherProvider>
-          <Screen />
+          <LobbyProvider>
+            <Screen />
+          </LobbyProvider>
         </PusherProvider>
         <StatusBar style="dark" />
       </SafeAreaView>

@@ -25,7 +25,7 @@ const LobbyName = forwardRef<View, Props>(({ lobby }: Props, ref) => {
     lobby.channel.name,
   );
 
-  const pusher = usePusher();
+  const { pusher } = usePusher();
 
   const [emojiOpen, setEmojiOpen] = useState(false);
 
