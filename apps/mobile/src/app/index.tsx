@@ -1,6 +1,5 @@
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
 import Animated, {
-  FadeIn,
   FadeInDown,
   FadeInLeft,
   FadeInRight,
@@ -32,29 +31,6 @@ function Screen() {
 
   const { lobby, changeChannelType, changeUserLimit } = useLobby();
   const { connectionState } = usePusher();
-
-  console.log('connectionState', connectionState);
-  if (connectionState === 'connecting' || !connectionState) {
-    return (
-      <Animated.View
-        key="connecting"
-        className="flex flex-1"
-        entering={FadeIn.duration(200).delay(500)}
-      >
-        <SafeAreaView edges={['bottom']} className="flex flex-1">
-          <Animated.View className="flex flex-1 items-center justify-center">
-            <Text className="mb-3 text-2xl font-bold text-primary-300">
-              Connecting
-            </Text>
-            <ActivityIndicator
-              size="large"
-              color={baseConfig.theme.colors.primary[300]}
-            />
-          </Animated.View>
-        </SafeAreaView>
-      </Animated.View>
-    );
-  }
 
   if (connectionState === 'unavailable' || connectionState === 'failed') {
     return (
