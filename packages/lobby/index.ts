@@ -89,7 +89,7 @@ export function generateLobbyName(
 
       // Checks if custom icon is not a voice channel icon
       if (
-        !Object.keys(ChannelType)
+        !Object.values(ChannelType)
           .map<string>((t) => getIcon(<ChannelType>t))
           .includes(customIcon) &&
         customIcon !== '📝'

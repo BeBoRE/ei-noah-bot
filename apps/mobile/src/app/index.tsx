@@ -101,11 +101,13 @@ function Screen() {
         entering={FadeInDown.duration(200).delay(400)}
       />
       <AnimatedTypeSelector
+        delay={600}
         currentType={lobby.channel.type}
         onTypeChange={changeChannelType}
         entering={FadeInDown.duration(200).delay(600)}
       />
       <AnimatedUserLimitSelector
+        delay={800}
         currentLimit={lobby.channel.limit}
         onLimitChange={changeUserLimit}
         entering={FadeInDown.duration(200).delay(800)}

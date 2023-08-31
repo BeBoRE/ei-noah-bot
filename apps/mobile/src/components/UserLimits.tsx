@@ -18,15 +18,17 @@ function UserLimitButton({ limit }: ButtonProps) {
 type Props = {
   currentLimit: number | null;
   onLimitChange: (limit: number) => void;
+  delay?: number;
 };
 
 const UserLimitSelector = forwardRef<View, Props>(
-  ({ currentLimit, onLimitChange }: Props, ref) => {
+  ({ currentLimit, onLimitChange, delay }: Props, ref) => {
     const limits = new Set([0, 2, 5, 10, currentLimit || 0]);
 
     return (
       <Options
         ref={ref}
+        delay={delay}
         items={Array.from(limits)
           .sort((a, b) => a - b)
           .map((limit) => ({

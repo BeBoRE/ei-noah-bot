@@ -10,12 +10,14 @@ import Options from './Options';
 type Props = {
   currentType: ChannelType;
   onTypeChange: (type: ChannelType) => void;
+  delay?: number;
 };
 
 const TypeSelector = forwardRef<View, Props>(
-  ({ currentType, onTypeChange }: Props, ref) => (
+  ({ currentType, onTypeChange, delay }: Props, ref) => (
     <Options
       ref={ref}
+      delay={delay}
       items={[
         {
           onPress: () => onTypeChange(ChannelType.Public),

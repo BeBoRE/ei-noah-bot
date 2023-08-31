@@ -6,7 +6,7 @@ import {
   View,
   ViewProps,
 } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeInRight } from 'react-native-reanimated';
 import { MotiView } from 'moti';
 import { twMerge } from 'tailwind-merge';
 
@@ -15,7 +15,7 @@ type ItemProps = PressableProps & {
   active?: boolean;
 };
 
-function Item({ className, onActive, active, ...props }: ItemProps) {
+const Item = forwardRef<View, ItemProps>(({ className, onActive, active, ...props }: ItemProps, ref) => {
   const [measurements, setMeasurements] = useState<LayoutRectangle>();
 
   useEffect(() => {
@@ -26,6 +26,7 @@ function Item({ className, onActive, active, ...props }: ItemProps) {
 
   return (
     <View
+      ref={ref}
       onLayout={(event) => {
         setMeasurements(event.nativeEvent.layout);
       }}
@@ -40,7 +41,9 @@ function Item({ className, onActive, active, ...props }: ItemProps) {
       />
     </View>
   );
-}
+})
+
+const AnimatedItem = Animated.createAnimatedComponent(Item);
 
 type Props = ViewProps & {
   items: Array<{
@@ -49,10 +52,11 @@ type Props = ViewProps & {
     children: React.ReactNode;
     active?: boolean;
   }>;
+  delay?: number;
 };
 
 const Options = forwardRef<View, Props>(
-  ({ className, items, ...props }: Props, ref) => {
+  ({ className, items, delay, ...props }: Props, ref) => {
     const [activeLayout, setActiveLayout] = useState<LayoutRectangle | null>();
 
     return (
@@ -78,20 +82,22 @@ const Options = forwardRef<View, Props>(
               damping: 40,
               stiffness: 400,
             }}
+            entering={FadeInRight.duration(200).delay((delay || 0) + ((items.length - 1) * 100))}
             className="absolute rounded-full bg-primary-800"
           />
         )}
-        {items.map(({ id, onPress: onSelect, children, active }) => (
-          <Item
+        {items.map(({ id, onPress: onSelect, children, active }, index) => (
+          <AnimatedItem
             key={id}
             onActive={(layout) => {
               setActiveLayout(layout);
             }}
             onPress={onSelect}
             active={active}
+            entering={FadeInRight.duration(200).delay((delay || 0) + index * 100)}
           >
             {children}
-          </Item>
+          </AnimatedItem>
         ))}
       </View>
     );
