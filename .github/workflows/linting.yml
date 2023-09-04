@@ -43,3 +43,6 @@ jobs:
 
       - name: Running linters
         run: pnpm lint
+
+      - name: Running type check
+        run: pnpm lint:typecheck
