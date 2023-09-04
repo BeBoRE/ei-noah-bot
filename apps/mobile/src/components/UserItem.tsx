@@ -74,7 +74,7 @@ function UserItem({
   user: Zod.infer<typeof userSchema>;
   channelType: ChannelType;
 }) {
-  const pusher = usePusher();
+  const { pusher } = usePusher();
   const { data: me } = api.user.me.useQuery();
 
   const showButtons = channelType !== ChannelType.Public;
