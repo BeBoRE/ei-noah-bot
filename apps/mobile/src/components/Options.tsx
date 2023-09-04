@@ -15,33 +15,35 @@ type ItemProps = PressableProps & {
   active?: boolean;
 };
 
-const Item = forwardRef<View, ItemProps>(({ className, onActive, active, ...props }: ItemProps, ref) => {
-  const [measurements, setMeasurements] = useState<LayoutRectangle>();
+const Item = forwardRef<View, ItemProps>(
+  ({ className, onActive, active, ...props }: ItemProps, ref) => {
+    const [measurements, setMeasurements] = useState<LayoutRectangle>();
 
-  useEffect(() => {
-    if (active && measurements) {
-      onActive(measurements);
-    }
-  }, [active, measurements, onActive]);
+    useEffect(() => {
+      if (active && measurements) {
+        onActive(measurements);
+      }
+    }, [active, measurements, onActive]);
 
-  return (
-    <View
-      ref={ref}
-      onLayout={(event) => {
-        setMeasurements(event.nativeEvent.layout);
-      }}
-    >
-      <Pressable
-        // eslint-disable-next-line react/jsx-props-no-spreading
-        {...props}
-        className={twMerge(
-          'flex h-16 w-16 items-center justify-center rounded-full',
-          className,
-        )}
-      />
-    </View>
-  );
-})
+    return (
+      <View
+        ref={ref}
+        onLayout={(event) => {
+          setMeasurements(event.nativeEvent.layout);
+        }}
+      >
+        <Pressable
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...props}
+          className={twMerge(
+            'flex h-16 w-16 items-center justify-center rounded-full',
+            className,
+          )}
+        />
+      </View>
+    );
+  },
+);
 
 const AnimatedItem = Animated.createAnimatedComponent(Item);
 
@@ -82,7 +84,9 @@ const Options = forwardRef<View, Props>(
               damping: 40,
               stiffness: 400,
             }}
-            entering={FadeInRight.duration(200).delay((delay || 0) + ((items.length - 1) * 100))}
+            entering={FadeInRight.duration(200).delay(
+              (delay || 0) + (items.length - 1) * 100,
+            )}
             className="absolute rounded-full bg-primary-800"
           />
         )}
@@ -94,7 +98,9 @@ const Options = forwardRef<View, Props>(
             }}
             onPress={onSelect}
             active={active}
-            entering={FadeInRight.duration(200).delay((delay || 0) + index * 100)}
+            entering={FadeInRight.duration(200).delay(
+              (delay || 0) + index * 100,
+            )}
           >
             {children}
           </AnimatedItem>

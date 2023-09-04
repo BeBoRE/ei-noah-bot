@@ -148,7 +148,7 @@ const handler: GuildHandler = async ({
       return i18n.t('quote.noQuoteFound', { user: user.toString() });
     }
 
-    if (quotedUser.quotes.length === 1) {
+    if (quotedUser.quotes[0]) {
       return getQuoteOptions(msg.guild, quotedUser.quotes[0], i18n);
     }
 

@@ -188,6 +188,8 @@ process.title = 'Ei Noah Bot';
 
       await Promise.all(
         lines.map((line, index) => {
+          if (!line) return Promise.resolve();
+
           const { width } = measureText(ctx, line);
           return Promise.all([
             fillTextWithTwemoji(
@@ -361,6 +363,8 @@ process.title = 'Ei Noah Bot';
 
       await Promise.all(
         lines.map((line, index) => {
+          if (!line) return Promise.resolve();
+
           const { width } = measureText(ctx, line);
           return Promise.all([
             fillTextWithTwemoji(
@@ -564,7 +568,7 @@ process.title = 'Ei Noah Bot';
       const presence =
         watDoetNoah[Math.floor(Math.random() * watDoetNoah.length)];
 
-      client.user?.setPresence(presence);
+      if (presence) client.user?.setPresence(presence);
 
       setTimeout(updatePrecense, 1000 * 60);
     };

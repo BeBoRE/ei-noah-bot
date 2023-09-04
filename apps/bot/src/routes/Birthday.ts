@@ -344,7 +344,7 @@ const colorFullText = (
   ctx.save();
   text.split('').forEach((letter) => {
     const color = colors[Math.floor(Math.random() * colors.length)];
-    ctx.fillStyle = color;
+    ctx.fillStyle = color || '#FFFFFF';
     ctx.fillText(letter, x, y);
     x += ctx.measureText(letter).width;
   });

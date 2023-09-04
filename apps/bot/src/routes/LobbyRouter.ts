@@ -343,7 +343,10 @@ function updateTextChannel(
 }
 
 const createCreateChannel = (type: ChannelType, category: CategoryChannel) => {
-  const typeName = `${type[0].toUpperCase()}${type.substring(1, type.length)}`;
+  const firstLetter = type[0]?.toUpperCase();
+  if (!firstLetter) throw new Error('Invalid Type');
+
+  const typeName = `${firstLetter}${type.substring(1, type.length)}`;
   return category.guild.channels.create({
     type: DiscordChannelType.GuildVoice,
     parent: category,
@@ -1043,7 +1046,7 @@ const generateComponents = async (
         new ButtonBuilder({
           customId: type,
           emoji: { name: getIcon(type) },
-          label: `${type[0].toUpperCase()}${type.substring(1)}`,
+          label: `${type[0]?.toUpperCase()}${type.substring(1)}`,
           style:
             currentType === type ? ButtonStyle.Success : ButtonStyle.Secondary,
           disabled: currentType === type,
@@ -1132,6 +1135,7 @@ const pushLobbyToUser = (
     guild: DiscordGuild;
     tempChannel: TempChannel;
     voiceChannel: VoiceChannel;
+    timeTillLobbyChange: Duration | null;
   } | null,
 ) => {
   pusher.sendToUser(
@@ -1159,6 +1163,9 @@ const pushLobbyToUser = (
               name: data.tempChannel.name || null,
               type: getChannelType(data.voiceChannel),
               limit: data.voiceChannel.userLimit,
+              lobbyNameChangeDate: data.timeTillLobbyChange
+                ? moment.now() + data.timeTillLobbyChange.asMilliseconds()
+                : null,
             },
             users: data.voiceChannel.members
               .map((member) => ({
@@ -1185,18 +1192,27 @@ const changeLobby = (() => {
   const timeouts = new Map<Snowflake, NameChangeTimeout>();
 
   return async (
-    changeTo: ChannelType | undefined,
-    voiceChannel: VoiceChannel,
-    owner: GuildMember,
-    guild: DiscordGuild,
-    tempChannel: TempChannel,
-    limit: number | undefined,
-    interaction: MessageComponentInteraction | null,
-    em: EntityManager,
-    i18n: I18n,
-    logger: Logger,
-    forcePermissionUpdate = false,
+    requiredOptions: {
+      tempChannel: TempChannel;
+      voiceChannel: VoiceChannel;
+      owner: GuildMember;
+      guild: DiscordGuild;
+      em: EntityManager;
+      i18n: I18n;
+    },
+    options?: {
+      changeTo?: ChannelType;
+      limit?: number;
+      interaction?: MessageComponentInteraction | null;
+      forcePermissionUpdate?: boolean;
+    },
   ) => {
+    const { tempChannel, voiceChannel, owner, guild, em, i18n } =
+      requiredOptions;
+
+    const { changeTo, limit, forcePermissionUpdate, interaction } =
+      options ?? {};
+
     const currentType = getChannelType(voiceChannel);
     const textChannel = activeTempText(guild.client, tempChannel);
     const deny = toDeny(
@@ -1204,7 +1220,7 @@ const changeLobby = (() => {
       voiceChannel.id !== (await textChannel)?.id,
     );
 
-    if (changeTo !== currentType || forcePermissionUpdate) {
+    if ((changeTo && changeTo !== currentType) || forcePermissionUpdate) {
       const newOverwrites =
         currentType === ChannelType.Public
           ? voiceChannel.members
@@ -1263,7 +1279,7 @@ const changeLobby = (() => {
           }
           return null;
         })
-        .catch((error) => logger.error(error.description, { error }));
+        .catch((error) => globalLogger.error(error.description, { error }));
     }
 
     const newName = generateLobbyName(
@@ -1288,92 +1304,115 @@ const changeLobby = (() => {
       }
 
       const timeout = timeouts.get(voiceChannel.id);
-      const execute = async () => {
+      const execute = async (isTimeout: boolean) => {
         await Promise.all([
           voiceChannel.fetch(false).catch(() => null),
           (await textChannel)?.fetch(false).catch(() => null),
-        ]).then(([vc, tc]) => {
-          const newVoiceName = generateLobbyName(
-            changeTo ?? currentType,
-            owner,
-            tempChannel.name,
-          );
-          const newTextName = generateLobbyName(
-            changeTo ?? currentType,
-            owner,
-            tempChannel.name,
-            true,
-          );
+        ])
+          .then(async ([vc, tc]) => {
+            const newVoiceName = generateLobbyName(
+              changeTo ?? currentType,
+              owner,
+              tempChannel.name,
+            );
+            const newTextName = generateLobbyName(
+              changeTo ?? currentType,
+              owner,
+              tempChannel.name,
+              true,
+            );
 
-          if (!newVoiceName || !newTextName)
-            throw new Error('Invalid Name Given');
+            if (!newVoiceName || !newTextName)
+              throw new Error('Invalid Name Given');
 
-          if (vc && vc instanceof VoiceChannel) {
-            vc.setName(newVoiceName.full)
-              .then(() => {
-                timeout?.changes.push(new Date());
-              })
-              .catch(() => {});
-
-            if (tc?.type === DiscordChannelType.GuildText) {
-              tc.setName(newTextName.full)
-                .then((updatedTc) => {
-                  if (tempChannel.controlDashboardId) {
-                    return updatedTc.messages.fetch({
-                      message: `${BigInt(tempChannel.controlDashboardId)}`,
-                      cache: true,
-                    });
-                  }
-
-                  return null;
+            if (vc && vc instanceof VoiceChannel) {
+              await vc
+                .setName(newVoiceName.full)
+                .then(() => {
+                  timeout?.changes.push(new Date());
                 })
-                .then(
-                  async (msg) =>
-                    msg?.edit({
-                      ...(<MessageEditOptions[]>(
-                        getDashboardOptions(i18n, guild, owner)
-                      )),
-                      components: await generateComponents(
-                        vc,
-                        em,
-                        tempChannel.guildUser,
-                        owner,
-                        i18n,
-                      ),
-                    }),
-                )
                 .catch(() => {});
+
+              if (tc?.type === DiscordChannelType.GuildText) {
+                await tc
+                  .setName(newTextName.full)
+                  .then(() => {
+                    if (tempChannel.controlDashboardId) {
+                      return tc.messages.fetch({
+                        message: `${BigInt(tempChannel.controlDashboardId)}`,
+                        cache: true,
+                      });
+                    }
+
+                    return null;
+                  })
+                  .then(
+                    async (msg) =>
+                      msg?.edit({
+                        ...(<MessageEditOptions>(
+                          getDashboardOptions(i18n, guild, owner)
+                        )),
+                        components: await generateComponents(
+                          voiceChannel,
+                          em,
+                          tempChannel.guildUser,
+                          owner,
+                          i18n,
+                        ),
+                      }),
+                  )
+                  .catch(() => {});
+              }
+            } else {
+              timeouts.delete(voiceChannel.id);
             }
-          } else {
-            timeouts.delete(voiceChannel.id);
-          }
-        });
+          })
+          .finally(() => {
+            if (!isTimeout) return;
+            pushLobbyToUser(owner, {
+              member: owner,
+              guild,
+              tempChannel,
+              voiceChannel,
+              timeTillLobbyChange: null,
+            });
+          });
       };
 
       if (!timeout) {
-        await execute();
+        await execute(false).catch(() => {});
 
         timeouts.set(voiceChannel.id, {
           changes: [new Date()],
         });
       } else {
+        const timePeriod = 1000 * 60 * 10;
+        const maxChanges = 3;
+
         timeout.changes = timeout.changes.filter(
-          (date) => date.getTime() > new Date().getTime() - 1000 * 60 * 10,
+          (date) => date.getTime() > new Date().getTime() - timePeriod,
         );
 
-        if (timeout.changes.length < 2) {
-          await execute();
+        if (timeout.changes.length < maxChanges - 1) {
+          await execute(false);
 
           timeout.changes.push(new Date());
         } else {
           const date = timeout.changes.sort(
             (a, b) => a.getTime() - b.getTime(),
           )[0];
-          const timeTo = date.getTime() + 1000 * 60 * 10 - new Date().getTime();
-          timeTillNameChange = moment.duration(timeTo, 'milliseconds');
 
-          if (timeout.timeout) clearTimeout(timeout.timeout);
-          timeout.timeout = setTimeout(execute, timeTo);
+          if (!date) {
+            await execute(false);
+
+            timeout.changes.push(new Date());
+          } else {
+            const timeTo = date.getTime() + timePeriod - new Date().getTime();
+            timeTillNameChange = moment.duration(timeTo, 'milliseconds');
+
+            if (timeout.timeout) clearTimeout(timeout.timeout);
+            timeout.timeout = setTimeout(() => execute(true), timeTo);
+          }
         }
       }
     } else {
@@ -1441,6 +1480,7 @@ const changeLobby = (() => {
       guild,
       tempChannel,
       voiceChannel,
+      timeTillLobbyChange: timeTillNameChange || null,
     });
 
     return timeTillNameChange;
@@ -1454,7 +1494,6 @@ const changeTypeHandler: GuildHandler = async ({
   em,
   flags,
   i18n,
-  logger,
 }) => {
   const requestingUser = msg.member;
   if (
@@ -1519,17 +1558,18 @@ const changeTypeHandler: GuildHandler = async ({
   }
 
   changeLobby(
-    changeTo,
-    activeChannel,
-    requestingUser,
-    msg.guild,
-    lobbyOwner.tempChannel,
-    activeChannel.userLimit,
-    null,
-    em,
-    i18n,
-    logger,
-    true,
+    {
+      tempChannel: lobbyOwner.tempChannel,
+      voiceChannel: activeChannel,
+      owner: requestingUser,
+      guild: msg.guild,
+      em,
+      i18n,
+    },
+    {
+      changeTo,
+      forcePermissionUpdate: true,
+    },
   );
 
   return i18n.t('lobby.lobbyTypeChangedTo', { type: changeTo });
@@ -1542,7 +1582,7 @@ router.use('type', changeTypeHandler, HandlerType.GUILD, {
       name: 'type',
       description: 'Type you want to change your lobby to',
       choices: Object.values(ChannelType).map((t) => ({
-        name: `${getIcon(t)} ${t[0].toUpperCase()}${t.substring(1)}`,
+        name: `${getIcon(t)} ${t[0]?.toUpperCase()}${t.substring(1)}`,
         value: t,
       })),
       type: ApplicationCommandOptionType.String,
@@ -1561,7 +1601,6 @@ const sizeHandler: GuildHandler = async ({
   em,
   flags,
   i18n,
-  logger,
 }) => {
   const activeChannel = await activeTempChannel(
     msg.client,
@@ -1603,22 +1642,23 @@ const sizeHandler: GuildHandler = async ({
   if (size > 99) {
     size = 99;
   }
-  size = Math.abs(size);
 
-  const type = getChannelType(activeChannel);
+  if (size < 0) {
+    size = 0;
+  }
 
   await changeLobby(
-    type,
-    activeChannel,
-    requestingUser,
-    msg.guild,
-    guildUser.tempChannel,
-    size,
-    null,
-    em,
-    i18n,
-    logger,
-    false,
+    {
+      tempChannel: guildUser.tempChannel,
+      voiceChannel: activeChannel,
+      owner: requestingUser,
+      guild: msg.guild,
+      em,
+      i18n,
+    },
+    {
+      limit: size,
+    },
   );
 
   if (size === 0) return i18n.t('lobby.limitRemoved');
@@ -1855,7 +1895,6 @@ const nameHandler: GuildHandler = async ({
   em,
   flags,
   i18n,
-  logger,
 }) => {
   const requestingUser = msg.member;
 
@@ -1893,19 +1932,14 @@ const nameHandler: GuildHandler = async ({
   const type = getChannelType(tempChannel);
 
   try {
-    const timeTillChange = await changeLobby(
-      type,
-      tempChannel,
-      requestingUser,
-      msg.guild,
-      guildUser.tempChannel,
-      tempChannel.userLimit,
-      null,
+    const timeTillChange = await changeLobby({
+      tempChannel: guildUser.tempChannel,
+      voiceChannel: tempChannel,
+      owner: requestingUser,
+      guild: msg.guild,
       em,
       i18n,
-      logger,
-      false,
-    );
+    });
     const newName = generateLobbyName(
       type,
       requestingUser,
@@ -2159,19 +2193,14 @@ const createDashBoardCollector = async (
               )?.full;
               currentTempChannel.name = newName;
 
-              const duration = await changeLobby(
-                currentType,
+              const duration = await changeLobby({
+                tempChannel: currentTempChannel,
                 voiceChannel,
-                member,
-                interaction.guild,
-                currentTempChannel,
-                voiceChannel.userLimit,
-                null,
+                owner: member,
+                guild: interaction.guild,
                 em,
                 i18n,
-                logger,
-                false,
-              );
+              });
 
               interaction
                 .reply({
@@ -2193,17 +2222,18 @@ const createDashBoardCollector = async (
           } else if (Number.isSafeInteger(limit)) {
             if (limit >= 0 && limit < 100 && interaction.guild) {
               await changeLobby(
-                currentType,
-                voiceChannel,
-                member,
-                interaction.guild,
-                currentTempChannel,
-                limit,
-                interaction,
-                em,
-                i18n,
-                logger,
-                false,
+                {
+                  tempChannel: currentTempChannel,
+                  voiceChannel,
+                  owner: member,
+                  guild: interaction.guild,
+                  em,
+                  i18n,
+                },
+                {
+                  limit,
+                  interaction,
+                },
               );
             }
           } else if (
@@ -2211,18 +2241,19 @@ const createDashBoardCollector = async (
             interaction.customId === 'name'
           ) {
             [currentTempChannel.name] = interaction.values;
+
             await changeLobby(
-              currentType,
-              voiceChannel,
-              member,
-              interaction.guild,
-              currentTempChannel,
-              voiceChannel.userLimit,
-              interaction,
-              em,
-              i18n,
-              logger,
-              false,
+              {
+                tempChannel: currentTempChannel,
+                voiceChannel,
+                owner: member,
+                guild: interaction.guild,
+                em,
+                i18n,
+              },
+              {
+                interaction,
+              },
             );
           } else if (
             interaction.isMentionableSelectMenu() &&
@@ -2273,17 +2304,18 @@ const createDashBoardCollector = async (
               interaction.guild
             ) {
               await changeLobby(
-                changeTo,
-                voiceChannel,
-                member,
-                interaction.guild,
-                currentTempChannel,
-                voiceChannel.userLimit,
-                interaction,
-                em,
-                i18n,
-                logger,
-                false,
+                {
+                  tempChannel: currentTempChannel,
+                  voiceChannel,
+                  owner: member,
+                  guild: interaction.guild,
+                  em,
+                  i18n,
+                },
+                {
+                  changeTo,
+                  interaction,
+                },
               );
             }
           }
@@ -2338,11 +2370,16 @@ const createPusherSubscriptionListeners = (
       return;
     }
 
-    pushLobbyToUser(oldOwnerMember, {
-      member: oldOwnerMember,
-      guild,
+    const locale = getLocale({ user: tempChannel.guildUser.user });
+    const i18n = i18next.cloneInstance({ lng: locale });
+
+    changeLobby({
       tempChannel,
       voiceChannel,
+      owner: oldOwnerMember,
+      guild,
+      em,
+      i18n,
     });
   };
 
@@ -2378,12 +2415,7 @@ const createPusherSubscriptionListeners = (
       );
 
       if (oldOwnerGuidUser.tempChannel) {
-        pushLobbyToUser(oldOwnerMember, {
-          member: oldOwnerMember,
-          guild,
-          tempChannel: oldOwnerGuidUser.tempChannel,
-          voiceChannel,
-        });
+        refresh();
       }
     })
     .bind('client-remove-user', async (data: unknown) => {
@@ -2431,12 +2463,7 @@ const createPusherSubscriptionListeners = (
       );
 
       if (oldOwnerGuidUser.tempChannel) {
-        pushLobbyToUser(oldOwnerMember, {
-          member: oldOwnerMember,
-          guild,
-          tempChannel: oldOwnerGuidUser.tempChannel,
-          voiceChannel,
-        });
+        refresh();
       }
     })
     .bind('client-change-lobby', async (data: unknown) => {
@@ -2456,18 +2483,22 @@ const createPusherSubscriptionListeners = (
         return;
       }
 
+      const locale = getLocale({ user: tempChannel.guildUser.user });
+      const i18n = i18next.cloneInstance({ lng: locale });
+
       changeLobby(
-        parsedData.data.type,
-        voiceChannel,
-        oldOwnerMember,
-        guild,
-        tempChannel,
-        parsedData.data.limit,
-        null,
-        em,
-        i18next,
-        globalLogger,
-        false,
+        {
+          tempChannel,
+          voiceChannel,
+          owner: oldOwnerMember,
+          guild,
+          em,
+          i18n,
+        },
+        {
+          changeTo: parsedData.data.type,
+          limit: parsedData.data.limit,
+        },
       );
     })
     .bind('client-change-name', async (data: unknown) => {
@@ -2489,19 +2520,17 @@ const createPusherSubscriptionListeners = (
 
       tempChannel.name = parsedData.data.name;
 
-      changeLobby(
-        getChannelType(voiceChannel),
-        voiceChannel,
-        oldOwnerMember,
-        guild,
+      const locale = getLocale({ user: tempChannel.guildUser.user });
+      const i18n = i18next.cloneInstance({ lng: locale });
+
+      changeLobby({
         tempChannel,
-        voiceChannel.userLimit,
-        null,
+        voiceChannel,
+        owner: oldOwnerMember,
+        guild,
         em,
-        i18next,
-        globalLogger,
-        false,
-      );
+        i18n,
+      });
 
       await em.flush();
     });
@@ -2604,8 +2633,6 @@ const checkTempChannel = async (
           newOwnerGuildUser.user.language || newOwnerGuildUser.guild.language,
       });
 
-      const type = getChannelType(activeChannel);
-
       await activeChannel.permissionOverwrites
         .edit(newOwner, { Speak: true, Connect: true })
         .catch((err) => logger.error(err.message, { error: err }));
@@ -2624,17 +2651,17 @@ const checkTempChannel = async (
 
       await Promise.all([
         changeLobby(
-          type,
-          activeChannel,
-          newOwner,
-          newOwner.guild,
-          tempChannel,
-          activeChannel.userLimit,
-          null,
-          em,
-          i18n,
-          logger,
-          true,
+          {
+            tempChannel,
+            voiceChannel: activeChannel,
+            owner: newOwner,
+            guild: activeChannel.guild,
+            em,
+            i18n,
+          },
+          {
+            forcePermissionUpdate: true,
+          },
         ),
         activeTextChannel?.send({
           allowedMentions: { users: [] },
@@ -2656,7 +2683,6 @@ const checkTempChannel = async (
           cache: true,
         }),
       );
-    const lobbyType = getChannelType(activeChannel);
 
     if (
       !tempChannel.guildUser.user.isInitialized() ||
@@ -2664,10 +2690,12 @@ const checkTempChannel = async (
     )
       throw new Error('user of guild is not initialized');
 
+    const locale = getLocale({
+      user: tempChannel.guildUser.user,
+      guild: tempChannel.guildUser.guild,
+    });
     const i18n = _i18n.cloneInstance({
-      lng:
-        tempChannel.guildUser.user.language ||
-        tempChannel.guildUser.guild.language,
+      lng: locale,
     });
 
     await createDashBoardCollector(
@@ -2678,19 +2706,15 @@ const checkTempChannel = async (
       i18n,
       logger,
     );
-    await changeLobby(
-      lobbyType,
-      activeChannel,
-      member,
-      activeChannel.guild,
+
+    await changeLobby({
       tempChannel,
-      activeChannel.userLimit,
-      null,
+      voiceChannel: activeChannel,
+      owner: member,
+      guild: activeChannel.guild,
       em,
       i18n,
-      logger,
-      false,
-    );
+    });
 
     if (isStartup) {
       createPusherSubscriptionListeners(em, {
@@ -2752,7 +2776,7 @@ const sendUserAddPushNotification = (owner: DbUser, toBeAdded: User) => {
 router.onInit = async (client, orm, _i18n, logger) => {
   let isFirst = true;
 
-  // Check elke tempChannel om de 60 minuten
+  // Check elke tempChannel om de 60 seconden
   const checkTempLobbies = async () => {
     const em = orm.em.fork();
 
@@ -2874,12 +2898,18 @@ router.onInit = async (client, orm, _i18n, logger) => {
             logger.error(error.discription, { error });
           });
 
-          pushLobbyToUser(member, {
-            member,
-            guild: newState.guild,
+          const locale = getLocale({ user: guildUser.user });
+          const i18n = _i18n.cloneInstance({ lng: locale });
+
+          changeLobby({
             tempChannel: guildUser.tempChannel,
             voiceChannel,
+            owner: member,
+            guild: newState.guild,
+            em,
+            i18n,
           });
+
           createPusherSubscriptionListeners(em, {
             member,
             guild: newState.guild,
@@ -2954,11 +2984,13 @@ router.onInit = async (client, orm, _i18n, logger) => {
             })
             .catch(() => null);
           if (activeChannel && owner) {
-            pushLobbyToUser(owner, {
-              member: owner,
-              guild: newState.guild,
+            changeLobby({
               tempChannel,
               voiceChannel: activeChannel,
+              owner,
+              guild: newState.guild,
+              em,
+              i18n,
             });
           }
         }

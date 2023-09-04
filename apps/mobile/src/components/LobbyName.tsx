@@ -1,6 +1,7 @@
 import { forwardRef, useMemo, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
+import ReactTimeAgo from 'react-time-ago';
 import EmojiPicker, { emojisByCategory } from 'rn-emoji-keyboard';
 import { usePusher } from 'src/context/pusher';
 
@@ -12,7 +13,7 @@ import {
 } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
-import { AnimatedText } from './Text';
+import Text, { AnimatedText } from './Text';
 
 type Props = {
   lobby: NonNullable<Zod.infer<typeof lobbyChangeSchema>>;
@@ -58,7 +59,14 @@ const LobbyName = forwardRef<View, Props>(({ lobby }: Props, ref) => {
         onPress={() => setEmojiOpen(true)}
         className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-800"
       >
-        <AnimatedText key={nameInfo?.icon} entering={FadeInDown.duration(200)} exiting={FadeOutUp.duration(200)} className="text-4xl">{nameInfo?.icon}</AnimatedText>
+        <AnimatedText
+          key={nameInfo?.icon}
+          entering={FadeInDown.duration(200)}
+          exiting={FadeOutUp.duration(200)}
+          className="text-4xl"
+        >
+          {nameInfo?.icon}
+        </AnimatedText>
       </Pressable>
       <View className="flex-1">
         <TextInput
@@ -85,6 +93,16 @@ const LobbyName = forwardRef<View, Props>(({ lobby }: Props, ref) => {
             }
           }}
         />
+        {lobby.channel.lobbyNameChangeDate && (
+          <Text className="absolute bottom-0 w-full text-center text-xs">
+            Changes{' '}
+            <ReactTimeAgo
+              timeStyle="round"
+              component={Text}
+              date={lobby.channel.lobbyNameChangeDate}
+            />
+          </Text>
+        )}
       </View>
       <EmojiPicker
         open={emojiOpen}
@@ -118,7 +136,21 @@ const LobbyName = forwardRef<View, Props>(({ lobby }: Props, ref) => {
           emoji: {
             selected: baseConfig.theme.colors.primary[800],
           },
+          search: {
+            background: baseConfig.theme.colors.primary[800],
+            placeholder: baseConfig.theme.colors.primary[400],
+            icon: baseConfig.theme.colors.primary[400],
+            text: baseConfig.theme.colors.primary[400],
+          },
         }}
+        styles={{
+          searchBar: {
+            container: {
+              marginBottom: 20,
+            },
+          },
+        }}
+        enableSearchBar
         expandable={false}
         disabledCategories={['flags']}
         selectedEmojis={

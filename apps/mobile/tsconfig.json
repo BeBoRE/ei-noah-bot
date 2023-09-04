@@ -3,7 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "jsx": "react-native",
-    "types": ["nativewind/types"]
+    "types": ["nativewind/types"],
+    "noUncheckedIndexedAccess": true
   },
   "exclude": ["node_modules", "*.config.js"]
 }

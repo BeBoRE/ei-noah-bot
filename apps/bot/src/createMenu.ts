@@ -99,7 +99,7 @@ async function createMenu<T>({
 
     for (let i = 0; i < navigationButtons.length; i += 1) {
       const item = strings[i + page * navigationButtons.length];
-      if (item) text += `\n${navigationButtons[i].data.label} \`${item}\``;
+      if (item) text += `\n${navigationButtons[i]?.data.label} \`${item}\``;
     }
 
     if (pages - 1) text += `\n\n> \`${page + 1}/${pages}\``;
@@ -114,8 +114,12 @@ async function createMenu<T>({
     list.forEach((q, i) => {
       if (i < navigationButtons.length) {
         const item = list[i + page * navigationButtons.length];
-        navigationButtons[i].setDisabled(!item);
-        listButtons.addComponents([navigationButtons[i]]);
+        const button = navigationButtons[i];
+
+        if (button) {
+          button.setDisabled(!item);
+          listButtons.addComponents([button]);
+        }
       }
     });
 
