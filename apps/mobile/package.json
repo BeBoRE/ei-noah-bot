@@ -7,6 +7,7 @@
     "update": "eas update --auto",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
+    "lint:typecheck": "tsc --noEmit",
     "android": "expo run:android",
     "ios": "expo run:ios"
   },

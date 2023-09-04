@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "lint:typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@ei/tsconfig": "*",

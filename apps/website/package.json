@@ -6,7 +6,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "lint:typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ei/database": "*",

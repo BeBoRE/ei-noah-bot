@@ -8,7 +8,8 @@
     "dev": "ts-node-dev -T ./src/index.ts -watch ./locales/**/*.json",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "lint:typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",

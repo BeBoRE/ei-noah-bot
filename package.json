@@ -12,6 +12,7 @@
     "expo-update": "dotenv -- turbo update",
     "lint": "dotenv -- turbo lint",
     "lint:fix": "dotenv -- turbo lint:fix",
+    "lint:typecheck": "dotenv -- turbo lint:typecheck",
     "db:push": "dotenv -- turbo db:push",
     "db:create": "dotenv -- turbo db:create",
     "format": "prettier --write \"**/*.{js,cjs,mjs,ts,tsx,md,json}\" --ignore-path .gitignore",

@@ -5,13 +5,10 @@ import options from './mikro-orm.config';
 
 export default options;
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace NodeJS {
-    interface Global {
-      __MikroORM__: MikroORM | undefined;
-    }
-  }
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare namespace global {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  let __MikroORM__: MikroORM;
 }
 
 const getOrm = async (): Promise<MikroORM> => {

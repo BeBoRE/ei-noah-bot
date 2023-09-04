@@ -5,7 +5,8 @@
   "types": "index.ts",
   "scripts": {
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "lint:typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@ei/tsconfig": "*",

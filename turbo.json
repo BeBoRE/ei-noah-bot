@@ -34,6 +34,7 @@
     },
     "lint": {},
     "lint:fix": {},
+    "lint:typecheck": {},
     "dev": {
       "cache": false,
       "dotEnv": [".env"]

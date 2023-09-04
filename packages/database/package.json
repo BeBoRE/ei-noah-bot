@@ -5,6 +5,7 @@
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "lint:typecheck": "tsc --noEmit",
     "db:push": "mikro-orm migration:up",
     "db:create": "mikro-orm migration:create"
   },
