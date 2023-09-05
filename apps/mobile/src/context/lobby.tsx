@@ -84,8 +84,6 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      console.log('lobby changed', result.data);
-
       setLobby(result.data);
     });
 
