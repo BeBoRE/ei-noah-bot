@@ -24,9 +24,9 @@ const defineConfig = (): ExpoConfig => {
     icon: './assets/ei.png',
     userInterfaceStyle: 'dark',
     splash: {
-      image: './assets/ei.png',
+      image: './assets/splash.png',
       resizeMode: 'contain',
-      backgroundColor: '#fbefd5',
+      backgroundColor: '#0C0403',
     },
     updates: {
       url: 'https://u.expo.dev/f01c56f4-e11b-41fd-a1bb-e70cca535c3c',
@@ -43,6 +43,7 @@ const defineConfig = (): ExpoConfig => {
         UIStatusBarStyle: 'UIStatusBarStyleLightContent',
       },
       buildNumber: '2',
+      icon: './assets/icon.png',
     },
     android: {
       adaptiveIcon: {
@@ -51,6 +52,7 @@ const defineConfig = (): ExpoConfig => {
       },
       package: identifier,
       googleServicesFile: './google-services.json',
+      icon: './assets/adaptive-icon.png',
     },
     extra: {
       eas: {
