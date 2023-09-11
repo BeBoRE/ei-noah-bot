@@ -4,6 +4,9 @@
     "baseUrl": ".",
     "jsx": "react-native",
     "types": ["nativewind/types"],
+    "paths": {
+      "@": ["src"],
+    },
     "noUncheckedIndexedAccess": true
   },
   "exclude": ["node_modules", "*.config.js"]

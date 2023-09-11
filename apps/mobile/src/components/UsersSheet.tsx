@@ -32,6 +32,9 @@ function UsersSheet({
       }}
       snapPoints={[100, 300, '90%']}
       index={users.length ? 1 : -1}
+      handleStyle={{
+        backgroundColor: baseConfig.theme.colors.primary[700],
+      }}
     >
       <BottomSheetView>
         <View className="px-5">
