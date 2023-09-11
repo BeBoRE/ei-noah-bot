@@ -26,7 +26,7 @@ type AuthContextType = {
   signOut: () => void;
 };
 
-SplashScreen.preventAutoHideAsync();
+// SplashScreen.preventAutoHideAsync();
 
 registerDevMenuItems([
   {
