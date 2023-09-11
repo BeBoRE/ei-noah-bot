@@ -32,7 +32,7 @@ function UsersSheet({
       }}
       snapPoints={[100, 300, '90%']}
       index={users.length ? 1 : -1}
-      handleStyle={{
+      handleIndicatorStyle={{
         backgroundColor: baseConfig.theme.colors.primary[700],
       }}
     >
