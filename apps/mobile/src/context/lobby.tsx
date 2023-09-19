@@ -47,7 +47,7 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
       toast({
         title: 'Lost connection',
         message:
-          'Could not connect to the server. Please check your internet connection and try again.',
+          'Could not connect to the server',
         preset: 'custom',
         icon: {
           ios: {
