@@ -78,7 +78,7 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
         else
           toast({
             title: 'Error',
-            message: `Cannot read lobby data`,
+            message: `Contact support`,
             preset: 'error',
           });
 
