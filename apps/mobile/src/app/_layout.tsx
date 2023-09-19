@@ -7,9 +7,12 @@ import { StatusBar } from 'expo-status-bar';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import { AuthProvider } from 'src/context/auth';
 import { onAcceptResponse } from 'src/hooks/useNotifications';
+import { UpdateEventType, useUpdateEvents } from 'expo-updates'
 
 import baseConfig from '@ei/tailwind-config';
 
+import { toast } from 'burnt';
+import type { SFSymbol } from 'sf-symbols-typescript';
 import { TRPCProvider } from '../utils/api';
 
 (async () => {
@@ -24,6 +27,23 @@ function RootLayout() {
   useFonts({
     'gg-sans': require('../../assets/fonts/ggsans-Medium.ttf'),
   });
+
+  useUpdateEvents(({type}) => {
+    if (type === UpdateEventType.UPDATE_AVAILABLE) {
+      toast({
+        title: 'Update available',
+        message: 'Restart the app to update.',
+        preset: 'custom',
+        icon: {
+          ios: {
+            name: 'arrow.down.app' satisfies SFSymbol,
+            color: baseConfig.theme.colors.primary.DEFAULT,
+          },
+        },
+        haptic: 'success',
+      })
+    }
+  })
 
   return (
     <>
