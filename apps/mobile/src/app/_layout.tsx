@@ -32,7 +32,7 @@ function RootLayout() {
     if (type === UpdateEventType.UPDATE_AVAILABLE) {
       toast({
         title: 'Update available',
-        message: 'Restart the app to update.',
+        message: 'Restart the app to update',
         preset: 'custom',
         icon: {
           ios: {
