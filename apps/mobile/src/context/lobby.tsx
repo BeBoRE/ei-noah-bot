@@ -55,6 +55,7 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
             color: baseConfig.theme.colors.reject,
           },
         },
+        haptic: 'error',
       });
 
       setLobby(null);
