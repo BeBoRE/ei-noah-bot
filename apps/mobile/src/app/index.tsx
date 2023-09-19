@@ -9,7 +9,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { AntDesign } from '@expo/vector-icons';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/rest/v10';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 import JoinLobby from 'src/components/JoinLobby';
@@ -23,6 +22,7 @@ import { LobbyProvider, useLobby } from 'src/context/lobby';
 import { PusherProvider, usePusher } from 'src/context/pusher';
 import useNotifications from 'src/hooks/useNotifications';
 import { baseConfig } from 'tailwind.config';
+import { Unplug } from 'lucide-react-native'
 
 import { api } from '../utils/api';
 
@@ -43,11 +43,7 @@ function Screen() {
         <SafeAreaView edges={['bottom']} className="flex flex-1">
           <View className="flex flex-1 items-center justify-center">
             <View className="m-5 flex items-center justify-center rounded bg-primary-900 p-6">
-              <AntDesign
-                name="disconnect"
-                size={32}
-                color={baseConfig.theme.colors.reject}
-              />
+              <Unplug size={32} color={baseConfig.theme.colors.reject}/>
               <Text className="mt-3 text-center text-2xl font-bold text-primary-300">
                 Cannot connect to server, please check your internet connection
                 or try again later.
