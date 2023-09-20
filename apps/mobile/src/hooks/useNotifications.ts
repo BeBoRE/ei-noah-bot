@@ -11,6 +11,7 @@ import registerForPushNotificationsAsync from 'src/utils/registerForPushNotifica
 import { secureStorage } from 'src/utils/storage/secureStorage';
 
 import { userAddNotificationSchema, userIdToPusherChannel } from '@ei/lobby';
+import { isTokenExpired } from 'src/utils/auth';
 
 export const onAcceptResponse = async (
   response: NotificationResponse | undefined | null,
@@ -30,6 +31,7 @@ export const onAcceptResponse = async (
 
     const actualAuthInfo = await secureStorage.get('discordOauth');
     if (!actualAuthInfo) return;
+    if (isTokenExpired(actualAuthInfo)) return;
 
     const client = createVanillaApi(actualAuthInfo.accessToken);
 

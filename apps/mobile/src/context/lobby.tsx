@@ -46,8 +46,7 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
     if (connectionState === 'unavailable') {
       toast({
         title: 'Lost connection',
-        message:
-          'Could not connect to the server',
+        message: 'Could not connect to the server',
         preset: 'custom',
         icon: {
           ios: {

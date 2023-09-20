@@ -1,0 +1,28 @@
+import { applyWSSHandler } from '@trpc/server/adapters/ws';
+import ws from 'ws';
+
+import { appRouter, createTRPCContext } from '@ei/trpc';
+
+const wss = new ws.Server({
+  port: 3001,
+});
+
+applyWSSHandler({
+  wss,
+  router: appRouter,
+  createContext: createTRPCContext,
+});
+
+console.log('Starting WebSocket Server...')
+
+wss.on('listening', () => {
+  console.log('✅ WebSocket Server listening');
+})
+
+wss.on('connection', (socket) => {
+  console.log(`➕➕ Connection (${wss.clients.size})`);
+  socket.once('close', () => {
+    console.log(`➖➖ Connection (${wss.clients.size})`);
+  });
+});
+console.log('✅ WebSocket Server listening on ws://localhost:3001');

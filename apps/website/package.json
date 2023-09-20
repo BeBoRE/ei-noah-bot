@@ -2,9 +2,11 @@
   "name": "@ei/website",
   "version": "1.0.0",
   "scripts": {
-    "dev": "next dev",
+    "dev:next": "next dev",
+    "dev:wss": "ts-node-dev ./server/development.ts",
+    "dev": "run-p dev:*",
     "build": "next build",
-    "start": "next start",
+    "start": "ts-node ./server/production.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:typecheck": "tsc --noEmit"
@@ -21,10 +23,13 @@
     "@trpc/react-query": "^10.34.0",
     "@trpc/server": "^10.35.0",
     "next": "^13.4.10",
+    "npm-run-all": "^4.1.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "superjson": "1.13.1",
-    "webpack-node-externals": "^3.0.0"
+    "ts-node": "^10.9.1",
+    "webpack-node-externals": "^3.0.0",
+    "ws": "^8.14.2"
   },
   "devDependencies": {
     "@ei/tsconfig": "*",
@@ -32,8 +37,9 @@
     "@types/react": "^18.2.16",
     "@types/react-dom": "^18.2.7",
     "eslint": "^8.46.0",
-    "typescript": "^5.1.6",
     "postcss": "^8.4.27",
-    "tailwindcss": "^3.3.3"
+    "tailwindcss": "^3.3.3",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.1.6"
   }
 }

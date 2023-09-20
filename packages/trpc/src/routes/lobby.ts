@@ -1,6 +1,7 @@
 import TempChannel from '@ei/database/entity/TempChannel';
 
-import { createTRPCRouter, protectedProcedure } from '../trpc';
+import { observable } from '@trpc/server/observable';
+import { createTRPCRouter, protectedProcedure, publicProcedure } from '../trpc';
 
 export const lobbyRouter = createTRPCRouter({
   activeLobby: protectedProcedure.query(async ({ ctx }) =>
@@ -8,6 +9,15 @@ export const lobbyRouter = createTRPCRouter({
       guildUser: { user: { id: ctx.session.user.id } },
     }),
   ),
+  subscribeToActiveLobby: publicProcedure.subscription(() => observable<number>((emit) => {
+      const interval = setInterval(() => {
+        emit.next(Date.now());
+      }, 1000);
+
+      return () => {
+        clearInterval(interval);
+      };
+    }))
 });
 
 export default lobbyRouter;

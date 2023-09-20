@@ -4,15 +4,15 @@ import { useFonts } from 'expo-font';
 import { getLastNotificationResponseAsync } from 'expo-notifications';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { UpdateEventType, useUpdateEvents } from 'expo-updates';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
+import { toast } from 'burnt';
+import type { SFSymbol } from 'sf-symbols-typescript';
 import { AuthProvider } from 'src/context/auth';
 import { onAcceptResponse } from 'src/hooks/useNotifications';
-import { UpdateEventType, useUpdateEvents } from 'expo-updates'
 
 import baseConfig from '@ei/tailwind-config';
 
-import { toast } from 'burnt';
-import type { SFSymbol } from 'sf-symbols-typescript';
 import { TRPCProvider } from '../utils/api';
 
 (async () => {
@@ -28,7 +28,7 @@ function RootLayout() {
     'gg-sans': require('../../assets/fonts/ggsans-Medium.ttf'),
   });
 
-  useUpdateEvents(({type}) => {
+  useUpdateEvents(({ type }) => {
     if (type === UpdateEventType.UPDATE_AVAILABLE) {
       toast({
         title: 'Update available',
@@ -41,9 +41,9 @@ function RootLayout() {
           },
         },
         haptic: 'success',
-      })
+      });
     }
-  })
+  });
 
   return (
     <>

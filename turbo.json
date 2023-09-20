@@ -26,7 +26,9 @@
     "EXPO_PUBLIC_VERCEL_URL",
     "EXPO_TOKEN",
     "CI",
-    "APP_VARIANT"
+    "APP_VARIANT",
+    "REDIS_URL",
+    "PORT"
   ],
   "pipeline": {
     "start": {

@@ -10,6 +10,7 @@ import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/rest/v10';
+import { Unplug } from 'lucide-react-native';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 import JoinLobby from 'src/components/JoinLobby';
 import { AnimatedLobbyName } from 'src/components/LobbyName';
@@ -22,8 +23,8 @@ import { LobbyProvider, useLobby } from 'src/context/lobby';
 import { PusherProvider, usePusher } from 'src/context/pusher';
 import useNotifications from 'src/hooks/useNotifications';
 import { baseConfig } from 'tailwind.config';
-import { Unplug } from 'lucide-react-native'
 
+import { useState } from 'react';
 import { api } from '../utils/api';
 
 function Screen() {
@@ -43,7 +44,7 @@ function Screen() {
         <SafeAreaView edges={['bottom']} className="flex flex-1">
           <View className="flex flex-1 items-center justify-center">
             <View className="m-5 flex items-center justify-center rounded bg-primary-900 p-6">
-              <Unplug size={32} color={baseConfig.theme.colors.reject}/>
+              <Unplug size={32} color={baseConfig.theme.colors.reject} />
               <Text className="mt-3 text-center text-2xl font-bold text-primary-300">
                 Cannot connect to server, please check your internet connection
                 or try again later.
@@ -124,6 +125,13 @@ function Index() {
   const { signOut } = useAuth();
   const { data: user } = api.user.me.useQuery();
 
+  const [serverDate, setServerDate] = useState<number | null>(null)
+  api.lobby.subscribeToActiveLobby.useSubscription(undefined, {
+    onData: (data) => {
+      setServerDate(data)
+    }
+  });
+
   return (
     <>
       <Stack.Screen
@@ -157,7 +165,7 @@ function Index() {
                   />
                 )}
                 <Text className="text-2xl font-bold text-primary-950">
-                  {user?.globalName}
+                  {serverDate}
                 </Text>
               </View>
             )),

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ReactQueryStreamedHydration } from '@tanstack/react-query-next-experimental';
-import { httpBatchLink, loggerLink } from '@trpc/client';
+import { createWSClient, httpBatchLink, loggerLink, splitLink, wsLink } from '@trpc/client';
 import superjson from 'superjson';
 
 import { api } from '../utils/api';
@@ -31,6 +31,14 @@ export default function TRPCReactProvider({ children }: Props) {
         },
       }),
   );
+  
+  const wsClient = createWSClient({
+    url: `ws://localhost:3001`,
+  })
+
+  useEffect(() => () => {
+      wsClient.close();
+    })
 
   const [trpcClient] = useState(() =>
     api.createClient({
@@ -41,8 +49,12 @@ export default function TRPCReactProvider({ children }: Props) {
             process.env.NODE_ENV === 'development' ||
             (opts.direction === 'down' && opts.result instanceof Error),
         }),
-        httpBatchLink({
-          url: `${getBaseUrl()}/api/trpc`,
+        splitLink({
+          condition: ({ type }) => type === 'subscription',
+          true: wsLink({ client: wsClient }),
+          false: httpBatchLink({
+            url: `${getBaseUrl()}/api/trpc`,
+          }),
         }),
       ],
     }),
