@@ -1,23 +1,27 @@
-import { Redis } from 'ioredis';
+import Redis from 'ioredis'
 
 import { LobbyChange, lobbyChangeSchema } from '@ei/lobby';
 
-const redis = new Redis();
+const publisher = new Redis();
+const subscriber = publisher.duplicate();
 
 const userIdToChannel = (userId: string) => `user:${userId}`;
+const userIdToChannelRefresh = (userId: string) => `user:${userId}:refresh`;
+const userIdToChannelLobbyChange = (userId: string) => `user:${userId}:lobbyChange`;
 
-export const sendLobbyChange = async (change: NonNullable<LobbyChange>) => {
-  await redis.publish(userIdToChannel(change.user.id), JSON.stringify(change));
-};
+export const sendLobbyChange = (change: NonNullable<LobbyChange>) => publisher.publish(userIdToChannelLobbyChange(change.user.id), JSON.stringify(change));
+export const sendLobbyRefreshRequest =  (userId: string) => publisher.publish(userIdToChannelRefresh(userId), '');
 
-export const subscribeUserToLobbyChange = async (
+export const subscribeUserToLobbyChange = (
   userId: string,
   callback: (change: LobbyChange) => void,
+  error?: (err: Error) => void,
+  listening?: () => void
 ) => {
-  await redis.subscribe(userIdToChannel(userId));
+  subscriber.subscribe(userIdToChannelLobbyChange(userId)).then(() => listening?.()).catch(error);
 
-  redis.on('message', (channel, message) => {
-    if (channel === userIdToChannel(userId)) {
+  const handler = (channel : string, message: string) => {
+    if (channel === userIdToChannelLobbyChange(userId)) {
       const data = lobbyChangeSchema.safeParse(JSON.parse(message));
 
       if (!data.success) {
@@ -27,7 +31,41 @@ export const subscribeUserToLobbyChange = async (
 
       callback(data.data);
     }
-  });
+  }
 
-  return () => redis.unsubscribe(userIdToChannel(userId));
+  subscriber.addListener('message', handler);
+
+  return () => {
+    subscriber.unsubscribe(userIdToChannel(userId))
+    subscriber.removeListener('message', handler);
+  };
 };
+
+export const subscribeUserToRefresh = (
+  userId: string,
+  callback: () => void,
+  error?: (err: Error) => void,
+  listening?: () => void
+) => {
+  subscriber.subscribe(userIdToChannelRefresh(userId)).then(() => listening?.()).catch(error);
+
+  const handler = (channel : string, message : string) => {
+    if (channel === userIdToChannel(userId)) {
+      const data = lobbyChangeSchema.safeParse(JSON.parse(message));
+
+      if (!data.success) {
+        console.error(data.error);
+        return;
+      }
+
+      callback();
+    }
+  }
+
+  subscriber.addListener('message', handler);
+
+  return () => {
+    subscriber.unsubscribe(userIdToChannel(userId))
+    subscriber.removeListener('message', handler);
+  };
+}

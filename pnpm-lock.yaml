@@ -48,6 +48,9 @@ importers:
       '@ei/pusher-server':
         specifier: '*'
         version: link:../../packages/pusher-server
+      '@ei/redis':
+        specifier: '*'
+        version: link:../../packages/redis
       '@mikro-orm/core':
         specifier: ^5.5.3
         version: 5.7.13(@mikro-orm/entity-generator@5.7.13)(@mikro-orm/migrations@5.7.13)(@mikro-orm/postgresql@5.7.13)
@@ -686,9 +689,15 @@ importers:
       '@ei/database':
         specifier: '*'
         version: link:../database
+      '@ei/lobby':
+        specifier: '*'
+        version: link:../lobby
       '@ei/pusher-server':
         specifier: '*'
         version: link:../pusher-server
+      '@ei/redis':
+        specifier: '*'
+        version: link:../redis
       '@ei/tsconfig':
         specifier: '*'
         version: link:../tsconfig

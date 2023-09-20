@@ -13,6 +13,8 @@
     "@ei/database": "*",
     "@ei/pusher-server": "*",
     "@ei/tsconfig": "*",
+    "@ei/lobby": "*",
+    "@ei/redis": "*",
     "@trpc/server": "^10.35.0",
     "discord-api-types": "^0.27.3",
     "lodash": "^4.17.21",

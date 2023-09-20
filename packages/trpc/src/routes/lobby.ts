@@ -1,23 +1,32 @@
-import TempChannel from '@ei/database/entity/TempChannel';
-
 import { observable } from '@trpc/server/observable';
-import { createTRPCRouter, protectedProcedure, publicProcedure } from '../trpc';
+import { LobbyChange } from '@ei/lobby';
+import { sendLobbyRefreshRequest, subscribeUserToLobbyChange } from '@ei/redis';
+import { bearerSchema, createTRPCRouter, getSession, publicProcedure } from '../trpc';
 
 export const lobbyRouter = createTRPCRouter({
-  activeLobby: protectedProcedure.query(async ({ ctx }) =>
-    ctx.em.findOne(TempChannel, {
-      guildUser: { user: { id: ctx.session.user.id } },
-    }),
-  ),
-  subscribeToActiveLobby: publicProcedure.subscription(() => observable<number>((emit) => {
-      const interval = setInterval(() => {
-        emit.next(Date.now());
-      }, 1000);
+  lobbyChange: publicProcedure.input(bearerSchema).subscription(async ({input: token}) => {
+    const session = await getSession(token);
 
-      return () => {
-        clearInterval(interval);
-      };
-    }))
+    if (!session) {
+      throw new Error('Invalid token');
+    }
+
+    const { user } = session;
+
+    return observable<LobbyChange>((emit) => {
+      const unsubscribe = subscribeUserToLobbyChange(user.id, (change) => {
+        emit.next(change);
+      }, () => {
+        emit.error('Error subscribing to lobby changes');
+        emit.complete();
+      }, () => {
+        console.log('Subscribed to lobby changes');
+        sendLobbyRefreshRequest(user.id);
+      });
+
+      return () => unsubscribe();
+    })
+} )
 });
 
 export default lobbyRouter;

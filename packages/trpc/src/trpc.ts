@@ -46,7 +46,7 @@ const userSchema = z.object({
   locale: z.string(),
 });
 
-const bearerSchema = z.string().min(1);
+export const bearerSchema = z.string().min(1);
 
 type Opts =
   | NodeHTTPCreateContextFnOptions<NextIncomingMessage, ws>
@@ -102,6 +102,30 @@ const camelize = (obj: unknown) => {
   );
 };
 
+export const getSession = async (token : string) => {
+  const rest = new REST({ version: '10', authPrefix: 'Bearer' }).setToken(
+    token,
+  );
+  const userRes = await rest.get(Routes.user()).catch(() => null);
+
+  if (!userRes) {
+    return null;
+  }
+
+  const user = userSchema.safeParse(camelize(userRes));
+
+  if (user.success) {
+    return {
+      user: user.data,
+      userRestClient: rest,
+    };
+  }
+
+  console.warn(user.error);
+
+  return null;
+}
+
 /**
  * This is the actual context you'll use in your router. It will be used to
  * process every request that goes through your tRPC endpoint
@@ -110,43 +134,28 @@ const camelize = (obj: unknown) => {
 export const createTRPCContext = async (opts: Opts) => {
   const { req } = opts;
 
-  const bearer = bearerSchema.safeParse(req.headers.authorization);
+  const tokenData = bearerSchema.safeParse(req.headers.authorization);
+  if (!tokenData.success) {
+    return createInnerTRPCContext({
+      ...opts,
+      session: null,
+    });
+  }
 
-  if (bearer.success) {
-    const rest = new REST({ version: '10', authPrefix: 'Bearer' }).setToken(
-      bearer.data,
-    );
+  const {data: token} = tokenData;
+    const session = token !== undefined && await getSession(token);
 
-    const userRes = await rest.get(Routes.user()).catch(() => null);
-
-    if (!userRes) {
+    if (!session) {
       return createInnerTRPCContext({
         ...opts,
         session: null,
       });
     }
 
-    const user = userSchema.safeParse(camelize(userRes));
-
-    if (user.success) {
-      return createInnerTRPCContext({
-        ...opts,
-        session: {
-          user: user.data,
-          userRestClient: rest,
-        },
-      });
-    }
-
-    console.log('User schema error', user.error.flatten());
-  }
-
-  const contextInner = await createInnerTRPCContext({
-    ...opts,
-    session: null,
-  });
-
-  return contextInner;
+    return createInnerTRPCContext({
+      ...opts,
+      session
+    });
 };
 
 /**

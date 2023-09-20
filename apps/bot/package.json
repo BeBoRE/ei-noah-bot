@@ -29,6 +29,7 @@
     "@digitak/esrun": "^3.2.24",
     "@ei/database": "*",
     "@ei/lobby": "*",
+    "@ei/redis": "*",
     "@ei/pusher-server": "*",
     "@mikro-orm/core": "^5.5.3",
     "@mikro-orm/knex": "^5.5.3",

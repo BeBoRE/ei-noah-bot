@@ -24,7 +24,8 @@ import { PusherProvider, usePusher } from 'src/context/pusher';
 import useNotifications from 'src/hooks/useNotifications';
 import { baseConfig } from 'tailwind.config';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { LobbyChange } from '@ei/lobby';
 import { api } from '../utils/api';
 
 function Screen() {
@@ -124,13 +125,19 @@ const getUserImageUrl = (user: { avatar: string; id: string }) =>
 function Index() {
   const { signOut } = useAuth();
   const { data: user } = api.user.me.useQuery();
+  const {authInfo} = useAuth();
 
-  const [serverDate, setServerDate] = useState<number | null>(null)
-  api.lobby.subscribeToActiveLobby.useSubscription(undefined, {
+  const [lobby, setLobby] = useState<LobbyChange | null>(null);
+  api.lobby.lobbyChange.useSubscription(authInfo?.accessToken || '', {
+    enabled: !!authInfo?.accessToken,
     onData: (data) => {
-      setServerDate(data)
+      setLobby(data)
     }
   });
+
+  useEffect(() => {
+    console.log(lobby, JSON.stringify(lobby))
+  }, [lobby])
 
   return (
     <>
@@ -165,7 +172,7 @@ function Index() {
                   />
                 )}
                 <Text className="text-2xl font-bold text-primary-950">
-                  {serverDate}
+                  {user.globalName || ''}
                 </Text>
               </View>
             )),
