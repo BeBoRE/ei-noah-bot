@@ -3,7 +3,7 @@ services:
     name: ei-noah-website
     env: node
     plan: free
-    buildCommand: NODE_ENV=development cd apps/website && pnpm install && pnpm build
+    buildCommand: cd apps/website && NODE_ENV=development pnpm install && pnpm build
     startCommand: cd apps/website && pnpm start
     healthCheckPath: /api/trpc/healthcheck
     envVars:
