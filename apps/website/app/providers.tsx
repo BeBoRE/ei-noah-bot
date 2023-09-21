@@ -22,6 +22,20 @@ const getBaseUrl = () => {
   return 'http://localhost:3000'; // dev SSR should use localhost
 };
 
+const getWsUrl = () => {
+  if (typeof window !== 'undefined') {
+    const {protocol, host} = window.location;
+
+    if (protocol === 'https:') {
+      return `wss://${host}`;
+    }
+
+    return `ws://${host}`;
+  }
+
+  return 'ws://localhost:3001'; // dev SSR should use localhost
+}
+
 type Props = {
   children: React.ReactNode;
 };
@@ -39,7 +53,7 @@ export default function TRPCReactProvider({ children }: Props) {
   );
 
   const wsClient = createWSClient({
-    url: `ws://localhost:3001`,
+    url: getWsUrl(),
   });
 
   useEffect(() => () => {
