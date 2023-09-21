@@ -43,12 +43,16 @@ app.prepare().then(() => {
       console.log(`Connection closed (${wss.clients.size})`);
     });
   });
+  
+  wss.on('error', (err) => {
+    console.error(err);
+  })
 
   process.on('SIGTERM', () => {
     console.log('SIGTERM');
     handler.broadcastReconnectNotification();
   });
-  server.listen(3000);
+  server.listen(process.env.PORT || 3000);
 
   console.log(
     `> Server listening at http://localhost:3000 as ${

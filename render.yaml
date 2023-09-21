@@ -3,6 +3,7 @@ services:
     name: ei-noah-website
     env: node
     plan: free
+    region: frankfurt
     buildCommand: cd apps/website && NODE_ENV=development pnpm install && pnpm build
     startCommand: cd apps/website && pnpm start
     healthCheckPath: /api/trpc/healthcheck
@@ -19,6 +20,7 @@ services:
   - type: redis
     name: redis
     plan: free
+    region: frankfurt
     ipAllowList:
       - source: 185.202.238.1
         description: vps
