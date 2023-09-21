@@ -69,9 +69,6 @@ importers:
       '@types/cron':
         specifier: ^1.7.2
         version: 1.7.2
-      '@types/node':
-        specifier: ^14.0.27
-        version: 14.0.27
       '@types/node-fetch':
         specifier: ^2.5.7
         version: 2.5.7
@@ -146,7 +143,7 @@ importers:
         version: 4.0.4
       ts-node:
         specifier: ^10.9.1
-        version: 10.9.1(@types/node@14.0.27)(typescript@4.9.3)
+        version: 10.9.1(@types/node@18.17.0)(typescript@4.9.3)
       typescript:
         specifier: ^4.9.3
         version: 4.9.3
@@ -178,6 +175,9 @@ importers:
       '@types/i18next-fs-backend':
         specifier: ^1.0.1
         version: 1.0.1
+      '@types/node':
+        specifier: ^18.17.0
+        version: 18.17.0
       '@types/string-similarity':
         specifier: ^4.0.0
         version: 4.0.0
@@ -189,7 +189,7 @@ importers:
         version: link:../../packages/eslint-config-custom
       ts-node-dev:
         specifier: ^2.0.0
-        version: 2.0.0(@types/node@14.0.27)(typescript@4.9.3)
+        version: 2.0.0(@types/node@18.17.0)(typescript@4.9.3)
 
   apps/mobile:
     dependencies:
@@ -531,7 +531,7 @@ importers:
         version: 8.46.0
       ts-node:
         specifier: ^10.9.1
-        version: 10.9.1(@types/node@18.16.0)(typescript@5.1.6)
+        version: 10.9.1(@types/node@18.17.18)(typescript@5.1.6)
       typescript:
         specifier: ^5.1.6
         version: 5.1.6
@@ -3157,7 +3157,7 @@ packages:
     dependencies:
       '@jest/fake-timers': 29.6.2
       '@jest/types': 29.6.1
-      '@types/node': 18.16.0
+      '@types/node': 18.17.18
       jest-mock: 29.6.2
     dev: false
 
@@ -3167,7 +3167,7 @@ packages:
     dependencies:
       '@jest/types': 29.6.1
       '@sinonjs/fake-timers': 10.3.0
-      '@types/node': 18.16.0
+      '@types/node': 18.17.18
       jest-message-util: 29.6.2
       jest-mock: 29.6.2
       jest-util: 29.6.2
@@ -3186,7 +3186,7 @@ packages:
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.4
       '@types/istanbul-reports': 3.0.1
-      '@types/node': 18.16.0
+      '@types/node': 18.17.18
       '@types/yargs': 15.0.15
       chalk: 4.1.2
     dev: false
@@ -3197,7 +3197,7 @@ packages:
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.4
       '@types/istanbul-reports': 3.0.1
-      '@types/node': 18.16.0
+      '@types/node': 18.17.18
       '@types/yargs': 16.0.5
       chalk: 4.1.2
     dev: false
@@ -3209,7 +3209,7 @@ packages:
       '@jest/schemas': 29.6.0
       '@types/istanbul-lib-coverage': 2.0.4
       '@types/istanbul-reports': 3.0.1
-      '@types/node': 18.16.0
+      '@types/node': 18.17.18
       '@types/yargs': 17.0.24
       chalk: 4.1.2
     dev: false
@@ -4531,7 +4531,7 @@ packages:
   /@types/bunyan@1.8.8:
     resolution: {integrity: sha512-Cblq+Yydg3u+sGiz2mjHjC5MPmdjY+No4qvHrF+BUhblsmSfMvsHLbOG62tPbonsqBj6sbWv1LHcsoe5Jw+/Ow==}
     dependencies:
-      '@types/node': 18.16.0
+      '@types/node': 18.17.18
     dev: false
 
   /@types/chart.js@2.9.34:
@@ -4553,7 +4553,7 @@ packages:
   /@types/cron@1.7.2:
     resolution: {integrity: sha512-AEpNLRcsVSc5AdseJKNHpz0d4e8+ow+abTaC0fKDbAU86rF1evoFF0oC2fV9FdqtfVXkG2LKshpLTJCFOpyvTg==}
     dependencies:
-      '@types/node': 14.0.27
+      '@types/node': 18.17.0
       moment: 2.29.4
     dev: false
 
@@ -4605,15 +4605,19 @@ packages:
   /@types/node-fetch@2.5.7:
     resolution: {integrity: sha512-o2WVNf5UhWRkxlf6eq+jMZDu7kjgpgJfl4xVNlvryc95O/6F2ld8ztKX+qu+Rjyet93WAWm5LjeX9H5FGkODvw==}
     dependencies:
-      '@types/node': 14.0.27
+      '@types/node': 18.17.0
       form-data: 3.0.1
     dev: false
 
-  /@types/node@14.0.27:
-    resolution: {integrity: sha512-kVrqXhbclHNHGu9ztnAwSncIgJv/FaxmzXJvGXNdcCpV1b8u1/Mi6z6m0vwy0LzKeXFTPLH0NzwmoJ3fNCIq0g==}
-
   /@types/node@18.16.0:
     resolution: {integrity: sha512-BsAaKhB+7X+H4GnSjGhJG9Qi8Tw+inU9nJDwmD5CgOmBLEI6ArdhikpLX7DjbjDRDTbqZzU2LSQNZg8WGPiSZQ==}
+    dev: true
+
+  /@types/node@18.17.0:
+    resolution: {integrity: sha512-GXZxEtOxYGFchyUzxvKI14iff9KZ2DI+A6a37o6EQevtg6uO9t+aUZKcaC1Te5Ng1OnLM7K9NVVj+FbecD9cJg==}
+
+  /@types/node@18.17.18:
+    resolution: {integrity: sha512-/4QOuy3ZpV7Ya1GTRz5CYSz3DgkKpyUptXuQ5PPce7uuyJAOR7r9FhkmxJfvcNUXyklbC63a+YvB3jxy7s9ngw==}
 
   /@types/prop-types@15.7.5:
     resolution: {integrity: sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==}
@@ -4675,13 +4679,13 @@ packages:
   /@types/ws@7.2.6:
     resolution: {integrity: sha512-Q07IrQUSNpr+cXU4E4LtkSIBPie5GLZyyMC1QtQYRLWz701+XcoVygGUZgvLqElq1nU4ICldMYPnexlBsg3dqQ==}
     dependencies:
-      '@types/node': 14.0.27
+      '@types/node': 18.17.0
     dev: false
 
   /@types/ws@8.5.5:
     resolution: {integrity: sha512-lwhs8hktwxSjf9UaZ9tG5M03PGogvFaH8gUgLNbN9HKIg0dvv6q+gkSuJ8HN4/VbyxkuLzCjlN7GquQ0gUJfIg==}
     dependencies:
-      '@types/node': 18.16.0
+      '@types/node': 18.17.0
     dev: false
 
   /@types/yargs-parser@21.0.0:
@@ -9867,7 +9871,7 @@ packages:
       '@jest/environment': 29.6.2
       '@jest/fake-timers': 29.6.2
       '@jest/types': 29.6.1
-      '@types/node': 18.16.0
+      '@types/node': 18.17.18
       jest-mock: 29.6.2
       jest-util: 29.6.2
     dev: false
@@ -9897,7 +9901,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.1
-      '@types/node': 18.16.0
+      '@types/node': 18.17.18
       jest-util: 29.6.2
     dev: false
 
@@ -9911,7 +9915,7 @@ packages:
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
       '@jest/types': 27.5.1
-      '@types/node': 18.16.0
+      '@types/node': 18.17.18
       chalk: 4.1.2
       ci-info: 3.8.0
       graceful-fs: 4.2.11
@@ -9923,7 +9927,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.1
-      '@types/node': 18.16.0
+      '@types/node': 18.17.18
       chalk: 4.1.2
       ci-info: 3.8.0
       graceful-fs: 4.2.11
@@ -9946,7 +9950,7 @@ packages:
     resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 18.16.0
+      '@types/node': 18.17.18
       merge-stream: 2.0.0
       supports-color: 8.1.1
     dev: false
@@ -14327,7 +14331,7 @@ packages:
       code-block-writer: 12.0.0
     dev: false
 
-  /ts-node-dev@2.0.0(@types/node@14.0.27)(typescript@4.9.3):
+  /ts-node-dev@2.0.0(@types/node@18.17.0)(typescript@4.9.3):
     resolution: {integrity: sha512-ywMrhCfH6M75yftYvrvNarLEY+SUXtUvU8/0Z6llrHQVBx12GiFk5sStF8UdfE/yfzk9IAq7O5EEbTQsxlBI8w==}
     engines: {node: '>=0.8.0'}
     hasBin: true
@@ -14346,7 +14350,7 @@ packages:
       rimraf: 2.7.1
       source-map-support: 0.5.19
       tree-kill: 1.2.2
-      ts-node: 10.9.1(@types/node@14.0.27)(typescript@4.9.3)
+      ts-node: 10.9.1(@types/node@18.17.0)(typescript@4.9.3)
       tsconfig: 7.0.0
       typescript: 4.9.3
     transitivePeerDependencies:
@@ -14355,7 +14359,7 @@ packages:
       - '@types/node'
     dev: true
 
-  /ts-node@10.9.1(@types/node@14.0.27)(typescript@4.9.3):
+  /ts-node@10.9.1(@types/node@18.17.0)(typescript@4.9.3):
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
     hasBin: true
     peerDependencies:
@@ -14374,7 +14378,7 @@ packages:
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 14.0.27
+      '@types/node': 18.17.0
       acorn: 8.10.0
       acorn-walk: 8.2.0
       arg: 4.1.3
@@ -14385,7 +14389,7 @@ packages:
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
-  /ts-node@10.9.1(@types/node@18.16.0)(typescript@5.1.6):
+  /ts-node@10.9.1(@types/node@18.17.18)(typescript@5.1.6):
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
     hasBin: true
     peerDependencies:
@@ -14404,7 +14408,7 @@ packages:
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 18.16.0
+      '@types/node': 18.17.18
       acorn: 8.10.0
       acorn-walk: 8.2.0
       arg: 4.1.3

@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import PusherClient from 'pusher-js';
 
 import { pusher as pusherServer } from '@ei/pusher-server';
