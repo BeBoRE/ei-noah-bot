@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: ei-noah-website
+    env: node
+    plan: free
+    buildCommand: NODE_ENV=development cd apps/website && pnpm install && pnpm build
+    startCommand: cd apps/website && pnpm start
+    healthCheckPath: /api/trpc/healthcheck
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: redis
+          property: connectionString
+  - type: redis
+    name: redis
+    plan: free
+    ipAllowList:
+      - source: 185.202.238.1
+        description: vps
+      - source: 62.45.107.77
+        description: home

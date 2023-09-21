@@ -1,11 +1,6 @@
 import _ from 'lodash';
 
 export type Config = {
-  pusher: {
-    appId: string;
-    appKey: string;
-    cluster: string;
-  };
   api: {
     url?: string | null;
   };
@@ -34,11 +29,6 @@ if (developmentConfig) console.log('Using development config');
 
 const config: Config = _.merge(
   {
-    pusher: {
-      appId: process.env.EXPO_PUBLIC_PUSHER_APP_ID || '1645825',
-      appKey: process.env.EXPO_PUBLIC_PUSHER_KEY || 'e53b6fdba8cac687678b',
-      cluster: process.env.EXPO_PUBLIC_PUSHER_CLUSTER || 'eu',
-    },
     api: {
       url: process.env.EXPO_PUBLIC_VERCEL_URL || 'https://ei.sweaties.net',
     },

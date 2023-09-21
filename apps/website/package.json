@@ -6,7 +6,7 @@
     "dev:wss": "ts-node-dev ./server/development.ts",
     "dev": "run-p dev:*",
     "build": "next build",
-    "start": "ts-node ./server/production.ts",
+    "start": "DBUSER=before DEBUG=true NODE_ENV=production ts-node --transpileOnly ./server/production.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:typecheck": "tsc --noEmit"

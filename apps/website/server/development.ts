@@ -7,7 +7,7 @@ const wss = new ws.Server({
   port: 3001,
 });
 
-applyWSSHandler({
+const handler = applyWSSHandler({
   wss,
   router: appRouter,
   createContext: createTRPCContext,
@@ -26,3 +26,10 @@ wss.on('connection', (socket) => {
   });
 });
 console.log('✅ WebSocket Server listening on ws://localhost:3001');
+
+process.on('SIGTERM', (signal) => {
+  console.log('SIGTERM', signal);
+  handler.broadcastReconnectNotification();
+  wss.close();
+  process.exit();
+});

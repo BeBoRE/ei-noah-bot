@@ -3,7 +3,9 @@ import { z, ZodType } from 'zod';
 
 import { addUserSchema, ClientChangeLobby, clientChangeLobbySchema, LobbyChange, lobbyChangeSchema, removeUserSchema } from '@ei/lobby';
 
-const publisher = new Redis();
+const redisUrl = process.env.REDIS_URL;
+
+const publisher = redisUrl ? new Redis(redisUrl) : new Redis();
 const subscriber = publisher.duplicate();
 
 const userIdToChannel = (userId: string) => `user:${userId}`;
