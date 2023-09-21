@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ei-noah-website
+    name: ei-noah
     env: node
     plan: free
     region: frankfurt
@@ -13,12 +13,13 @@ services:
       - key: REDIS_URL
         fromService:
           type: redis
-          name: redis
+          name: redis2
           property: connectionString
+      - fromGroup: ei-noah
       - key: PORT
         value: 3000
   - type: redis
-    name: redis
+    name: redis2
     plan: free
     region: frankfurt
     ipAllowList:
