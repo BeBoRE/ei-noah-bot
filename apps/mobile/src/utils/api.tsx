@@ -10,7 +10,14 @@ import {
   QueryClient,
 } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { createTRPCProxyClient, createWSClient, httpBatchLink, loggerLink, splitLink, wsLink } from '@trpc/client';
+import {
+  createTRPCProxyClient,
+  createWSClient,
+  httpBatchLink,
+  loggerLink,
+  splitLink,
+  wsLink,
+} from '@trpc/client';
 import { createTRPCReact } from '@trpc/react-query';
 import config from 'src/config';
 import { useAuth } from 'src/context/auth';
@@ -40,8 +47,8 @@ const getBaseUrl = (ws = false) => {
 
   if (config.api.url) {
     if (ws) return config.api.url.replace('https', 'wss');
-    return config.api.url
-  };
+    return config.api.url;
+  }
 
   if (!localhost) {
     throw new Error(
@@ -82,7 +89,7 @@ type TRPCProviderProps = {
 
 const wsClient = createWSClient({
   url: getBaseUrl(true),
-})
+});
 
 /**
  * A wrapper for your app that provides the TRPC context.
@@ -125,7 +132,7 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
                   }
                 : undefined,
             }),
-          })
+          }),
         ],
       }),
     [authInfo?.accessToken],

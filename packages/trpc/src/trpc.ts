@@ -102,7 +102,7 @@ const camelize = (obj: unknown) => {
   );
 };
 
-export const getSession = async (token : string) => {
+export const getSession = async (token: string) => {
   const rest = new REST({ version: '10', authPrefix: 'Bearer' }).setToken(
     token,
   );
@@ -124,7 +124,7 @@ export const getSession = async (token : string) => {
   console.warn(user.error);
 
   return null;
-}
+};
 
 /**
  * This is the actual context you'll use in your router. It will be used to
@@ -142,20 +142,20 @@ export const createTRPCContext = async (opts: Opts) => {
     });
   }
 
-  const {data: token} = tokenData;
-    const session = token !== undefined && await getSession(token);
+  const { data: token } = tokenData;
+  const session = token !== undefined && (await getSession(token));
 
-    if (!session) {
-      return createInnerTRPCContext({
-        ...opts,
-        session: null,
-      });
-    }
-
+  if (!session) {
     return createInnerTRPCContext({
       ...opts,
-      session
+      session: null,
     });
+  }
+
+  return createInnerTRPCContext({
+    ...opts,
+    session,
+  });
 };
 
 /**

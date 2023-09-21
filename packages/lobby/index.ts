@@ -51,19 +51,24 @@ export const addUserSchema = z.object({
     id: z.string(),
   }),
 });
+export type AddUser = z.infer<typeof addUserSchema>;
 
 export const userAddNotificationSchema = z.object({
   userId: z.string(),
 });
 
-export const clientChangeLobby = z
+export const clientChangeLobbySchema = z
   .object({
     type: z.nativeEnum(ChannelType),
     limit: z.number(),
+    name: z.string().min(1).max(90),
   })
   .partial();
 
+export type ClientChangeLobby = z.infer<typeof clientChangeLobbySchema>;
+
 export const removeUserSchema = addUserSchema;
+export type RemoveUser = z.infer<typeof removeUserSchema>;
 
 type LobbyNameInfo = {
   icon: string;

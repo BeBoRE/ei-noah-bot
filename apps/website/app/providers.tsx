@@ -4,7 +4,13 @@ import { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ReactQueryStreamedHydration } from '@tanstack/react-query-next-experimental';
-import { createWSClient, httpBatchLink, loggerLink, splitLink, wsLink } from '@trpc/client';
+import {
+  createWSClient,
+  httpBatchLink,
+  loggerLink,
+  splitLink,
+  wsLink,
+} from '@trpc/client';
 import superjson from 'superjson';
 
 import { api } from '../utils/api';
@@ -31,14 +37,14 @@ export default function TRPCReactProvider({ children }: Props) {
         },
       }),
   );
-  
+
   const wsClient = createWSClient({
     url: `ws://localhost:3001`,
-  })
+  });
 
   useEffect(() => () => {
-      wsClient.close();
-    })
+    wsClient.close();
+  });
 
   const [trpcClient] = useState(() =>
     api.createClient({

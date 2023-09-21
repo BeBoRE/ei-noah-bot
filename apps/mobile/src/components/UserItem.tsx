@@ -8,12 +8,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { usePusher } from 'src/context/pusher';
 import { api } from 'src/utils/api';
 
-import { ChannelType, userIdToPusherChannel, type userSchema } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
+import { ChannelType, userSchema } from '@ei/lobby';
 import Text from './Text';
 
 type ButtonProps = {
@@ -74,25 +73,21 @@ function UserItem({
   user: Zod.infer<typeof userSchema>;
   channelType: ChannelType;
 }) {
-  const { pusher } = usePusher();
-  const { data: me } = api.user.me.useQuery();
+  const {mutate: addUser} = api.lobby.addUser.useMutation();
+  const {mutate: removeUser} = api.lobby.removeUser.useMutation();
 
   const showButtons = channelType !== ChannelType.Public;
 
   const onReject = () => {
-    if (!pusher || !me) return;
-
-    pusher
-      .channel(userIdToPusherChannel(me))
-      .trigger('client-remove-user', { user: { id: user.id } });
+    removeUser({
+      user
+    })
   };
 
   const onAccept = () => {
-    if (!pusher || !me) return;
-
-    pusher
-      .channel(userIdToPusherChannel(me))
-      .trigger('client-add-user', { user: { id: user.id } });
+    addUser({
+      user
+    })
   };
 
   return (

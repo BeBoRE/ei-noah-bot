@@ -13,11 +13,11 @@ applyWSSHandler({
   createContext: createTRPCContext,
 });
 
-console.log('Starting WebSocket Server...')
+console.log('Starting WebSocket Server...');
 
 wss.on('listening', () => {
   console.log('✅ WebSocket Server listening');
-})
+});
 
 wss.on('connection', (socket) => {
   console.log(`➕➕ Connection (${wss.clients.size})`);

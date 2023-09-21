@@ -10,7 +10,6 @@ import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/rest/v10';
-import { Unplug } from 'lucide-react-native';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 import JoinLobby from 'src/components/JoinLobby';
 import { AnimatedLobbyName } from 'src/components/LobbyName';
@@ -20,42 +19,15 @@ import { AnimatedUserLimitSelector } from 'src/components/UserLimits';
 import UsersSheet from 'src/components/UsersSheet';
 import { useAuth } from 'src/context/auth';
 import { LobbyProvider, useLobby } from 'src/context/lobby';
-import { PusherProvider, usePusher } from 'src/context/pusher';
 import useNotifications from 'src/hooks/useNotifications';
 import { baseConfig } from 'tailwind.config';
 
-import { useEffect, useState } from 'react';
-import { LobbyChange } from '@ei/lobby';
 import { api } from '../utils/api';
 
 function Screen() {
   useNotifications();
 
   const { lobby, changeChannelType, changeUserLimit } = useLobby();
-  const { connectionState } = usePusher();
-
-  if (connectionState === 'unavailable' || connectionState === 'failed') {
-    return (
-      <Animated.View
-        key="unavailable"
-        className="flex flex-1"
-        entering={FadeInDown.duration(200)}
-        exiting={FadeOutUp.duration(200)}
-      >
-        <SafeAreaView edges={['bottom']} className="flex flex-1">
-          <View className="flex flex-1 items-center justify-center">
-            <View className="m-5 flex items-center justify-center rounded bg-primary-900 p-6">
-              <Unplug size={32} color={baseConfig.theme.colors.reject} />
-              <Text className="mt-3 text-center text-2xl font-bold text-primary-300">
-                Cannot connect to server, please check your internet connection
-                or try again later.
-              </Text>
-            </View>
-          </View>
-        </SafeAreaView>
-      </Animated.View>
-    );
-  }
 
   if (!lobby) {
     return <JoinLobby />;
@@ -125,19 +97,6 @@ const getUserImageUrl = (user: { avatar: string; id: string }) =>
 function Index() {
   const { signOut } = useAuth();
   const { data: user } = api.user.me.useQuery();
-  const {authInfo} = useAuth();
-
-  const [lobby, setLobby] = useState<LobbyChange | null>(null);
-  api.lobby.lobbyChange.useSubscription(authInfo?.accessToken || '', {
-    enabled: !!authInfo?.accessToken,
-    onData: (data) => {
-      setLobby(data)
-    }
-  });
-
-  useEffect(() => {
-    console.log(lobby, JSON.stringify(lobby))
-  }, [lobby])
 
   return (
     <>
@@ -179,11 +138,9 @@ function Index() {
         }}
       />
       <SafeAreaView edges={['left', 'right']} className="flex-1 to-primary-950">
-        <PusherProvider>
-          <LobbyProvider>
-            <Screen />
-          </LobbyProvider>
-        </PusherProvider>
+        <LobbyProvider>
+          <Screen />
+        </LobbyProvider>
         <StatusBar style="dark" />
       </SafeAreaView>
     </>

@@ -1,28 +1,75 @@
-import Redis from 'ioredis'
+import Redis from 'ioredis';
+import { z, ZodType } from 'zod';
 
-import { LobbyChange, lobbyChangeSchema } from '@ei/lobby';
+import { addUserSchema, ClientChangeLobby, clientChangeLobbySchema, LobbyChange, lobbyChangeSchema, removeUserSchema } from '@ei/lobby';
 
 const publisher = new Redis();
 const subscriber = publisher.duplicate();
 
 const userIdToChannel = (userId: string) => `user:${userId}`;
-const userIdToChannelRefresh = (userId: string) => `user:${userId}:refresh`;
-const userIdToChannelLobbyChange = (userId: string) => `user:${userId}:lobbyChange`;
 
-export const sendLobbyChange = (change: NonNullable<LobbyChange>) => publisher.publish(userIdToChannelLobbyChange(change.user.id), JSON.stringify(change));
-export const sendLobbyRefreshRequest =  (userId: string) => publisher.publish(userIdToChannelRefresh(userId), '');
+const userIdToChannelRefresh = (userId: string) =>
+  `${userIdToChannel(userId)}:refresh`;
 
-export const subscribeUserToLobbyChange = (
+const userIdToChannelLobbyUpdate = (userId: string) =>
+  `${userIdToChannel(userId)}:lobbyUpdate`;
+
+const userIdToClientChangeLobby = (userId: string) =>
+  `${userIdToChannel(userId)}:clientChangeLobby`;
+
+const userIdToUserAdd = (userId: string) => `${userIdToChannel(userId)}:addUser`;
+
+const userIdToUserRemove = (userId: string) =>
+  `${userIdToChannel(userId)}:removeUser`;
+
+
+export const sendLobbyUpdate = (userId: string, change: LobbyChange) =>
+  publisher.publish(
+    userIdToChannelLobbyUpdate(userId),
+    change ? JSON.stringify(change) : JSON.stringify(null),
+  );
+
+export const requestLobbyUpdate = (userId: string) =>
+  publisher.publish(userIdToChannelRefresh(userId), JSON.stringify(null));
+
+export const sendClientLobbyChange = (
   userId: string,
-  callback: (change: LobbyChange) => void,
-  error?: (err: Error) => void,
-  listening?: () => void
+  change: ClientChangeLobby,
 ) => {
-  subscriber.subscribe(userIdToChannelLobbyChange(userId)).then(() => listening?.()).catch(error);
+  publisher.publish(userIdToClientChangeLobby(userId), JSON.stringify(change));
+};
 
-  const handler = (channel : string, message: string) => {
-    if (channel === userIdToChannelLobbyChange(userId)) {
-      const data = lobbyChangeSchema.safeParse(JSON.parse(message));
+export const sendAddUser = (userId: string, data : z.infer<typeof addUserSchema>) => {
+  publisher.publish(userIdToUserAdd(userId), JSON.stringify(data));
+}
+
+export const sendRemoveUser = (userId: string, data : z.infer<typeof removeUserSchema>) => {
+  publisher.publish(userIdToUserRemove(userId), JSON.stringify(data));
+}
+
+interface SubscriberOptions<T extends ZodType<unknown>> {
+  channel: string;
+  schema: T;
+  callback: (data: Zod.infer<T>) => void;
+  error?: (err: Error) => void;
+  listening?: () => void;
+}
+
+const subscribe = <T extends ZodType<unknown>>({
+  channel,
+  schema,
+  callback,
+  error,
+  listening,
+}: SubscriberOptions<T>) => {
+  subscriber
+    .subscribe(channel)
+    .then(() => listening?.())
+    .catch(error);
+
+  const handler = (msgChannel: string, msg: string) => {
+    if (channel === msgChannel) {
+      const data = schema.safeParse(JSON.parse(msg));
 
       if (!data.success) {
         console.error(data.error);
@@ -31,41 +78,107 @@ export const subscribeUserToLobbyChange = (
 
       callback(data.data);
     }
-  }
+  };
 
   subscriber.addListener('message', handler);
 
   return () => {
-    subscriber.unsubscribe(userIdToChannel(userId))
+    subscriber.unsubscribe(channel);
     subscriber.removeListener('message', handler);
   };
 };
 
-export const subscribeUserToRefresh = (
-  userId: string,
-  callback: () => void,
-  error?: (err: Error) => void,
-  listening?: () => void
-) => {
-  subscriber.subscribe(userIdToChannelRefresh(userId)).then(() => listening?.()).catch(error);
+export const subscribeToLobbyUpdates = ({
+  userId,
+  callback,
+  error,
+  listening,
+}: {
+  userId: string;
+  callback: (change: LobbyChange | null) => void;
+  error?: (err: Error) => void;
+  listening?: () => void;
+}) =>
+  subscribe({
+    channel: userIdToChannelLobbyUpdate(userId),
+    schema: lobbyChangeSchema,
+    callback,
+    error,
+    listening,
+  });
 
-  const handler = (channel : string, message : string) => {
-    if (channel === userIdToChannel(userId)) {
-      const data = lobbyChangeSchema.safeParse(JSON.parse(message));
+export const subscribeToRefreshRequests = ({
+  userId,
+  callback,
+  error,
+  listening,
+}: {
+  userId: string;
+  callback: () => void;
+  error?: (err: Error) => void;
+  listening?: () => void;
+}) =>
+  subscribe({
+    channel: userIdToChannelRefresh(userId),
+    schema: z.unknown(),
+    callback,
+    error,
+    listening,
+  });
 
-      if (!data.success) {
-        console.error(data.error);
-        return;
-      }
+export const subscribeToClientLobbyChanges = ({
+  userId,
+  callback,
+  error,
+  listening,
+}: {
+  userId: string;
+  callback: (change: ClientChangeLobby) => void;
+  error?: (err: Error) => void;
+  listening?: () => void;
+}) => 
+  subscribe({
+    channel: userIdToClientChangeLobby(userId),
+    schema: clientChangeLobbySchema,
+    callback,
+    error,
+    listening,
+  });
 
-      callback();
-    }
-  }
+export const subscribeToAddUser = ({
+  userId,
+  callback,
+  error,
+  listening,
+}: {
+  userId: string;
+  callback: (change: z.infer<typeof addUserSchema>) => void;
+  error?: (err: Error) => void;
+  listening?: () => void;
+}) => 
+  subscribe({
+    channel: userIdToUserAdd(userId),
+    schema: addUserSchema,
+    callback,
+    error,
+    listening,
+  });
 
-  subscriber.addListener('message', handler);
-
-  return () => {
-    subscriber.unsubscribe(userIdToChannel(userId))
-    subscriber.removeListener('message', handler);
-  };
-}
+  export const subscribeToRemoveUser = ({
+    userId,
+    callback,
+    error,
+    listening,
+  }: {
+    userId: string;
+    callback: (change: z.infer<typeof removeUserSchema>) => void;
+    error?: (err: Error) => void;
+    listening?: () => void;
+  }) => 
+    subscribe({
+      channel: userIdToUserRemove(userId),
+      schema: removeUserSchema,
+      callback,
+      error,
+      listening,
+    });
