@@ -6,7 +6,7 @@
     "dev:wss": "ts-node-dev ./server/development.ts",
     "dev": "run-p dev:*",
     "build": "next build",
-    "start": "PORT=3000 ts-node --transpileOnly ./server/production.ts",
+    "start": "ts-node --transpileOnly ./server/production.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:typecheck": "tsc --noEmit"

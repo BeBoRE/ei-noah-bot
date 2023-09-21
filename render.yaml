@@ -14,6 +14,8 @@ services:
           type: redis
           name: redis
           property: connectionString
+      - key: PORT
+        value: 3000
   - type: redis
     name: redis
     plan: free
