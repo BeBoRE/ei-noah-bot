@@ -32,6 +32,18 @@ app.prepare().then(() => {
     createContext: createTRPCContext,
   });
 
+  console.log('Starting WebSocket Server...');
+  wss.on('listening', () => {
+    console.log('✅ WebSocket Server listening');
+  });
+
+  wss.on('connection', (socket) => {
+    console.log(`Connection added (${wss.clients.size})`);
+    socket.once('close', () => {
+      console.log(`Connection closed (${wss.clients.size})`);
+    });
+  });
+
   process.on('SIGTERM', () => {
     console.log('SIGTERM');
     handler.broadcastReconnectNotification();
