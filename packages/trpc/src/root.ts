@@ -4,7 +4,7 @@ import { userRouter } from './routes/users';
 import { createTRPCRouter, publicProcedure } from './trpc';
 
 export const appRouter = createTRPCRouter({
-  healthCheck: publicProcedure.query(() => 'OK'),
+  healthcheck: publicProcedure.query(() => 'OK'),
   user: userRouter,
   lobby: lobbyRouter,
   notification: notificationRouter,

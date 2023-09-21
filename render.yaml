@@ -5,7 +5,7 @@ services:
     plan: free
     buildCommand: cd apps/website && NODE_ENV=development pnpm install && pnpm build
     startCommand: cd apps/website && pnpm start
-    healthCheckPath: /api/trpc/healthCheck
+    healthCheckPath: /api/trpc/healthcheck
     envVars:
       - key: NODE_ENV
         value: production
