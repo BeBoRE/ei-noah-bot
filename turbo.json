@@ -16,17 +16,12 @@
     "WEBPACK",
     "CLIENT_ID",
     "EXPO_PUBLIC_CLIENT_ID",
-    "PUSHER_APP_ID",
-    "PUSHER_KEY",
-    "PUSHER_SECRET",
-    "PUSHER_CLUSTER",
-    "EXPO_PUBLIC_PUSHER_APP_ID",
-    "EXPO_PUBLIC_PUSHER_CLUSTER",
-    "EXPO_PUBLIC_PUSHER_KEY",
     "EXPO_PUBLIC_VERCEL_URL",
     "EXPO_TOKEN",
     "CI",
-    "APP_VARIANT"
+    "APP_VARIANT",
+    "REDIS_URL",
+    "PORT"
   ],
   "pipeline": {
     "start": {
@@ -44,7 +39,7 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", ".expo/**"]
+      "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts", ".expo/**"]
     },
     "db:push": { "inputs": ["migrations/**"], "cache": false },
     "db:create": {

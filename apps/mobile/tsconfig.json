@@ -5,7 +5,7 @@
     "jsx": "react-native",
     "types": ["nativewind/types"],
     "paths": {
-      "@": ["src"],
+      "@": ["src"]
     },
     "noUncheckedIndexedAccess": true
   },

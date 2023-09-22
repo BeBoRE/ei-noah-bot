@@ -6,12 +6,15 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end
  */
+import type { NextIncomingMessage } from 'next/dist/server/request-meta';
 import { REST } from '@discordjs/rest';
 import { initTRPC, TRPCError } from '@trpc/server';
 import type { CreateNextContextOptions } from '@trpc/server/adapters/next';
+import { NodeHTTPCreateContextFnOptions } from '@trpc/server/dist/adapters/node-http';
 import { Routes } from 'discord-api-types/v10';
 import { camelCase, isArray, isObject, transform } from 'lodash';
 import superjson from 'superjson';
+import type ws from 'ws';
 import { z, ZodError } from 'zod';
 
 import { getOrm } from '@ei/database';
@@ -43,7 +46,11 @@ const userSchema = z.object({
   locale: z.string(),
 });
 
-const bearerSchema = z.string().min(1);
+export const bearerSchema = z.string().min(1);
+
+type Opts =
+  | NodeHTTPCreateContextFnOptions<NextIncomingMessage, ws>
+  | CreateNextContextOptions;
 
 /**
  * 1. CONTEXT
@@ -54,12 +61,12 @@ const bearerSchema = z.string().min(1);
  * processing a request
  *
  */
-interface CreateInnerContextOptions extends Partial<CreateNextContextOptions> {
-  session: {
+type CreateInnerContextOptions = Partial<Opts> & {
+  session?: {
     user: z.infer<typeof userSchema>;
     userRestClient: REST;
   } | null;
-}
+};
 
 /**
  * This helper generates the "internals" for a tRPC context. If you need to use
@@ -95,51 +102,60 @@ const camelize = (obj: unknown) => {
   );
 };
 
+export const getSession = async (token: string) => {
+  const rest = new REST({ version: '10', authPrefix: 'Bearer' }).setToken(
+    token,
+  );
+  const userRes = await rest.get(Routes.user()).catch(() => null);
+
+  if (!userRes) {
+    return null;
+  }
+
+  const user = userSchema.safeParse(camelize(userRes));
+
+  if (user.success) {
+    return {
+      user: user.data,
+      userRestClient: rest,
+    };
+  }
+
+  console.warn(user.error);
+
+  return null;
+};
+
 /**
  * This is the actual context you'll use in your router. It will be used to
  * process every request that goes through your tRPC endpoint
  * @link https://trpc.io/docs/context
  */
-export const createTRPCContext = async (opts: CreateNextContextOptions) => {
+export const createTRPCContext = async (opts: Opts) => {
   const { req } = opts;
 
-  const bearer = bearerSchema.safeParse(req.headers.authorization);
-
-  if (bearer.success) {
-    const rest = new REST({ version: '10', authPrefix: 'Bearer' }).setToken(
-      bearer.data,
-    );
-
-    const userRes = await rest.get(Routes.user()).catch(() => null);
-
-    if (!userRes) {
-      return createInnerTRPCContext({
-        ...opts,
-        session: null,
-      });
-    }
-
-    const user = userSchema.safeParse(camelize(userRes));
-
-    if (user.success) {
-      return createInnerTRPCContext({
-        ...opts,
-        session: {
-          user: user.data,
-          userRestClient: rest,
-        },
-      });
-    }
-
-    console.log('User schema error', user.error.flatten());
+  const tokenData = bearerSchema.safeParse(req.headers.authorization);
+  if (!tokenData.success) {
+    return createInnerTRPCContext({
+      ...opts,
+      session: null,
+    });
   }
 
-  const contextInner = await createInnerTRPCContext({
-    ...opts,
-    session: null,
-  });
+  const { data: token } = tokenData;
+  const session = token !== undefined && (await getSession(token));
 
-  return contextInner;
+  if (!session) {
+    return createInnerTRPCContext({
+      ...opts,
+      session: null,
+    });
+  }
+
+  return createInnerTRPCContext({
+    ...opts,
+    session,
+  });
 };
 
 /**

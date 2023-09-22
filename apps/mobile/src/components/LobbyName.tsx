@@ -3,14 +3,9 @@ import { Pressable, TextInput, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import ReactTimeAgo from 'react-time-ago';
 import EmojiPicker, { emojisByCategory } from 'rn-emoji-keyboard';
-import { usePusher } from 'src/context/pusher';
+import { api } from 'src/utils/api';
 
-import {
-  generateLobbyName,
-  lobbyChangeSchema,
-  lobbyNameSchema,
-  userIdToPusherChannel,
-} from '@ei/lobby';
+import { generateLobbyName, lobbyChangeSchema } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
 import Text, { AnimatedText } from './Text';
@@ -20,13 +15,13 @@ type Props = {
 };
 
 const LobbyName = forwardRef<View, Props>(({ lobby }: Props, ref) => {
+  const { mutate: changeLobby } = api.lobby.changeLobby.useMutation();
+
   const nameInfo = generateLobbyName(
     lobby.channel.type,
     lobby.user,
     lobby.channel.name,
   );
-
-  const { pusher } = usePusher();
 
   const [emojiOpen, setEmojiOpen] = useState(false);
 
@@ -41,13 +36,9 @@ const LobbyName = forwardRef<View, Props>(({ lobby }: Props, ref) => {
   const [name, setName] = useState(nameInfo?.name);
 
   const onNameChange = (newName: string) => {
-    pusher?.send_event(
-      'client-change-name',
-      {
-        name: newName,
-      } satisfies Zod.infer<typeof lobbyNameSchema>,
-      userIdToPusherChannel(lobby.user),
-    );
+    changeLobby({
+      name: newName,
+    });
   };
 
   return (

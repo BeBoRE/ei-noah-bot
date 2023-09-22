@@ -1,10 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ReactQueryStreamedHydration } from '@tanstack/react-query-next-experimental';
-import { httpBatchLink, loggerLink } from '@trpc/client';
+import {
+  createWSClient,
+  httpBatchLink,
+  loggerLink,
+  splitLink,
+  wsLink,
+} from '@trpc/client';
 import superjson from 'superjson';
 
 import { api } from '../utils/api';
@@ -14,6 +20,20 @@ const getBaseUrl = () => {
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`; // SSR should use vercel url
 
   return 'http://localhost:3000'; // dev SSR should use localhost
+};
+
+const getWsUrl = () => {
+  if (typeof window !== 'undefined') {
+    const { protocol, host } = window.location;
+
+    if (protocol === 'https:') {
+      return `wss://${host}`;
+    }
+
+    return `ws://${host}`;
+  }
+
+  return 'ws://localhost:3001'; // dev SSR should use localhost
 };
 
 type Props = {
@@ -32,6 +52,14 @@ export default function TRPCReactProvider({ children }: Props) {
       }),
   );
 
+  const wsClient = createWSClient({
+    url: getWsUrl(),
+  });
+
+  useEffect(() => () => {
+    wsClient.close();
+  });
+
   const [trpcClient] = useState(() =>
     api.createClient({
       transformer: superjson,
@@ -41,8 +69,12 @@ export default function TRPCReactProvider({ children }: Props) {
             process.env.NODE_ENV === 'development' ||
             (opts.direction === 'down' && opts.result instanceof Error),
         }),
-        httpBatchLink({
-          url: `${getBaseUrl()}/api/trpc`,
+        splitLink({
+          condition: ({ type }) => type === 'subscription',
+          true: wsLink({ client: wsClient }),
+          false: httpBatchLink({
+            url: `${getBaseUrl()}/api/trpc`,
+          }),
         }),
       ],
     }),

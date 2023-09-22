@@ -3,6 +3,7 @@
   "include": ["**/*.tsx", "**/*.ts", ".next/types/**/*.ts"],
   "exclude": ["node_modules"],
   "compilerOptions": {
+    "module": "CommonJS",
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,

@@ -10,7 +10,14 @@ import {
   QueryClient,
 } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { createTRPCProxyClient, httpBatchLink } from '@trpc/client';
+import {
+  createTRPCProxyClient,
+  createWSClient,
+  httpBatchLink,
+  loggerLink,
+  splitLink,
+  wsLink,
+} from '@trpc/client';
 import { createTRPCReact } from '@trpc/react-query';
 import config from 'src/config';
 import { useAuth } from 'src/context/auth';
@@ -34,11 +41,14 @@ function onAppStateChange(status: AppStateStatus) {
  * Extend this function when going to production by
  * setting the baseUrl to your production API URL.
  */
-const getBaseUrl = () => {
+const getBaseUrl = (ws = false) => {
   const debuggerHost = Constants.expoConfig?.hostUri;
   const localhost = debuggerHost?.split(':')[0];
 
-  if (config.api.url) return config.api.url;
+  if (config.api.url) {
+    if (ws) return config.api.url.replace('https', 'wss');
+    return config.api.url;
+  }
 
   if (!localhost) {
     throw new Error(
@@ -46,6 +56,7 @@ const getBaseUrl = () => {
     );
   }
 
+  if (ws) return `ws://${localhost}:3001`;
   return `http://${localhost}:3000`;
 };
 
@@ -76,6 +87,10 @@ type TRPCProviderProps = {
   children: React.ReactNode;
 };
 
+const wsClient = createWSClient({
+  url: getBaseUrl(true),
+});
+
 /**
  * A wrapper for your app that provides the TRPC context.
  * Use only in _app.tsx
@@ -101,13 +116,22 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
       api.createClient({
         transformer: superjson,
         links: [
-          httpBatchLink({
-            url: `${getBaseUrl()}/api/trpc`,
-            headers: authInfo?.accessToken
-              ? {
-                  authorization: authInfo?.accessToken,
-                }
-              : undefined,
+          loggerLink({
+            enabled: (opts) =>
+              process.env.NODE_ENV === 'development' ||
+              (opts.direction === 'down' && opts.result instanceof Error),
+          }),
+          splitLink({
+            condition: ({ type }) => type === 'subscription',
+            true: wsLink({ client: wsClient }),
+            false: httpBatchLink({
+              url: `${getBaseUrl()}/api/trpc`,
+              headers: authInfo?.accessToken
+                ? {
+                    authorization: authInfo?.accessToken,
+                  }
+                : undefined,
+            }),
           }),
         ],
       }),

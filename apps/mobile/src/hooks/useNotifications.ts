@@ -5,12 +5,12 @@ import {
   useLastNotificationResponse,
 } from 'expo-notifications';
 import { useAuth } from 'src/context/auth';
-import { PusherTasks } from 'src/context/pusher';
 import { api, createVanillaApi } from 'src/utils/api';
+import { isTokenExpired } from 'src/utils/auth';
 import registerForPushNotificationsAsync from 'src/utils/registerForPushNotifications';
 import { secureStorage } from 'src/utils/storage/secureStorage';
 
-import { userAddNotificationSchema, userIdToPusherChannel } from '@ei/lobby';
+import { userAddNotificationSchema } from '@ei/lobby';
 
 export const onAcceptResponse = async (
   response: NotificationResponse | undefined | null,
@@ -30,26 +30,14 @@ export const onAcceptResponse = async (
 
     const actualAuthInfo = await secureStorage.get('discordOauth');
     if (!actualAuthInfo) return;
+    if (isTokenExpired(actualAuthInfo)) return;
 
     const client = createVanillaApi(actualAuthInfo.accessToken);
 
-    const outsidePusher = PusherTasks(client);
-
-    const me = await client.user.me.query();
-
-    outsidePusher.signin();
-    outsidePusher.bind('pusher:signin_success', () => {
-      outsidePusher
-        .subscribe(userIdToPusherChannel(me))
-        .bind('pusher:subscription_succeeded', () => {
-          outsidePusher?.send_event(
-            'client-add-user',
-            {
-              user: { id: data.data.userId },
-            },
-            userIdToPusherChannel(me),
-          );
-        });
+    await client.lobby.addUser.mutate({
+      user: {
+        id: data.data.userId,
+      },
     });
   }
 };
