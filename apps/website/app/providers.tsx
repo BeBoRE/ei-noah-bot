@@ -24,7 +24,7 @@ const getBaseUrl = () => {
 
 const getWsUrl = () => {
   if (typeof window !== 'undefined') {
-    const {protocol, host} = window.location;
+    const { protocol, host } = window.location;
 
     if (protocol === 'https:') {
       return `wss://${host}`;
@@ -34,7 +34,7 @@ const getWsUrl = () => {
   }
 
   return 'ws://localhost:3001'; // dev SSR should use localhost
-}
+};
 
 type Props = {
   children: React.ReactNode;

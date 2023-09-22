@@ -16,6 +16,7 @@
     "WEBPACK",
     "CLIENT_ID",
     "EXPO_PUBLIC_CLIENT_ID",
+    "EXPO_PUBLIC_VERCEL_URL",
     "EXPO_TOKEN",
     "CI",
     "APP_VARIANT",

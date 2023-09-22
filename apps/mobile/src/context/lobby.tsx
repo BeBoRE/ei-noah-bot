@@ -1,10 +1,7 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { api } from 'src/utils/api';
 
-import {
-  ChannelType,
-  LobbyChange,
-} from '@ei/lobby';
+import { ChannelType, LobbyChange } from '@ei/lobby';
 
 import { useAuth } from './auth';
 
@@ -31,7 +28,7 @@ export function useLobby() {
 export function LobbyProvider({ children }: { children: React.ReactNode }) {
   const [lobby, setLobby] = useState<LobbyChange | null>(null);
 
-  const {mutate: changeLobby} = api.lobby.changeLobby.useMutation();
+  const { mutate: changeLobby } = api.lobby.changeLobby.useMutation();
 
   const { authInfo } = useAuth();
 
@@ -61,7 +58,7 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
 
         changeLobby({
           type,
-        })
+        });
       },
       changeUserLimit: (limit: number) => {
         // Optimistic update
@@ -79,7 +76,7 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
 
         changeLobby({
           limit,
-        })
+        });
       },
     }),
     [changeLobby, lobby],

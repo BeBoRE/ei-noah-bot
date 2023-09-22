@@ -64,7 +64,13 @@ import {
   RemoveUser,
   userIdToPusherChannel,
 } from '@ei/lobby';
-import { sendLobbyUpdate, subscribeToAddUser, subscribeToClientLobbyChanges, subscribeToRefreshRequests, subscribeToRemoveUser } from '@ei/redis';
+import {
+  sendLobbyUpdate,
+  subscribeToAddUser,
+  subscribeToClientLobbyChanges,
+  subscribeToRefreshRequests,
+  subscribeToRemoveUser,
+} from '@ei/redis';
 
 import { createEntityCache } from '../EiNoah';
 import globalLogger from '../logger';
@@ -2390,7 +2396,7 @@ const createRedisSubscriptionListeners = (
     });
   };
 
-  const lobbyChangeHandler = async (data : ClientChangeLobby) => {
+  const lobbyChangeHandler = async (data: ClientChangeLobby) => {
     const em = _em.fork();
 
     const tempChannel = await em.findOne(
@@ -2407,8 +2413,7 @@ const createRedisSubscriptionListeners = (
     const locale = getLocale({ user: tempChannel.guildUser.user });
     const i18n = i18next.cloneInstance({ lng: locale });
 
-    if(data.name)
-      tempChannel.name = data.name;
+    if (data.name) tempChannel.name = data.name;
 
     changeLobby(
       {
@@ -2424,7 +2429,7 @@ const createRedisSubscriptionListeners = (
         limit: data.limit,
       },
     );
-  }
+  };
 
   const addUserHandler = async (data: AddUser) => {
     const em = _em.fork();
@@ -2458,7 +2463,7 @@ const createRedisSubscriptionListeners = (
     );
 
     refresh();
-  }
+  };
 
   const removeUserHandler = async (data: RemoveUser) => {
     const em = _em.fork();
@@ -2493,8 +2498,7 @@ const createRedisSubscriptionListeners = (
     );
 
     refresh();
-  }
-
+  };
 
   addSubscriptionUnsubber(
     oldOwnerGuidUser.user,
@@ -2513,8 +2517,8 @@ const createRedisSubscriptionListeners = (
       callback: (data) => {
         lobbyChangeHandler(data);
       },
-    })
-  )
+    }),
+  );
 
   addSubscriptionUnsubber(
     oldOwnerGuidUser.user,
@@ -2524,8 +2528,8 @@ const createRedisSubscriptionListeners = (
         globalLogger.debug('add user', data);
         addUserHandler(data);
       },
-    })
-  )
+    }),
+  );
 
   addSubscriptionUnsubber(
     oldOwnerGuidUser.user,
@@ -2535,8 +2539,8 @@ const createRedisSubscriptionListeners = (
         globalLogger.debug('remove user', data);
         removeUserHandler(data);
       },
-    })
-  )
+    }),
+  );
 };
 
 const checkTempChannel = async (

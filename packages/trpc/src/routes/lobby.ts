@@ -1,6 +1,11 @@
 import { observable } from '@trpc/server/observable';
 
-import { addUserSchema, clientChangeLobbySchema, LobbyChange, removeUserSchema } from '@ei/lobby';
+import {
+  addUserSchema,
+  clientChangeLobbySchema,
+  LobbyChange,
+  removeUserSchema,
+} from '@ei/lobby';
 import {
   requestLobbyUpdate,
   sendAddUser,

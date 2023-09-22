@@ -43,10 +43,10 @@ app.prepare().then(() => {
       console.log(`Connection closed (${wss.clients.size})`);
     });
   });
-  
+
   wss.on('error', (err) => {
     console.error(err);
-  })
+  });
 
   process.on('SIGTERM', () => {
     console.log('SIGTERM');

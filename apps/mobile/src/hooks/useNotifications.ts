@@ -37,7 +37,7 @@ export const onAcceptResponse = async (
     await client.lobby.addUser.mutate({
       user: {
         id: data.data.userId,
-      }
+      },
     });
   }
 };

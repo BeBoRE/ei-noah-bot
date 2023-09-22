@@ -10,9 +10,9 @@ import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { api } from 'src/utils/api';
 
+import { ChannelType, userSchema } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
-import { ChannelType, userSchema } from '@ei/lobby';
 import Text from './Text';
 
 type ButtonProps = {
@@ -73,21 +73,21 @@ function UserItem({
   user: Zod.infer<typeof userSchema>;
   channelType: ChannelType;
 }) {
-  const {mutate: addUser} = api.lobby.addUser.useMutation();
-  const {mutate: removeUser} = api.lobby.removeUser.useMutation();
+  const { mutate: addUser } = api.lobby.addUser.useMutation();
+  const { mutate: removeUser } = api.lobby.removeUser.useMutation();
 
   const showButtons = channelType !== ChannelType.Public;
 
   const onReject = () => {
     removeUser({
-      user
-    })
+      user,
+    });
   };
 
   const onAccept = () => {
     addUser({
-      user
-    })
+      user,
+    });
   };
 
   return (

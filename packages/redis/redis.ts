@@ -1,7 +1,14 @@
 import Redis from 'ioredis';
 import { z, ZodType } from 'zod';
 
-import { addUserSchema, ClientChangeLobby, clientChangeLobbySchema, LobbyChange, lobbyChangeSchema, removeUserSchema } from '@ei/lobby';
+import {
+  addUserSchema,
+  ClientChangeLobby,
+  clientChangeLobbySchema,
+  LobbyChange,
+  lobbyChangeSchema,
+  removeUserSchema,
+} from '@ei/lobby';
 
 const redisUrl = process.env.REDIS_URL;
 
@@ -19,11 +26,11 @@ const userIdToChannelLobbyUpdate = (userId: string) =>
 const userIdToClientChangeLobby = (userId: string) =>
   `${userIdToChannel(userId)}:clientChangeLobby`;
 
-const userIdToUserAdd = (userId: string) => `${userIdToChannel(userId)}:addUser`;
+const userIdToUserAdd = (userId: string) =>
+  `${userIdToChannel(userId)}:addUser`;
 
 const userIdToUserRemove = (userId: string) =>
   `${userIdToChannel(userId)}:removeUser`;
-
 
 export const sendLobbyUpdate = (userId: string, change: LobbyChange) =>
   publisher.publish(
@@ -41,13 +48,19 @@ export const sendClientLobbyChange = (
   publisher.publish(userIdToClientChangeLobby(userId), JSON.stringify(change));
 };
 
-export const sendAddUser = (userId: string, data : z.infer<typeof addUserSchema>) => {
+export const sendAddUser = (
+  userId: string,
+  data: z.infer<typeof addUserSchema>,
+) => {
   publisher.publish(userIdToUserAdd(userId), JSON.stringify(data));
-}
+};
 
-export const sendRemoveUser = (userId: string, data : z.infer<typeof removeUserSchema>) => {
+export const sendRemoveUser = (
+  userId: string,
+  data: z.infer<typeof removeUserSchema>,
+) => {
   publisher.publish(userIdToUserRemove(userId), JSON.stringify(data));
-}
+};
 
 interface SubscriberOptions<T extends ZodType<unknown>> {
   channel: string;
@@ -138,7 +151,7 @@ export const subscribeToClientLobbyChanges = ({
   callback: (change: ClientChangeLobby) => void;
   error?: (err: Error) => void;
   listening?: () => void;
-}) => 
+}) =>
   subscribe({
     channel: userIdToClientChangeLobby(userId),
     schema: clientChangeLobbySchema,
@@ -157,7 +170,7 @@ export const subscribeToAddUser = ({
   callback: (change: z.infer<typeof addUserSchema>) => void;
   error?: (err: Error) => void;
   listening?: () => void;
-}) => 
+}) =>
   subscribe({
     channel: userIdToUserAdd(userId),
     schema: addUserSchema,
@@ -166,21 +179,21 @@ export const subscribeToAddUser = ({
     listening,
   });
 
-  export const subscribeToRemoveUser = ({
-    userId,
+export const subscribeToRemoveUser = ({
+  userId,
+  callback,
+  error,
+  listening,
+}: {
+  userId: string;
+  callback: (change: z.infer<typeof removeUserSchema>) => void;
+  error?: (err: Error) => void;
+  listening?: () => void;
+}) =>
+  subscribe({
+    channel: userIdToUserRemove(userId),
+    schema: removeUserSchema,
     callback,
     error,
     listening,
-  }: {
-    userId: string;
-    callback: (change: z.infer<typeof removeUserSchema>) => void;
-    error?: (err: Error) => void;
-    listening?: () => void;
-  }) => 
-    subscribe({
-      channel: userIdToUserRemove(userId),
-      schema: removeUserSchema,
-      callback,
-      error,
-      listening,
-    });
+  });
