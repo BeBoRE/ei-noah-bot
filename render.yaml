@@ -23,7 +23,7 @@ services:
     plan: free
     region: frankfurt
     ipAllowList:
-      - source: 185.202.238.1
-        description: vps
+      - source: 185.202.239.111
+        description: bot
       - source: 62.45.107.77
         description: home
