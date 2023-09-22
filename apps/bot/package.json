@@ -73,7 +73,7 @@
     "@mikro-orm/entity-generator": "^5.5.3",
     "@types/emoji-regex": "^9.2.0",
     "@types/i18next-fs-backend": "^1.0.1",
-    "@types/node": "^18.11.9",
+    "@types/node": "^18.17.0",
     "@types/string-similarity": "^4.0.0",
     "eslint": "^8.46.0",
     "eslint-config-custom": "*",
