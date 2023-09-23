@@ -18,6 +18,7 @@ import type ws from 'ws';
 import { z, ZodError } from 'zod';
 
 import { getOrm } from '@ei/database';
+import TempChannel from '@ei/database/entity/TempChannel';
 
 /**
  * User res {
@@ -158,6 +159,8 @@ export const createTRPCContext = async (opts: Opts) => {
   });
 };
 
+export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
+
 /**
  * 2. INITIALIZATION
  *
@@ -226,3 +229,26 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
  * @see https://trpc.io/docs/procedures
  */
 export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+
+const enforceUserHasLobby = enforceUserIsAuthed.unstable_pipe(
+  async ({ ctx, next }) => {
+    const { em } = ctx;
+    const { user } = ctx.session;
+
+    const lobby = await em.findOne(TempChannel, {
+      guildUser: { user: { id: user.id } },
+    });
+
+    if (!lobby) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'You are not in a lobby',
+      });
+    }
+
+    return next({ ctx });
+  },
+);
+
+export const protectedProcedureWithLobby =
+  protectedProcedure.use(enforceUserHasLobby);

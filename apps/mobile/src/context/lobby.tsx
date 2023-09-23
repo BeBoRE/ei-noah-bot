@@ -47,9 +47,12 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
     () => ({
       lobby,
       changeChannelType: (type: ChannelType) => {
+        let currentState: LobbyChange | null = null;
+
         // Optimistic update
         setLobby((prev) => {
           if (!prev) return prev;
+          currentState = prev;
 
           return {
             ...prev,
@@ -60,14 +63,30 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
           };
         });
 
-        changeLobby({
-          type,
-        });
+        changeLobby(
+          {
+            type,
+          },
+          {
+            onError: (err) => {
+              if (err.data?.code === 'NOT_FOUND') {
+                // Channel was deleted
+                setLobby(null);
+                return;
+              }
+
+              setLobby(currentState);
+            },
+          },
+        );
       },
       changeUserLimit: (limit: number) => {
+        let currentState: LobbyChange | null = null;
+
         // Optimistic update
         setLobby((prev) => {
           if (!prev) return prev;
+          currentState = prev;
 
           return {
             ...prev,
@@ -78,9 +97,22 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
           };
         });
 
-        changeLobby({
-          limit,
-        });
+        changeLobby(
+          {
+            limit,
+          },
+          {
+            onError: (err) => {
+              if (err.data?.code === 'NOT_FOUND') {
+                // Channel was deleted
+                setLobby(null);
+                return;
+              }
+
+              setLobby(currentState);
+            },
+          },
+        );
       },
     }),
     [changeLobby, lobby],
