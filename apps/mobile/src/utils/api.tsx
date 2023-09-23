@@ -33,7 +33,7 @@ onlineManager.setEventListener((setOnline) =>
 
 function onAppStateChange(status: AppStateStatus) {
   if (Platform.OS !== 'web') {
-    focusManager.setFocused(status === 'active');
+    focusManager.setFocused(status === 'active' || status === 'inactive');
   }
 }
 

@@ -50,7 +50,10 @@ export const lobbyRouter = createTRPCRouter({
           },
         });
 
-        return () => unsubscribe();
+        return () => {
+          unsubscribe();
+          console.log('Unsubscribed from lobby changes');
+        };
       });
     }),
   changeLobby: protectedProcedure

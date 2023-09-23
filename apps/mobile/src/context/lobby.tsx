@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useState } from 'react';
+import { useAppState } from '@react-native-community/hooks';
 import { api } from 'src/utils/api';
 
 import { ChannelType, LobbyChange } from '@ei/lobby';
@@ -31,9 +32,12 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
   const { mutate: changeLobby } = api.lobby.changeLobby.useMutation();
 
   const { authInfo } = useAuth();
+  const appState = useAppState();
 
   api.lobby.lobbyUpdate.useSubscription(authInfo?.accessToken || '', {
-    enabled: !!authInfo?.accessToken,
+    enabled:
+      !!authInfo?.accessToken &&
+      (appState === 'active' || appState === 'inactive'),
     onData: (data) => {
       setLobby(data);
     },
