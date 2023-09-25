@@ -8,7 +8,8 @@
   "scripts": {
     "clean": "git clean -xdf node_modules",
     "dev": "dotenv -- turbo dev",
-    "bot": "dotenv -- turbo start --filter=bot",
+    "start": "dotenv -- turbo start --filter=bot --filter=website",
+    "build": "dotenv -- turbo build",
     "expo-update": "dotenv -- turbo update",
     "lint": "dotenv -- turbo lint",
     "lint:fix": "dotenv -- turbo lint:fix",

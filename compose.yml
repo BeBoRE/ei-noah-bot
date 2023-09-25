@@ -1,0 +1,26 @@
+networks:
+  ei:
+    driver: bridge
+
+services:
+  redis:
+    image: 'bitnami/redis:latest'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - ei
+  ei-noah:
+    image: 'ghcr.io/bebore/ei-noah-bot/ei-noah:latest'
+    networks:
+      - ei
+    ports:
+      - "3000:3000"
+    environment:
+      - REDIS_URL=redis
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
