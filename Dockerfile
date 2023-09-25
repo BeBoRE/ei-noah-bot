@@ -32,6 +32,10 @@ COPY . .
 
 RUN npm install -g pnpm
 RUN pnpm install --config.platform=linux --config.architecture=x64
+
+RUN pnpm build
+ENV NODE_ENV=production
+
 RUN chmod 500 entrypoint.sh
 
 RUN sed -i 's/\r//g' entrypoint.sh

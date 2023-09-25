@@ -16,7 +16,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REDIS_URL=redis
+      - REDIS_URL=redis://redis
     env_file:
       - .env
     healthcheck:
