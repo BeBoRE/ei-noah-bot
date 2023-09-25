@@ -30,7 +30,7 @@ if (developmentConfig) console.log('Using development config');
 const config: Config = _.merge(
   {
     api: {
-      url: process.env.EXPO_PUBLIC_VERCEL_URL || 'https://ei-noah.onrender.com',
+      url: process.env.EXPO_PUBLIC_VERCEL_URL || 'https://ei.sweaties.net',
     },
     discord: {
       clientId: process.env.EXPO_PUBLIC_CLIENT_ID || '730913870805336195',
