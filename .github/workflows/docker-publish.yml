@@ -129,7 +129,7 @@ jobs:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.PRIVATE_KEY }}
-        script: ./redeploy.sh
+        script: docker-compose pull && docker-compose up -d
 
   discord:
     needs: deploy

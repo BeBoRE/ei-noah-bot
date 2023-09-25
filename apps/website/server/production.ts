@@ -52,7 +52,7 @@ app.prepare().then(() => {
     console.log('SIGTERM');
     handler.broadcastReconnectNotification();
   });
-  server.listen(process.env.PORT || 3000);
+  server.listen({ port: 3000, host: '0.0.0.0' });
 
   console.log(
     `> Server listening at http://localhost:3000 as ${
