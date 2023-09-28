@@ -2,6 +2,7 @@
   "name": "@ei/mobile",
   "version": "0.0.0",
   "main": "index.tsx",
+  "private": true,
   "scripts": {
     "dev": "expo start -c",
     "update": "eas update --auto",

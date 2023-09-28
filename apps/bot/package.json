@@ -2,6 +2,7 @@
   "name": "@ei/bot",
   "version": "1.0.0",
   "description": "Ei Noah Bot",
+  "private": true,
   "main": "./dist/index.js",
   "scripts": {
     "start": "ts-node ./src/index.ts",

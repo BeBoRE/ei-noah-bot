@@ -5,6 +5,7 @@
     "index.ts",
     "postcss.js"
   ],
+  "private": true,
   "devDependencies": {
     "@ei/tsconfig": "*",
     "@types/color-convert": "^2.0.0",

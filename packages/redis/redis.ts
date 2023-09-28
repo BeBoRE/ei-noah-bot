@@ -7,7 +7,7 @@ import {
   removeUserSchema,
 } from '@ei/lobby';
 
-import channelCreator from './channel';
+import channelCreator from 'zod-redis-pubsub';
 
 const redisUrl = process.env.REDIS_URL;
 

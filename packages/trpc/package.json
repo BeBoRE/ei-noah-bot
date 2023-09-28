@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "main": "./index.ts",
   "types": "./index.ts",
+  "private": true,
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
