@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { useAppState } from '@react-native-community/hooks';
+import { alert } from 'burnt';
 import { api } from 'src/utils/api';
 
 import { ChannelType, LobbyChange } from '@ei/lobby';
@@ -69,6 +70,11 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
           },
           {
             onError: (err) => {
+              alert({
+                title: 'Error',
+                message: err.message,
+              });
+
               if (err.data?.code === 'NOT_FOUND') {
                 // Channel was deleted
                 setLobby(null);
@@ -103,6 +109,11 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
           },
           {
             onError: (err) => {
+              alert({
+                title: 'Error',
+                message: err.message,
+              });
+
               if (err.data?.code === 'NOT_FOUND') {
                 // Channel was deleted
                 setLobby(null);

@@ -9,11 +9,11 @@ import {
   removeUserSchema,
 } from '@ei/lobby';
 import {
-  requestLobbyUpdate,
-  sendAddUser,
-  sendClientLobbyChange,
-  sendRemoveUser,
-  subscribeToLobbyUpdates,
+  publishAddUser,
+  publishClientLobbyChanges,
+  publishLobbyRefresh,
+  publishRemoveUser,
+  subscribeToLobbyUpdate,
 } from '@ei/redis';
 
 import {
@@ -47,22 +47,24 @@ export const lobbyRouter = createTRPCRouter({
       const lobby = await hasLobby(user.id, em);
 
       return observable<LobbyChange>((emit) => {
-        const unsubscribe = subscribeToLobbyUpdates({
-          userId: user.id,
-          callback: (change) => {
-            emit.next(change);
+        const unsubscribe = subscribeToLobbyUpdate(
+          {
+            onData: (change) => {
+              emit.next(change);
+            },
+            onSubscribeError: () => {
+              emit.error('Error subscribing to lobby changes');
+              emit.complete();
+            },
+            onSubscription: () => {
+              if (lobby) publishLobbyRefresh(undefined, user.id);
+              else {
+                emit.next(null);
+              }
+            },
           },
-          error: () => {
-            emit.error('Error subscribing to lobby changes');
-            emit.complete();
-          },
-          listening: () => {
-            if (lobby) requestLobbyUpdate(user.id);
-            else {
-              emit.next(null);
-            }
-          },
-        });
+          user.id,
+        );
 
         return () => {
           unsubscribe();
@@ -74,21 +76,21 @@ export const lobbyRouter = createTRPCRouter({
     .mutation(async ({ input: change, ctx: { session } }) => {
       const { user } = session;
 
-      sendClientLobbyChange(user.id, change);
+      publishClientLobbyChanges(change, user.id);
     }),
   addUser: protectedProcedureWithLobby
     .input(addUserSchema)
     .mutation(async ({ input: data, ctx: { session } }) => {
       const { user } = session;
 
-      sendAddUser(user.id, data);
+      publishAddUser(data, user.id);
     }),
   removeUser: protectedProcedureWithLobby
     .input(removeUserSchema)
     .mutation(async ({ input: data, ctx: { session } }) => {
       const { user } = session;
 
-      sendRemoveUser(user.id, data);
+      publishRemoveUser(data, user.id);
     }),
 });
 

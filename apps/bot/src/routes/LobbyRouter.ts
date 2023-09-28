@@ -60,15 +60,14 @@ import {
   ClientChangeLobby,
   generateLobbyName,
   getIcon,
-  lobbyChangeSchema,
   RemoveUser,
   userIdToPusherChannel,
 } from '@ei/lobby';
 import {
-  sendLobbyUpdate,
+  publishLobbyUpdate,
   subscribeToAddUser,
   subscribeToClientLobbyChanges,
-  subscribeToRefreshRequests,
+  subscribeToLobbyRefresh,
   subscribeToRemoveUser,
 } from '@ei/redis';
 
@@ -1143,52 +1142,50 @@ const pushLobbyToUser = (
   } | null,
 ) => {
   globalLogger.debug('pushing lobby to user');
-  sendLobbyUpdate(
-    user.id,
-    lobbyChangeSchema.parse(
-      !data
-        ? null
-        : ({
-            user: {
-              id: user.id,
-              displayName: data.member.displayName,
-            },
-            guild: {
-              id: data.guild.id,
-              name: data.guild.name,
-              icon: data.guild.iconURL({
+  publishLobbyUpdate(
+    !data
+      ? null
+      : {
+          user: {
+            id: user.id,
+            displayName: data.member.displayName,
+          },
+          guild: {
+            id: data.guild.id,
+            name: data.guild.name,
+            icon: data.guild.iconURL({
+              forceStatic: true,
+              size: 512,
+              extension: 'png',
+            }),
+          },
+          channel: {
+            id: data.voiceChannel.id,
+            name: data.tempChannel.name || null,
+            type: getChannelType(data.voiceChannel),
+            limit: data.voiceChannel.userLimit,
+            lobbyNameChangeDate: data.timeTillLobbyChange
+              ? moment.now() + data.timeTillLobbyChange.asMilliseconds()
+              : null,
+          },
+          users: data.voiceChannel.members
+            .map((member) => ({
+              id: member.id,
+              avatar: member.user.displayAvatarURL({
                 forceStatic: true,
-                size: 512,
+                size: 128,
                 extension: 'png',
               }),
-            },
-            channel: {
-              id: data.voiceChannel.id,
-              name: data.tempChannel.name || null,
-              type: getChannelType(data.voiceChannel),
-              limit: data.voiceChannel.userLimit,
-              lobbyNameChangeDate: data.timeTillLobbyChange
-                ? moment.now() + data.timeTillLobbyChange.asMilliseconds()
-                : null,
-            },
-            users: data.voiceChannel.members
-              .map((member) => ({
-                id: member.id,
-                avatar: member.user.displayAvatarURL({
-                  forceStatic: true,
-                  size: 128,
-                  extension: 'png',
-                }),
-                username: member.displayName,
-                isAllowed: data.voiceChannel.permissionOverwrites.cache.has(
-                  member.id,
-                ),
-                isKickable:
-                  member.id !== user.id && member.id !== member.client.user.id,
-              }))
-              .filter((u) => u.id !== user.id),
-          } satisfies Zod.infer<typeof lobbyChangeSchema>),
-    ),
+              username: member.displayName,
+              isAllowed: data.voiceChannel.permissionOverwrites.cache.has(
+                member.id,
+              ),
+              isKickable:
+                member.id !== user.id && member.id !== member.client.user.id,
+            }))
+            .filter((u) => u.id !== user.id),
+        },
+    user.id,
   );
 };
 
@@ -2502,44 +2499,52 @@ const createRedisSubscriptionListeners = (
 
   addSubscriptionUnsubber(
     oldOwnerGuidUser.user,
-    subscribeToRefreshRequests({
-      userId: oldOwnerGuidUser.user.id,
-      callback: () => {
-        refresh();
+    subscribeToLobbyRefresh(
+      {
+        onData: () => {
+          refresh();
+        },
       },
-    }),
+      oldOwnerGuidUser.user.id,
+    ),
   );
 
   addSubscriptionUnsubber(
     oldOwnerGuidUser.user,
-    subscribeToClientLobbyChanges({
-      userId: oldOwnerGuidUser.user.id,
-      callback: (data) => {
-        lobbyChangeHandler(data);
+    subscribeToClientLobbyChanges(
+      {
+        onData: (data) => {
+          lobbyChangeHandler(data);
+        },
       },
-    }),
+      oldOwnerGuidUser.user.id,
+    ),
   );
 
   addSubscriptionUnsubber(
     oldOwnerGuidUser.user,
-    subscribeToAddUser({
-      userId: oldOwnerGuidUser.user.id,
-      callback: (data) => {
-        globalLogger.debug('add user', data);
-        addUserHandler(data);
+    subscribeToAddUser(
+      {
+        onData: (data) => {
+          globalLogger.debug('add user', data);
+          addUserHandler(data);
+        },
       },
-    }),
+      oldOwnerGuidUser.user.id,
+    ),
   );
 
   addSubscriptionUnsubber(
     oldOwnerGuidUser.user,
-    subscribeToRemoveUser({
-      userId: oldOwnerGuidUser.user.id,
-      callback: (data) => {
-        globalLogger.debug('remove user', data);
-        removeUserHandler(data);
+    subscribeToRemoveUser(
+      {
+        onData: (data) => {
+          globalLogger.debug('remove user', data);
+          removeUserHandler(data);
+        },
       },
-    }),
+      oldOwnerGuidUser.user.id,
+    ),
   );
 };
 
