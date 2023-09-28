@@ -1304,7 +1304,9 @@ const changeLobby = (() => {
         em.persist(lobbyNameChange);
       }
 
-      const timeout = timeouts.get(voiceChannel.id);
+      const timeout = timeouts.get(voiceChannel.id) ?? {
+        changes: [],
+      };
       const execute = async (isTimeout: boolean) => {
         await Promise.all([
           voiceChannel.fetch(false).catch(() => null),
@@ -1330,7 +1332,8 @@ const changeLobby = (() => {
               await vc
                 .setName(newVoiceName.full)
                 .then(() => {
-                  timeout?.changes.push(new Date());
+                  timeout.changes.push(new Date());
+                  timeouts.set(voiceChannel.id, timeout);
                 })
                 .catch(() => {});
 
@@ -1380,40 +1383,28 @@ const changeLobby = (() => {
           });
       };
 
-      if (!timeout) {
-        await execute(false).catch(() => {});
+      const timePeriod = 1000 * 60 * 10;
+      const maxChanges = 3;
 
-        timeouts.set(voiceChannel.id, {
-          changes: [new Date()],
-        });
+      timeout.changes = timeout.changes.filter(
+        (date) => date.getTime() > new Date().getTime() - timePeriod,
+      );
+
+      if (timeout.changes.length < maxChanges - 1) {
+        await execute(false);
       } else {
-        const timePeriod = 1000 * 60 * 10;
-        const maxChanges = 3;
+        const date = timeout.changes.sort(
+          (a, b) => a.getTime() - b.getTime(),
+        )[0];
 
-        timeout.changes = timeout.changes.filter(
-          (date) => date.getTime() > new Date().getTime() - timePeriod,
-        );
-
-        if (timeout.changes.length < maxChanges - 1) {
+        if (!date) {
           await execute(false);
-
-          timeout.changes.push(new Date());
         } else {
-          const date = timeout.changes.sort(
-            (a, b) => a.getTime() - b.getTime(),
-          )[0];
+          const timeTo = date.getTime() + timePeriod - new Date().getTime();
+          timeTillNameChange = moment.duration(timeTo, 'milliseconds');
 
-          if (!date) {
-            await execute(false);
-
-            timeout.changes.push(new Date());
-          } else {
-            const timeTo = date.getTime() + timePeriod - new Date().getTime();
-            timeTillNameChange = moment.duration(timeTo, 'milliseconds');
-
-            if (timeout.timeout) clearTimeout(timeout.timeout);
-            timeout.timeout = setTimeout(() => execute(true), timeTo);
-          }
+          if (timeout.timeout) clearTimeout(timeout.timeout);
+          timeout.timeout = setTimeout(() => execute(true), timeTo);
         }
       }
     } else {
@@ -2653,6 +2644,7 @@ const checkTempChannel = async (
         newOwner.voice.setMute(false).catch(() => {});
       }
 
+      publishLobbyUpdate(null, oldOwner.id);
       destroyRedisSubscriptionListener(oldOwner);
       createRedisSubscriptionListeners(em, {
         member: newOwner,

@@ -17,11 +17,17 @@ interface SubscribeOptions<T extends ZodType<unknown>> {
 }
 
 const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
-  const createChannel = <T extends ZodType<unknown>, CN extends ChannelNamer | string>(
+  const createChannel = <
+    T extends ZodType<unknown>,
+    CN extends ChannelNamer | string,
+  >(
     channelNamer: CN,
     schema?: T,
   ): {
-    publish: (data: z.input<T>, ...params: CN extends ChannelNamer ? Parameters<CN> : []) => Promise<number>;
+    publish: (
+      data: z.input<T>,
+      ...params: CN extends ChannelNamer ? Parameters<CN> : []
+    ) => Promise<number>;
     subscribe: (
       options: SubscribeOptions<T>,
       ...params: CN extends ChannelNamer ? Parameters<CN> : []
@@ -30,7 +36,12 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
     publish: async (input, ...params) => {
       schema?.parse(input);
 
-      const channelName = typeof channelNamer === 'string' ? channelNamer : channelNamer(...params);
+      const channelName =
+        typeof channelNamer === 'string'
+          ? channelNamer
+          : channelNamer(...params);
+
+      console.log('publishing to', channelName);
 
       return publisher.publish(channelName, superjson.stringify(input));
     },
@@ -38,7 +49,10 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
       { onData, onParsingError, onSubscribeError, onSubscription },
       ...params
     ) => {
-      const channelName = typeof channelNamer === 'string' ? channelNamer : channelNamer(...params);
+      const channelName =
+        typeof channelNamer === 'string'
+          ? channelNamer
+          : channelNamer(...params);
 
       const handler = (msgChannel: string, msg: string) => {
         if (channelName === msgChannel) {
@@ -86,7 +100,10 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
 
       subscriber
         .subscribe(channelName)
-        .then(() => onSubscription?.())
+        .then(() => {
+          console.log('subscribed to', channelName);
+          onSubscription?.();
+        })
         .catch((err) => {
           if (!onSubscribeError) {
             console.error(err);
@@ -97,6 +114,8 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
         });
 
       return () => {
+        console.log('unsubscribing from', channelName);
+
         subscriber.unsubscribe(channelName);
         subscriber.removeListener('message', handler);
       };
