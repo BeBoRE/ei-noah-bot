@@ -21,7 +21,7 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
     channelNamer: CN,
     schema?: T,
   ): {
-    publish: (data: z.input<T>, ...params: Parameters<CN>) => Promise<void>;
+    publish: (data: z.input<T>, ...params: Parameters<CN>) => Promise<number>;
     subscribe: (
       options: SubscribeOptions<T>,
       ...params: Parameters<CN>
@@ -30,7 +30,7 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
     publish: async (input, ...params) => {
       schema?.parse(input);
 
-      publisher.publish(channelNamer(...params), superjson.stringify(input));
+      return publisher.publish(channelNamer(...params), superjson.stringify(input));
     },
     subscribe: (
       { onData, onParsingError, onSubscribeError, onSubscription },
