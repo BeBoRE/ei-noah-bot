@@ -17,27 +17,31 @@ interface SubscribeOptions<T extends ZodType<unknown>> {
 }
 
 const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
-  const createChannel = <T extends ZodType<unknown>, CN extends ChannelNamer>(
+  const createChannel = <T extends ZodType<unknown>, CN extends ChannelNamer | string>(
     channelNamer: CN,
     schema?: T,
   ): {
-    publish: (data: z.input<T>, ...params: Parameters<CN>) => Promise<number>;
+    publish: (data: z.input<T>, ...params: CN extends ChannelNamer ? Parameters<CN> : []) => Promise<number>;
     subscribe: (
       options: SubscribeOptions<T>,
-      ...params: Parameters<CN>
+      ...params: CN extends ChannelNamer ? Parameters<CN> : []
     ) => () => void;
   } => ({
     publish: async (input, ...params) => {
       schema?.parse(input);
 
-      return publisher.publish(channelNamer(...params), superjson.stringify(input));
+      const channelName = typeof channelNamer === 'string' ? channelNamer : channelNamer(...params);
+
+      return publisher.publish(channelName, superjson.stringify(input));
     },
     subscribe: (
       { onData, onParsingError, onSubscribeError, onSubscription },
       ...params
     ) => {
+      const channelName = typeof channelNamer === 'string' ? channelNamer : channelNamer(...params);
+
       const handler = (msgChannel: string, msg: string) => {
-        if (channelNamer(...params) === msgChannel) {
+        if (channelName === msgChannel) {
           let parsed;
 
           try {
@@ -81,7 +85,7 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
       subscriber.addListener('message', handler);
 
       subscriber
-        .subscribe(channelNamer(...params))
+        .subscribe(channelName)
         .then(() => onSubscription?.())
         .catch((err) => {
           if (!onSubscribeError) {
@@ -93,7 +97,7 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
         });
 
       return () => {
-        subscriber.unsubscribe(channelNamer(...params));
+        subscriber.unsubscribe(channelName);
         subscriber.removeListener('message', handler);
       };
     },
