@@ -1,5 +1,11 @@
 # zod-redis-pubsub
 
+## 1.2.0
+
+### Minor Changes
+
+- You can now omit either publisher or subscriber
+
 ## 1.1.2
 
 ### Patch Changes

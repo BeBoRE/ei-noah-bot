@@ -2,10 +2,19 @@ import { Redis } from 'ioredis';
 import superjson from 'superjson';
 import { z, ZodType } from 'zod';
 
-type ChannelCreatorOptions = {
-  publisher: Redis;
-  subscriber: Redis;
-};
+type ChannelCreatorOptions =
+  | {
+      publisher: Redis;
+      subscriber: Redis;
+    }
+  | {
+      publisher: Redis;
+      subscriber: undefined;
+    }
+  | {
+      publisher: undefined;
+      subscriber: Redis;
+    };
 
 type ChannelNamer = (...params: string[]) => string;
 
@@ -35,6 +44,10 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
     ) => () => void;
   } => ({
     publish: async (input, ...params) => {
+      if (!publisher) {
+        throw new Error('publisher not provided');
+      }
+
       schema?.parse(input);
 
       const channelName =
@@ -47,9 +60,19 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
       return publisher.publish(channelName, superjson.stringify(input));
     },
     subscribe: (
-      { onData, onParsingError, onSubscribeError, onSubscription, onDeserializationError },
+      {
+        onData,
+        onParsingError,
+        onSubscribeError,
+        onSubscription,
+        onDeserializationError,
+      },
       ...params
     ) => {
+      if (!subscriber) {
+        throw new Error('subscriber not provided');
+      }
+
       const channelName =
         typeof channelNamer === 'string'
           ? channelNamer
@@ -71,7 +94,7 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
               console.warn(err);
               return;
             }
-            
+
             onDeserializationError?.(err);
             return;
           }

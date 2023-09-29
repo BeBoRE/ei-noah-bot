@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import channelCreator from 'zod-redis-pubsub/channel';
 
 import {
   addUserSchema,
@@ -6,8 +7,6 @@ import {
   lobbyChangeSchema,
   removeUserSchema,
 } from '@ei/lobby';
-
-import channelCreator from 'zod-redis-pubsub';
 
 const redisUrl = process.env.REDIS_URL;
 

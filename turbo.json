@@ -40,7 +40,13 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts", ".expo/**", "dist/**"]
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "next-env.d.ts",
+        ".expo/**",
+        "dist/**"
+      ]
     },
     "db:push": { "inputs": ["migrations/**"], "cache": false },
     "db:create": {
