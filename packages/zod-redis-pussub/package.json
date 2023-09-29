@@ -28,6 +28,7 @@
     "email": "ayrton@bebore.com"
   },
   "scripts": {
+    "clean": "rm -rf .turbo node_modules dist",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:typecheck": "tsc --noEmit",

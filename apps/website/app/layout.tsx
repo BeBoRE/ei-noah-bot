@@ -3,7 +3,9 @@ import { Inter } from 'next/font/google';
 
 import '../styles/globals.css';
 
+import { getServerSession } from 'next-auth';
 import TRPCReactProvider from './providers';
+import { authOptions } from './api/auth/[...nextauth]/route';
 
 const fontSans = Inter({
   subsets: ['latin'],
@@ -25,7 +27,9 @@ type Props = {
   children: React.ReactNode;
 };
 
-export default function Layout({ children }: Props) {
+export default async function Layout({ children }: Props) {
+  const session = await getServerSession(authOptions);
+
   return (
     <html
       lang="en"
@@ -33,9 +37,9 @@ export default function Layout({ children }: Props) {
     >
       <link rel="icon" href="/favicon.ico" sizes="any" />
       <body
-        className={['font-sans', fontSans.variable, 'flex-1', 'flex'].join(' ')}
+        className={['font-sans', fontSans.variable, 'flex-1', 'flex', 'flex-col'].join(' ')}
       >
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <TRPCReactProvider session={session}>{children}</TRPCReactProvider>
       </body>
     </html>
   );

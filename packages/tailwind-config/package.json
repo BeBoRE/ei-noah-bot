@@ -5,6 +5,9 @@
     "index.ts",
     "postcss.js"
   ],
+  "scripts": {
+    "clean": "rm -rf .turbo node_modules"
+  },
   "private": true,
   "devDependencies": {
     "@ei/tsconfig": "*",

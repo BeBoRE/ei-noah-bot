@@ -47,6 +47,9 @@
       "inputs": ["entity/**"],
       "outputs": ["migrations/**"],
       "cache": false
+    },
+    "clean": {
+      "cache": false
     }
   }
 }

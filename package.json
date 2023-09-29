@@ -7,6 +7,7 @@
   "packageManager": "pnpm@8.6.9",
   "scripts": {
     "clean": "git clean -xdf node_modules",
+    "clean:workspaces": "turbo clean",
     "dev": "dotenv -- turbo dev",
     "start": "dotenv -- turbo start --filter=bot --filter=website",
     "build": "dotenv -- turbo build",

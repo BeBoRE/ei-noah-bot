@@ -4,6 +4,7 @@
   "main": "index.tsx",
   "private": true,
   "scripts": {
+    "clean": "rm -rf .turbo node_modules .expo",
     "dev": "expo start -c",
     "update": "eas update --auto",
     "lint": "eslint .",

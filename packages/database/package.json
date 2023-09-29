@@ -4,6 +4,7 @@
   "types": "index.ts",
   "private": true,
   "scripts": {
+    "clean": "rm -rf .turbo node_modules",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:typecheck": "tsc --noEmit",

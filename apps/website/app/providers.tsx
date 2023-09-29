@@ -13,6 +13,8 @@ import {
 } from '@trpc/client';
 import superjson from 'superjson';
 
+import { Session } from 'next-auth';
+import { SessionProvider } from 'next-auth/react';
 import { api } from '../utils/api';
 
 const getBaseUrl = () => {
@@ -38,9 +40,10 @@ const getWsUrl = () => {
 
 type Props = {
   children: React.ReactNode;
+  session: Session | null;
 };
 
-export default function TRPCReactProvider({ children }: Props) {
+export default function TRPCReactProvider({ children, session }: Props) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -81,13 +84,15 @@ export default function TRPCReactProvider({ children }: Props) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ReactQueryStreamedHydration>
-        <api.Provider client={trpcClient} queryClient={queryClient}>
-          {children}
-        </api.Provider>
-      </ReactQueryStreamedHydration>
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+    <SessionProvider session={session}>
+      <QueryClientProvider client={queryClient}>
+        <ReactQueryStreamedHydration>
+          <api.Provider client={trpcClient} queryClient={queryClient}>
+            {children}
+          </api.Provider>
+        </ReactQueryStreamedHydration>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </SessionProvider>
   );
 }
