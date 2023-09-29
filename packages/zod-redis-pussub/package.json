@@ -1,13 +1,24 @@
 {
   "name": "zod-redis-pubsub",
   "description": "A simple redis pubsub with zod validation",
+  "homepage": "https://github.com/BeBoRE/ei-noah-bot/tree/master/packages/zod-redis-pussub#typesafe-redis-pubsub-channels",
+  "author": {
+    "name": "Ayrton-Taede Tromp",
+    "email": "ayrton@bebore.com",
+    "url": "https://bebore.com"
+  },
   "keywords": [
     "redis",
     "pubsub",
     "zod",
     "validation"
   ],
-  "version": "1.1.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BeBoRE/ei-noah-bot.git",
+    "directory": "packages/zod-redis-pussub"
+  },
+  "version": "1.1.2",
   "main": "./dist/channel.js",
   "module": "./dist/channel.mjs",
   "types": "./dist/channel.d.ts",

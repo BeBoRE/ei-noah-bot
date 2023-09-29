@@ -1,5 +1,11 @@
 # zod-redis-pubsub
 
+## 1.1.2
+
+### Patch Changes
+
+- Added more metadata
+
 ## 1.1.1
 
 ### Patch Changes
