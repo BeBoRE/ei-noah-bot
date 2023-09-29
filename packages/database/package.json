@@ -14,22 +14,22 @@
   "dependencies": {
     "@auth/mikro-orm-adapter": "^1.0.1",
     "@ei/tsconfig": "*",
-    "@mikro-orm/cli": "^5.7.13",
-    "@mikro-orm/core": "^5.7.13",
-    "@mikro-orm/knex": "^5.7.13",
-    "@mikro-orm/migrations": "^5.7.13",
-    "@mikro-orm/postgresql": "^5.7.13",
-    "@mikro-orm/reflection": "^5.7.13",
-    "dotenv": "^8.2.0",
+    "@mikro-orm/cli": "^5.8.4",
+    "@mikro-orm/core": "^5.8.4",
+    "@mikro-orm/knex": "^5.8.4",
+    "@mikro-orm/migrations": "^5.8.4",
+    "@mikro-orm/postgresql": "^5.8.4",
+    "@mikro-orm/reflection": "^5.8.4",
+    "dotenv": "^8.6.0",
     "webpack-env": "^0.8.0"
   },
   "devDependencies": {
     "@mikro-orm/cli": "^5.7.13",
-    "@mikro-orm/entity-generator": "^5.7.13",
-    "@types/webpack-env": "^1.18.1",
-    "eslint": "^8.46.0",
+    "@mikro-orm/entity-generator": "^5.8.4",
+    "@types/webpack-env": "^1.18.2",
+    "eslint": "^8.50.0",
     "ts-node": "^10.9.1",
-    "typescript": "^5.1.6"
+    "typescript": "^5.2.2"
   },
   "mikro-orm": {
     "useTsNode": true,
