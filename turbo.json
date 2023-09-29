@@ -21,6 +21,7 @@
     "CI",
     "APP_VARIANT",
     "REDIS_URL",
+    "REDIS_PASSWORD",
     "PORT"
   ],
   "pipeline": {
