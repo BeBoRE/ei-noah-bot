@@ -1,9 +1,10 @@
 /* eslint-disable no-underscore-dangle */
 import { MikroORM, PostgreSqlDriver } from '@mikro-orm/postgresql';
 
-import options from './mikro-orm.config';
+import { MikroOrmAdapter } from '@auth/mikro-orm-adapter';
+import mikroOrmOptions from './mikro-orm.config';
 
-export default options;
+export default mikroOrmOptions;
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 declare namespace global {
@@ -11,9 +12,11 @@ declare namespace global {
   let __MikroORM__: MikroORM;
 }
 
+export const adapter = MikroOrmAdapter(mikroOrmOptions)
+
 const getOrm = async (): Promise<MikroORM> => {
   if (!global.__MikroORM__) {
-    global.__MikroORM__ = await MikroORM.init<PostgreSqlDriver>(options).catch(
+    global.__MikroORM__ = await MikroORM.init<PostgreSqlDriver>(mikroOrmOptions).catch(
       (err) => {
         console.log(err);
         process.exit(-1);

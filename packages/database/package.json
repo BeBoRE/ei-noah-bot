@@ -12,6 +12,7 @@
     "db:create": "mikro-orm migration:create"
   },
   "dependencies": {
+    "@auth/mikro-orm-adapter": "^1.0.1",
     "@ei/tsconfig": "*",
     "@mikro-orm/cli": "^5.7.13",
     "@mikro-orm/core": "^5.7.13",
@@ -26,8 +27,8 @@
     "@mikro-orm/cli": "^5.7.13",
     "@mikro-orm/entity-generator": "^5.7.13",
     "@types/webpack-env": "^1.18.1",
-    "ts-node": "^10.9.1",
     "eslint": "^8.46.0",
+    "ts-node": "^10.9.1",
     "typescript": "^5.1.6"
   },
   "mikro-orm": {

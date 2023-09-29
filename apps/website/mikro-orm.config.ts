@@ -1,3 +1,3 @@
-import options from '@ei/database';
+import mikroOrmOptions from '@ei/database';
 
-export default options;
+export default mikroOrmOptions;

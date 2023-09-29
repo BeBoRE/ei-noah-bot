@@ -1,7 +1,11 @@
 import NextAuth, { AuthOptions } from "next-auth"
 import DiscordProvider from "next-auth/providers/discord"
+import { MikroOrmAdapter } from '@auth/mikro-orm-adapter'
+import mikroOrmOptions from "@ei/database"
 
 if (!process.env.CLIENT_ID) {
+  console.log(process.env)
+
   throw new Error("Missing env variable CLIENT_ID")
 }
 
@@ -15,7 +19,10 @@ export const authOptions : AuthOptions = {
       clientId: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET
     })
-  ]
+  ],
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore This gets fixed in later versions of next-auth
+  adapter: MikroOrmAdapter(mikroOrmOptions)
 }
 
 
