@@ -1,3 +1,7 @@
+# Typesafe Redis Pub/Sub channels
+
+[![npm version](https://badge.fury.io/js/zod-redis-pubsub.svg)](https://badge.fury.io/js/zod-redis-pubsub)
+
 Allows for the creation of typesafe Redis Pub/Sub channels. This is does this by using the [Zod](https://zod.dev/) library to validate the data being sent to and being received from Redis. Data is (de)serialized using [SuperJSON](https://www.npmjs.com/package/superjson) allowing us to easily send types like `Date` and `BigInt` over the wire.
 
 ## Installation
