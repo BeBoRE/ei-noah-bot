@@ -12,8 +12,9 @@ type ChannelNamer = (...params: string[]) => string;
 interface SubscribeOptions<T extends ZodType<unknown>> {
   onData: (data: z.output<T>) => void;
   onSubscription?: () => void;
-  onParsingError?: (err: Error) => void;
-  onSubscribeError?: (err: z.ZodError<T> | Error) => void;
+  onParsingError?: (err: z.ZodError<T>) => void;
+  onDeserializationError?: (err: Error) => void;
+  onSubscribeError?: (err: Error) => void;
 }
 
 const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
@@ -46,7 +47,7 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
       return publisher.publish(channelName, superjson.stringify(input));
     },
     subscribe: (
-      { onData, onParsingError, onSubscribeError, onSubscription },
+      { onData, onParsingError, onSubscribeError, onSubscription, onDeserializationError },
       ...params
     ) => {
       const channelName =
@@ -66,12 +67,12 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
               return;
             }
 
-            if (!onParsingError) {
+            if (!onDeserializationError) {
               console.warn(err);
               return;
             }
-
-            onParsingError(err);
+            
+            onDeserializationError?.(err);
             return;
           }
 
@@ -88,7 +89,8 @@ const channelCreator = ({ publisher, subscriber }: ChannelCreatorOptions) => {
               return;
             }
 
-            onParsingError(data.error);
+            // TODO: figure out how to type this
+            onParsingError(data.error as z.ZodError<T>);
             return;
           }
 
