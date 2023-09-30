@@ -1,0 +1,8 @@
+{
+  "extends": "@ei/tsconfig/base.json",
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "rootDir": "./",
+  }
+}
