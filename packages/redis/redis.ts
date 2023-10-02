@@ -25,7 +25,7 @@ export const {
 } = lobbyUpdateChannel;
 
 export const lobbyRefreshChannel = createChannel(
-  (userId) => `user:${userId}:refresh`,
+  (userId: string) => `user:${userId}:refresh`,
 );
 export const {
   publish: publishLobbyRefresh,
@@ -33,7 +33,7 @@ export const {
 } = lobbyRefreshChannel;
 
 export const clientLobbyChangesChannel = createChannel(
-  (userId) => `user:${userId}:clientChangeLobby`,
+  (userId: string) => `user:${userId}:clientChangeLobby`,
   clientChangeLobbySchema,
 );
 export const {
@@ -42,14 +42,14 @@ export const {
 } = clientLobbyChangesChannel;
 
 export const removeUserChannel = createChannel(
-  (userId) => `user:${userId}:removeUser`,
+  (userId: string) => `user:${userId}:removeUser`,
   removeUserSchema,
 );
 export const { publish: publishRemoveUser, subscribe: subscribeToRemoveUser } =
   removeUserChannel;
 
 export const addUserChannel = createChannel(
-  (userId) => `user:${userId}:addUser`,
+  (userId: string) => `user:${userId}:addUser`,
   addUserSchema,
 );
 export const { publish: publishAddUser, subscribe: subscribeToAddUser } =

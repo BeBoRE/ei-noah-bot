@@ -2,7 +2,7 @@ import { Redis } from 'ioredis';
 import superjson from 'superjson';
 import { z, ZodType } from 'zod';
 
-type ChannelNamer = (...params: string[]) => string;
+type ChannelNamer<P extends unknown[]> = (...params: P[]) => string;
 
 interface SubscribeOptions<T extends ZodType<unknown>> {
   onData: (data: z.output<T>) => void;
@@ -25,39 +25,45 @@ type ChannelCreatorOptions =
   | WithPublisher
   | (WithSubscriber & WithPublisher);
 
-type Publisher<T extends ZodType<unknown>, CN extends ChannelNamer | string> = (
+type Publisher<
+  T extends ZodType<unknown>,
+  CN extends ChannelNamer<P> | string,
+  P extends CN extends ChannelNamer<P> ? unknown[] : never,
+> = (
   data: z.input<T>,
-  ...params: CN extends ChannelNamer ? Parameters<CN> : []
+  ...params: CN extends ChannelNamer<P> ? Parameters<CN> : []
 ) => Promise<number>;
 
 type Subscriber<
   T extends ZodType<unknown>,
-  CN extends ChannelNamer | string,
+  CN extends ChannelNamer<P> | string,
+  P extends CN extends ChannelNamer<P> ? unknown[] : never,
 > = (
   options: SubscribeOptions<T>,
-  ...params: CN extends ChannelNamer ? Parameters<CN> : []
+  ...params: CN extends ChannelNamer<P> ? Parameters<CN> : []
 ) => () => void;
 
 const channelCreator = <CCO extends ChannelCreatorOptions>(options: CCO) => {
   const createChannel = <
     T extends ZodType<unknown>,
-    CN extends ChannelNamer | string,
+    CN extends ChannelNamer<P> | string,
+    P extends CN extends ChannelNamer<P> ? unknown[] : never,
   >(
     channelNamer: CN,
     schema?: T,
   ): CCO extends WithPublisher
     ? CCO extends WithSubscriber
       ? {
-          publish: Publisher<T, CN>;
-          subscribe: Subscriber<T, CN>;
+          publish: Publisher<T, CN, P>;
+          subscribe: Subscriber<T, CN, P>;
         }
       : {
-          publish: Publisher<T, CN>;
+          publish: Publisher<T, CN, P>;
         }
     : {
-        subscribe: CCO extends WithSubscriber ? Subscriber<T, CN> : never;
+        subscribe: CCO extends WithSubscriber ? Subscriber<T, CN, P> : never;
       } => {
-    const publish: Publisher<T, CN> | undefined =
+    const publish: Publisher<T, CN, P> | undefined =
       'publisher' in options
         ? async (input, ...params) => {
             if (!options.publisher) {
@@ -80,7 +86,7 @@ const channelCreator = <CCO extends ChannelCreatorOptions>(options: CCO) => {
           }
         : undefined;
 
-    const subscribe: Subscriber<T, CN> | undefined =
+    const subscribe: Subscriber<T, CN, P> | undefined =
       'subscriber' in options
         ? (
             {
