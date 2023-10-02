@@ -3,6 +3,6 @@
   "include": ["**/*.ts"],
   "exclude": ["node_modules"],
   "compilerOptions": {
-    "rootDir": "./",
+    "rootDir": "./"
   }
 }

@@ -1,5 +1,5 @@
-import type { Config } from 'drizzle-kit'
-import { ClientConfig } from 'pg'
+import type { Config } from 'drizzle-kit';
+import { ClientConfig } from 'pg';
 
 export const clientConfig = {
   database: process.env.DBNAME || 'ei-noah',
@@ -7,13 +7,13 @@ export const clientConfig = {
   port: process.env.DBPORT ? +process.env.DBPORT : 5432,
   user: process.env.DBUSER || 'ei-noah',
   password: process.env.DBPASSWORD || undefined,
-} satisfies ClientConfig
+} satisfies ClientConfig;
 
-const config : Config = {
+const config: Config = {
   schema: './schema.ts',
   out: './tables',
   driver: 'pg',
-  dbCredentials: clientConfig
-}
+  dbCredentials: clientConfig,
+};
 
-export default config
+export default config;

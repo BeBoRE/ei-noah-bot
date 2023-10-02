@@ -108,12 +108,8 @@
           "name": "custom_role_owner_id_foreign",
           "tableFrom": "custom_role",
           "tableTo": "guild_user",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "cascade"
         },
@@ -121,12 +117,8 @@
           "name": "custom_role_guild_id_foreign",
           "tableFrom": "custom_role",
           "tableTo": "guild",
-          "columnsFrom": [
-            "guild_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["guild_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "cascade"
         }
@@ -209,12 +201,8 @@
           "name": "guild_user_guild_id_foreign",
           "tableFrom": "guild_user",
           "tableTo": "guild",
-          "columnsFrom": [
-            "guild_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["guild_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "cascade"
         },
@@ -222,12 +210,8 @@
           "name": "guild_user_user_id_foreign",
           "tableFrom": "guild_user",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "cascade"
         }
@@ -235,10 +219,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "guild_user_guild_id_user_id_unique": {
-          "columns": [
-            "guild_id",
-            "user_id"
-          ],
+          "columns": ["guild_id", "user_id"],
           "nullsNotDistinct": false,
           "name": "guild_user_guild_id_user_id_unique"
         }
@@ -276,9 +257,7 @@
       "indexes": {
         "lobby_name_change_guild_user_id_index": {
           "name": "lobby_name_change_guild_user_id_index",
-          "columns": [
-            "guild_user_id"
-          ],
+          "columns": ["guild_user_id"],
           "isUnique": false
         }
       },
@@ -287,12 +266,8 @@
           "name": "lobby_name_change_guild_user_id_foreign",
           "tableFrom": "lobby_name_change",
           "tableTo": "guild_user",
-          "columnsFrom": [
-            "guild_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["guild_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "cascade"
         }
@@ -341,12 +316,8 @@
           "name": "quote_guild_user_id_foreign",
           "tableFrom": "quote",
           "tableTo": "guild_user",
-          "columnsFrom": [
-            "guild_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["guild_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "cascade"
         },
@@ -354,12 +325,8 @@
           "name": "quote_creator_id_foreign",
           "tableFrom": "quote",
           "tableTo": "guild_user",
-          "columnsFrom": [
-            "creator_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["creator_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "cascade"
         }
@@ -414,12 +381,8 @@
           "name": "temp_channel_guild_user_id_foreign",
           "tableFrom": "temp_channel",
           "tableTo": "guild_user",
-          "columnsFrom": [
-            "guild_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["guild_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "cascade"
         }
@@ -427,9 +390,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "temp_channel_guild_user_id_unique": {
-          "columns": [
-            "guild_user_id"
-          ],
+          "columns": ["guild_user_id"],
           "nullsNotDistinct": false,
           "name": "temp_channel_guild_user_id_unique"
         }
@@ -552,9 +513,7 @@
       "indexes": {
         "user_birthday_index": {
           "name": "user_birthday_index",
-          "columns": [
-            "birthday"
-          ],
+          "columns": ["birthday"],
           "isUnique": false
         }
       },
