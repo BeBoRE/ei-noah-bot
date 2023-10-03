@@ -2403,7 +2403,9 @@ const createRedisSubscriptionListeners = (
 
     if (data.name) tempChannel.name = data.name;
 
-    changeLobby(
+    await em.flush();
+
+    await changeLobby(
       {
         tempChannel,
         voiceChannel,
