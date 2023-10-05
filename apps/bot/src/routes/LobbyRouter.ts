@@ -1,7 +1,4 @@
-/* eslint-disable no-param-reassign */
 import Expo from 'expo-server-sdk';
-import { UniqueConstraintViolationException } from '@mikro-orm/core';
-import { EntityManager } from '@mikro-orm/postgresql';
 import { ComponentType, OverwriteType } from 'discord-api-types/v9';
 import {
   ActionRowBuilder,
@@ -43,17 +40,36 @@ import {
   User,
   VoiceChannel,
 } from 'discord.js';
+import {
+  and,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  ne,
+  or,
+  sql,
+} from 'drizzle-orm';
 import emojiRegex from 'emoji-regex';
 import i18next, { i18n as I18n } from 'i18next';
 import moment, { Duration } from 'moment';
 import { Logger } from 'winston';
 
-import { Category } from '@ei/database/entity/Category';
-import { Guild } from '@ei/database/entity/Guild';
-import { GuildUser } from '@ei/database/entity/GuildUser';
-import LobbyNameChange from '@ei/database/entity/LobbyNameChange';
-import TempChannel from '@ei/database/entity/TempChannel';
-import { User as DbUser } from '@ei/database/entity/User';
+import { DrizzleClient } from '@ei/drizzle';
+import {
+  categories,
+  Category,
+  User as DbUser,
+  Guild,
+  guilds,
+  GuildUser,
+  guildUsers,
+  lobbyNameChanges,
+  TempChannel,
+  tempChannels,
+  users,
+} from '@ei/drizzle/tables/schema';
 import {
   AddUser,
   ChannelType,
@@ -136,7 +152,7 @@ function getMaxBitrate(guild: DiscordGuild): number {
 async function createTempChannel(
   guild: DiscordGuild,
   parent: Snowflake,
-  users: Array<DiscordUser | Role>,
+  userList: Array<DiscordUser | Role>,
   owner: GuildMember,
   bitrate: number,
   type: ChannelType,
@@ -144,7 +160,7 @@ async function createTempChannel(
   userLimit = 0,
 ) {
   const userSnowflakes = [
-    ...new Set([...users.map((user) => user.id), owner.id]),
+    ...new Set([...userList.map((user) => user.id), owner.id]),
   ];
 
   const permissionOverwrites: OverwriteData[] = userSnowflakes.map((id) => ({
@@ -200,11 +216,10 @@ async function createTempChannel(
 
 async function activeTempChannel(
   client: Client,
-  em: EntityManager,
-  tempChannel?: TempChannel,
+  drizzle: DrizzleClient,
+  tempChannel?: Pick<TempChannel, 'channelId'>,
 ): Promise<VoiceChannel | null> {
   if (!tempChannel) return null;
-  if (!tempChannel.isInitialized()) await tempChannel.init();
 
   try {
     const activeChannel = await client.channels.fetch(
@@ -217,7 +232,9 @@ async function activeTempChannel(
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.status === 404) {
-        em.remove(tempChannel);
+        drizzle
+          .delete(tempChannels)
+          .where(eq(tempChannels.channelId, tempChannel.channelId));
         return null;
       }
       throw Error('Unknown Discord API Error');
@@ -229,7 +246,8 @@ async function activeTempChannel(
 
 async function activeTempText(
   client: Client,
-  tempChannel: TempChannel,
+  drizzle: DrizzleClient,
+  tempChannel?: TempChannel,
 ): Promise<VoiceChannel | TextChannel | null> {
   if (!tempChannel || !tempChannel.textChannelId) return null;
 
@@ -247,7 +265,9 @@ async function activeTempText(
   } catch (err) {
     if (err instanceof DiscordAPIError) {
       if (err.status === 404) {
-        tempChannel.textChannelId = undefined;
+        drizzle
+          .delete(tempChannels)
+          .where(eq(tempChannels.channelId, tempChannel.channelId));
         return null;
       }
       throw Error('Unknown Discord API Error');
@@ -300,15 +320,10 @@ function getTextPermissionOverwrites(
 
 async function createTextChannel(
   client: Client,
-  em: EntityManager,
-  tempChannel: TempChannel,
+  voiceChannel: VoiceChannel,
   owner: GuildMember,
+  name: string | null,
 ): Promise<VoiceChannel | TextChannel> {
-  const voiceChannel = await activeTempChannel(client, em, tempChannel);
-  if (!voiceChannel) throw Error('There is no active temp channel');
-
-  if (tempChannel.channelId === tempChannel.textChannelId) return voiceChannel;
-
   const permissionOverwrites: OverwriteData[] = [
     ...getTextPermissionOverwrites(voiceChannel, client),
     {
@@ -318,20 +333,20 @@ async function createTextChannel(
     },
   ];
 
-  const name = generateLobbyName(
+  const generatedName = generateLobbyName(
     getChannelType(voiceChannel),
     owner,
-    tempChannel.name,
+    name,
     true,
   );
 
-  if (!name) throw new Error('Invalid Name');
+  if (!generatedName) throw new Error('Invalid Name');
 
   return voiceChannel.guild.channels.create({
     type: DiscordChannelType.GuildText,
     parent: voiceChannel.parent || undefined,
     permissionOverwrites,
-    name: name.full,
+    name: generatedName.full,
   });
 }
 
@@ -357,7 +372,7 @@ const createCreateChannel = (type: ChannelType, category: CategoryChannel) => {
   });
 };
 
-const getChannel = (client: Client, channelId?: string) =>
+const getChannel = (client: Client, channelId?: string | null) =>
   new Promise<null | Channel>((resolve) => {
     if (!channelId) {
       resolve(null);
@@ -370,7 +385,11 @@ const getChannel = (client: Client, channelId?: string) =>
       .finally(() => resolve(null));
   });
 
-const createCreateChannels = async (category: Category, client: Client) => {
+const createCreateChannels = async (
+  category: Category,
+  drizzle: DrizzleClient,
+  client: Client,
+) => {
   const actualCategory = await client.channels.fetch(`${BigInt(category.id)}`, {
     cache: true,
   });
@@ -379,13 +398,11 @@ const createCreateChannels = async (category: Category, client: Client) => {
   let publicVoice = await getChannel(client, category.publicVoice);
   if (publicVoice === null) {
     publicVoice = await createCreateChannel(ChannelType.Public, actualCategory);
-    category.publicVoice = publicVoice.id;
   }
 
   let muteVoice = await getChannel(client, category.muteVoice);
   if (muteVoice === null) {
     muteVoice = await createCreateChannel(ChannelType.Mute, actualCategory);
-    category.muteVoice = muteVoice.id;
   }
 
   let privateVoice = await getChannel(client, category.privateVoice);
@@ -394,8 +411,25 @@ const createCreateChannels = async (category: Category, client: Client) => {
       ChannelType.Nojoin,
       actualCategory,
     );
-    category.privateVoice = privateVoice.id;
   }
+
+  await drizzle
+    .update(categories)
+    .set({
+      publicVoice: publicVoice.id,
+      muteVoice: muteVoice.id,
+      privateVoice: privateVoice.id,
+    })
+    .where(
+      and(
+        eq(categories.id, category.id),
+        or(
+          ne(categories.publicVoice, publicVoice.id),
+          ne(categories.muteVoice, muteVoice.id),
+          ne(categories.privateVoice, privateVoice.id),
+        ),
+      ),
+    );
 };
 
 interface AddUsersResponse {
@@ -405,14 +439,19 @@ interface AddUsersResponse {
   alreadyInMessage: string;
   text: string;
 }
-const addUsers = async (
-  toAllow: Array<DiscordUser | Role>,
-  activeChannel: VoiceChannel,
-  owner: GuildUser,
-  client: Client,
-  i18n?: I18n,
-  logger?: Logger,
-): Promise<AddUsersResponse> => {
+const addUsers = async ({
+  toAllow,
+  activeChannel,
+  textChannel,
+  i18n,
+  tempChannel,
+}: {
+  toAllow: Array<DiscordUser | Role>;
+  activeChannel: VoiceChannel;
+  textChannel: TextChannel | VoiceChannel | null;
+  i18n?: I18n;
+  tempChannel: TempChannel;
+}): Promise<AddUsersResponse> => {
   const allowedUsers: Array<DiscordUser | Role> = [];
   const alreadyAllowedUsers: Array<DiscordUser | Role> = [];
 
@@ -440,7 +479,7 @@ const addUsers = async (
     PermissionsBitField.Flags.ViewChannel,
   ];
 
-  if (owner.tempChannel?.textChannelId !== owner.tempChannel?.channelId)
+  if (tempChannel?.textChannelId !== tempChannel?.channelId)
     allow.push(PermissionsBitField.Flags.SendMessages);
 
   const newOverwrites: OverwriteResolvable[] = [
@@ -456,14 +495,13 @@ const addUsers = async (
   await activeChannel.permissionOverwrites
     .set(newOverwrites)
     .then(async (newChannel) => {
-      if (owner.tempChannel) {
-        const textChannel = await activeTempText(client, owner.tempChannel);
+      if (tempChannel) {
         if (textChannel && newChannel instanceof VoiceChannel) {
           updateTextChannel(newChannel, textChannel);
         }
       }
     })
-    .catch(() => logger && logger.error('Overwrite permission error'));
+    .catch(() => globalLogger.error('Overwrite permission error'));
 
   const allowedUsersMessage = i18n?.t('lobby.userAdded', {
     users: allowedUsers.map((u) => u.toString()),
@@ -491,7 +529,7 @@ const addUsers = async (
 
 router.use(
   'add',
-  async ({ params, msg, guildUser, em, flags, i18n, logger }) => {
+  async ({ params, msg, guildUser, drizzle, flags, i18n }) => {
     const nonUserOrRole = params.filter(
       (param) => !(param instanceof DiscordUser || param instanceof Role),
     );
@@ -512,32 +550,36 @@ router.use(
       return i18n.t('lobby.error.onlyMentions');
     }
 
-    if (!guildUser.tempChannel?.isInitialized())
-      await guildUser.tempChannel?.init();
+    const [tempChannel] = await drizzle
+      .select()
+      .from(tempChannels)
+      .where(eq(tempChannels.guildUserId, guildUser.id));
+
     const activeChannel = await activeTempChannel(
       msg.client,
-      em,
-      guildUser.tempChannel,
+      drizzle,
+      tempChannel,
     );
 
-    if (!activeChannel || !guildUser.tempChannel) {
+    const textChannel = await activeTempText(msg.client, drizzle, tempChannel);
+
+    if (!activeChannel || !tempChannel) {
       return i18n.t('lobby.error.noLobby');
     }
 
-    if (guildUser.tempChannel.textChannelId !== msg.channel.id) {
+    if (tempChannel.textChannelId !== msg.channel.id) {
       return i18n.t('lobby.error.useTextChannel', {
-        channel: guildUser.tempChannel.textChannelId,
+        channel: tempChannel.textChannelId,
       });
     }
 
-    return addUsers(
-      userOrRole,
+    return addUsers({
+      toAllow: userOrRole,
       activeChannel,
-      guildUser,
-      msg.client,
       i18n,
-      logger,
-    ).then((res) => res.text);
+      tempChannel,
+      textChannel,
+    }).then((res) => res.text);
   },
   HandlerType.GUILD,
   {
@@ -631,32 +673,40 @@ router.use(
 router.useContext(
   'Add To Lobby',
   ApplicationCommandType.User,
-  async ({ interaction, guildUser, em, i18n, logger }) => {
+  async ({ interaction, drizzle, i18n, getGuildUser }) => {
+    const guildUser =
+      interaction.guild &&
+      (await getGuildUser(interaction.user, interaction.guild));
+
     if (!guildUser) return i18n.t('error.onlyUsableOnGuild');
 
+    const [tempChannel] = await drizzle
+      .select()
+      .from(tempChannels)
+      .where(eq(tempChannels.guildUserId, guildUser.id));
+
     const activeChannel =
-      guildUser.tempChannel &&
-      (await activeTempChannel(interaction.client, em, guildUser.tempChannel));
-    if (!guildUser.tempChannel || !activeChannel)
-      return i18n.t('lobby.error.noLobby');
+      tempChannel &&
+      (await activeTempChannel(interaction.client, drizzle, tempChannel));
+    if (!tempChannel || !activeChannel) return i18n.t('lobby.error.noLobby');
+
+    const textChannel = await activeTempText(
+      interaction.client,
+      drizzle,
+      tempChannel,
+    );
 
     const userToAdd = interaction.options.getUser('user', true);
 
-    const addResponse = await addUsers(
-      [userToAdd],
+    const addResponse = await addUsers({
+      tempChannel,
+      toAllow: [userToAdd],
       activeChannel,
-      guildUser,
-      interaction.client,
+      textChannel,
       i18n,
-      logger,
-    );
+    });
 
-    if (interaction.channel?.id !== guildUser.tempChannel.textChannelId) {
-      const textChannel = await activeTempText(
-        interaction.client,
-        guildUser.tempChannel,
-      );
-
+    if (interaction.channel?.id !== tempChannel.textChannelId) {
       if (
         addResponse.allowedUsersOrRoles.length &&
         interaction.channel?.id !== textChannel?.id &&
@@ -685,6 +735,7 @@ const removeFromLobby = async (
   channelOwner: DiscordUser,
   tempChannel: TempChannel,
   i18n: I18n,
+  drizzle: DrizzleClient,
 ) => {
   if (getChannelType(channel) === ChannelType.Public) {
     return i18n.t('lobby.error.noRemoveInPublic');
@@ -815,7 +866,7 @@ const removeFromLobby = async (
 
   await Promise.all(deletePromises).then(() => {
     if (tempChannel) {
-      const tempText = activeTempText(channel.client, tempChannel);
+      const tempText = activeTempText(channel.client, drizzle, tempChannel);
       tempText.then((text) => {
         if (text) updateTextChannel(channel, text);
       });
@@ -827,11 +878,11 @@ const removeFromLobby = async (
 
 router.use(
   'remove',
-  async ({ params, msg, guildUser, em, flags, i18n }) => {
+  async ({ params, msg, guildUser, drizzle, flags, i18n }) => {
     const nonUsersOrRoles = params.filter(
       (param) => !(param instanceof DiscordUser || param instanceof Role),
     );
-    const users = params.filter(
+    const userList = params.filter(
       (param): param is DiscordUser => param instanceof DiscordUser,
     );
     const roles = params.filter(
@@ -842,7 +893,7 @@ router.use(
     flags.forEach((value) => {
       const [user] = value;
 
-      if (user instanceof User) users.push(user);
+      if (user instanceof User) userList.push(user);
       if (user instanceof Role) roles.push(user);
     });
 
@@ -850,32 +901,35 @@ router.use(
       return i18n.t('lobby.error.onlyMentions');
     }
 
-    if (guildUser.tempChannel?.isInitialized())
-      await guildUser.tempChannel.init();
+    const [tempChannel] = await drizzle
+      .select()
+      .from(tempChannels)
+      .where(eq(tempChannels.guildUserId, guildUser.id));
 
     const activeChannel = await activeTempChannel(
       msg.client,
-      em,
-      guildUser.tempChannel,
+      drizzle,
+      tempChannel,
     );
 
-    if (!activeChannel || !guildUser.tempChannel || !guildUser.tempChannel) {
+    if (!activeChannel || !tempChannel) {
       return i18n.t('lobby.error.noLobby');
     }
 
-    if (guildUser.tempChannel.textChannelId !== msg.channel.id) {
+    if (tempChannel.textChannelId !== msg.channel.id) {
       return i18n.t('lobby.error.useTextChannel', {
-        channel: guildUser.tempChannel.textChannelId,
+        channel: tempChannel.textChannelId,
       });
     }
 
     return removeFromLobby(
       activeChannel,
-      users,
+      userList,
       roles,
       requestingUser,
-      guildUser.tempChannel,
+      tempChannel,
       i18n,
+      drizzle,
     );
   },
   HandlerType.GUILD,
@@ -969,13 +1023,14 @@ router.use(
 
 const generateComponents = async (
   voiceChannel: VoiceChannel,
-  em: EntityManager,
+  drizzle: DrizzleClient,
   guildUser: GuildUser,
   owner: GuildMember,
   i18n: I18n,
 ): Promise<ActionRowBuilder<MessageActionRowComponentBuilder>[]> => {
   const currentType = getChannelType(voiceChannel);
 
+  /*
   const query = em
     .createQueryBuilder(LobbyNameChange, 'lnc')
     .where({ guildUser })
@@ -985,9 +1040,21 @@ const generateComponents = async (
     .orderBy('date', 'desc')
     .limit(25);
 
-  const latestNameChanges = await em
-    .getConnection()
-    .execute<LobbyNameChange[]>(query);
+    const latestNameChanges = await em
+      .getConnection()
+      .execute<LobbyNameChange[]>(query);
+  */
+
+  const latestNameChanges = await drizzle
+    .select({
+      name: lobbyNameChanges.name,
+      date: sql`max(${lobbyNameChanges.date}) as date`,
+    })
+    .from(lobbyNameChanges)
+    .where(eq(lobbyNameChanges.guildUserId, guildUser.id))
+    .groupBy(lobbyNameChanges.name)
+    .orderBy(desc(sql`date`))
+    .limit(25);
 
   const selectMenu = new StringSelectMenuBuilder();
   selectMenu.setCustomId('name');
@@ -1142,51 +1209,53 @@ const pushLobbyToUser = (
   } | null,
 ) => {
   globalLogger.debug('pushing lobby to user');
-  publishLobbyUpdate(
-    !data
-      ? null
-      : {
-          user: {
-            id: user.id,
-            displayName: data.member.displayName,
-          },
-          guild: {
-            id: data.guild.id,
-            name: data.guild.name,
-            icon: data.guild.iconURL({
+
+  const dataToSend = !data
+    ? null
+    : {
+        user: {
+          id: user.id,
+          displayName: data.member.displayName,
+        },
+        guild: {
+          id: data.guild.id,
+          name: data.guild.name,
+          icon: data.guild.iconURL({
+            forceStatic: true,
+            size: 512,
+            extension: 'png',
+          }),
+        },
+        channel: {
+          id: data.voiceChannel.id,
+          name: data.tempChannel.name || null,
+          type: getChannelType(data.voiceChannel),
+          limit: data.voiceChannel.userLimit,
+          lobbyNameChangeDate: data.timeTillLobbyChange
+            ? moment.now() + data.timeTillLobbyChange.asMilliseconds()
+            : null,
+        },
+        users: data.voiceChannel.members
+          .map((member) => ({
+            id: member.id,
+            avatar: member.user.displayAvatarURL({
               forceStatic: true,
-              size: 512,
+              size: 128,
               extension: 'png',
             }),
-          },
-          channel: {
-            id: data.voiceChannel.id,
-            name: data.tempChannel.name || null,
-            type: getChannelType(data.voiceChannel),
-            limit: data.voiceChannel.userLimit,
-            lobbyNameChangeDate: data.timeTillLobbyChange
-              ? moment.now() + data.timeTillLobbyChange.asMilliseconds()
-              : null,
-          },
-          users: data.voiceChannel.members
-            .map((member) => ({
-              id: member.id,
-              avatar: member.user.displayAvatarURL({
-                forceStatic: true,
-                size: 128,
-                extension: 'png',
-              }),
-              username: member.displayName,
-              isAllowed: data.voiceChannel.permissionOverwrites.cache.has(
-                member.id,
-              ),
-              isKickable:
-                member.id !== user.id && member.id !== member.client.user.id,
-            }))
-            .filter((u) => u.id !== user.id),
-        },
-    user.id,
-  );
+            username: member.displayName,
+            isAllowed: data.voiceChannel.permissionOverwrites.cache.has(
+              member.id,
+            ),
+            isKickable:
+              member.id !== user.id && member.id !== member.client.user.id,
+          }))
+          .filter((u) => u.id !== user.id),
+      };
+
+  globalLogger.debug('data to send', { dataToSend });
+
+  publishLobbyUpdate(dataToSend, user.id);
 };
 
 const changeLobby = (() => {
@@ -1198,7 +1267,7 @@ const changeLobby = (() => {
       voiceChannel: VoiceChannel;
       owner: GuildMember;
       guild: DiscordGuild;
-      em: EntityManager;
+      drizzle: DrizzleClient;
       i18n: I18n;
     },
     options?: {
@@ -1208,14 +1277,20 @@ const changeLobby = (() => {
       forcePermissionUpdate?: boolean;
     },
   ) => {
-    const { tempChannel, voiceChannel, owner, guild, em, i18n } =
+    const { tempChannel, voiceChannel, owner, guild, drizzle, i18n } =
       requiredOptions;
 
     const { changeTo, limit, forcePermissionUpdate, interaction } =
       options ?? {};
 
     const currentType = getChannelType(voiceChannel);
-    const textChannel = activeTempText(guild.client, tempChannel);
+    const textChannel = activeTempText(guild.client, drizzle, tempChannel);
+
+    const [guildUser] = await drizzle
+      .select()
+      .from(guildUsers)
+      .where(eq(guildUsers.userId, owner.id));
+
     const deny = toDeny(
       changeTo ?? currentType,
       voiceChannel.id !== (await textChannel)?.id,
@@ -1298,10 +1373,13 @@ const changeLobby = (() => {
 
     if (newName.full !== currentName) {
       if (tempChannel.name) {
-        const lobbyNameChange = new LobbyNameChange();
-        lobbyNameChange.name = tempChannel.name;
-        lobbyNameChange.guildUser = tempChannel.guildUser;
-        em.persist(lobbyNameChange);
+        await drizzle.insert(lobbyNameChanges).values([
+          {
+            name: tempChannel.name,
+            guildUserId: tempChannel.guildUserId,
+            date: new Date().toISOString(),
+          },
+        ]);
       }
 
       const timeout = timeouts.get(voiceChannel.id) ?? {
@@ -1337,7 +1415,7 @@ const changeLobby = (() => {
                 })
                 .catch(() => {});
 
-              if (tc?.type === DiscordChannelType.GuildText) {
+              if (tc?.type === DiscordChannelType.GuildText && guildUser) {
                 await tc
                   .setName(newTextName.full)
                   .then(() => {
@@ -1358,8 +1436,8 @@ const changeLobby = (() => {
                         )),
                         components: await generateComponents(
                           voiceChannel,
-                          em,
-                          tempChannel.guildUser,
+                          drizzle,
+                          guildUser,
                           owner,
                           i18n,
                         ),
@@ -1427,13 +1505,14 @@ const changeLobby = (() => {
     if (
       !(
         interaction &&
+        guildUser &&
         (await interaction
           .update({
             ...(<InteractionUpdateOptions>content),
             components: await generateComponents(
               voiceChannel,
-              em,
-              tempChannel.guildUser,
+              drizzle,
+              guildUser,
               owner,
               i18n,
             ),
@@ -1451,14 +1530,14 @@ const changeLobby = (() => {
           cache: true,
         })
         .catch(() => null);
-      if (msg) {
+      if (msg && guildUser) {
         msg
           .edit({
             ...(<MessageEditOptions>content),
             components: await generateComponents(
               voiceChannel,
-              em,
-              tempChannel.guildUser,
+              drizzle,
+              guildUser,
               owner,
               i18n,
             ),
@@ -1483,7 +1562,7 @@ const changeTypeHandler: GuildHandler = async ({
   params,
   msg,
   guildUser,
-  em,
+  drizzle,
   flags,
   i18n,
 }) => {
@@ -1496,22 +1575,25 @@ const changeTypeHandler: GuildHandler = async ({
     return i18n.t('error.onlyUsableOnGuild');
   }
   const lobbyOwner = guildUser;
-  if (lobbyOwner.tempChannel?.isInitialized())
-    await lobbyOwner.tempChannel.init();
+
+  const [tempChannel] = await drizzle
+    .select()
+    .from(tempChannels)
+    .where(eq(tempChannels.guildUserId, lobbyOwner.id));
 
   const activeChannel = await activeTempChannel(
     msg.client,
-    em,
-    lobbyOwner.tempChannel,
+    drizzle,
+    tempChannel,
   );
 
-  if (!activeChannel || !lobbyOwner.tempChannel) {
+  if (!activeChannel || !tempChannel) {
     return i18n.t('lobby.error.noLobby');
   }
 
-  if (lobbyOwner.tempChannel.textChannelId !== msg.channel.id) {
+  if (tempChannel.textChannelId !== msg.channel.id) {
     return i18n.t('lobby.error.useTextChannel', {
-      channel: lobbyOwner.tempChannel.textChannelId,
+      channel: tempChannel.textChannelId,
     });
   }
 
@@ -1551,11 +1633,11 @@ const changeTypeHandler: GuildHandler = async ({
 
   changeLobby(
     {
-      tempChannel: lobbyOwner.tempChannel,
+      tempChannel,
       voiceChannel: activeChannel,
       owner: requestingUser,
       guild: msg.guild,
-      em,
+      drizzle,
       i18n,
     },
     {
@@ -1590,24 +1672,29 @@ const sizeHandler: GuildHandler = async ({
   msg,
   guildUser,
   params,
-  em,
+  drizzle,
   flags,
   i18n,
 }) => {
+  const [tempChannel] = await drizzle
+    .select()
+    .from(tempChannels)
+    .where(eq(tempChannels.guildUserId, guildUser.id));
+
   const activeChannel = await activeTempChannel(
     msg.client,
-    em,
-    guildUser.tempChannel,
+    drizzle,
+    tempChannel,
   );
   const requestingUser = msg.member;
 
-  if (!guildUser.tempChannel || !activeChannel) {
+  if (!tempChannel || !activeChannel) {
     return i18n.t('lobby.error.noLobby');
   }
 
-  if (guildUser.tempChannel.textChannelId !== msg.channel.id) {
+  if (tempChannel.textChannelId !== msg.channel.id) {
     return i18n.t('lobby.error.useTextChannel', {
-      channel: guildUser.tempChannel.textChannelId,
+      channel: tempChannel.textChannelId,
     });
   }
 
@@ -1641,11 +1728,11 @@ const sizeHandler: GuildHandler = async ({
 
   await changeLobby(
     {
-      tempChannel: guildUser.tempChannel,
+      tempChannel,
       voiceChannel: activeChannel,
       owner: requestingUser,
       guild: msg.guild,
-      em,
+      drizzle,
       i18n,
     },
     {
@@ -1674,7 +1761,7 @@ router.use('userlimit', sizeHandler, HandlerType.GUILD);
 
 router.use(
   'lobby-category',
-  async ({ params, msg, flags, i18n, getCategory }) => {
+  async ({ params, msg, flags, i18n, drizzle, getCategory }) => {
     if (!msg.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
       return i18n.t('error.notAdmin');
     }
@@ -1706,14 +1793,22 @@ router.use(
     if (lobbyCategory.guild !== msg.guild)
       return i18n.t('lobby.error.lobbyNotInGuild');
 
-    const createCategoryData = getCategory(createCategory);
-    if ((await createCategoryData).lobbyCategory === lobbyCategory.id) {
-      (await createCategoryData).lobbyCategory = undefined;
+    const createCategoryData = await getCategory(createCategory);
+    if (createCategoryData.lobbyCategory === lobbyCategory.id) {
+      await drizzle
+        .update(categories)
+        .set({ lobbyCategory: null })
+        .where(eq(categories.id, createCategoryData.id));
+
       return i18n.t('lobby.removedLobbyCategory', {
         category: lobbyCategory.name,
       });
     }
-    (await createCategoryData).lobbyCategory = lobbyCategory.id;
+
+    await drizzle
+      .update(categories)
+      .set({ lobbyCategory: lobbyCategory.id })
+      .where(eq(categories.id, createCategoryData.id));
 
     return i18n.t('lobby.nowLobbyCategory', { category: lobbyCategory.name });
   },
@@ -1739,7 +1834,7 @@ router.use(
 
 router.use(
   'create-category',
-  async ({ params, msg, flags, i18n, getCategory }) => {
+  async ({ params, msg, flags, i18n, drizzle, getCategory }) => {
     if (!msg.client.user) throw new Error('msg.client.user not set somehow');
 
     let [category] = flags.get('category') || [null];
@@ -1782,7 +1877,7 @@ router.use(
       !categoryData.muteVoice ||
       !categoryData.privateVoice
     ) {
-      await createCreateChannels(categoryData, msg.client);
+      await createCreateChannels(categoryData, drizzle, msg.client);
 
       return i18n.t('lobby.nowLobbyCreateCategory', {
         category: category.name,
@@ -1801,9 +1896,14 @@ router.use(
       ),
     ])
       .then(async () => {
-        categoryData.publicVoice = undefined;
-        categoryData.privateVoice = undefined;
-        categoryData.muteVoice = undefined;
+        await drizzle
+          .update(categories)
+          .set({
+            publicVoice: null,
+            privateVoice: null,
+            muteVoice: null,
+          })
+          .where(eq(categories.id, categoryData.id));
 
         if (category instanceof CategoryChannel)
           i18n.t('lobby.removedCreateCategory', { category: category.name });
@@ -1827,13 +1927,18 @@ router.use(
 
 router.use(
   'bitrate',
-  async ({ msg, guildUser, params, flags, i18n }) => {
+  async ({ msg, params, flags, i18n, drizzle, getGuild }) => {
     const [bitrate] = flags.get('bitrate') || params;
 
+    const guild = await getGuild(msg.guild);
+
+    if (!guild) {
+      return i18n.t('lobby.error.noGuild');
+    }
+
     if (!bitrate) {
-      if (!guildUser.guild.isInitialized()) await guildUser.guild.init();
       return i18n.t('lobby.lobbyBitrateIs', {
-        bitrate: guildUser.guild.bitrate,
+        bitrate: guild.bitrate,
       });
     }
 
@@ -1859,10 +1964,10 @@ router.use(
 
     const newBitrate = givenBitrate < maxBitrate ? givenBitrate : maxBitrate;
 
-    if (!guildUser.guild.isInitialized()) await guildUser.guild.init();
-
-    // eslint-disable-next-line no-param-reassign
-    guildUser.guild.bitrate = givenBitrate;
+    await drizzle
+      .update(guilds)
+      .set({ bitrate: newBitrate })
+      .where(eq(guilds.id, guild.id));
 
     return i18n.t('lobby.bitrateChanged', { bitrate: newBitrate });
   },
@@ -1880,11 +1985,29 @@ router.use(
   },
 );
 
+const changeDatabaseChannelName = async (
+  drizzle: DrizzleClient,
+  tempChannel: TempChannel,
+  newName: string | null,
+) =>
+  drizzle
+    .update(tempChannels)
+    .set({ name: newName })
+    .where(eq(tempChannels.channelId, tempChannel.channelId))
+    .returning({
+      name: tempChannels.name,
+      guildUserId: tempChannels.guildUserId,
+      channelId: tempChannels.channelId,
+      textChannelId: tempChannels.textChannelId,
+      controlDashboardId: tempChannels.controlDashboardId,
+      createdAt: tempChannels.createdAt,
+    });
+
 const nameHandler: GuildHandler = async ({
   params,
   guildUser,
   msg,
-  em,
+  drizzle,
   flags,
   i18n,
 }) => {
@@ -1892,19 +2015,23 @@ const nameHandler: GuildHandler = async ({
 
   const rawNameArray = flags.get('name') || params;
 
-  if (!guildUser.tempChannel?.isInitialized())
-    await guildUser.tempChannel?.init();
-  const tempChannel = await activeTempChannel(
+  const [tempChannel] = await drizzle
+    .select()
+    .from(tempChannels)
+    .where(eq(tempChannels.guildUserId, guildUser.id));
+
+  globalLogger.debug('tempChannel', { tempChannel, guildUser });
+
+  const activeChannel = await activeTempChannel(
     msg.client,
-    em,
-    guildUser.tempChannel,
+    drizzle,
+    tempChannel,
   );
 
-  if (!tempChannel || !guildUser.tempChannel)
-    return i18n.t('lobby.error.noLobby');
-  if (guildUser.tempChannel.textChannelId !== msg.channel.id) {
+  if (!activeChannel || !tempChannel) return i18n.t('lobby.error.noLobby');
+  if (tempChannel.textChannelId !== msg.channel.id) {
     return i18n.t('lobby.error.useTextChannel', {
-      channel: guildUser.tempChannel.textChannelId,
+      channel: tempChannel.textChannelId,
     });
   }
 
@@ -1920,22 +2047,28 @@ const nameHandler: GuildHandler = async ({
 
   if (name.length > 80) return i18n.t('lobby.error.nameLimit');
 
-  guildUser.tempChannel.name = name;
-  const type = getChannelType(tempChannel);
+  const [renamedTempChannel] = await changeDatabaseChannelName(
+    drizzle,
+    tempChannel,
+    name,
+  );
+  const type = getChannelType(activeChannel);
+
+  if (!renamedTempChannel) return i18n.t('lobby.error.noLobby');
 
   try {
     const timeTillChange = await changeLobby({
-      tempChannel: guildUser.tempChannel,
-      voiceChannel: tempChannel,
+      tempChannel: renamedTempChannel,
+      voiceChannel: activeChannel,
       owner: requestingUser,
       guild: msg.guild,
-      em,
+      drizzle,
       i18n,
     });
     const newName = generateLobbyName(
       type,
       requestingUser,
-      guildUser.tempChannel.name,
+      renamedTempChannel.name,
       false,
     )?.full;
 
@@ -1966,13 +2099,22 @@ router.use('name', nameHandler, HandlerType.GUILD, {
 
 router.use(
   'text-in-voice',
-  ({ flags, msg, i18n, guildUser }) => {
+  async ({ flags, msg, i18n, getGuild, drizzle }) => {
+    const guild = await getGuild(msg.guild);
+
+    if (!guild) return i18n.t('lobby.error.noGuild');
+
     if (!msg.member.permissions.has(PermissionsBitField.Flags.Administrator))
       return i18n.t('lobby.error.notAdmin');
 
     const [enable] = flags.get('enable') || [true];
 
-    guildUser.guild.seperateTextChannel = !enable;
+    if (typeof enable !== 'boolean') return i18n.t('lobby.error.notABoolean');
+
+    await drizzle
+      .update(guilds)
+      .set({ seperateTextChannel: !enable })
+      .where(eq(guilds.id, guild.id));
 
     if (enable) return i18n.t('lobby.textInVoice.enabled');
     return i18n.t('lobby.textInVoice.disabled');
@@ -2000,18 +2142,18 @@ router.use('help', helpHandler, HandlerType.BOTH, {
 
 const createAddMessage = async (
   tempChannel: TempChannel,
+  guildUser: GuildUser,
   user: User,
   client: Client,
-  em: EntityManager,
+  drizzle: DrizzleClient,
   i18n: I18n,
-  logger: Logger,
 ) => {
   if (!tempChannel.textChannelId) throw new Error('Text channel not defined');
 
-  const textChannel = await activeTempText(client, tempChannel);
+  const textChannel = await activeTempText(client, drizzle, tempChannel);
   if (!textChannel?.isTextBased()) throw new Error('Text channel not found');
 
-  const activeChannel = await activeTempChannel(client, em, tempChannel);
+  const activeChannel = await activeTempChannel(client, drizzle, tempChannel);
   if (!activeChannel) throw new Error('No active temp channel');
 
   const actionRow = new ActionRowBuilder<MessageActionRowComponentBuilder>();
@@ -2034,19 +2176,18 @@ const createAddMessage = async (
         msg.createMessageComponentCollector<ComponentType.Button>();
       collector.on('collect', async (interaction) => {
         if (
-          interaction.user.id === tempChannel.guildUser.user.id &&
+          interaction.user.id === guildUser.userId &&
           interaction.customId === 'add'
         ) {
           interaction.update({
             content: (
-              await addUsers(
-                [user],
+              await addUsers({
+                toAllow: [user],
                 activeChannel,
-                tempChannel.guildUser,
-                client,
+                textChannel,
                 i18n,
-                logger,
-              )
+                tempChannel,
+              })
             ).text,
             components: [],
           });
@@ -2056,7 +2197,7 @@ const createAddMessage = async (
         const owner = await interaction.guild?.members
           .fetch({
             cache: true,
-            user: `${BigInt(tempChannel.guildUser.user.id)}`,
+            user: `${BigInt(guildUser.userId)}`,
           })
           .catch(() => undefined);
 
@@ -2081,25 +2222,34 @@ const msgCollectors = new Map<
   InteractionCollector<CollectedInteraction>
 >();
 
-const createDashBoardCollector = async (
-  client: Client,
-  voiceChannel: VoiceChannel,
-  tempChannel: TempChannel,
-  _em: EntityManager,
-  _i18n: I18n,
-  logger: Logger,
-) => {
-  const textChannel = await activeTempText(client, tempChannel);
+const createDashBoardCollector = async ({
+  client,
+  voiceChannel,
+  tempChannel,
+  guildUser,
+  dbUser,
+  dbGuild,
+  drizzle,
+  _i18n,
+}: {
+  client: Client;
+  voiceChannel: VoiceChannel;
+  tempChannel: TempChannel;
+  guildUser: GuildUser;
+  dbUser: DbUser;
+  dbGuild: Guild;
+  drizzle: DrizzleClient;
+  _i18n: I18n;
+}) => {
+  const textChannel = await activeTempText(client, drizzle, tempChannel);
   const guild = await client.guilds
-    .fetch({ cache: true, guild: tempChannel.guildUser.guild.id })
+    .fetch({ cache: true, guild: guildUser.guildId })
     .catch(() => null);
   const owner = await guild?.members
-    ?.fetch({ user: tempChannel.guildUser.user.id, cache: true })
+    ?.fetch({ user: guildUser.userId, cache: true })
     ?.catch(() => null);
   const i18 = _i18n.cloneInstance({
-    lng:
-      tempChannel.guildUser.user.language ||
-      tempChannel.guildUser.guild.language,
+    lng: dbUser.language || dbGuild.language || undefined,
   });
 
   if (textChannel && owner) {
@@ -2117,20 +2267,25 @@ const createDashBoardCollector = async (
           ...getDashboardOptions(i18, textChannel.guild, owner),
           components: await generateComponents(
             voiceChannel,
-            _em,
-            tempChannel.guildUser,
+            drizzle,
+            guildUser,
             owner,
             i18,
           ).catch((error) => {
-            logger.error(error.description, { error });
+            globalLogger.error(error.description, { error });
             return undefined;
           }),
         })
         .catch((err) => {
-          logger.error(err.description, { error: err });
+          globalLogger.error(err.description, { error: err });
           return undefined;
         });
-      if (msg) tempChannel.controlDashboardId = msg.id;
+
+      if (msg)
+        await drizzle
+          .update(tempChannels)
+          .set({ controlDashboardId: msg.id })
+          .where(eq(tempChannels.channelId, tempChannel.channelId));
     }
 
     // TODO: Fix dat dit weer werkt
@@ -2139,12 +2294,13 @@ const createDashBoardCollector = async (
     if (msg && !msgCollectors.has(msg.id)) {
       const collector = new InteractionCollector(client, { message: msg });
       collector.on('collect', async (interaction) => {
-        const em = _em.fork();
-        const currentTempChannel = await em.findOne(
-          TempChannel,
-          { channelId: voiceChannel.id },
-          { populate: ['guildUser.user', 'guildUser.guild'] },
-        );
+        const [currentTempChannel] = await drizzle
+          .select()
+          .from(tempChannels)
+          .where(eq(tempChannels.channelId, voiceChannel.id))
+          .innerJoin(guildUsers, eq(tempChannels.guildUserId, guildUsers.id))
+          .innerJoin(users, eq(guildUsers.userId, users.id))
+          .innerJoin(guilds, eq(guildUsers.guildId, guilds.id));
 
         if (
           (interaction.isMessageComponent() || interaction.isModalSubmit()) &&
@@ -2153,10 +2309,11 @@ const createDashBoardCollector = async (
         ) {
           const i18n = _i18n.cloneInstance({
             lng:
-              currentTempChannel.guildUser.user.language ||
-              currentTempChannel.guildUser.guild.language,
+              currentTempChannel.user.language ||
+              currentTempChannel.guild.language ||
+              undefined,
           });
-          if (interaction.user.id !== currentTempChannel.guildUser.user.id) {
+          if (interaction.user.id !== currentTempChannel.user.id) {
             interaction.reply({
               content: i18n.t('lobby.error.onlyOwner'),
               ephemeral: true,
@@ -2183,14 +2340,27 @@ const createDashBoardCollector = async (
                 newName,
                 false,
               )?.full;
-              currentTempChannel.name = newName;
+
+              const [renamedTempChannel] = await changeDatabaseChannelName(
+                drizzle,
+                currentTempChannel.temp_channel,
+                newName,
+              );
+
+              if (!renamedTempChannel) {
+                interaction.reply({
+                  content: i18n.t('lobby.error.noLobby'),
+                  ephemeral: true,
+                });
+                return;
+              }
 
               const duration = await changeLobby({
-                tempChannel: currentTempChannel,
+                tempChannel: renamedTempChannel,
                 voiceChannel,
                 owner: member,
                 guild: interaction.guild,
-                em,
+                drizzle,
                 i18n,
               });
 
@@ -2204,7 +2374,9 @@ const createDashBoardCollector = async (
                       })
                     : i18n.t('lobby.lobbyNameChanged', { name: voiceName }),
                 })
-                .catch((err) => logger.error(err.description, { error: err }));
+                .catch((err) =>
+                  globalLogger.error(err.description, { error: err }),
+                );
             } catch (err) {
               interaction.reply({
                 content: i18n.t('lobby.error.noEmojiOnly'),
@@ -2215,11 +2387,11 @@ const createDashBoardCollector = async (
             if (limit >= 0 && limit < 100 && interaction.guild) {
               await changeLobby(
                 {
-                  tempChannel: currentTempChannel,
+                  tempChannel: currentTempChannel.temp_channel,
                   voiceChannel,
                   owner: member,
                   guild: interaction.guild,
-                  em,
+                  drizzle,
                   i18n,
                 },
                 {
@@ -2232,15 +2404,27 @@ const createDashBoardCollector = async (
             interaction.isStringSelectMenu() &&
             interaction.customId === 'name'
           ) {
-            [currentTempChannel.name] = interaction.values;
+            const [renamedTempChannel] = await changeDatabaseChannelName(
+              drizzle,
+              currentTempChannel.temp_channel,
+              interaction.values[0] || null,
+            );
+
+            if (!renamedTempChannel) {
+              interaction.reply({
+                content: i18n.t('lobby.error.noLobby'),
+                ephemeral: true,
+              });
+              return;
+            }
 
             await changeLobby(
               {
-                tempChannel: currentTempChannel,
+                tempChannel: renamedTempChannel,
                 voiceChannel,
                 owner: member,
                 guild: interaction.guild,
-                em,
+                drizzle,
                 i18n,
               },
               {
@@ -2254,17 +2438,16 @@ const createDashBoardCollector = async (
           ) {
             interaction.reply({
               content: (
-                await addUsers(
-                  [
+                await addUsers({
+                  toAllow: [
                     ...interaction.users.values(),
                     ...interaction.roles.values(),
                   ],
-                  voiceChannel,
-                  currentTempChannel.guildUser,
-                  client,
+                  activeChannel: voiceChannel,
+                  textChannel,
+                  tempChannel: currentTempChannel.temp_channel,
                   i18n,
-                  logger,
-                )
+                })
               ).text,
               ephemeral: true,
             });
@@ -2279,7 +2462,7 @@ const createDashBoardCollector = async (
                 customId: 'name',
                 style: TextInputStyle.Short,
                 label: i18n.t('lobby.renameModal.nameLabel'),
-                value: currentTempChannel.name,
+                value: currentTempChannel.temp_channel.name || undefined,
                 maxLength: 80,
               }),
             ]);
@@ -2297,11 +2480,11 @@ const createDashBoardCollector = async (
             ) {
               await changeLobby(
                 {
-                  tempChannel: currentTempChannel,
+                  tempChannel: currentTempChannel.temp_channel,
                   voiceChannel,
                   owner: member,
                   guild: interaction.guild,
-                  em,
+                  drizzle,
                   i18n,
                 },
                 {
@@ -2311,8 +2494,6 @@ const createDashBoardCollector = async (
               );
             }
           }
-
-          await em.flush();
         }
       });
 
@@ -2323,13 +2504,10 @@ const createDashBoardCollector = async (
 
 const subscriptionsUnsubbers = new Map<Snowflake, (() => void)[]>();
 
-const addSubscriptionUnsubber = (
-  user: Pick<DiscordUser, 'id'>,
-  unsubber: () => void,
-) => {
-  const unsubbers = subscriptionsUnsubbers.get(user.id) || [];
+const addSubscriptionUnsubber = (userId: string, unsubber: () => void) => {
+  const unsubbers = subscriptionsUnsubbers.get(userId) || [];
   unsubbers.push(unsubber);
-  subscriptionsUnsubbers.set(user.id, unsubbers);
+  subscriptionsUnsubbers.set(userId, unsubbers);
 };
 
 const destroyRedisSubscriptionListener = (user: Pick<DiscordUser, 'id'>) => {
@@ -2338,10 +2516,18 @@ const destroyRedisSubscriptionListener = (user: Pick<DiscordUser, 'id'>) => {
   subscriptionsUnsubbers.delete(user.id);
 };
 
+const getTempChannel = (drizzle: DrizzleClient, voiceChannel: VoiceChannel) =>
+  drizzle
+    .select()
+    .from(tempChannels)
+    .where(eq(tempChannels.channelId, voiceChannel.id))
+    .innerJoin(guildUsers, eq(tempChannels.guildUserId, guildUsers.id))
+    .innerJoin(users, eq(guildUsers.userId, users.id));
+
 // Listens to new subscriptions
 // When there is a new subscription it will send the current lobby state to the user
 const createRedisSubscriptionListeners = (
-  _em: EntityManager,
+  drizzle: DrizzleClient,
   {
     member: oldOwnerMember,
     guild,
@@ -2357,59 +2543,63 @@ const createRedisSubscriptionListeners = (
   const channelName = userIdToPusherChannel(oldOwnerMember);
 
   const refresh = async () => {
-    const em = _em.fork();
-
-    const tempChannel = await em.findOne(
-      TempChannel,
-      { channelId: voiceChannel.id },
-      { populate: ['guildUser.user'] },
-    );
+    const [tempChannel] = await drizzle
+      .select()
+      .from(tempChannels)
+      .where(eq(tempChannels.channelId, voiceChannel.id))
+      .innerJoin(guildUsers, eq(tempChannels.guildUserId, guildUsers.id))
+      .innerJoin(users, eq(guildUsers.userId, users.id));
 
     if (!tempChannel) {
-      destroyRedisSubscriptionListener(oldOwnerGuidUser.user);
+      destroyRedisSubscriptionListener({ id: oldOwnerGuidUser.userId });
       globalLogger.info(`unsubscribed from channel ${channelName}`);
       return;
     }
 
-    const locale = getLocale({ user: tempChannel.guildUser.user });
+    const locale = getLocale({ user: tempChannel.user });
     const i18n = i18next.cloneInstance({ lng: locale });
 
     changeLobby({
-      tempChannel,
+      tempChannel: tempChannel.temp_channel,
       voiceChannel,
       owner: oldOwnerMember,
       guild,
-      em,
+      drizzle,
       i18n,
     });
   };
 
   const lobbyChangeHandler = async (data: ClientChangeLobby) => {
-    const em = _em.fork();
-
-    const tempChannel = await em.findOne(
-      TempChannel,
-      { channelId: voiceChannel.id },
-      { populate: ['guildUser.user'] },
-    );
+    const [tempChannel] = await getTempChannel(drizzle, voiceChannel);
 
     if (!tempChannel) {
-      destroyRedisSubscriptionListener(oldOwnerGuidUser.user);
+      destroyRedisSubscriptionListener({ id: oldOwnerGuidUser.userId });
       return;
     }
 
-    const locale = getLocale({ user: tempChannel.guildUser.user });
+    const locale = getLocale({ user: tempChannel.user });
     const i18n = i18next.cloneInstance({ lng: locale });
 
-    if (data.name) tempChannel.name = data.name;
+    let newName: string | null = null;
+    if (data.name) newName = data.name;
+
+    const renamedLobby = newName
+      ? (
+          await changeDatabaseChannelName(
+            drizzle,
+            tempChannel.temp_channel,
+            newName,
+          )
+        )[0]
+      : tempChannel.temp_channel;
 
     changeLobby(
       {
-        tempChannel,
+        tempChannel: renamedLobby || tempChannel.temp_channel,
         voiceChannel,
         owner: oldOwnerMember,
         guild,
-        em,
+        drizzle,
         i18n,
       },
       {
@@ -2420,20 +2610,14 @@ const createRedisSubscriptionListeners = (
   };
 
   const addUserHandler = async (data: AddUser) => {
-    const em = _em.fork();
-
-    const tempChannel = await em.findOne(
-      TempChannel,
-      { channelId: voiceChannel.id },
-      { populate: ['guildUser.user'] },
-    );
+    const [tempChannel] = await getTempChannel(drizzle, voiceChannel);
 
     if (!tempChannel) {
-      destroyRedisSubscriptionListener(oldOwnerGuidUser.user);
+      destroyRedisSubscriptionListener({ id: oldOwnerGuidUser.userId });
       return;
     }
 
-    const locale = getLocale({ user: tempChannel.guildUser.user });
+    const locale = getLocale({ user: tempChannel.user });
     const i18n = i18next.cloneInstance({ lng: locale });
 
     const user = await guild.members
@@ -2442,32 +2626,32 @@ const createRedisSubscriptionListeners = (
 
     if (!user) return;
 
-    await addUsers(
-      [user.user],
-      voiceChannel,
-      oldOwnerGuidUser,
-      oldOwnerMember.client,
-      i18n,
+    const textChannel = await activeTempText(
+      guild.client,
+      drizzle,
+      tempChannel.temp_channel,
     );
+
+    await addUsers({
+      toAllow: [user.user],
+      activeChannel: voiceChannel,
+      tempChannel: tempChannel.temp_channel,
+      textChannel,
+      i18n,
+    });
 
     refresh();
   };
 
   const removeUserHandler = async (data: RemoveUser) => {
-    const em = _em.fork();
-
-    const tempChannel = await em.findOne(
-      TempChannel,
-      { channelId: voiceChannel.id },
-      { populate: ['guildUser.user'] },
-    );
+    const [tempChannel] = await getTempChannel(drizzle, voiceChannel);
 
     if (!tempChannel) {
-      destroyRedisSubscriptionListener(oldOwnerGuidUser.user);
+      destroyRedisSubscriptionListener({ id: oldOwnerGuidUser.userId });
       return;
     }
 
-    const locale = getLocale({ user: tempChannel.guildUser.user });
+    const locale = getLocale({ user: tempChannel.user });
     const i18n = i18next.cloneInstance({ lng: locale });
 
     const user = await guild.members
@@ -2481,39 +2665,40 @@ const createRedisSubscriptionListeners = (
       [user.user],
       [],
       oldOwnerMember.user,
-      tempChannel,
+      tempChannel.temp_channel,
       i18n,
+      drizzle,
     );
 
     refresh();
   };
 
   addSubscriptionUnsubber(
-    oldOwnerGuidUser.user,
+    oldOwnerGuidUser.userId,
     subscribeToLobbyRefresh(
       {
         onData: () => {
           refresh();
         },
       },
-      oldOwnerGuidUser.user.id,
+      oldOwnerGuidUser.userId,
     ),
   );
 
   addSubscriptionUnsubber(
-    oldOwnerGuidUser.user,
+    oldOwnerGuidUser.userId,
     subscribeToClientLobbyChanges(
       {
         onData: (data) => {
           lobbyChangeHandler(data);
         },
       },
-      oldOwnerGuidUser.user.id,
+      oldOwnerGuidUser.userId,
     ),
   );
 
   addSubscriptionUnsubber(
-    oldOwnerGuidUser.user,
+    oldOwnerGuidUser.userId,
     subscribeToAddUser(
       {
         onData: (data) => {
@@ -2521,12 +2706,12 @@ const createRedisSubscriptionListeners = (
           addUserHandler(data);
         },
       },
-      oldOwnerGuidUser.user.id,
+      oldOwnerGuidUser.userId,
     ),
   );
 
   addSubscriptionUnsubber(
-    oldOwnerGuidUser.user,
+    oldOwnerGuidUser.userId,
     subscribeToRemoveUser(
       {
         onData: (data) => {
@@ -2534,7 +2719,7 @@ const createRedisSubscriptionListeners = (
           removeUserHandler(data);
         },
       },
-      oldOwnerGuidUser.user.id,
+      oldOwnerGuidUser.userId,
     ),
   );
 };
@@ -2542,25 +2727,25 @@ const createRedisSubscriptionListeners = (
 const checkTempChannel = async (
   client: Client,
   tempChannel: TempChannel,
-  em: EntityManager,
+  oldOwner: GuildUser,
+  drizzle: DrizzleClient,
   _i18n: I18n,
   logger: Logger,
   isStartup: boolean = false,
 ) => {
-  const { getGuildUser } = createEntityCache(em);
-
-  const activeChannel = await activeTempChannel(client, em, tempChannel);
-  const activeTextChannel = await activeTempText(client, tempChannel);
-
-  const oldOwner = tempChannel.guildUser.user;
+  const activeChannel = await activeTempChannel(client, drizzle, tempChannel);
+  const activeTextChannel = await activeTempText(client, drizzle, tempChannel);
 
   if (!activeChannel) {
-    em.remove(tempChannel);
+    await drizzle
+      .delete(tempChannels)
+      .where(eq(tempChannels.channelId, tempChannel.channelId));
+
     if (activeTextChannel?.deletable)
       await activeTextChannel.delete().catch(() => {});
   } else if (!activeChannel.members.filter((member) => !member.user.bot).size) {
     // If there is no one left in the lobby remove the lobby
-    destroyRedisSubscriptionListener(tempChannel.guildUser.user);
+    destroyRedisSubscriptionListener({ id: oldOwner.userId });
     await Promise.all([
       activeChannel.delete(),
       activeChannel.id !== activeTextChannel?.id && activeTextChannel?.delete(),
@@ -2568,28 +2753,38 @@ const checkTempChannel = async (
       logger.error(error.description, { error });
     });
 
-    pushLobbyToUser(tempChannel.guildUser.user, null);
+    pushLobbyToUser({ id: oldOwner.userId }, null);
 
-    em.remove(tempChannel);
-  } else if (
-    !activeChannel.members.has(`${BigInt(tempChannel.guildUser.user.id)}`)
-  ) {
-    const guildUsers = await Promise.all(
-      activeChannel.members.map((member) =>
-        getGuildUser(member.user, activeChannel.guild),
-      ),
-    );
+    await drizzle
+      .delete(tempChannels)
+      .where(eq(tempChannels.channelId, tempChannel.channelId));
+  } else if (!activeChannel.members.has(`${BigInt(oldOwner.userId)}`)) {
+    const memberIds = activeChannel.members.map((member) => member.id);
+
+    const guildUserList = await drizzle
+      .select()
+      .from(guildUsers)
+      .innerJoin(users, eq(guildUsers.userId, users.id))
+      .innerJoin(guilds, eq(guildUsers.guildId, guilds.id))
+      .leftJoin(tempChannels, eq(guildUsers.id, tempChannels.guildUserId))
+      .where(
+        and(
+          inArray(guildUsers.userId, memberIds),
+          eq(guildUsers.guildId, activeChannel.guild.id),
+          isNull(tempChannels.channelId),
+        ),
+      );
 
     // Alleen users die toegestaan zijn in de lobby kunnen de lobby krijgen
     // Als er niemand in de lobby zit die toegang heeft, dan krijgt iemand de lobby die geen toegang heeft
     // Anders krijgt niemand hem
     const newOwner =
-      activeChannel.members
-        .filter(
-          (member) =>
-            !guildUsers.find((gu) => gu.user.id === member.id)?.tempChannel,
-        )
-        .filter((member) => {
+      guildUserList
+        .filter((guildUser) => {
+          const member = activeChannel.members.get(guildUser.guild_user.userId);
+
+          if (!member) return false;
+
           const isPublic = getChannelType(activeChannel) === ChannelType.Public;
           const isAllowedUser = activeChannel.permissionOverwrites.cache.has(
             member.id,
@@ -2604,145 +2799,189 @@ const checkTempChannel = async (
             (isPublic || isAllowedUser || hasAllowedRole) && !member.user.bot
           );
         })
-        .sort(
-          (member1, member2) =>
-            member1.roles.highest.position - member2.roles.highest.position,
-        )
-        .reverse()
-        .first() ||
-      activeChannel.members
-        .filter(
-          (member) =>
-            !guildUsers.find((gu) => gu.user.id === member.id)?.tempChannel,
-        )
-        .filter((member) => !member.user.bot)
-        .sort(
-          (member1, member2) =>
-            member1.roles.highest.position - member2.roles.highest.position,
-        )
-        .reverse()
-        .first();
+        .sort((guildUser1, guildUser2) => {
+          const member1 = activeChannel.members.get(
+            guildUser1.guild_user.userId,
+          );
+          const member2 = activeChannel.members.get(
+            guildUser2.guild_user.userId,
+          );
+
+          if (!member1 || !member2) return 0;
+
+          return (
+            member1.roles.highest.position - member2.roles.highest.position
+          );
+        })
+        .reverse()[0] ||
+      guildUserList
+        .filter((guildUser) => {
+          const member = activeChannel.members.get(guildUser.guild_user.userId);
+
+          if (!member) return false;
+
+          return !member.user.bot;
+        })
+        .sort((guildUser1, guildUser2) => {
+          const member1 = activeChannel.members.get(
+            guildUser1.guild_user.userId,
+          );
+          const member2 = activeChannel.members.get(
+            guildUser2.guild_user.userId,
+          );
+
+          if (!member1 || !member2) return 0;
+
+          return (
+            member1.roles.highest.position - member2.roles.highest.position
+          );
+        })
+        .reverse()[0];
 
     if (newOwner) {
-      const newOwnerGuildUser = guildUsers.find(
-        (gu) => gu.user.id === newOwner.id,
-      );
+      const [newTempChannel] = await drizzle
+        .update(tempChannels)
+        .set({ guildUserId: newOwner.guild_user.id })
+        .where(eq(tempChannels.channelId, tempChannel.channelId))
+        .returning({
+          name: tempChannels.name,
+          guildUserId: tempChannels.guildUserId,
+          channelId: tempChannels.channelId,
+          textChannelId: tempChannels.textChannelId,
+          controlDashboardId: tempChannels.controlDashboardId,
+          createdAt: tempChannels.createdAt,
+        });
 
-      if (!newOwnerGuildUser) throw new Error('Guild User Not Found In Array');
+      if (!newTempChannel) return;
 
-      tempChannel.guildUser = newOwnerGuildUser;
       const i18n = _i18n.cloneInstance({
-        lng:
-          newOwnerGuildUser.user.language || newOwnerGuildUser.guild.language,
+        lng: newOwner.user.language || newOwner.guild.language || undefined,
       });
 
-      await activeChannel.permissionOverwrites
-        .edit(newOwner, { Speak: true, Connect: true })
-        .catch((err) => logger.error(err.message, { error: err }));
+      const newOwnerMember = activeChannel.members.get(
+        newOwner.guild_user.userId,
+      );
 
-      if (newOwner.voice.suppress) {
-        newOwner.voice.setMute(false).catch(() => {});
+      if (newOwnerMember) {
+        await activeChannel.permissionOverwrites
+          .edit(newOwnerMember, { Speak: true, Connect: true })
+          .catch((err) => logger.error(err.message, { error: err }));
+
+        if (newOwnerMember.voice.suppress) {
+          newOwnerMember.voice.setMute(false).catch(() => {});
+        }
+
+        createRedisSubscriptionListeners(drizzle, {
+          member: newOwnerMember,
+          guild: activeChannel.guild,
+          voiceChannel: activeChannel,
+          owner: newOwner.guild_user,
+        });
+
+        await Promise.all([
+          changeLobby(
+            {
+              tempChannel: newTempChannel,
+              voiceChannel: activeChannel,
+              owner: newOwnerMember,
+              guild: activeChannel.guild,
+              drizzle,
+              i18n,
+            },
+            {
+              forcePermissionUpdate: true,
+            },
+          ),
+          activeTextChannel?.send({
+            allowedMentions: { users: [] },
+            reply: tempChannel.controlDashboardId
+              ? { messageReference: tempChannel.controlDashboardId }
+              : undefined,
+            content: i18n.t('lobby.ownershipTransferred', {
+              user: newOwner.user.toString(),
+            }),
+          }),
+        ]).catch((err) => logger.error(err.message, { error: err }));
       }
 
-      publishLobbyUpdate(null, oldOwner.id);
-      destroyRedisSubscriptionListener(oldOwner);
-      createRedisSubscriptionListeners(em, {
-        member: newOwner,
-        guild: activeChannel.guild,
-        voiceChannel: activeChannel,
-        owner: tempChannel.guildUser,
-      });
-
-      await Promise.all([
-        changeLobby(
-          {
-            tempChannel,
-            voiceChannel: activeChannel,
-            owner: newOwner,
-            guild: activeChannel.guild,
-            em,
-            i18n,
-          },
-          {
-            forcePermissionUpdate: true,
-          },
-        ),
-        activeTextChannel?.send({
-          allowedMentions: { users: [] },
-          reply: tempChannel.controlDashboardId
-            ? { messageReference: tempChannel.controlDashboardId }
-            : undefined,
-          content: i18n.t('lobby.ownershipTransferred', {
-            user: newOwner.user.toString(),
-          }),
-        }),
-      ]).catch((err) => logger.error(err.message, { error: err }));
+      publishLobbyUpdate(null, oldOwner.userId);
+      destroyRedisSubscriptionListener({ id: oldOwner.userId });
     }
   } else {
-    const member = await client.guilds
-      .fetch({ guild: tempChannel.guildUser.guild.id, cache: true })
-      .then((guild) =>
-        guild.members.fetch({
-          user: `${BigInt(tempChannel.guildUser.user.id)}`,
-          cache: true,
-        }),
-      );
+    const member = await activeChannel.guild.members.fetch({
+      user: `${BigInt(oldOwner.userId)}`,
+      cache: true,
+    });
 
-    if (
-      !tempChannel.guildUser.user.isInitialized() ||
-      !tempChannel.guildUser.guild.isInitialized()
-    )
-      throw new Error('user of guild is not initialized');
+    const [guild] = await drizzle
+      .select()
+      .from(guilds)
+      .where(eq(guilds.id, activeChannel.guild.id));
+
+    const [user] = await drizzle
+      .select()
+      .from(users)
+      .where(eq(users.id, oldOwner.userId));
+
+    if (!guild || !user) return;
 
     const locale = getLocale({
-      user: tempChannel.guildUser.user,
-      guild: tempChannel.guildUser.guild,
+      user,
+      guild,
     });
     const i18n = _i18n.cloneInstance({
       lng: locale,
     });
 
-    await createDashBoardCollector(
+    await createDashBoardCollector({
       client,
-      activeChannel,
+      voiceChannel: activeChannel,
       tempChannel,
-      em.fork(),
-      i18n,
-      logger,
-    );
+      guildUser: oldOwner,
+      dbUser: user,
+      dbGuild: guild,
+      drizzle,
+      _i18n: i18n,
+    });
 
     await changeLobby({
       tempChannel,
       voiceChannel: activeChannel,
       owner: member,
       guild: activeChannel.guild,
-      em,
+      drizzle,
       i18n,
     });
 
     if (isStartup) {
-      createRedisSubscriptionListeners(em, {
+      createRedisSubscriptionListeners(drizzle, {
         member,
         guild: activeChannel.guild,
         voiceChannel: activeChannel,
-        owner: tempChannel.guildUser,
+        owner: oldOwner,
       });
     }
   }
 };
 
-const checkVoiceCreateChannels = async (em: EntityManager, client: Client) => {
-  const categories = await em.find(Category, {
-    $or: [
-      { publicVoice: { $ne: null } },
-      { muteVoice: { $ne: null } },
-      { privateVoice: { $ne: null } },
-    ],
-  });
+const checkVoiceCreateChannels = async (
+  drizzle: DrizzleClient,
+  client: Client,
+) => {
+  const categoryList = await drizzle
+    .select()
+    .from(categories)
+    .where(
+      or(
+        isNotNull(categories.publicVoice),
+        isNotNull(categories.muteVoice),
+        isNotNull(categories.privateVoice),
+      ),
+    );
 
   await Promise.all(
-    categories.map((category) =>
-      createCreateChannels(category, client).catch(() => {}),
+    categoryList.map((category) =>
+      createCreateChannels(category, drizzle, client).catch(() => {}),
     ),
   );
 };
@@ -2777,27 +3016,34 @@ const sendUserAddPushNotification = (owner: DbUser, toBeAdded: User) => {
   ]);
 };
 
-router.onInit = async (client, orm, _i18n, logger) => {
+router.onInit = async (client, drizzle, _i18n, logger) => {
   let isFirst = true;
 
   // Check elke tempChannel om de 60 seconden
   const checkTempLobbies = async () => {
-    const em = orm.em.fork();
+    const usersWithTemp = await drizzle
+      .select()
+      .from(tempChannels)
+      .innerJoin(guildUsers, eq(tempChannels.guildUserId, guildUsers.id))
+      .innerJoin(users, eq(guildUsers.userId, users.id));
 
-    const usersWithTemp = await em.getRepository(TempChannel).findAll({
-      populate: ['guildUser.user', 'guildUser.guild'],
-    });
+    globalLogger.debug('checking tempChannels', { usersWithTemp });
 
     const tempChecks = usersWithTemp.map((tcs) =>
-      checkTempChannel(client, tcs, em, _i18n, logger, isFirst),
+      checkTempChannel(
+        client,
+        tcs.temp_channel,
+        tcs.guild_user,
+        drizzle,
+        _i18n,
+        logger,
+        isFirst,
+      ),
     );
 
     await Promise.all(tempChecks).catch((err) =>
       logger.error(err.description, { error: err }),
     );
-    await em
-      .flush()
-      .catch((error) => logger.error(error.description, { error }));
 
     isFirst = false;
 
@@ -2807,33 +3053,48 @@ router.onInit = async (client, orm, _i18n, logger) => {
   client.on('voiceStateUpdate', async (oldState, newState) => {
     // Check of iemand een temp lobby heeft verlaten
     if (oldState?.channel && oldState.channel.id !== newState?.channel?.id) {
-      const em = orm.em.fork();
-      const tempChannel = await em.findOne(
-        TempChannel,
-        {
-          channelId: oldState.channel.id,
-        },
-        { populate: ['guildUser.user', 'guildUser.guild'] },
-      );
+      const [tempChannel] = await drizzle
+        .select()
+        .from(tempChannels)
+        .innerJoin(guildUsers, eq(tempChannels.guildUserId, guildUsers.id))
+        .where(eq(tempChannels.channelId, oldState.channel.id));
+
       if (tempChannel) {
-        await checkTempChannel(client, tempChannel, em, _i18n, logger);
-        await em.flush();
+        globalLogger.debug('user left tempChannel');
+
+        await checkTempChannel(
+          client,
+          tempChannel.temp_channel,
+          tempChannel.guild_user,
+          drizzle,
+          _i18n,
+          logger,
+        );
       }
     }
 
     if (
       newState.channel &&
       newState.channel.parent &&
-      oldState.channelId !== newState.channelId
+      oldState.channelId !== newState.channelId &&
+      newState.member
     ) {
       // Check of iemand een nieuw kanaal is gejoint
-      const em = orm.em.fork();
-      const { getCategory, getGuildUser } = createEntityCache(em);
+      const { getCategory } = createEntityCache(drizzle);
 
       const categoryData = getCategory(newState.channel.parent);
-      const guildUserPromise = newState.member?.user
-        ? getGuildUser(newState.member.user, newState.guild)
-        : null;
+      const [guildUser] = await drizzle
+        .select()
+        .from(guildUsers)
+        .innerJoin(users, eq(guildUsers.userId, users.id))
+        .innerJoin(guilds, eq(guildUsers.guildId, guilds.id))
+        .leftJoin(tempChannels, eq(guildUsers.id, tempChannels.guildUserId))
+        .where(
+          and(
+            eq(guildUsers.guildId, newState.guild.id),
+            eq(guildUsers.userId, newState.member.id),
+          ),
+        );
 
       const { member } = newState;
 
@@ -2845,31 +3106,33 @@ router.onInit = async (client, orm, _i18n, logger) => {
       // Check of iemand een create-lobby channel is gejoint
       if (
         channel &&
-        guildUserPromise &&
+        guildUser &&
         member &&
         (channel.id === (await categoryData).publicVoice ||
           channel.id === (await categoryData).muteVoice ||
           channel.id === (await categoryData).privateVoice)
       ) {
+        globalLogger.debug('user joined create-lobby channel');
         const activeChannel = await activeTempChannel(
           client,
-          em,
-          (await guildUserPromise).tempChannel,
+          drizzle,
+          guildUser.temp_channel || undefined,
         );
-        const guildUser = await guildUserPromise;
 
         if (activeChannel) {
+          globalLogger.debug('user already has a tempChannel');
           // Degene had al een kanaal
           newState.setChannel(activeChannel);
         } else if (channel.parent) {
           // Creeer een nieuw kanaal
+          globalLogger.debug('user does not have a tempChannel yet');
+          globalLogger.debug('creating new tempChannel');
+
           let type: ChannelType = ChannelType.Public;
           if (channel.id === (await categoryData).privateVoice)
             type = ChannelType.Nojoin;
           if (channel.id === (await categoryData).muteVoice)
             type = ChannelType.Mute;
-
-          if (!guildUser.guild.isInitialized()) await guildUser.guild.init();
 
           voiceChannel = await createTempChannel(
             newState.guild,
@@ -2882,23 +3145,46 @@ router.onInit = async (client, orm, _i18n, logger) => {
             type,
             guildUser.guild,
           );
-          guildUser.tempChannel = new TempChannel(voiceChannel.id, guildUser);
 
           newState.setChannel(voiceChannel);
 
           textChannel = guildUser.guild.seperateTextChannel
-            ? await createTextChannel(client, em, guildUser.tempChannel, member)
+            ? await createTextChannel(client, voiceChannel, member, null)
             : voiceChannel;
-          guildUser.tempChannel.textChannelId = textChannel.id;
 
-          await createDashBoardCollector(
+          const [tempChannel] = await drizzle
+            .insert(tempChannels)
+            .values([
+              {
+                channelId: voiceChannel.id,
+                guildUserId: guildUser.guild_user.id,
+                name: null,
+                textChannelId: textChannel.id,
+                controlDashboardId: null,
+                createdAt: new Date().toISOString(),
+              },
+            ])
+            .returning({
+              name: tempChannels.name,
+              guildUserId: tempChannels.guildUserId,
+              channelId: tempChannels.channelId,
+              textChannelId: tempChannels.textChannelId,
+              controlDashboardId: tempChannels.controlDashboardId,
+              createdAt: tempChannels.createdAt,
+            });
+
+          if (!tempChannel) return;
+
+          await createDashBoardCollector({
             client,
             voiceChannel,
-            guildUser.tempChannel,
-            em.fork(),
+            tempChannel,
+            guildUser: guildUser.guild_user,
+            dbUser: guildUser.user,
+            dbGuild: guildUser.guild,
+            drizzle,
             _i18n,
-            logger,
-          ).catch((error) => {
+          }).catch((error) => {
             logger.error(error.discription, { error });
           });
 
@@ -2906,19 +3192,19 @@ router.onInit = async (client, orm, _i18n, logger) => {
           const i18n = _i18n.cloneInstance({ lng: locale });
 
           changeLobby({
-            tempChannel: guildUser.tempChannel,
+            tempChannel,
             voiceChannel,
             owner: member,
             guild: newState.guild,
-            em,
+            drizzle,
             i18n,
           });
 
-          createRedisSubscriptionListeners(em, {
+          createRedisSubscriptionListeners(drizzle, {
             member,
             guild: newState.guild,
             voiceChannel,
-            owner: guildUser,
+            owner: guildUser.guild_user,
           });
 
           if (textChannel.id !== voiceChannel.id) {
@@ -2939,24 +3225,25 @@ router.onInit = async (client, orm, _i18n, logger) => {
         member &&
         newState.channelId !== oldState.channelId
       ) {
-        const tempChannel = await em.findOne(
-          TempChannel,
-          {
-            channelId: channel.id,
-          },
-          { populate: ['guildUser', 'guildUser.user', 'guildUser.guild'] },
-        );
+        const [tempChannel] = await drizzle
+          .select()
+          .from(tempChannels)
+          .innerJoin(guildUsers, eq(tempChannels.guildUserId, guildUsers.id))
+          .innerJoin(users, eq(guildUsers.userId, users.id))
+          .innerJoin(guilds, eq(guildUsers.guildId, guilds.id))
+          .where(eq(tempChannels.channelId, channel.id));
 
         if (tempChannel) {
           const i18n = _i18n.cloneInstance({
             lng:
-              tempChannel.guildUser.user.language ||
-              tempChannel.guildUser.guild.language,
+              tempChannel.user.language ||
+              tempChannel.guild.language ||
+              undefined,
           });
           const activeChannel = await activeTempChannel(
             client,
-            em,
-            tempChannel,
+            drizzle,
+            tempChannel.temp_channel,
           );
 
           if (
@@ -2966,17 +3253,14 @@ router.onInit = async (client, orm, _i18n, logger) => {
           ) {
             Promise.all([
               await createAddMessage(
-                tempChannel,
+                tempChannel.temp_channel,
+                tempChannel.guild_user,
                 member.user,
                 client,
-                em,
+                drizzle,
                 i18n,
-                logger,
               ),
-              sendUserAddPushNotification(
-                tempChannel.guildUser.user,
-                member.user,
-              ),
+              sendUserAddPushNotification(tempChannel.user, member.user),
             ]).catch((err) => logger.error(err.description, { error: err }));
           }
 
@@ -2984,39 +3268,27 @@ router.onInit = async (client, orm, _i18n, logger) => {
           const owner = await newState.guild?.members
             .fetch({
               cache: true,
-              user: `${BigInt(tempChannel.guildUser.user.id)}`,
+              user: `${BigInt(tempChannel.user.id)}`,
             })
             .catch(() => null);
           if (activeChannel && owner) {
             changeLobby({
-              tempChannel,
+              tempChannel: tempChannel.temp_channel,
               voiceChannel: activeChannel,
               owner,
               guild: newState.guild,
-              em,
+              drizzle,
               i18n,
             });
           }
         }
       }
-
-      await em.flush().catch((err) => {
-        if (err instanceof UniqueConstraintViolationException) {
-          if (voiceChannel.deletable) voiceChannel.delete();
-          if (voiceChannel.id !== textChannel.id && textChannel.deletable)
-            textChannel.delete();
-        } else {
-          throw err;
-        }
-      });
     }
   });
 
   checkTempLobbies();
 
-  const em = orm.em.fork();
-  await checkVoiceCreateChannels(em, client);
-  await em.flush();
+  await checkVoiceCreateChannels(drizzle, client);
 };
 
 export default router;

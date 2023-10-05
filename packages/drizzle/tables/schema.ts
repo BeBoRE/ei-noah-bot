@@ -1,7 +1,5 @@
-import { sql } from 'drizzle-orm';
 import {
   boolean,
-  foreignKey,
   index,
   integer,
   pgTable,
@@ -20,15 +18,17 @@ export const mikroOrmMigrations = pgTable('mikro_orm_migrations', {
   }).defaultNow(),
 });
 
-export const channel = pgTable('channel', {
+export const channels = pgTable('channel', {
   id: varchar('id', { length: 255 }).primaryKey().notNull(),
 });
 
-export const customRole = pgTable('custom_role', {
+export type Channel = typeof channels.$inferSelect;
+
+export const customRoles = pgTable('custom_role', {
   id: varchar('id', { length: 255 }).primaryKey().notNull(),
   ownerId: integer('owner_id')
     .notNull()
-    .references(() => guildUser.id, { onUpdate: 'cascade' }),
+    .references(() => guildUsers.id, { onUpdate: 'cascade' }),
   roleName: varchar('role_name', { length: 255 }).notNull(),
   maxUsers: integer('max_users'),
   expireDate: timestamp('expire_date', { withTimezone: true, mode: 'string' }),
@@ -36,10 +36,10 @@ export const customRole = pgTable('custom_role', {
   channelId: varchar('channel_id', { length: 255 }),
   guildId: varchar('guild_id', { length: 255 })
     .notNull()
-    .references(() => guild.id, { onUpdate: 'cascade' }),
+    .references(() => guilds.id, { onUpdate: 'cascade' }),
 });
 
-export const category = pgTable('category', {
+export const categories = pgTable('category', {
   id: varchar('id', { length: 255 }).primaryKey().notNull(),
   publicVoice: varchar('public_voice', { length: 255 }),
   muteVoice: varchar('mute_voice', { length: 255 }),
@@ -47,15 +47,17 @@ export const category = pgTable('category', {
   lobbyCategory: varchar('lobby_category', { length: 255 }),
 });
 
-export const guildUser = pgTable(
+export type Category = typeof categories.$inferSelect;
+
+export const guildUsers = pgTable(
   'guild_user',
   {
     guildId: varchar('guild_id', { length: 255 })
       .notNull()
-      .references(() => guild.id, { onUpdate: 'cascade' }),
+      .references(() => guilds.id, { onUpdate: 'cascade' }),
     userId: varchar('user_id', { length: 255 })
       .notNull()
-      .references(() => user.id, { onUpdate: 'cascade' }),
+      .references(() => users.id, { onUpdate: 'cascade' }),
     id: serial('id').primaryKey().notNull(),
     birthdayMsg: varchar('birthday_msg', { length: 20 }),
   },
@@ -68,13 +70,15 @@ export const guildUser = pgTable(
   },
 );
 
-export const lobbyNameChange = pgTable(
+export type GuildUser = typeof guildUsers.$inferSelect;
+
+export const lobbyNameChanges = pgTable(
   'lobby_name_change',
   {
     id: serial('id').primaryKey().notNull(),
     guildUserId: integer('guild_user_id')
       .notNull()
-      .references(() => guildUser.id, { onUpdate: 'cascade' }),
+      .references(() => guildUsers.id, { onUpdate: 'cascade' }),
     name: varchar('name', { length: 99 }).notNull(),
     date: timestamp('date', { withTimezone: true, mode: 'string' }).notNull(),
   },
@@ -85,25 +89,29 @@ export const lobbyNameChange = pgTable(
   },
 );
 
-export const quote = pgTable('quote', {
+export type LobbyNameChange = typeof lobbyNameChanges.$inferSelect;
+
+export const quotes = pgTable('quote', {
   id: serial('id').primaryKey().notNull(),
   guildUserId: integer('guild_user_id')
     .notNull()
-    .references(() => guildUser.id, { onUpdate: 'cascade' }),
+    .references(() => guildUsers.id, { onUpdate: 'cascade' }),
   text: varchar('text', { length: 2000 }).notNull(),
   creatorId: integer('creator_id')
     .notNull()
-    .references(() => guildUser.id, { onUpdate: 'cascade' }),
+    .references(() => guildUsers.id, { onUpdate: 'cascade' }),
   date: timestamp('date', { withTimezone: true, mode: 'string' }),
 });
 
-export const tempChannel = pgTable(
+export type Quote = typeof quotes.$inferSelect;
+
+export const tempChannels = pgTable(
   'temp_channel',
   {
     channelId: varchar('channel_id', { length: 255 }).primaryKey().notNull(),
     guildUserId: integer('guild_user_id')
       .notNull()
-      .references(() => guildUser.id, { onUpdate: 'cascade' }),
+      .references(() => guildUsers.id, { onUpdate: 'cascade' }),
     createdAt: timestamp('created_at', {
       withTimezone: true,
       mode: 'string',
@@ -121,7 +129,9 @@ export const tempChannel = pgTable(
   },
 );
 
-export const guild = pgTable('guild', {
+export type TempChannel = typeof tempChannels.$inferSelect;
+
+export const guilds = pgTable('guild', {
   id: varchar('id', { length: 255 }).primaryKey().notNull(),
   bitrate: integer('bitrate').default(96000).notNull(),
   birthdayChannel: varchar('birthday_channel', { length: 255 }),
@@ -136,7 +146,9 @@ export const guild = pgTable('guild', {
     .notNull(),
 });
 
-export const user = pgTable(
+export type Guild = typeof guilds.$inferSelect;
+
+export const users = pgTable(
   'user',
   {
     id: varchar('id', { length: 255 }).primaryKey().notNull(),
@@ -152,3 +164,5 @@ export const user = pgTable(
     };
   },
 );
+
+export type User = typeof users.$inferSelect;

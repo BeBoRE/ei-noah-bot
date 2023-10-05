@@ -38,9 +38,9 @@ importers:
       '@digitak/esrun':
         specifier: ^3.2.24
         version: 3.2.24
-      '@ei/database':
+      '@ei/drizzle':
         specifier: '*'
-        version: link:../../packages/database
+        version: link:../../packages/drizzle
       '@ei/lobby':
         specifier: '*'
         version: link:../../packages/lobby
@@ -104,6 +104,9 @@ importers:
       dotenv:
         specifier: ^8.2.0
         version: 8.2.0
+      drizzle-orm:
+        specifier: ^0.28.6
+        version: 0.28.6(pg@8.3.3)
       emoji-regex:
         specifier: ^9.2.1
         version: 9.2.1
@@ -7619,6 +7622,71 @@ packages:
     dependencies:
       '@types/pg': 8.10.3
       pg: 8.11.1
+    dev: false
+
+  /drizzle-orm@0.28.6(pg@8.3.3):
+    resolution: {integrity: sha512-yBe+F9htrlYER7uXgDJUQsTHFoIrI5yMm5A0bg0GiZ/kY5jNXTWoEy4KQtg35cE27sw1VbgzoMWHAgCckUUUww==}
+    peerDependencies:
+      '@aws-sdk/client-rds-data': '>=3'
+      '@cloudflare/workers-types': '>=3'
+      '@libsql/client': '*'
+      '@neondatabase/serverless': '>=0.1'
+      '@opentelemetry/api': ^1.4.1
+      '@planetscale/database': '>=1'
+      '@types/better-sqlite3': '*'
+      '@types/pg': '*'
+      '@types/sql.js': '*'
+      '@vercel/postgres': '*'
+      better-sqlite3: '>=7'
+      bun-types: '*'
+      knex: '*'
+      kysely: '*'
+      mysql2: '>=2'
+      pg: '>=8'
+      postgres: '>=3'
+      sql.js: '>=1'
+      sqlite3: '>=5'
+    peerDependenciesMeta:
+      '@aws-sdk/client-rds-data':
+        optional: true
+      '@cloudflare/workers-types':
+        optional: true
+      '@libsql/client':
+        optional: true
+      '@neondatabase/serverless':
+        optional: true
+      '@opentelemetry/api':
+        optional: true
+      '@planetscale/database':
+        optional: true
+      '@types/better-sqlite3':
+        optional: true
+      '@types/pg':
+        optional: true
+      '@types/sql.js':
+        optional: true
+      '@vercel/postgres':
+        optional: true
+      better-sqlite3:
+        optional: true
+      bun-types:
+        optional: true
+      knex:
+        optional: true
+      kysely:
+        optional: true
+      mysql2:
+        optional: true
+      pg:
+        optional: true
+      postgres:
+        optional: true
+      sql.js:
+        optional: true
+      sqlite3:
+        optional: true
+    dependencies:
+      pg: 8.3.3
     dev: false
 
   /dtrace-provider@0.8.8:

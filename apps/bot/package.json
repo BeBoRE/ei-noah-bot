@@ -28,7 +28,7 @@
   "homepage": "https://github.com/dotBeFoRE/ei-noah-bot#readme",
   "dependencies": {
     "@digitak/esrun": "^3.2.24",
-    "@ei/database": "*",
+    "@ei/drizzle": "*",
     "@ei/lobby": "*",
     "@ei/redis": "*",
     "@mikro-orm/core": "^5.5.3",
@@ -50,6 +50,7 @@
     "discord-api-types": "^0.27.3",
     "discord.js": "^14.11.0",
     "dotenv": "^8.2.0",
+    "drizzle-orm": "^0.28.6",
     "emoji-regex": "^9.2.1",
     "expo-server-sdk": "^3.7.0",
     "i18next": "^21.6.16",

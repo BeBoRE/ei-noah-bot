@@ -1,5 +1,3 @@
-import { MikroORM } from '@mikro-orm/core';
-import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import {
   ApplicationCommandData,
   ApplicationCommandOptionData,
@@ -20,19 +18,26 @@ import {
   User as DiscordUser,
   Embed,
   GatewayIntentBits,
-  GuildMember,
   InteractionReplyOptions,
   Partials,
   Role,
   Snowflake,
 } from 'discord.js';
+import { and, eq } from 'drizzle-orm';
 import { i18n as I18n } from 'i18next';
 import { Logger } from 'winston';
 
-import { Category } from '@ei/database/entity/Category';
-import { Guild } from '@ei/database/entity/Guild';
-import { GuildUser } from '@ei/database/entity/GuildUser';
-import { User } from '@ei/database/entity/User';
+import { DrizzleClient } from '@ei/drizzle';
+import {
+  categories,
+  Category,
+  Guild,
+  guilds,
+  GuildUser,
+  guildUsers,
+  User,
+  users,
+} from '@ei/drizzle/tables/schema';
 
 import Router, {
   AutocompleteRouteInfo,
@@ -132,69 +137,126 @@ export async function parseParams(
 }
 
 const getCategoryData = async (
-  em: EntityManager,
-  category: CategoryChannel,
+  category: Pick<CategoryChannel, 'id'>,
+  drizzle: DrizzleClient,
 ) => {
-  const dbCategory = await em.findOne(Category, { id: category.id });
+  const [dbCategory] = await drizzle
+    .select()
+    .from(categories)
+    .where(eq(categories.id, category.id));
 
   if (dbCategory) return dbCategory;
 
-  const newCategory = em.create(Category, { id: category.id });
+  const [newCategoryId] = await drizzle
+    .insert(categories)
+    .values({
+      id: category.id,
+      publicVoice: null,
+      muteVoice: null,
+      privateVoice: null,
+      lobbyCategory: null,
+    })
+    .returning({ id: categories.id });
 
-  em.persist(newCategory);
+  if (!newCategoryId)
+    throw new Error('Something went wrong while creating a new category');
+
+  const [newCategory] = await drizzle
+    .select()
+    .from(categories)
+    .where(eq(categories.id, newCategoryId.id));
+
+  if (!newCategory)
+    throw new Error('Something went wrong while creating a new category');
 
   return newCategory;
 };
 
-export const createEntityCache = (em: EntityManager) => {
+export const createEntityCache = (drizzle: DrizzleClient) => {
   const userMap = new Map<Snowflake, User>();
-  const getUser = async (user: DiscordUser): Promise<User> => {
+  const getUser = async (user: Pick<DiscordUser, 'id'>): Promise<User> => {
     const cachedUser = userMap.get(user.id);
 
     if (cachedUser) {
       return Promise.resolve(cachedUser);
     }
 
-    const dbUser = await em.findOne(User, { id: user.id });
+    const [dbUser] = await drizzle
+      .select()
+      .from(users)
+      .where(eq(users.id, user.id));
     if (dbUser) {
       userMap.set(user.id, dbUser);
       return dbUser;
     }
 
-    const newUser = em.create(User, { id: user.id, count: 0 });
+    const [newUserId] = await drizzle
+      .insert(users)
+      .values({
+        id: user.id,
+        language: null,
+      })
+      .returning({ id: users.id });
+
+    if (!newUserId)
+      throw new Error('Something went wrong while creating a new user');
+
+    const [newUser] = await drizzle
+      .select()
+      .from(users)
+      .where(eq(users.id, newUserId.id));
+
+    if (!newUser)
+      throw new Error('Something went wrong while creating a new user');
+
     userMap.set(user.id, newUser);
-    em.persist(newUser);
     return newUser;
   };
 
   const guildMap = new Map<Snowflake, Guild>();
-  const getGuild = async (guild: DiscordGuild): Promise<Guild> => {
+  const getGuild = async (guild: Pick<DiscordGuild, 'id'>): Promise<Guild> => {
     const cachedGuild = guildMap.get(guild.id);
 
     if (cachedGuild) {
       return Promise.resolve(cachedGuild);
     }
 
-    const dbGuild = await em.findOne(Guild, guild.id);
+    const [dbGuild] = await drizzle
+      .select()
+      .from(guilds)
+      .where(eq(guilds.id, guild.id));
     if (dbGuild) {
       guildMap.set(guild.id, dbGuild);
       return dbGuild;
     }
 
-    const newGuild = em.create(Guild, {
-      id: guild.id,
-      bitrate: 96000,
-      seperateTextChannel: false,
-    });
+    const [newGuildId] = await drizzle
+      .insert(guilds)
+      .values({
+        id: guild.id,
+        language: null,
+      })
+      .returning({ id: guilds.id });
+
+    if (!newGuildId)
+      throw new Error('Something went wrong while creating a new guild');
+
+    const [newGuild] = await drizzle
+      .select()
+      .from(guilds)
+      .where(eq(guilds.id, newGuildId.id));
+
+    if (!newGuild)
+      throw new Error('Something went wrong while creating a new guild');
+
     guildMap.set(guild.id, newGuild);
-    em.persist(newGuild);
     return newGuild;
   };
 
   const guildUserMap = new Map<Snowflake, GuildUser>();
   const getGuildUser = async (
-    user: DiscordUser,
-    guild: DiscordGuild,
+    user: Pick<DiscordUser, 'id'>,
+    guild: Pick<DiscordGuild, 'id'>,
   ): Promise<GuildUser> => {
     const cachedGuildUser = guildUserMap.get(`${guild.id}+${user.id}`);
 
@@ -202,41 +264,60 @@ export const createEntityCache = (em: EntityManager) => {
       return Promise.resolve(cachedGuildUser);
     }
 
-    const dbGuildUser = await em.findOne(
-      GuildUser,
-      { guild: { id: guild.id }, user: { id: user.id } },
-      { populate: ['guild', 'user'] },
-    );
+    const [dbGuildUser] = await drizzle
+      .select()
+      .from(guildUsers)
+      .innerJoin(users, eq(users.id, user.id))
+      .innerJoin(guilds, eq(guilds.id, guild.id))
+      .where(
+        and(eq(guildUsers.userId, user.id), eq(guildUsers.guildId, guild.id)),
+      );
 
     if (dbGuildUser) {
-      guildUserMap.set(`${guild.id}+${user.id}`, dbGuildUser);
+      guildUserMap.set(`${guild.id}+${user.id}`, dbGuildUser.guild_user);
       guildMap.set(guild.id, dbGuildUser.guild);
       userMap.set(user.id, dbGuildUser.user);
-      return dbGuildUser;
+      return dbGuildUser.guild_user;
     }
 
-    const dbUser = getUser(user);
-    const dbGuild = getGuild(guild);
+    await Promise.all([getUser(user), getGuild(guild)]);
 
-    const newGuildUser = em.create(GuildUser, {
-      user: await dbUser,
-      guild: await dbGuild,
-    });
+    const [newGuildUserId] = await drizzle
+      .insert(guildUsers)
+      .values({
+        guildId: guild.id,
+        userId: user.id,
+        birthdayMsg: null,
+      })
+      .returning({ id: guildUsers.id });
+
+    if (!newGuildUserId)
+      throw new Error('Something went wrong while creating a new guild user');
+
+    const [newGuildUser] = await drizzle
+      .select()
+      .from(guildUsers)
+      .where(eq(guildUsers.id, newGuildUserId.id));
+
+    if (!newGuildUser)
+      throw new Error('Something went wrong while creating a new guild user');
+
     guildUserMap.set(`${guild.id}+${user.id}`, newGuildUser);
-    em.persist(newGuildUser);
 
     return newGuildUser;
   };
 
   const categoryMap = new Map<Snowflake, Category>();
-  const getCategory = (category: CategoryChannel): Promise<Category> => {
+  const getCategory = (
+    category: Pick<CategoryChannel, 'id'>,
+  ): Promise<Category> => {
     const cachedCategory = categoryMap.get(category.id);
 
     if (cachedCategory) {
       return Promise.resolve(cachedCategory);
     }
 
-    return getCategoryData(em, category);
+    return getCategoryData(category, drizzle);
   };
 
   return {
@@ -249,19 +330,19 @@ export const createEntityCache = (em: EntityManager) => {
 
 async function messageParser(
   msg: AutocompleteInteraction,
-  em: EntityManager,
+  drizzle: DrizzleClient,
   i18n: I18n,
   logger: Logger,
 ): Promise<AutocompleteRouteInfo | null>;
 async function messageParser(
   msg: CommandInteraction,
-  em: EntityManager,
+  drizzle: DrizzleClient,
   i18n: I18n,
   logger: Logger,
 ): Promise<MsgRouteInfo | null>;
 async function messageParser(
   msg: CommandInteraction | AutocompleteInteraction,
-  em: EntityManager,
+  drizzle: DrizzleClient,
   i18n: I18n,
   logger: Logger,
 ): Promise<AutocompleteRouteInfo | MsgRouteInfo | null> {
@@ -273,12 +354,13 @@ async function messageParser(
   const { user } = msg;
 
   const { getUser, getGuild, getGuildUser, getCategory } =
-    createEntityCache(em);
+    createEntityCache(drizzle);
 
   let guildUser = null;
   if (msg.guild) guildUser = await getGuildUser(msg.user, msg.guild);
 
-  const userData = guildUser?.user || (await getUser(user));
+  const userData = await getUser(user);
+  const guildData = msg.guild && (await getGuild(msg.guild));
 
   let command:
     | CommandInteractionOption
@@ -334,7 +416,7 @@ async function messageParser(
     if (option.role instanceof Role) flags.set(option.name, [option.role]);
   });
 
-  const language = getLocale({ user: userData, guild: guildUser?.guild });
+  const language = getLocale({ user: userData, guild: guildData || undefined });
 
   const newI18n = i18n.cloneInstance({ lng: language });
 
@@ -344,7 +426,7 @@ async function messageParser(
       absoluteParams: [...params],
       msg,
       flags,
-      em,
+      drizzle,
       guildUser,
       user: userData,
       i18n: newI18n,
@@ -363,7 +445,7 @@ async function messageParser(
     absoluteParams: [...params],
     msg,
     flags,
-    em,
+    drizzle,
     guildUser,
     user: userData,
     i18n: newI18n,
@@ -448,7 +530,7 @@ class EiNoah implements IRouter {
 
   private readonly token: string;
 
-  private readonly orm: MikroORM<PostgreSqlDriver>;
+  private readonly drizzle: DrizzleClient;
 
   private readonly logger: Logger;
 
@@ -460,12 +542,12 @@ class EiNoah implements IRouter {
 
   constructor(
     token: string,
-    orm: MikroORM<PostgreSqlDriver>,
+    drizzle: DrizzleClient,
     i18n: I18n,
     logger: Logger,
   ) {
     this.token = token;
-    this.orm = orm;
+    this.drizzle = drizzle;
     this.i18n = i18n;
     this.logger = logger;
   }
@@ -557,7 +639,7 @@ class EiNoah implements IRouter {
 
   public onInit?: (
     client: Client,
-    orm: MikroORM<PostgreSqlDriver>,
+    drizzle: DrizzleClient,
     i18n: I18n,
     logger: Logger,
   ) => void | Promise<void>;
@@ -573,7 +655,7 @@ class EiNoah implements IRouter {
     );
 
   public async start() {
-    const { orm } = this;
+    const { drizzle } = this;
 
     this.client.on('ready', () => {
       this.logger.info('Client online :)');
@@ -590,9 +672,7 @@ class EiNoah implements IRouter {
 
     this.client.on('interactionCreate', async (interaction) => {
       if (interaction.isChatInputCommand()) {
-        const em = orm.em.fork();
-
-        messageParser(interaction, em, this.i18n, this.logger)
+        messageParser(interaction, drizzle, this.i18n, this.logger)
           .then((info) => {
             if (info) {
               return this.router.handle(info);
@@ -600,8 +680,7 @@ class EiNoah implements IRouter {
             return 'Er is iets misgegaan, volgende keer beter';
           })
           .then(handlerReturnToMessageOptions)
-          .then((options) => Promise.all([options, em.flush()]))
-          .then(async ([options]) => {
+          .then(async (options) => {
             if (options) {
               if (interaction.deferred) {
                 return interaction.followUp({
@@ -634,8 +713,7 @@ class EiNoah implements IRouter {
       }
 
       if (interaction.isAutocomplete()) {
-        const em = orm.em.fork();
-        messageParser(interaction, em, this.i18n, this.logger)
+        messageParser(interaction, drizzle, this.i18n, this.logger)
           .then((info) => {
             if (!info)
               return [{ name: 'Er is iets misgegaan', value: 'error' }];
@@ -648,17 +726,15 @@ class EiNoah implements IRouter {
       }
 
       if (interaction.isContextMenuCommand()) {
-        const em = orm.em.fork();
         const { getUser, getCategory, getGuild, getGuildUser } =
-          createEntityCache(em);
+          createEntityCache(drizzle);
 
-        const guildUserOrUser =
-          interaction.member instanceof GuildMember
-            ? await getGuildUser(
-                interaction.member.user,
-                interaction.member.guild,
-              )
-            : await getUser(interaction.user);
+        const [guild, user] = await Promise.all([
+          interaction.guild && getGuild(interaction.guild),
+          getUser(interaction.user),
+          interaction.guild &&
+            getGuildUser(interaction.user, interaction.guild),
+        ]);
 
         const handler = this.contextHandlers.get(interaction.commandName);
         if (!handler) {
@@ -671,21 +747,14 @@ class EiNoah implements IRouter {
 
         const i18n = this.i18n.cloneInstance();
         i18n.changeLanguage(
-          guildUserOrUser instanceof GuildUser
-            ? guildUserOrUser.user.language || guildUserOrUser.guild.language
-            : guildUserOrUser.language,
+          (guild ? user.language || guild.language : user.language) ||
+            undefined,
         );
 
         try {
           const handlerReturn = await handler.handler({
             interaction,
-            guildUser:
-              guildUserOrUser instanceof GuildUser ? guildUserOrUser : null,
-            user:
-              guildUserOrUser instanceof GuildUser
-                ? guildUserOrUser.user
-                : guildUserOrUser,
-            em,
+            drizzle,
             i18n,
             logger: this.logger,
             getUser,
@@ -701,7 +770,6 @@ class EiNoah implements IRouter {
             ephemeral: true,
           };
 
-          await em.flush();
           if (interaction.deferred) {
             await interaction.followUp(
               typeof handlerReturn === 'string'
@@ -749,7 +817,8 @@ class EiNoah implements IRouter {
     await this.client.login(this.token);
 
     this.router.onInit = async (client) => {
-      if (this.onInit) await this.onInit(client, orm, this.i18n, this.logger);
+      if (this.onInit)
+        await this.onInit(client, drizzle, this.i18n, this.logger);
 
       this.contextHandlers.forEach((info, name) => {
         // TODO: Dit weer weghalen na release V14
@@ -768,7 +837,7 @@ class EiNoah implements IRouter {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    this.router.initialize(this.client, orm, this.i18n, this.logger);
+    this.router.initialize(this.client, drizzle, this.i18n, this.logger);
 
     process.on('uncaughtException', async (err) => {
       this.logger.error('UncaughtError', {

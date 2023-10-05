@@ -1,4 +1,8 @@
 import { ApplicationCommandOptionType, PermissionsBitField } from 'discord.js';
+import { eq } from 'drizzle-orm';
+
+import { DrizzleClient } from '@ei/drizzle';
+import { guilds, users } from '@ei/drizzle/tables/schema';
 
 import Router, { HandlerType } from '../router/Router';
 
@@ -27,13 +31,27 @@ router.use(
   },
 );
 
+const changeUserLanguage = async (
+  drizzle: DrizzleClient,
+  userId: string,
+  language: string | null,
+) =>
+  drizzle
+    .update(users)
+    .set({
+      language,
+    })
+    .where(eq(users.id, userId));
+
 router.use(
   'user',
-  async ({ i18n, user, params, flags, guildUser }) => {
+  async ({ msg, i18n, user, params, flags, getGuild, drizzle }) => {
     const [language] = flags.get('language') || params;
     const availableLanguages = Object.keys(
       i18n.services.resourceStore.data,
     ).sort();
+
+    const guild = msg.guild && (await getGuild(msg.guild));
 
     if (typeof language !== 'string') return i18n.t('locale.error.notLanguage');
 
@@ -41,16 +59,14 @@ router.use(
       return i18n.t('locale.error.notLanguage');
 
     if (language === 'none') {
-      // eslint-disable-next-line no-param-reassign
-      user.language = undefined;
-      await i18n.changeLanguage(guildUser?.guild.language);
+      await changeUserLanguage(drizzle, user.id, null);
+      await i18n.changeLanguage(guild?.language || undefined);
 
       return i18n.t('locale.userLanguageRemoved');
     }
 
     await i18n.changeLanguage(language);
-    // eslint-disable-next-line no-param-reassign
-    user.language = language;
+    await changeUserLanguage(drizzle, user.id, language);
 
     return i18n.t('locale.userLanguageChanged', { changedTo: language });
   },
@@ -69,9 +85,21 @@ router.use(
   },
 );
 
+const changeServerLanguage = async (
+  drizzle: DrizzleClient,
+  guildId: string,
+  language: string | null,
+) =>
+  drizzle
+    .update(guilds)
+    .set({
+      language,
+    })
+    .where(eq(guilds.id, guildId));
+
 router.use(
   'server',
-  async ({ i18n, guildUser, params, flags, msg }) => {
+  async ({ i18n, user, guildUser, params, flags, msg, drizzle }) => {
     const [language] = flags.get('language') || params;
     const { member } = msg;
     const availableLanguages = Object.keys(
@@ -89,16 +117,14 @@ router.use(
       return i18n.t('locale.error.notAdmin');
 
     if (language === 'none') {
-      // eslint-disable-next-line no-param-reassign
-      guildUser.guild.language = undefined;
-      await i18n.changeLanguage(guildUser.user.language);
+      changeServerLanguage(drizzle, guildUser.guildId, null);
+      await i18n.changeLanguage(user.language || undefined);
 
       return i18n.t('locale.guildLanguageRemoved');
     }
 
     await i18n.changeLanguage(language);
-    // eslint-disable-next-line no-param-reassign
-    guildUser.guild.language = language;
+    changeServerLanguage(drizzle, guildUser.guildId, null);
 
     return i18n.t('locale.guildLanguageChanged', { changedTo: language });
   },

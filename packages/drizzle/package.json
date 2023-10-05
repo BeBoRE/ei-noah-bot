@@ -8,14 +8,11 @@
     "migrate": "ts-node migrate.ts"
   },
   "main": "client.ts",
-  "exports": {
-    ".": {
-      "import": "./client.ts"
-    },
-    "./schema": {
-      "import": "./tables/schema.ts"
-    }
-  },
+  "types": "client.ts",
+  "files": [
+    "client.ts",
+    "tables/schema.ts"
+  ],
   "dependencies": {
     "drizzle-orm": "^0.28.6",
     "pg": "^8.3.3"
