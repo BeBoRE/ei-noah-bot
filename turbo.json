@@ -33,7 +33,8 @@
     "lint:typecheck": {},
     "dev": {
       "cache": false,
-      "dotEnv": [".env"]
+      "dotEnv": [".env"],
+      "dependsOn": ["^build"]
     },
     "update": {
       "env": ["EXPO_TOKEN", "CI"]
@@ -48,10 +49,10 @@
         "dist/**"
       ]
     },
-    "db:push": { "inputs": ["migrations/**"], "cache": false },
+    "db:push": { "inputs": ["tables/**"] },
     "db:create": {
-      "inputs": ["entity/**"],
-      "outputs": ["migrations/**"],
+      "inputs": ["tables/**"],
+      "outputs": ["tables/**"],
       "cache": false
     }
   }
