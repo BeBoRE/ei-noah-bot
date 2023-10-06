@@ -1,7 +1,6 @@
-import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
-import { User } from '@ei/database/entity/User';
+import { users } from '@ei/drizzle/tables/schema';
 
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 
@@ -12,19 +11,23 @@ export const notificationRouter = createTRPCRouter({
         token: z.string(),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
-      const user = await ctx.em.findOne(User, { id: ctx.session.user.id });
-
-      if (!user) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'User not found',
-        });
-      }
-
-      user.expoPushToken = input.token;
-      await ctx.em.flush();
-    }),
+    .mutation(
+      async ({
+        ctx: {
+          session: { user },
+          drizzle,
+        },
+        input,
+      }) => {
+        await drizzle
+          .insert(users)
+          .values({id: user.id, expoPushToken: input.token})
+          .onConflictDoUpdate({
+            target: users.id,
+            set: {expoPushToken: input.token}
+          })
+      },
+    ),
 });
 
 export default notificationRouter;

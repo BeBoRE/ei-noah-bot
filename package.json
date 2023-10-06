@@ -29,11 +29,5 @@
     "prettier": "^3.0.1",
     "prettier-plugin-tailwindcss": "^0.4.1",
     "turbo": "latest"
-  },
-  "mikro-orm": {
-    "useTsNode": true,
-    "configPaths": [
-      "packages/database/mikro-orm.config.ts"
-    ]
   }
 }

@@ -1,7 +1,9 @@
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
+import { eq } from 'drizzle-orm';
 
-import TempChannel from '@ei/database/entity/TempChannel';
+import { DrizzleClient } from '@ei/drizzle';
+import { guildUsers, tempChannels } from '@ei/drizzle/tables/schema';
 import {
   addUserSchema,
   clientChangeLobbySchema,
@@ -18,17 +20,18 @@ import {
 
 import {
   bearerSchema,
-  Context,
   createTRPCRouter,
   getSession,
   protectedProcedureWithLobby,
   publicProcedure,
 } from '../trpc';
 
-const hasLobby = async (userId: string, em: Context['em']) => {
-  const lobby = await em.findOne(TempChannel, {
-    guildUser: { user: { id: userId } },
-  });
+const hasLobby = async (userId: string, drizzle: DrizzleClient) => {
+  const [lobby] = await drizzle
+    .select()
+    .from(tempChannels)
+    .innerJoin(guildUsers, eq(guildUsers.id, tempChannels.guildUserId))
+    .where(eq(guildUsers.userId, userId));
 
   return !!lobby;
 };
@@ -36,7 +39,7 @@ const hasLobby = async (userId: string, em: Context['em']) => {
 export const lobbyRouter = createTRPCRouter({
   lobbyUpdate: publicProcedure
     .input(bearerSchema)
-    .subscription(async ({ input: token, ctx: { em } }) => {
+    .subscription(async ({ input: token, ctx: { drizzle } }) => {
       const session = await getSession(token);
 
       if (!session) {
@@ -44,7 +47,7 @@ export const lobbyRouter = createTRPCRouter({
       }
 
       const { user } = session;
-      const lobby = await hasLobby(user.id, em);
+      const lobby = await hasLobby(user.id, drizzle);
 
       return observable<LobbyChange>((emit) => {
         const unsubscribe = subscribeToLobbyUpdate(
