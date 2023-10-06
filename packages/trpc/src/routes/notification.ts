@@ -21,11 +21,11 @@ export const notificationRouter = createTRPCRouter({
       }) => {
         await drizzle
           .insert(users)
-          .values({id: user.id, expoPushToken: input.token})
+          .values({ id: user.id, expoPushToken: input.token })
           .onConflictDoUpdate({
             target: users.id,
-            set: {expoPushToken: input.token}
-          })
+            set: { expoPushToken: input.token },
+          });
       },
     ),
 });
