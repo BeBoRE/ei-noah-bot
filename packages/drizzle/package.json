@@ -5,7 +5,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:typecheck": "tsc --noEmit",
-    "migrate": "ts-node migrate.ts"
+    "db:push": "ts-node migrate.ts"
   },
   "main": "client.ts",
   "types": "client.ts",
