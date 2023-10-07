@@ -14,7 +14,7 @@ let drizzle: NodePgDatabase<Record<string, never>> | null = null;
 
 export const getDrizzleClient = async () => {
   if (!drizzle) {
-    await client.connect();
+    await client.connect().catch((err) => console.error(err))
 
     drizzle = drizzleClient(client, { logger: true });
   }
