@@ -13,7 +13,6 @@
     "lint:typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ei/database": "*",
     "@ei/tailwind-config": "*",
     "@ei/trpc": "*",
     "@tanstack/react-query": "^4.29.23",

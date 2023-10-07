@@ -89,6 +89,12 @@ type TRPCProviderProps = {
 
 const wsClient = createWSClient({
   url: getBaseUrl(true),
+  onOpen: () => {
+    console.log('ws open');
+  },
+  onClose: (cause) => {
+    console.log('ws close', cause);
+  },
 });
 
 /**

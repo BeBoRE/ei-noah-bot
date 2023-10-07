@@ -12,13 +12,14 @@ import { initTRPC, TRPCError } from '@trpc/server';
 import type { CreateNextContextOptions } from '@trpc/server/adapters/next';
 import { NodeHTTPCreateContextFnOptions } from '@trpc/server/dist/adapters/node-http';
 import { Routes } from 'discord-api-types/v10';
+import { eq } from 'drizzle-orm';
 import { camelCase, isArray, isObject, transform } from 'lodash';
 import superjson from 'superjson';
 import type ws from 'ws';
 import { z, ZodError } from 'zod';
 
-import { getOrm } from '@ei/database';
-import TempChannel from '@ei/database/entity/TempChannel';
+import { getDrizzleClient } from '@ei/drizzle';
+import { guildUsers, tempChannels } from '@ei/drizzle/tables/schema';
 
 /**
  * User res {
@@ -79,11 +80,11 @@ type CreateInnerContextOptions = Partial<Opts> & {
  * @see https://create.t3.gg/en/usage/trpc#-servertrpccontextts
  */
 const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
-  const em = (await getOrm()).em.fork();
+  const drizzle = await getDrizzleClient();
   const { session } = opts;
 
   return {
-    em,
+    drizzle,
     session,
   };
 };
@@ -232,12 +233,14 @@ export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
 
 const enforceUserHasLobby = enforceUserIsAuthed.unstable_pipe(
   async ({ ctx, next }) => {
-    const { em } = ctx;
+    const { drizzle } = ctx;
     const { user } = ctx.session;
 
-    const lobby = await em.findOne(TempChannel, {
-      guildUser: { user: { id: user.id } },
-    });
+    const [lobby] = await drizzle
+      .select()
+      .from(tempChannels)
+      .innerJoin(guildUsers, eq(guildUsers.id, tempChannels.guildUserId))
+      .where(eq(guildUsers.userId, user.id));
 
     if (!lobby) {
       throw new TRPCError({

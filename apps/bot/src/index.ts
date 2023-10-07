@@ -19,6 +19,7 @@ import {
   User,
 } from 'discord.js';
 import dotenv from 'dotenv';
+import { isNotNull } from 'drizzle-orm';
 import i18next from 'i18next';
 import Backend from 'i18next-fs-backend';
 import {
@@ -27,14 +28,13 @@ import {
   strokeTextWithTwemoji,
 } from 'node-canvas-with-twemoji-and-discord-emoji';
 
-import { getOrm } from '@ei/database';
-import { Guild } from '@ei/database/entity/Guild';
+import { getDrizzleClient } from '@ei/drizzle';
+import { guilds } from '@ei/drizzle/tables/schema';
 
 import EiNoah from './EiNoah';
 import logger from './logger';
 import { BothHandler, HandlerType } from './router/Router';
 import Birthday from './routes/Birthday';
-import Counter from './routes/Counter';
 import LobbyRouter from './routes/LobbyRouter';
 import LocaleRouter from './routes/Locale';
 import QuoteRouter from './routes/QuoteRouter';
@@ -69,8 +69,7 @@ process.title = 'Ei Noah Bot';
     throw new Error("Add bot's token to CLIENT_TOKEN");
 
   // Creëerd de database connectie
-  const orm = await getOrm();
-  await orm.getMigrator().up();
+  const drizzle = await getDrizzleClient();
 
   const preloadLanguages = readdirSync(join(__dirname, '../locales')).filter(
     (fileName) => {
@@ -97,7 +96,7 @@ process.title = 'Ei Noah Bot';
     (err) => err && logger.error({ err }),
   );
 
-  const eiNoah = new EiNoah(process.env.CLIENT_TOKEN, orm, i18next, logger);
+  const eiNoah = new EiNoah(process.env.CLIENT_TOKEN, drizzle, i18next, logger);
 
   eiNoah.use(
     'help',
@@ -484,9 +483,6 @@ process.title = 'Ei Noah Bot';
   eiNoah.use('knuffel', hugHandler, HandlerType.BOTH);
 
   if (process.env.NODE_ENV !== 'production') {
-    // Voorbeeld hoe je met user data omgaat
-    eiNoah.use('counter', Counter);
-
     const hasUpdated = false;
     // Update alle slash commands voor development
     eiNoah.use(
@@ -589,14 +585,13 @@ process.title = 'Ei Noah Bot';
           client.user
             .edit({ avatar, username: 'ei Sint' })
             .then(async () => {
-              const em = orm.em.fork();
-
-              const guilds = await em.find(Guild, {
-                $not: { birthdayChannel: null },
-              });
+              const guildList = await drizzle
+                .select()
+                .from(guilds)
+                .where(isNotNull(guilds.birthdayChannel));
 
               return Promise.all(
-                guilds.map((guild) => {
+                guildList.map((guild) => {
                   if (!guild.birthdayChannel) return null;
 
                   return client.channels
@@ -635,14 +630,13 @@ process.title = 'Ei Noah Bot';
           client.user
             .edit({ avatar, username: 'ei Kerst' })
             .then(async () => {
-              const em = orm.em.fork();
-
-              const guilds = await em.find(Guild, {
-                $not: { birthdayChannel: null },
-              });
+              const guildList = await drizzle
+                .select()
+                .from(guilds)
+                .where(isNotNull(guilds.birthdayChannel));
 
               return Promise.all(
-                guilds.map((guild) => {
+                guildList.map((guild) => {
                   if (!guild.birthdayChannel) return null;
 
                   return client.channels

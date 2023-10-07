@@ -1,5 +1,4 @@
-import { type Guild } from '@ei/database/entity/Guild';
-import { type User } from '@ei/database/entity/User';
+import { Guild, User } from '@ei/drizzle/tables/schema';
 
 const defaultLanguage = 'nl';
 
