@@ -24,6 +24,13 @@ async function registerForPushNotificationsAsync() {
       vibrationPattern: [0, 250, 250, 250],
       lightColor: `${baseConfig.theme.colors.primary.DEFAULT}CA`,
     });
+
+    await setNotificationChannelAsync('newLobby', {
+      name: 'Manage lobby notification',
+      importance: AndroidImportance.LOW,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: `${baseConfig.theme.colors.primary.DEFAULT}CA`,
+    });
   }
 
   if (isDevice) {

@@ -1,5 +1,3 @@
-import { MikroORM } from '@mikro-orm/core';
-import { EntityManager, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import {
   ApplicationCommandOptionChoiceData,
   ApplicationCommandOptionType,
@@ -23,22 +21,21 @@ import {
 import { i18n as I18n } from 'i18next';
 import { Logger } from 'winston';
 
-import { Category } from '@ei/database/entity/Category';
-import { Guild } from '@ei/database/entity/Guild';
-import { GuildUser } from '@ei/database/entity/GuildUser';
-import { User } from '@ei/database/entity/User';
+import { DrizzleClient } from '@ei/drizzle';
+import { Category, Guild, GuildUser, User } from '@ei/drizzle/tables/schema';
 
 export interface ContextMenuInfo {
   interaction: ContextMenuCommandInteraction;
-  em: EntityManager;
+  drizzle: DrizzleClient;
   i18n: I18n;
-  user: User;
-  guildUser: GuildUser | null;
   logger: Logger;
-  getUser: (user: DiscordUser) => Promise<User>;
-  getGuildUser: (user: DiscordUser, guild: DiscordGuild) => Promise<GuildUser>;
-  getGuild: (guild: DiscordGuild) => Promise<Guild>;
-  getCategory: (category: CategoryChannel) => Promise<Category>;
+  getUser: (user: Pick<DiscordUser, 'id'>) => Promise<User>;
+  getGuildUser: (
+    user: Pick<DiscordUser, 'id'>,
+    guild: Pick<DiscordGuild, 'id'>,
+  ) => Promise<GuildUser>;
+  getGuild: (guild: Pick<DiscordGuild, 'id'>) => Promise<Guild>;
+  getCategory: (category: Pick<CategoryChannel, 'id'>) => Promise<Category>;
 }
 
 export interface RouteInfo {
@@ -51,11 +48,14 @@ export interface RouteInfo {
   >;
   readonly guildUser: GuildUser | null;
   readonly user: User;
-  getUser: (user: DiscordUser) => Promise<User>;
-  getGuildUser: (user: DiscordUser, guild: DiscordGuild) => Promise<GuildUser>;
-  getGuild: (guild: DiscordGuild) => Promise<Guild>;
-  getCategory: (category: CategoryChannel) => Promise<Category>;
-  em: EntityManager;
+  getUser: (user: Pick<DiscordUser, 'id'>) => Promise<User>;
+  getGuildUser: (
+    user: Pick<DiscordUser, 'id'>,
+    guild: Pick<DiscordGuild, 'id'>,
+  ) => Promise<GuildUser>;
+  getGuild: (guild: Pick<DiscordGuild, 'id'>) => Promise<Guild>;
+  getCategory: (category: Pick<CategoryChannel, 'id'>) => Promise<Category>;
+  drizzle: DrizzleClient;
   i18n: I18n;
   logger: Logger;
 }
@@ -209,7 +209,7 @@ export interface IRouter {
 
   onInit?: (
     client: Client,
-    orm: MikroORM<PostgreSqlDriver>,
+    drizzle: DrizzleClient,
     i18n: I18n,
     logger: Logger,
   ) => void | Promise<void>;
@@ -473,18 +473,18 @@ export default class Router implements IRouter {
 
   protected initialize(
     client: Client,
-    orm: MikroORM<PostgreSqlDriver>,
+    drizzle: DrizzleClient,
     i18n: I18n,
     logger: Logger,
   ) {
     Object.values(this.routes).forEach((route) => {
       if (route instanceof Router && !route.isInitialized) {
-        route.initialize(client, orm, i18n, logger);
+        route.initialize(client, drizzle, i18n, logger);
       }
     });
 
     if (this.onInit) {
-      this.onInit(client, orm, i18n, logger);
+      this.onInit(client, drizzle, i18n, logger);
       // eslint-disable-next-line no-underscore-dangle
       this._isInitialized = true;
     }
@@ -492,7 +492,7 @@ export default class Router implements IRouter {
 
   public onInit?: (
     client: Client,
-    orm: MikroORM<PostgreSqlDriver>,
+    orm: DrizzleClient,
     i18n: I18n,
     logger: Logger,
   ) => void | Promise<void>;

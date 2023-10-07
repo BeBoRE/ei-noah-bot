@@ -89,6 +89,12 @@ type TRPCProviderProps = {
 
 const wsClient = createWSClient({
   url: getBaseUrl(true),
+  onOpen: () => {
+    console.log('ws open');
+  },
+  onClose: (cause) => {
+    console.log('ws close', cause);
+  },
 });
 
 /**
@@ -105,7 +111,11 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
     () =>
       new QueryClient({
         defaultOptions: {
-          queries: { staleTime: 1000 * 1, enabled: isLoggedIn },
+          queries: { 
+            staleTime: 1000 * 1, 
+            enabled: isLoggedIn,
+            cacheTime: 1000 * 60 * 60 * 24,
+          },
         },
       }),
     [isLoggedIn],

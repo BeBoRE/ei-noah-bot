@@ -29,14 +29,9 @@
   "homepage": "https://github.com/dotBeFoRE/ei-noah-bot#readme",
   "dependencies": {
     "@digitak/esrun": "^3.2.24",
-    "@ei/database": "*",
+    "@ei/drizzle": "*",
     "@ei/lobby": "*",
     "@ei/redis": "*",
-    "@mikro-orm/core": "^5.5.3",
-    "@mikro-orm/knex": "^5.5.3",
-    "@mikro-orm/migrations": "^5.5.3",
-    "@mikro-orm/postgresql": "^5.5.3",
-    "@mikro-orm/reflection": "^5.5.3",
     "@types/chart.js": "^2.9.34",
     "@types/cron": "^1.7.2",
     "@types/node-fetch": "^2.5.7",
@@ -51,6 +46,7 @@
     "discord-api-types": "^0.27.3",
     "discord.js": "^14.11.0",
     "dotenv": "^8.2.0",
+    "drizzle-orm": "^0.28.6",
     "emoji-regex": "^9.2.1",
     "expo-server-sdk": "^3.7.0",
     "i18next": "^21.6.16",
@@ -71,8 +67,6 @@
   },
   "devDependencies": {
     "@ei/tsconfig": "*",
-    "@mikro-orm/cli": "^5.5.3",
-    "@mikro-orm/entity-generator": "^5.5.3",
     "@types/emoji-regex": "^9.2.0",
     "@types/i18next-fs-backend": "^1.0.1",
     "@types/node": "^18.17.0",
@@ -80,10 +74,5 @@
     "eslint": "^8.46.0",
     "eslint-config-custom": "*",
     "ts-node-dev": "^2.0.0"
-  },
-  "mikro-orm": {
-    "configPaths": [
-      "./src/mikro-orm.config.ts"
-    ]
   }
 }

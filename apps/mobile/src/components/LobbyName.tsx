@@ -1,4 +1,4 @@
-import { forwardRef, useMemo, useState } from 'react';
+import { forwardRef, useEffect, useMemo, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import ReactTimeAgo from 'react-time-ago';
@@ -34,6 +34,10 @@ const LobbyName = forwardRef<View, Props>(({ lobby }: Props, ref) => {
   );
 
   const [name, setName] = useState(nameInfo?.name);
+
+  useEffect(() => {
+    setName(nameInfo?.name);
+  }, [nameInfo?.name]);
 
   const onNameChange = (newName: string) => {
     changeLobby({

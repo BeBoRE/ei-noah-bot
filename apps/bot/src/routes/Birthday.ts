@@ -1,4 +1,3 @@
-import { EntityManager } from '@mikro-orm/postgresql';
 import { CanvasRenderingContext2D, createCanvas, loadImage } from 'canvas';
 import { CronJob } from 'cron';
 import {
@@ -17,11 +16,13 @@ import {
   Role,
   TextChannel,
 } from 'discord.js';
+import { and, eq, inArray, isNotNull } from 'drizzle-orm';
 import i18next, { i18n as I18n } from 'i18next';
 import moment from 'moment';
 import { Logger } from 'winston';
 
-import { User } from '@ei/database/entity/User';
+import { DrizzleClient } from '@ei/drizzle';
+import { guilds, guildUsers, User, users } from '@ei/drizzle/tables/schema';
 
 import Router, {
   BothHandler,
@@ -40,7 +41,13 @@ router.use('help', helpHandler, HandlerType.BOTH, {
   description: 'Get a help menu',
 });
 
-const setRouter: BothHandler = async ({ user, params, flags, i18n }) => {
+const setRouter: BothHandler = async ({
+  user,
+  params,
+  flags,
+  i18n,
+  drizzle,
+}) => {
   const input = (flags.get('date') || params)
     .filter((item): item is string => typeof item === 'string')
     .join(' ');
@@ -61,7 +68,12 @@ const setRouter: BothHandler = async ({ user, params, flags, i18n }) => {
   }
 
   // eslint-disable-next-line no-param-reassign
-  user.birthday = birthday.toDate();
+  user.birthday = birthday.toDate().toISOString();
+
+  await drizzle
+    .update(users)
+    .set({ birthday: user.birthday })
+    .where(eq(users.id, user.id));
 
   if (user.birthday != null) {
     return i18n.t('birthday.bdayChanged', {
@@ -87,17 +99,31 @@ router.use('set', setRouter, HandlerType.BOTH, {
 router.use('add', setRouter);
 router.use('change', setRouter);
 
-const showAll: GuildHandler = async ({ msg, em, i18n }) => {
+const showAll: GuildHandler = async ({ msg, drizzle, i18n }) => {
   const members: GuildMember[] = await msg.guild.members
     .list({ limit: 1000 })
     .then((c) => [...c.values()])
     .catch(() => []);
-  const users = await em.find(User, {
-    $not: { birthday: null },
-    id: { $in: members.map((member) => member.id) },
-  });
 
-  const description = users
+  // const users = await em.find(User, {
+  //   $not: { birthday: null },
+  //   id: { $in: members.map((member) => member.id) },
+  // });
+
+  const userList = await drizzle
+    .select()
+    .from(users)
+    .where(
+      and(
+        isNotNull(users.birthday),
+        inArray(
+          users.id,
+          members.map((member) => member.id),
+        ),
+      ),
+    );
+
+  const description = userList
     .sort((a, b) => {
       let dayA = moment(a.birthday).dayOfYear();
       let dayB = moment(b.birthday).dayOfYear();
@@ -129,20 +155,33 @@ router.use('all', showAll, HandlerType.GUILD, {
   description: 'See all birthdays',
 });
 
-const showAgeHandler: GuildHandler = async ({ msg, em, i18n }) => {
+const showAgeHandler: GuildHandler = async ({ msg, drizzle, i18n }) => {
   const members: GuildMember[] = await msg.guild.members
     .list({ limit: 1000 })
     .then((c) => [...c.values()])
     .catch(() => []);
-  const users = await em.find(User, {
-    $not: { birthday: null },
-    id: { $in: members.map((member) => member.id) },
-  });
 
-  if (users.length === 0) return i18next.t('birthday.noBirthdayRegistered');
+  const userList = await drizzle
+    .select()
+    .from(users)
+    .where(
+      and(
+        isNotNull(users.birthday),
+        inArray(
+          users.id,
+          members.map((member) => member.id),
+        ),
+      ),
+    );
 
-  const description = users
-    .sort((a, b) => (a.birthday?.valueOf() || 0) - (b.birthday?.valueOf() || 0))
+  if (userList.length === 0) return i18next.t('birthday.noBirthdayRegistered');
+
+  const description = userList
+    .sort(
+      (a, b) =>
+        new Date(a.birthday || 0).getDate() -
+        new Date(b.birthday || 0).getDate(),
+    )
     .map(
       (dbUser) =>
         `\n${members.find((m) => m.id === dbUser.id)?.toString()} is ${-moment(
@@ -218,7 +257,8 @@ router.use(
 router.useContext(
   'Get Birthday',
   ApplicationCommandType.User,
-  async ({ interaction, i18n, user, getUser }) => {
+  async ({ interaction, i18n, getUser }) => {
+    const user = await getUser(interaction.user);
     const discUser = interaction.options.getUser('user', true);
 
     if (!(discUser instanceof DiscordUser)) {
@@ -236,9 +276,12 @@ router.useContext(
 
 router.use(
   'remove',
-  async ({ user, i18n }) => {
-    // eslint-disable-next-line no-param-reassign
-    user.birthday = undefined;
+  async ({ user, i18n, drizzle }) => {
+    await drizzle
+      .update(users)
+      .set({ birthday: null })
+      .where(eq(users.id, user.id));
+
     return i18n.t('birthday.birthdayRemoved');
   },
   HandlerType.BOTH,
@@ -247,20 +290,32 @@ router.use(
   },
 );
 
-const setChannelHandler: GuildHandler = async ({ guildUser, msg, i18n }) => {
+const setChannelHandler: GuildHandler = async ({
+  msg,
+  i18n,
+  drizzle,
+  getGuild,
+}) => {
   if (!msg.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
     return i18n.t('error.notAdmin');
   }
 
-  const guild = await guildUser.guild.init();
+  const guild = await getGuild(msg.guild);
   const { channel } = msg;
 
   if (guild.birthdayChannel === channel.id) {
-    guild.birthdayChannel = undefined;
+    await drizzle
+      .update(guilds)
+      .set({ birthdayChannel: null })
+      .where(eq(guilds.id, guild.id));
+
     return i18n.t('birthday.notSelectedAsAnnouncement');
   }
 
-  guild.birthdayChannel = channel.id;
+  await drizzle
+    .update(guilds)
+    .set({ birthdayChannel: msg.channel.id })
+    .where(eq(guilds.id, guild.id));
   return i18n.t('birthday.selectedAsAnnouncement');
 };
 
@@ -271,10 +326,10 @@ router.use('channel', setChannelHandler, HandlerType.GUILD, {
 });
 
 const setRoleHandler: GuildHandler = async ({
-  guildUser,
   msg,
   params,
   flags,
+  drizzle,
   i18n,
 }) => {
   if (!msg.member?.permissions.has(PermissionsBitField.Flags.Administrator)) {
@@ -291,11 +346,13 @@ const setRoleHandler: GuildHandler = async ({
 
   const [role] = flags.get('role') || params;
 
-  const guild = await guildUser.guild.init();
-
   if (role instanceof Role) {
     if (msg.guild.members.me.roles.highest.position > role.position) {
-      guild.birthdayRole = role.id;
+      await drizzle
+        .update(guilds)
+        .set({ birthdayRole: role.id })
+        .where(eq(guilds.id, msg.guild.id));
+
       return i18n.t('birthday.birthdayRoleSet');
     }
 
@@ -528,168 +585,168 @@ const getMsgOptions = async (
 // Refactor: Iets meer van async gebruikmaken
 const checkBday = async (
   client: Client,
-  em: EntityManager,
+  drizzle: DrizzleClient,
   _i18n: I18n,
   logger: Logger,
 ) => {
   const today = moment().startOf('day').locale('nl').format('DD MMMM');
   const currentYear = new Date().getFullYear();
 
-  const users = await em.find(
-    User,
-    { $not: { birthday: null } },
-    { populate: ['guildUsers', 'guildUsers.guild'] },
-  );
-  const discUsers = (
-    await Promise.all(
-      users.map((u) =>
-        client.users
-          .fetch(`${BigInt(u.id)}`, { cache: true })
-          .catch(() => null),
-      ),
-    )
-  ).filter((user): user is DiscordUser => !!user);
+  const userList = await drizzle
+    .select()
+    .from(users)
+    .innerJoin(guildUsers, eq(users.id, guildUsers.userId))
+    .innerJoin(guilds, eq(guilds.id, guildUsers.guildId))
+    .where(isNotNull(users.birthday));
 
   await Promise.all(
-    discUsers.map(async (du) => {
-      const user = users.find((u) => u.id === du.id);
+    userList.map(async (u) => {
+      const { user } = u;
       if (user) {
-        const discBday = moment(user?.birthday)
-          .locale('nl')
-          .format('DD MMMM');
-        const birthYear = user?.birthday?.getFullYear();
+        const discBday = moment(user.birthday).locale('nl').format('DD MMMM');
+        const birthYear =
+          user.birthday && new Date(user.birthday).getFullYear();
         const isBirthday = today === discBday;
         const age = birthYear ? currentYear - birthYear : 0;
 
-        await Promise.all(
-          user.guildUsers.getItems().map(async (gu) => {
-            const [guild, channel] = await Promise.all([
-              client.guilds
-                .fetch({ guild: gu.guild.id, cache: true })
-                .catch(() => null),
-              gu.guild.birthdayChannel
-                ? client.channels
-                    .fetch(gu.guild.birthdayChannel, { cache: true })
-                    .catch(() => null)
-                : Promise.resolve(null),
-            ]);
+        const [guild, channel] = await Promise.all([
+          client.guilds
+            .fetch({ guild: u.guild.id, cache: true })
+            .catch(() => null),
+          u.guild.birthdayChannel
+            ? client.channels
+                .fetch(u.guild.birthdayChannel, { cache: true })
+                .catch(() => null)
+            : Promise.resolve(null),
+        ]);
 
-            if (guild) {
-              const [member, role] = await Promise.all([
-                guild.members
-                  .fetch({ user: gu.user.id, cache: true })
-                  .catch(() => null),
-                gu.guild.birthdayRole
-                  ? guild.roles
-                      .fetch(gu.guild.birthdayRole, { cache: true })
-                      .catch(() => null)
-                  : Promise.resolve(null),
-              ]);
+        if (!guild) {
+          return;
+        }
 
-              // Give or remove birthday role
-              if (member && role) {
-                if (isBirthday && !member.roles.cache.has(role.id)) {
-                  member.roles
-                    .add(role)
-                    .catch((error) =>
-                      logger.error(error.description, { error }),
-                    );
-                } else if (!isBirthday && member.roles.cache.has(role.id)) {
-                  member.roles
-                    .remove(role)
-                    .catch((error) =>
-                      logger.error(error.description, { error }),
-                    );
-                }
-              }
+        const [member, role] = await Promise.all([
+          guild.members
+            .fetch({ user: u.user.id, cache: true })
+            .catch(() => null),
+          u.guild.birthdayRole
+            ? guild.roles
+                .fetch(u.guild.birthdayRole, { cache: true })
+                .catch(() => null)
+            : Promise.resolve(null),
+        ]);
 
-              if (
-                channel &&
-                (channel instanceof TextChannel ||
-                  channel instanceof NewsChannel)
-              ) {
-                const birthdayMessage = gu.birthdayMsg
-                  ? await channel.messages
-                      .fetch({ message: gu.birthdayMsg, cache: true })
-                      .catch(() => null)
-                  : null;
+        // Give or remove birthday role
+        if (member && role) {
+          if (isBirthday && !member.roles.cache.has(role.id)) {
+            member.roles
+              .add(role)
+              .catch((error) => logger.error(error.description, { error }));
+          } else if (!isBirthday && member.roles.cache.has(role.id)) {
+            member.roles
+              .remove(role)
+              .catch((error) => logger.error(error.description, { error }));
+          }
+        }
 
-                // Post the birthday message when it's a member's birthday,
-                // when there is already a birthday message only post a new message if the last one can't be deleted
-                if (member && isBirthday && !birthdayMessage) {
-                  const i18n = _i18n.cloneInstance({
-                    lng: gu.guild.language || user.language || 'nl',
-                  });
-                  const options = await getMsgOptions(
-                    member,
-                    channel,
-                    age,
-                    i18n,
-                  );
+        if (
+          channel &&
+          (channel instanceof TextChannel || channel instanceof NewsChannel)
+        ) {
+          const birthdayMessage = u.guild_user.birthdayMsg
+            ? await channel.messages
+                .fetch({ message: u.guild_user.birthdayMsg, cache: true })
+                .catch(() => null)
+            : null;
 
-                  if (options) {
-                    // eslint-disable-next-line no-param-reassign
-                    gu.birthdayMsg = await channel
-                      .send(options)
-                      .then((msg) => {
-                        if (msg) {
-                          const overwrites =
-                            client.user && channel.permissionsFor(client.user);
+          // Post the birthday message when it's a member's birthday,
+          // when there is already a birthday message only post a new message if the last one can't be deleted
+          if (member && isBirthday && !birthdayMessage) {
+            const i18n = _i18n.cloneInstance({
+              lng: u.guild.language || user.language || 'nl',
+            });
+            const options = await getMsgOptions(member, channel, age, i18n);
 
-                          if (
-                            overwrites &&
-                            (overwrites.has(
-                              PermissionsBitField.Flags.SendMessagesInThreads,
-                            ) ||
-                              overwrites.has(
-                                PermissionsBitField.Flags.SendMessagesInThreads,
-                              ))
-                          ) {
-                            msg
-                              .startThread({
-                                name: i18n.t('birthday.congratulations'),
-                                autoArchiveDuration: 1440,
-                              })
-                              .catch(() => {});
-                          }
-                          return msg.id;
-                        }
+            if (options) {
+              const message = await channel
+                .send(options)
+                .then((msg) => {
+                  if (msg) {
+                    const overwrites =
+                      client.user && channel.permissionsFor(client.user);
 
-                        return undefined;
-                      })
-                      .catch(() => undefined);
-                  } else {
-                    const owner = await guild.fetchOwner({ cache: true });
-
-                    const url =
-                      member.user.avatarURL({ size: 256, extension: 'png' }) ||
-                      member.user.defaultAvatarURL;
-
-                    const ownerUser = await em.findOneOrFail(User, {
-                      id: owner.user.id,
-                    });
-                    await i18n.changeLanguage(ownerUser.language);
-
-                    owner
-                      .send({
-                        content: i18n.t(
-                          'birthday.error.noSendPermission',
-                          channel.toString(),
-                        ),
-                        files: [await generateImage(url, age.toString())],
-                      })
-                      .catch(() => {});
+                    if (
+                      overwrites &&
+                      (overwrites.has(
+                        PermissionsBitField.Flags.SendMessagesInThreads,
+                      ) ||
+                        overwrites.has(
+                          PermissionsBitField.Flags.SendMessagesInThreads,
+                        ))
+                    ) {
+                      msg
+                        .startThread({
+                          name: i18n.t('birthday.congratulations'),
+                          autoArchiveDuration: 1440,
+                        })
+                        .catch(() => {});
+                    }
+                    return msg.id;
                   }
-                  // If there is a birthday message delete it if the message is deletable and when it's not the members birthday or if the member left the server
-                } else if (birthdayMessage && !(isBirthday && member)) {
-                  birthdayMessage.delete().catch(() => {});
-                  // eslint-disable-next-line no-param-reassign
-                  gu.birthdayMsg = undefined;
-                }
+
+                  return undefined;
+                })
+                .catch(() => undefined);
+
+              if (message) {
+                await drizzle
+                  .update(guildUsers)
+                  .set({ birthdayMsg: message })
+                  .where(
+                    and(
+                      eq(guildUsers.guildId, guild.id),
+                      eq(guildUsers.userId, u.user.id),
+                    ),
+                  );
               }
+            } else {
+              const owner = await guild.fetchOwner({ cache: true });
+
+              const url =
+                member.user.avatarURL({ size: 256, extension: 'png' }) ||
+                member.user.defaultAvatarURL;
+
+              const [ownerUser] = await drizzle
+                .select()
+                .from(users)
+                .where(eq(users.id, owner.id));
+
+              await i18n.changeLanguage(ownerUser?.language || undefined);
+
+              owner
+                .send({
+                  content: i18n.t(
+                    'birthday.error.noSendPermission',
+                    channel.toString(),
+                  ),
+                  files: [await generateImage(url, age.toString())],
+                })
+                .catch(() => {});
             }
-          }),
-        );
+            // If there is a birthday message delete it if the message is deletable and when it's not the members birthday or if the member left the server
+          } else if (birthdayMessage && !(isBirthday && member)) {
+            birthdayMessage.delete().catch(() => {});
+
+            await drizzle
+              .update(guildUsers)
+              .set({ birthdayMsg: null })
+              .where(
+                and(
+                  eq(guildUsers.guildId, guild.id),
+                  eq(guildUsers.userId, u.user.id),
+                ),
+              );
+          }
+        }
       }
     }),
   );
@@ -698,9 +755,9 @@ const checkBday = async (
 if (process.env.NODE_ENV !== 'production') {
   router.use(
     'check',
-    async ({ em, msg, i18n, logger }) => {
+    async ({ drizzle, msg, i18n, logger }) => {
       const { client } = msg;
-      await checkBday(client, em, i18n, logger);
+      await checkBday(client, drizzle, i18n, logger);
 
       return 'Ohko';
     },
@@ -711,20 +768,14 @@ if (process.env.NODE_ENV !== 'production') {
   );
 }
 
-router.onInit = async (client, orm, i18n, logger) => {
+router.onInit = async (client, drizzle, i18n, logger) => {
   const offset = new Date().getTimezoneOffset();
   logger.info(`Offset in minutes: ${offset}`);
 
-  {
-    const em = orm.em.fork();
-    await checkBday(client, em, i18n, logger);
-    await em.flush();
-  }
+  await checkBday(client, drizzle, i18n, logger);
 
   const reportCron = new CronJob('5 0 0 * * *', async () => {
-    const em = orm.em.fork();
-    await checkBday(client, em, i18n, logger);
-    await em.flush();
+    await checkBday(client, drizzle, i18n, logger);
   });
 
   reportCron.start();

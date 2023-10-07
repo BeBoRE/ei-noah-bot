@@ -1,8 +1,6 @@
 import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
-  ButtonBuilder,
-  ButtonStyle,
   Channel,
   User as DiscordUser,
   EmbedBuilder,
@@ -10,15 +8,22 @@ import {
   InteractionReplyOptions,
   InteractionUpdateOptions,
   Message,
-  PermissionsBitField,
   Role,
 } from 'discord.js';
+import { eq } from 'drizzle-orm';
 import { i18n as I18n } from 'i18next';
 
-import { GuildUser } from '@ei/database/entity/GuildUser';
-import Quote from '@ei/database/entity/Quote';
+import { DrizzleClient } from '@ei/drizzle';
+import {
+  GuildUser,
+  guildUsers,
+  Quote,
+  quotes,
+  User,
+} from '@ei/drizzle/tables/schema';
 
 import createMenu from '../createMenu';
+import { createEntityCache } from '../EiNoah';
 import Router, { GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Onthoud al');
@@ -36,25 +41,13 @@ const getQuoteOptions = async (
   guild: Guild,
   quote: Quote,
   i18n: I18n,
+  quotedUser: User,
+  ownerDb: User,
 ): Promise<InteractionReplyOptions> => {
-  await Promise.all([
-    (() => {
-      if (!quote.guildUser.isInitialized()) return quote.guildUser.init();
-
-      return quote.guildUser;
-    })(),
-    (() => {
-      if (!quote.creator.isInitialized()) return quote.creator.init();
-
-      return quote.creator;
-    })(),
-  ]);
-
-  const quoted = guild.client.users.fetch(
-    `${BigInt(quote.guildUser.user.id)}`,
-    { cache: true },
-  );
-  const owner = guild.client.users.fetch(`${BigInt(quote.creator.user.id)}`, {
+  const quoted = guild.client.users.fetch(`${BigInt(quotedUser.id)}`, {
+    cache: true,
+  });
+  const owner = guild.client.users.fetch(`${BigInt(ownerDb.id)}`, {
     cache: true,
   });
 
@@ -63,10 +56,12 @@ const getQuoteOptions = async (
   const linkRegex =
     /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/gm;
 
+  const date = quote.date !== null && new Date(quote.date);
+
   if (text.match(linkRegex)) {
     return {
       content: `${text}\n> - ${await quoted} ${
-        quote.date ? `(<t:${quote.date.getTime() / 1000}:D>)` : ''
+        date ? `(<t:${date.getTime() / 1000}:D>)` : ''
       }\n> ${i18n.t('quote.byUser', { user: (await owner).toString() })}`,
     };
   }
@@ -84,18 +79,22 @@ const getQuoteOptions = async (
     text: i18n.t('quote.byUser', { user: (await owner).username }),
     iconURL: (await owner).displayAvatarURL({ size: 64 }),
   });
-  if (quote.date) embed.setTimestamp(quote.date);
+  if (date) embed.setTimestamp(date);
   if (color) embed.setColor(color);
 
   return { embeds: [embed] };
 };
 
-const addQuote = (
+type GetUser = ReturnType<typeof createEntityCache>['getUser'];
+
+const addQuote = async (
   params: (string | DiscordUser | Channel | Role | number | boolean)[],
   quotedUser: GuildUser,
   owner: GuildUser,
   guild: Guild,
   i18n: I18n,
+  drizzle: DrizzleClient,
+  getUser: GetUser,
   date?: Date,
 ) => {
   const text = params
@@ -109,11 +108,39 @@ const addQuote = (
     return i18n.t('quote.error.quoteSizeLimit');
   }
 
-  const quote = new Quote(text, owner);
-  if (date) quote.date = date;
-  quotedUser.quotes.add(quote);
+  const quote: typeof quotes.$inferInsert = {
+    text,
+    creatorId: owner.id,
+    guildUserId: quotedUser.id,
+  };
 
-  return getQuoteOptions(guild, quote, i18n);
+  if (date) quote.date = date.toISOString();
+  const [newQuote] = await drizzle.insert(quotes).values(quote).returning({
+    id: quotes.id,
+    date: quotes.date,
+    creatorId: quotes.creatorId,
+    guildUserId: quotes.guildUserId,
+    text: quotes.text,
+  });
+
+  if (!newQuote) {
+    return i18n.t('quote.error.quoteNotAdded');
+  }
+
+  const quotedDbUser = await getUser({ id: quotedUser.userId });
+  const ownerDb = await getUser({ id: owner.userId });
+
+  return getQuoteOptions(guild, newQuote, i18n, quotedDbUser, ownerDb);
+};
+
+const getQuotes = async (drizzle: DrizzleClient, guildUser: GuildUser) => {
+  const quoteList = await drizzle
+    .select()
+    .from(quotes)
+    .innerJoin(guildUsers, eq(quotes.guildUserId, guildUsers.id))
+    .where(eq(guildUsers.id, guildUser.id));
+
+  return quoteList.map((q) => q.quote);
 };
 
 const handler: GuildHandler = async ({
@@ -124,6 +151,8 @@ const handler: GuildHandler = async ({
   i18n,
   logger,
   getGuildUser,
+  getUser,
+  drizzle,
 }) => {
   const [user] = flags.get('persoon') || params;
   params.shift();
@@ -139,40 +168,54 @@ const handler: GuildHandler = async ({
   if (requestingUser.id === user.id) quotedUser = guildUser;
   else quotedUser = await getGuildUser(user, msg.guild);
 
-  if (!quotedUser.quotes.isInitialized()) {
-    await quotedUser.quotes.init();
-  }
+  const quoteList = await getQuotes(drizzle, quotedUser);
 
   if (!quoteToAdd || quoteToAdd.length === 0) {
-    if (quotedUser.quotes.length === 0) {
+    if (quoteList.length === 0) {
       return i18n.t('quote.noQuoteFound', { user: user.toString() });
     }
 
-    if (quotedUser.quotes[0]) {
-      return getQuoteOptions(msg.guild, quotedUser.quotes[0], i18n);
+    if (quoteList[0]) {
+      const quoted = await getUser({ id: quotedUser.userId });
+      const owner = await getUser({ id: quoteList[0].creatorId.toString() });
+
+      return getQuoteOptions(msg.guild, quoteList[0], i18n, quoted, owner);
     }
 
     createMenu({
       logger,
-      list: quotedUser.quotes.getItems(),
+      list: quoteList,
       owner: requestingUser,
       msg,
       title: i18n.t('quote.quoteMenuTitle'),
       mapper: (q) => q.text,
-      selectCallback: async (q) => ({
-        ...(<InteractionUpdateOptions>(
-          await getQuoteOptions(msg.guild, q, i18n)
-        )),
-        allowedMentions: {
-          users: [],
-          roles: [],
-        },
-      }),
+      selectCallback: async (q) => {
+        const quoted = await getUser({ id: quotedUser.userId });
+        const owner = await getUser({ id: q.creatorId.toString() });
+
+        return {
+          ...(<InteractionUpdateOptions>(
+            await getQuoteOptions(msg.guild, q, i18n, quoted, owner)
+          )),
+          allowedMentions: {
+            users: [],
+            roles: [],
+          },
+        };
+      },
     });
     return null;
   }
 
-  const quote = addQuote(quoteToAdd, quotedUser, guildUser, msg.guild, i18n);
+  const quote = addQuote(
+    quoteToAdd,
+    quotedUser,
+    guildUser,
+    msg.guild,
+    i18n,
+    drizzle,
+    getUser,
+  );
   if (typeof quote === 'string') return quote;
 
   return quote;
@@ -212,27 +255,30 @@ router.use('toevoegen', handler, HandlerType.GUILD);
 router.useContext(
   'Save As Quote',
   ApplicationCommandType.Message,
-  async ({ interaction, i18n, guildUser, getGuildUser }) => {
+  async ({ interaction, i18n, getGuildUser, getUser, drizzle }) => {
     const message = interaction.options.getMessage('message');
 
     if (!(message instanceof Message)) {
       return 'Onmogelijk pad';
     }
 
-    if (!guildUser || !message.guild) {
+    if (!message.guild) {
       return i18n.t('error.onlyUsableInGuild');
     }
 
     if (!message.content) return i18n.t('quote.error.noContentInMessage');
 
     const quoted = await getGuildUser(message.author, message.guild);
+    const owner = await getGuildUser(interaction.user, message.guild);
 
     const quoteMessage = await addQuote(
       message.content.split(' '),
       quoted,
-      guildUser,
+      owner,
       message.guild,
       i18n,
+      drizzle,
+      getUser,
       message.createdAt,
     );
 
@@ -245,9 +291,10 @@ router.useContext(
   },
 );
 
+/*
 const removeHandler: GuildHandler = async ({
   msg,
-  em,
+  drizzle,
   params,
   guildUser,
   flags,
@@ -366,5 +413,7 @@ router.use(
     description: 'Give a random quote from the server',
   },
 );
+
+*/
 
 export default router;

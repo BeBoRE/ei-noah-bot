@@ -1,5 +1,17 @@
 # zod-redis-pubsub
 
+## 1.3.0
+
+### Minor Changes
+
+- Improved typing when only passing subscriber or publisher
+
+## 1.2.0
+
+### Minor Changes
+
+- You can now omit either publisher or subscriber
+
 ## 1.1.2
 
 ### Patch Changes

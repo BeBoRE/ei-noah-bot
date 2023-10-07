@@ -1,0 +1,26 @@
+{
+  "name": "@ei/drizzle",
+  "version": "0.0.1",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:typecheck": "tsc --noEmit",
+    "db:push": "ts-node migrate.ts"
+  },
+  "main": "client.ts",
+  "types": "client.ts",
+  "files": [
+    "client.ts",
+    "tables/schema.ts"
+  ],
+  "dependencies": {
+    "drizzle-orm": "^0.28.6",
+    "pg": "^8.3.3"
+  },
+  "devDependencies": {
+    "@ei/tsconfig": "*",
+    "@types/pg": "^8.10.3",
+    "drizzle-kit": "^0.19.13",
+    "ts-node": "^10.9.1"
+  }
+}

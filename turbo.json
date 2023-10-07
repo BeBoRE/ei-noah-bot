@@ -35,19 +35,26 @@
     "lint:typecheck": {},
     "dev": {
       "cache": false,
-      "dotEnv": [".env"]
+      "dotEnv": [".env"],
+      "dependsOn": ["^build"]
     },
     "update": {
       "env": ["EXPO_TOKEN", "CI"]
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "next-env.d.ts", ".expo/**", "dist/**"]
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "next-env.d.ts",
+        ".expo/**",
+        "dist/**"
+      ]
     },
-    "db:push": { "inputs": ["migrations/**"], "cache": false },
+    "db:push": { "inputs": ["tables/**"] },
     "db:create": {
-      "inputs": ["entity/**"],
-      "outputs": ["migrations/**"],
+      "inputs": ["tables/**"],
+      "outputs": ["tables/**"],
       "cache": false
     },
     "clean": {
