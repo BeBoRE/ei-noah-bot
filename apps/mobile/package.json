@@ -74,7 +74,7 @@
     "superjson": "1.13.1",
     "tailwind-merge": "^1.14.0",
     "use-optimistic-update": "^0.0.4",
-    "zod": "^3.21.4"
+    "zod": "^3.22.3"
   },
   "devDependencies": {
     "@babel/core": "^7.22.9",
