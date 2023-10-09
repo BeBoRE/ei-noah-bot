@@ -694,6 +694,9 @@ importers:
       '@ei/lobby':
         specifier: '*'
         version: link:../lobby
+      '@ei/lucia':
+        specifier: '*'
+        version: link:../lucia
       '@ei/redis':
         specifier: '*'
         version: link:../redis

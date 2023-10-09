@@ -14,6 +14,7 @@
     "@discordjs/rest": "^1.7.1",
     "@ei/drizzle": "*",
     "@ei/lobby": "*",
+    "@ei/lucia": "*",
     "@ei/redis": "*",
     "@ei/tsconfig": "*",
     "@trpc/server": "^10.35.0",

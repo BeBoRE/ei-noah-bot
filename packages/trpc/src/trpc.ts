@@ -6,20 +6,21 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end
  */
-import type { NextIncomingMessage } from 'next/dist/server/request-meta';
+import { IncomingMessage } from 'http';
+import type { NextApiRequest } from 'next';
 import { REST } from '@discordjs/rest';
 import { initTRPC, TRPCError } from '@trpc/server';
-import type { CreateNextContextOptions } from '@trpc/server/adapters/next';
-import { NodeHTTPCreateContextFnOptions } from '@trpc/server/dist/adapters/node-http';
+
 import { Routes } from 'discord-api-types/v10';
 import { eq } from 'drizzle-orm';
 import { camelCase, isArray, isObject, transform } from 'lodash';
 import superjson from 'superjson';
-import type ws from 'ws';
 import { z, ZodError } from 'zod';
+
 
 import { getDrizzleClient } from '@ei/drizzle';
 import { guildUsers, tempChannels } from '@ei/drizzle/tables/schema';
+import { auth } from '@ei/lucia';
 
 /**
  * User res {
@@ -50,9 +51,7 @@ const userSchema = z.object({
 
 export const bearerSchema = z.string().min(1);
 
-type Opts =
-  | NodeHTTPCreateContextFnOptions<NextIncomingMessage, ws>
-  | CreateNextContextOptions;
+type Opts = { req: NextApiRequest | IncomingMessage }
 
 /**
  * 1. CONTEXT
@@ -135,6 +134,14 @@ export const getSession = async (token: string) => {
  */
 export const createTRPCContext = async (opts: Opts) => {
   const { req } = opts;
+
+  const authRequest = auth.handleRequest({
+    req
+  });
+
+  const validated = await authRequest.validate();
+
+  console.log(validated);
 
   const tokenData = bearerSchema.safeParse(req.headers.authorization);
   if (!tokenData.success) {

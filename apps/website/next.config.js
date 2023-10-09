@@ -23,7 +23,7 @@ const optionalModules = new Set([]);
  */
 module.exports = {
   reactStrictMode: true,
-  transpilePackages: ['@ei/trpc', '@ei/database'],
+  transpilePackages: ['@ei/trpc', '@ei/database', '@ei/lucia'],
   typescript: {
     ignoreBuildErrors: true,
   },
