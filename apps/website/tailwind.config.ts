@@ -1,5 +1,6 @@
 import baseConfig from "@ei/tailwind-config";
-import { Config } from "tailwindcss";
+import type { Config } from "tailwindcss";
+import TailwindAnimate from "tailwindcss-animate"
 
 export default {
   darkMode: ["class"],
@@ -34,6 +35,6 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [TailwindAnimate],
   presets: [baseConfig]
 } satisfies Config;

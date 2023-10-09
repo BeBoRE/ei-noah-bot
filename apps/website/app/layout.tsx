@@ -3,15 +3,10 @@ import { Inter } from 'next/font/google';
 
 import '../styles/globals.css';
 
-import { getServerSession } from 'next-auth';
-
-import Image from 'next/image';
 import Link from 'next/link';
 
-import ei from '../public/ei.png';
-
 import TRPCReactProvider from './providers';
-import { authOptions } from './api/auth/[...nextauth]/route';
+import Header from './header';
 
 const fontSans = Inter({
   subsets: ['latin'],
@@ -34,8 +29,6 @@ type Props = {
 };
 
 export default async function Layout({ children }: Props) {
-  const session = await getServerSession(authOptions);
-
   return (
     <html
       lang="en"
@@ -51,18 +44,8 @@ export default async function Layout({ children }: Props) {
           'flex-col',
         ].join(' ')}
       >
-        <header className="flex justify-center bg-primary-900">
-          <div className="container flex place-content-between py-3">
-            <Link
-              href="/"
-              className="flex gap-2 text-xl font-bold text-primary-500"
-            >
-              <Image src={ei} alt="logo" height={30} className="inline-block" />
-              <span>ei Noah</span>
-            </Link>
-          </div>
-        </header>
-        <TRPCReactProvider session={session}>{children}</TRPCReactProvider>
+        <Header />
+        <TRPCReactProvider>{children}</TRPCReactProvider>
         <footer className="flex place-content-center bg-primary-900 p-3">
           <div className="container text-sm hover:underline">
             <Link href="/privacy">Privacy Policy</Link>
