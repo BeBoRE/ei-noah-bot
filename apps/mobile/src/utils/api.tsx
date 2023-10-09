@@ -111,8 +111,8 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
     () =>
       new QueryClient({
         defaultOptions: {
-          queries: { 
-            staleTime: 1000 * 1, 
+          queries: {
+            staleTime: 1000 * 1,
             enabled: isLoggedIn,
             cacheTime: 1000 * 60 * 60 * 24,
           },

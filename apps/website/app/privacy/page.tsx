@@ -64,9 +64,7 @@ function PrivacyPage() {
       </h2>
       <p className="max-w-2xl pb-3 text-justify">
         If you have any further questions, please contact us at{' '}
-        <a href="mailto:privacy@bebore.com">
-          privacy@bebore.com
-        </a>.
+        <a href="mailto:privacy@bebore.com">privacy@bebore.com</a>.
       </p>
     </div>
   );
