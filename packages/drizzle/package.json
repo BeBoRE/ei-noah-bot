@@ -5,6 +5,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:typecheck": "tsc --noEmit",
+    "db:create": "drizzle-kit generate:pg",
     "db:push": "ts-node migrate.ts"
   },
   "main": "client.ts",

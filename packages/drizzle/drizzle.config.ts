@@ -1,3 +1,4 @@
+import path from 'path';
 import type { Config } from 'drizzle-kit';
 import { ClientConfig } from 'pg';
 
@@ -9,9 +10,10 @@ export const clientConfig = {
   password: process.env.DBPASSWORD || undefined,
 } satisfies ClientConfig;
 
+
 const config: Config = {
-  schema: './schema.ts',
-  out: './tables',
+  schema: './tables/schema.ts',  // schema: './schema.ts',
+  out: './tables', // out: './tables',
   driver: 'pg',
   dbCredentials: clientConfig,
 };
