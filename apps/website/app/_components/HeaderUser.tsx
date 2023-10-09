@@ -1,11 +1,13 @@
 'use client';
 
+import Link from 'next/link';
+
 import { Button } from './ui/button';
 
 function HeaderUser() {
   return (
-    <Button variant="outline" onClick={() => {}}>
-      Login to Discord
+    <Button variant="outline" asChild>
+      <Link href="/login/discord">Login</Link>
     </Button>
   );
 }

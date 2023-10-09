@@ -55,35 +55,35 @@ export const users = pgTable(
   }),
 );
 
-export const session = pgTable("session", {
-	id: varchar("id", {
-		length: 128
-	}).primaryKey(),
-	userId: varchar("user_id", {
-		length: 15
-	})
-		.notNull()
-		.references(() => users.id),
-	activeExpires: bigint("active_expires", {
-		mode: "number"
-	}).notNull(),
-	idleExpires: bigint("idle_expires", {
-		mode: "number"
-	}).notNull()
+export const session = pgTable('session', {
+  id: varchar('id', {
+    length: 128,
+  }).primaryKey(),
+  userId: varchar('user_id', {
+    length: 255,
+  })
+    .notNull()
+    .references(() => users.id),
+  activeExpires: bigint('active_expires', {
+    mode: 'number',
+  }).notNull(),
+  idleExpires: bigint('idle_expires', {
+    mode: 'number',
+  }).notNull(),
 });
 
-export const keys = pgTable("key", {
-	id: varchar("id", {
-		length: 255
-	}).primaryKey(),
-	userId: varchar("user_id", {
-		length: 15
-	})
-		.notNull()
-		.references(() => users.id),
-	hashedPassword: varchar("hashed_password", {
-		length: 255
-	})
+export const keys = pgTable('key', {
+  id: varchar('id', {
+    length: 255,
+  }).primaryKey(),
+  userId: varchar('user_id', {
+    length: 255,
+  })
+    .notNull()
+    .references(() => users.id),
+  hashedPassword: varchar('hashed_password', {
+    length: 255,
+  }),
 });
 
 export const guildUsers = pgTable(

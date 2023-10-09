@@ -2,17 +2,21 @@ import {
   drizzle as drizzleClient,
   type NodePgDatabase,
 } from 'drizzle-orm/node-postgres';
-import { Client as PgClient } from 'pg';
+import { Client, Pool } from 'pg';
 
 import { clientConfig } from './drizzle.config';
 
-const pg: PgClient = new PgClient(clientConfig);
-let connectedPgClient: Promise<PgClient> | null = null;
+export const luciaPgClient = new Pool(clientConfig);
+export const pg: Client = new Client(clientConfig);
 
+let connectedPgClient: Promise<Client> | null = null;
 export const getConnectedPgClient = async () => {
   if (connectedPgClient) return connectedPgClient;
 
-  connectedPgClient = pg.connect().then(() => pg);
+  connectedPgClient = pg
+    .connect()
+    .then(() => pg)
+    .catch(() => pg);
 
   return connectedPgClient;
 };

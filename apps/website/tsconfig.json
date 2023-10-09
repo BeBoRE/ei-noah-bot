@@ -1,6 +1,12 @@
 {
   "extends": "@ei/tsconfig/expo.json",
-  "include": ["**/*.tsx", "**/*.ts", ".next/types/**/*.ts"],
+  "include": [
+    "**/*.tsx",
+    "**/*.ts",
+    ".next/types/**/*.ts",
+    "../../packages/lucia/auth.d.ts",
+    "../../packages/lucia/lucia.ts"
+  ],
   "exclude": ["node_modules"],
   "compilerOptions": {
     "module": "CommonJS",

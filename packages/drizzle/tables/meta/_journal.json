@@ -15,6 +15,13 @@
       "when": 1696863841582,
       "tag": "0001_condemned_albert_cleary",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1696884676562,
+      "tag": "0002_lyrical_firelord",
+      "breakpoints": true
     }
   ]
 }

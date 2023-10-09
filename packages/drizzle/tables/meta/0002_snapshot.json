@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "fd3b5f73-2718-41c0-9017-82fc321e1931",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "c4044c39-340d-42f9-b2d4-ae5276dc33a5",
+  "prevId": "fd3b5f73-2718-41c0-9017-82fc321e1931",
   "tables": {
     "category": {
       "name": "category",
@@ -280,7 +280,7 @@
         },
         "user_id": {
           "name": "user_id",
-          "type": "varchar(15)",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
@@ -456,7 +456,7 @@
         },
         "user_id": {
           "name": "user_id",
-          "type": "varchar(15)",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
