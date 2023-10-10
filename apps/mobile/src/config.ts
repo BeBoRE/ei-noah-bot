@@ -32,7 +32,7 @@ const config: Config = _.merge(
   {
     api: {
       url: process.env.EXPO_PUBLIC_VERCEL_URL || 'https://ei.sweaties.net',
-      wsUrl: process.env.EXPO_PUBLIC_VERCEL_URL || 'wss://ws.ei.sweaties.net',
+      wsUrl: process.env.EXPO_PUBLIC_VERCEL_URL || 'wss://ws.sweaties.net',
     },
     discord: {
       clientId: process.env.EXPO_PUBLIC_CLIENT_ID || '730913870805336195',

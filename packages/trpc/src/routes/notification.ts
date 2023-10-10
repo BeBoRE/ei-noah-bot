@@ -11,23 +11,15 @@ export const notificationRouter = createTRPCRouter({
         token: z.string(),
       }),
     )
-    .mutation(
-      async ({
-        ctx: {
-          dbUser,
-          drizzle,
-        },
-        input,
-      }) => {
-        await drizzle
-          .insert(users)
-          .values({ id: dbUser.id, expoPushToken: input.token })
-          .onConflictDoUpdate({
-            target: users.id,
-            set: { expoPushToken: input.token },
-          });
-      },
-    ),
+    .mutation(async ({ ctx: { dbUser, drizzle }, input }) => {
+      await drizzle
+        .insert(users)
+        .values({ id: dbUser.id, expoPushToken: input.token })
+        .onConflictDoUpdate({
+          target: users.id,
+          set: { expoPushToken: input.token },
+        });
+    }),
 });
 
 export default notificationRouter;

@@ -1,10 +1,6 @@
 {
   "extends": "@ei/tsconfig/expo.json",
-  "include": [
-    "**/*.tsx",
-    "**/*.ts",
-    ".next/types/**/*.ts"
-  ],
+  "include": ["**/*.tsx", "**/*.ts", ".next/types/**/*.ts"],
   "exclude": ["node_modules"],
   "compilerOptions": {
     "outDir": "dist",
