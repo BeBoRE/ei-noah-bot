@@ -18,13 +18,16 @@ import {
   subscribeToLobbyUpdate,
 } from '@ei/redis';
 
+import { REST } from '@discordjs/rest';
+import { Routes } from 'discord-api-types/v10';
 import {
   bearerSchema,
   createTRPCRouter,
-  getSession,
+  discordUserSchema,
   protectedProcedureWithLobby,
   publicProcedure,
 } from '../trpc';
+import { camelize } from '../utils';
 
 const hasLobby = async (userId: string, drizzle: DrizzleClient) => {
   const [lobby] = await drizzle
@@ -34,6 +37,30 @@ const hasLobby = async (userId: string, drizzle: DrizzleClient) => {
     .where(eq(guildUsers.userId, userId));
 
   return !!lobby;
+};
+
+export const getSession = async (token: string) => {
+  const rest = new REST({ version: '10', authPrefix: 'Bearer' }).setToken(
+    token,
+  );
+  const userRes = await rest.get(Routes.user()).catch(() => null);
+
+  if (!userRes) {
+    return null;
+  }
+
+  const user = discordUserSchema.safeParse(camelize(userRes));
+
+  if (user.success) {
+    return {
+      user: user.data,
+      userRestClient: rest,
+    };
+  }
+
+  console.warn(user.error);
+
+  return null;
 };
 
 export const lobbyRouter = createTRPCRouter({
@@ -76,24 +103,18 @@ export const lobbyRouter = createTRPCRouter({
     }),
   changeLobby: protectedProcedureWithLobby
     .input(clientChangeLobbySchema)
-    .mutation(async ({ input: change, ctx: { session } }) => {
-      const { user } = session;
-
-      publishClientLobbyChanges(change, user.id);
+    .mutation(async ({ input: change, ctx: { dbUser } }) => {
+      publishClientLobbyChanges(change, dbUser.id);
     }),
   addUser: protectedProcedureWithLobby
     .input(addUserSchema)
-    .mutation(async ({ input: data, ctx: { session } }) => {
-      const { user } = session;
-
-      publishAddUser(data, user.id);
+    .mutation(async ({ input: data, ctx: { dbUser } }) => {
+      publishAddUser(data, dbUser.id);
     }),
   removeUser: protectedProcedureWithLobby
     .input(removeUserSchema)
-    .mutation(async ({ input: data, ctx: { session } }) => {
-      const { user } = session;
-
-      publishRemoveUser(data, user.id);
+    .mutation(async ({ input: data, ctx: { dbUser } }) => {
+      publishRemoveUser(data, dbUser.id);
     }),
 });
 

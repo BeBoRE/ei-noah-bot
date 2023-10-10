@@ -4,7 +4,7 @@ import next from 'next';
 import { applyWSSHandler } from '@trpc/server/adapters/ws';
 import ws from 'ws';
 
-import { appRouter, createTRPCContext } from '@ei/trpc';
+import { appRouter, createWSContext } from '@ei/trpc';
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -29,7 +29,7 @@ app.prepare().then(() => {
   const handler = applyWSSHandler({
     wss,
     router: appRouter,
-    createContext: createTRPCContext,
+    createContext: createWSContext,
   });
 
   console.log('Starting WebSocket Server...');

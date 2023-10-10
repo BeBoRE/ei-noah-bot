@@ -30,6 +30,10 @@ const getWsUrl = () => {
       return `wss://${host}`;
     }
 
+    if (host === 'localhost:3000' && process.env.NODE_ENV !== 'production') {
+      return 'ws://localhost:3001'; // dev client should use localhost
+    }
+
     return `ws://${host}`;
   }
 
@@ -52,8 +56,10 @@ export default function TRPCReactProvider({ children }: Props) {
       }),
   );
 
+  const wsUrl = getWsUrl();
+
   const wsClient = createWSClient({
-    url: getWsUrl(),
+    url: wsUrl,
   });
 
   useEffect(() => () => {

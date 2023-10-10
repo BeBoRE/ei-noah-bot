@@ -8,7 +8,7 @@
     "dev": "run-p dev:*",
     "clean": "rm -rf .turbo node_modules .next",
     "build": "next build",
-    "start": "ts-node --transpileOnly ./server/production.ts",
+    "start": "tsx ./server/production.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:typecheck": "tsc --noEmit"

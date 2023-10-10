@@ -4,7 +4,7 @@
     "**/*.tsx",
     "**/*.ts",
     ".next/types/**/*.ts",
-    "../../packages/lucia/auth.d.ts",
+    "../../packages/lucia/app.d.ts",
     "../../packages/lucia/auth.ts"
   ],
   "exclude": ["node_modules"],

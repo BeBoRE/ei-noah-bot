@@ -7,6 +7,11 @@ import ei from '../public/ei.png';
 
 export default function Page() {
   const {data} = api.healthcheck.useQuery();
+  api.subscription.useSubscription(undefined, {
+    onData: (time) => {
+      console.log(time)
+    }
+  })
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center py-5">

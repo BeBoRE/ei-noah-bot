@@ -12,10 +12,7 @@ export const auth = lucia({
     key: 'key',
     session: 'session',
     user: 'user',
-  }),
-  experimental: {
-    debugMode: true,
-  }
+  })
 });
 
 const clientId = process.env.CLIENT_ID;
@@ -32,3 +29,4 @@ export const discordAuth = discord(auth, {
 });
 
 export type Auth = typeof auth;
+export type { SessionSchema, UserSchema, Session, User } from 'lucia';
