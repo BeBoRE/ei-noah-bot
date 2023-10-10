@@ -1,9 +1,10 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
-import { appRouter, createTRPCContext } from "@ei/trpc";
-import { NextApiHandler } from "next";
+import type { NextRequest } from 'next/server';
 
-export const runtime = "edge";
+import { appRouter, createApiContext } from "@ei/trpc";
+
+import * as context from "next/headers"
 
 /**
  * Configure basic CORS headers
@@ -24,12 +25,12 @@ export function OPTIONS() {
   return response;
 }
 
-const handler : NextApiHandler = async (req) => {
+const handler = async (req : NextRequest) => {
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     router: appRouter,
     req: req as unknown as Request,
-    createContext: () => createTRPCContext({ req }),
+    createContext: () => createApiContext({ req, context }),
     onError({ error, path }) {
       console.error(`>>> tRPC Error on '${path}'`, error);
     },

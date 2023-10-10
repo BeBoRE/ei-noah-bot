@@ -4,7 +4,7 @@ const { IgnorePlugin } = require('webpack');
 const { devDependencies } = require('./package.json');
 const externals = {};
 
-const externalList = ['pg'];
+const externalList = ['pg', '@discordjs/rest'];
 
 for (const devDependency of Object.keys(devDependencies)) {
   externals[devDependency] = `commonjs ${devDependency}`;
@@ -23,7 +23,7 @@ const optionalModules = new Set([]);
  */
 module.exports = {
   reactStrictMode: true,
-  transpilePackages: ['@ei/trpc', '@ei/database', '@ei/lucia'],
+  transpilePackages: ['@ei/trpc', '@ei/drizzle', '@ei/lucia'],
   typescript: {
     ignoreBuildErrors: true,
   },

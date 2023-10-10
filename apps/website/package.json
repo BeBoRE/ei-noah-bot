@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev:next": "next dev",
-    "dev:wss": "ts-node-dev ./server/development.ts",
+    "dev:wss": "tsx watch ./server/development.ts",
     "dev": "run-p dev:*",
     "clean": "rm -rf .turbo node_modules .next",
     "build": "next build",
@@ -54,6 +54,7 @@
     "postcss": "^8.4.27",
     "tailwindcss": "^3.3.3",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^3.13.0",
     "typescript": "^5.1.6"
   }
 }

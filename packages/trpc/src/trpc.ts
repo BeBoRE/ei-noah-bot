@@ -7,7 +7,7 @@
  * The pieces you will need to use are documented accordingly near the end
  */
 import { IncomingMessage } from 'http';
-import type { NextApiRequest } from 'next';
+import type { NextRequest } from 'next/server';
 import { REST } from '@discordjs/rest';
 import { initTRPC, TRPCError } from '@trpc/server';
 
@@ -16,7 +16,6 @@ import { eq } from 'drizzle-orm';
 import { camelCase, isArray, isObject, transform } from 'lodash';
 import superjson from 'superjson';
 import { z, ZodError } from 'zod';
-
 
 import { getDrizzleClient } from '@ei/drizzle';
 import { guildUsers, tempChannels } from '@ei/drizzle/tables/schema';
@@ -51,7 +50,7 @@ const userSchema = z.object({
 
 export const bearerSchema = z.string().min(1);
 
-type Opts = { req: NextApiRequest | IncomingMessage }
+type Opts = { req: NextRequest | IncomingMessage, authRequest : ReturnType<typeof auth.handleRequest> }
 
 /**
  * 1. CONTEXT
@@ -127,23 +126,27 @@ export const getSession = async (token: string) => {
   return null;
 };
 
+const getHeader = (req : IncomingMessage | NextRequest, header : string) => {
+  if (req instanceof IncomingMessage) {
+    return req.headers[header] as string | undefined;
+  }
+
+  return req.headers.get(header);
+}
+
 /**
  * This is the actual context you'll use in your router. It will be used to
  * process every request that goes through your tRPC endpoint
  * @link https://trpc.io/docs/context
  */
 export const createTRPCContext = async (opts: Opts) => {
-  const { req } = opts;
-
-  const authRequest = auth.handleRequest({
-    req
-  });
+  const { req, authRequest } = opts;
 
   const validated = await authRequest.validate();
 
   console.log(validated);
 
-  const tokenData = bearerSchema.safeParse(req.headers.authorization);
+  const tokenData = bearerSchema.safeParse(getHeader(req, 'authorization'));
   if (!tokenData.success) {
     return createInnerTRPCContext({
       ...opts,
@@ -166,6 +169,18 @@ export const createTRPCContext = async (opts: Opts) => {
     session,
   });
 };
+
+export const createWSContext = async ({req} : {req: IncomingMessage}) => {
+  const authRequest = auth.handleRequest({req})
+
+  return createTRPCContext({ req, authRequest });
+}
+
+export const createApiContext = async ({req, context} : {req: NextRequest, context: NonNullable<Parameters<typeof auth.handleRequest>['1']>}) => {
+  const authRequest = auth.handleRequest(req.method, context);
+
+  return createTRPCContext({ req, authRequest });
+}
 
 export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 

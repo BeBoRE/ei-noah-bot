@@ -6,7 +6,7 @@ import { discordAuth } from '@ei/lucia';
 export const GET = async () => {
   const [url, state] = await discordAuth.getAuthorizationUrl();
   // store state
-  context.cookies().set('github_oauth_state', state, {
+  context.cookies().set('discord_oauth_state', state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     path: '/',

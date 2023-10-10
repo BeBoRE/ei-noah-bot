@@ -1,13 +1,13 @@
 import { pg as postgresAdapter } from '@lucia-auth/adapter-postgresql';
 import { discord } from '@lucia-auth/oauth/providers';
 import { lucia } from 'lucia';
-import { nextjs_future as nextjs } from 'lucia/middleware';
+import { nextjs_future as middleware } from 'lucia/middleware';
 
 import { luciaPgClient } from '@ei/drizzle';
 
 export const auth = lucia({
   env: process.env.NODE_ENV === 'production' ? 'PROD' : 'DEV',
-  middleware: nextjs(),
+  middleware: middleware(),
   adapter: postgresAdapter(luciaPgClient, {
     key: 'key',
     session: 'session',
@@ -15,7 +15,7 @@ export const auth = lucia({
   }),
   experimental: {
     debugMode: true,
-  },
+  }
 });
 
 const clientId = process.env.CLIENT_ID;

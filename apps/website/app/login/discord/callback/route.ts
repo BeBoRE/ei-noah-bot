@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import { cookies, headers } from 'next/headers';
+import * as context from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { OAuthRequestError } from '@lucia-auth/oauth';
 import { eq } from 'drizzle-orm';
@@ -9,7 +9,7 @@ import { users } from '@ei/drizzle/tables/schema';
 import { auth, discordAuth } from '@ei/lucia';
 
 export const GET = async (request: NextRequest) => {
-  const storedState = cookies().get('github_oauth_state')?.value;
+  const storedState = context.cookies().get('discord_oauth_state')?.value;
   const url = new URL(request.url);
   const state = url.searchParams.get('state');
   const code = url.searchParams.get('code');
@@ -54,10 +54,12 @@ export const GET = async (request: NextRequest) => {
       userId: user.userId,
       attributes: {},
     });
-    const authRequest = auth.handleRequest(request.method, {
-      cookies,
-      headers,
-    });
+
+    const authRequest = auth.handleRequest(
+      request.method,
+      context
+    )
+
     authRequest.setSession(session);
     return new Response(null, {
       status: 302,
