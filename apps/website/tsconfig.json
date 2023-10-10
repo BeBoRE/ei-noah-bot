@@ -3,12 +3,11 @@
   "include": [
     "**/*.tsx",
     "**/*.ts",
-    ".next/types/**/*.ts",
-    "../../packages/lucia/app.d.ts",
-    "../../packages/lucia/auth.ts"
+    ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules"],
   "compilerOptions": {
+    "outDir": "dist",
     "module": "CommonJS",
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
@@ -16,6 +15,7 @@
     "incremental": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "esModuleInterop": true,
     "lib": ["dom"],
     "jsx": "preserve",
     "plugins": [
@@ -23,7 +23,10 @@
         "name": "next"
       }
     ],
+    "skipDefaultLibCheck": true,
+    "skipLibCheck": true,
     "baseUrl": "./",
+    "rootDir": "./",
     "strictNullChecks": true
   }
 }

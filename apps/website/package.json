@@ -2,6 +2,7 @@
   "name": "@ei/website",
   "version": "1.0.0",
   "private": true,
+  "main": "server/production.ts",
   "scripts": {
     "dev:next": "next dev",
     "dev:wss": "tsx watch ./server/development.ts",

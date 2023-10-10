@@ -4,7 +4,7 @@ const { IgnorePlugin } = require('webpack');
 const { devDependencies } = require('./package.json');
 const externals = {};
 
-const externalList = ['pg', '@discordjs/rest'];
+const externalList = ['pg'];
 
 for (const devDependency of Object.keys(devDependencies)) {
   externals[devDependency] = `commonjs ${devDependency}`;

@@ -14,14 +14,14 @@ export const notificationRouter = createTRPCRouter({
     .mutation(
       async ({
         ctx: {
-          session: { user },
+          dbUser,
           drizzle,
         },
         input,
       }) => {
         await drizzle
           .insert(users)
-          .values({ id: user.id, expoPushToken: input.token })
+          .values({ id: dbUser.id, expoPushToken: input.token })
           .onConflictDoUpdate({
             target: users.id,
             set: { expoPushToken: input.token },
