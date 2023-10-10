@@ -32,7 +32,7 @@ export default async function Layout({ children }: Props) {
   return (
     <html
       lang="en"
-      className="flex min-h-[100dvh] dark bg-primary-950 text-primary-100"
+      className="dark flex min-h-[100dvh] bg-primary-950 text-primary-100"
     >
       <link rel="icon" href="/favicon.ico" sizes="any" />
       <body

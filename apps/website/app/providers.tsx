@@ -25,16 +25,13 @@ const getBaseUrl = () => {
 const getWsUrl = () => {
   if (typeof window !== 'undefined') {
     const { protocol, host } = window.location;
+    const [hostname] = host.split(':');
 
     if (protocol === 'https:') {
       return `wss://ws.sweaties.net`;
     }
 
-    if (host === 'localhost:3000') {
-      return 'ws://localhost:3001'; // dev client should use localhost
-    }
-
-    return `ws://${host}`;
+    return `ws://${hostname}:3001`;
   }
 
   return 'ws://localhost:3001'; // dev SSR should use localhost
