@@ -1,22 +1,12 @@
-'use client';
-
 import Image from 'next/image';
-import { api } from 'utils/api';
 
 import ei from '../public/ei.png';
 
 export default function Page() {
-  const { data } = api.healthcheck.useQuery();
-  api.subscription.useSubscription(undefined, {
-    onData: (time) => {
-      console.log(time);
-    },
-  });
-
   return (
     <main className="flex flex-1 flex-col items-center justify-center py-5">
       <h1 className="mb-5 text-center text-5xl font-bold text-primary-500">
-        ei Noah {data}
+        ei Noah
       </h1>
       <Image alt="ei Noah" src={ei} width={300} height={300} className="mb-5" />
       <q className="text-center text-4xl font-semibold text-primary-500">

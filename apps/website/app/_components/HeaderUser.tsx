@@ -44,7 +44,7 @@ function HeaderUser({ user }: Props) {
   if (user) {
     return (
       <DropdownMenu>
-        <DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild>
           <Button variant={'ghost'} className="flex items-center gap-2">
             <Image
               className="rounded-full"
