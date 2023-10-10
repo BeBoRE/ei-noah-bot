@@ -23,7 +23,7 @@ const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 
 if (!clientId || !clientSecret) {
-  throw new Error('Missing environment variables CLIENT_ID and CLIENT_SECRET');
+  console.warn('Missing environment variables CLIENT_ID and CLIENT_SECRET');
 }
 
 // Get's the hosts ip when in development mode
@@ -34,8 +34,8 @@ const getHost = () => {
 console.log('Host is', getHost());
 
 export const discordAuth = discord(auth, {
-  clientId,
-  clientSecret,
+  clientId: clientId || '',
+  clientSecret: clientSecret || '',
   redirectUri: `${getHost()}/login/discord/callback`,
 });
 
