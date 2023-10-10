@@ -3,13 +3,14 @@
 import Link from 'next/link';
 
 import { RouterOutputs } from '@ei/trpc';
+
 import { Button } from './ui/button';
 
 type Props = {
-  user: RouterOutputs['user']['me']
-}
+  user: RouterOutputs['user']['me'];
+};
 
-function HeaderUser({user} : Props) {
+function HeaderUser({ user }: Props) {
   if (user) {
     return (
       <Button variant="outline" asChild>

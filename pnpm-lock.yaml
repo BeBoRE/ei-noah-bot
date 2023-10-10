@@ -451,9 +451,6 @@ importers:
       drizzle-orm:
         specifier: ^0.28.6
         version: 0.28.6(@types/pg@8.10.3)(pg@8.11.1)
-      ip:
-        specifier: ^1.1.8
-        version: 1.1.8
       lucide-react:
         specifier: ^0.279.0
         version: 0.279.0(react@18.2.0)
@@ -497,9 +494,6 @@ importers:
       '@ei/tsconfig':
         specifier: '*'
         version: link:../../packages/tsconfig
-      '@types/ip':
-        specifier: ^1.1.1
-        version: 1.1.1
       '@types/node':
         specifier: ^18.16.0
         version: 18.16.0
@@ -625,6 +619,9 @@ importers:
       '@lucia-auth/oauth':
         specifier: ^3.3.0
         version: 3.3.0(lucia@2.7.1)
+      ip:
+        specifier: ^1.1.8
+        version: 1.1.8
       lucia:
         specifier: ^2.7.1
         version: 2.7.1
@@ -632,6 +629,9 @@ importers:
       '@ei/tsconfig':
         specifier: '*'
         version: link:../tsconfig
+      '@types/ip':
+        specifier: ^1.1.1
+        version: 1.1.1
       eslint:
         specifier: ^8.46.0
         version: 8.51.0

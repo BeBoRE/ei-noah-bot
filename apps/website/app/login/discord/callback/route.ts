@@ -55,14 +55,14 @@ export const GET = async (request: NextRequest) => {
       attributes: {},
     });
 
-    const authRequest = auth.handleRequest(
-      request.method,
-      context
-    )
+    const authRequest = auth.handleRequest(request.method, context);
 
     const platform = context.cookies().get('discord_oauth_platform')?.value;
 
-    const redirect = platform === 'mobile' ? `ei://auth?session_token=${session.sessionId}}` : '/'
+    const redirect =
+      platform === 'mobile'
+        ? `ei://auth?session_token=${session.sessionId}`
+        : '/';
     console.log('Redirecting to', redirect);
 
     authRequest.setSession(session);

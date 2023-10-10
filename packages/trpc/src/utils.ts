@@ -1,4 +1,4 @@
-import { camelCase, isArray, isObject, transform } from "lodash";
+import { camelCase, isArray, isObject, transform } from 'lodash';
 
 /* eslint-disable import/prefer-default-export */
 export const camelize = (obj: unknown) => {

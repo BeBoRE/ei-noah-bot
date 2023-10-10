@@ -10,7 +10,6 @@ import { IncomingMessage } from 'http';
 import type { NextRequest } from 'next/server';
 import { REST } from '@discordjs/rest';
 import { initTRPC, TRPCError } from '@trpc/server';
-
 import { Routes } from 'discord-api-types/v10';
 import { eq } from 'drizzle-orm';
 import superjson from 'superjson';
@@ -19,6 +18,7 @@ import { z, ZodError } from 'zod';
 import { getDrizzleClient } from '@ei/drizzle';
 import { guildUsers, tempChannels, users } from '@ei/drizzle/tables/schema';
 import { auth, Session } from '@ei/lucia';
+
 import { camelize } from './utils';
 
 /**
@@ -44,15 +44,15 @@ export const discordUserSchema = z.object({
   id: z.string(),
   username: z.string(),
   avatar: z.string().nullable(),
-  globalName: z.string().nullable()
+  globalName: z.string().nullable(),
 });
 
 export const bearerSchema = z.string().min(1);
 
-type Opts = { 
-  req?: NextRequest | IncomingMessage,
-  authRequest : ReturnType<typeof auth.handleRequest>
-}
+type Opts = {
+  req?: NextRequest | IncomingMessage;
+  authRequest: ReturnType<typeof auth.handleRequest>;
+};
 
 /**
  * 1. CONTEXT
@@ -71,7 +71,9 @@ if (!process.env.CLIENT_TOKEN) {
   throw new Error('Missing environment variable CLIENT_TOKEN');
 }
 
-export const rest = new REST({ version: '10' }).setToken(process.env.CLIENT_TOKEN);
+export const rest = new REST({ version: '10' }).setToken(
+  process.env.CLIENT_TOKEN,
+);
 
 /**
  * This helper generates the "internals" for a tRPC context. If you need to use
@@ -86,25 +88,35 @@ const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
   const drizzle = await getDrizzleClient();
   const { session } = opts;
 
-  const [dbUser] = session?.user.userId !== undefined ? await drizzle
-    .select()
-    .from(users)
-    .where(eq(users.id, session?.user.userId)) : [null];
+  const [dbUser] =
+    session?.user.userId !== undefined
+      ? await drizzle
+          .select()
+          .from(users)
+          .where(eq(users.id, session?.user.userId))
+      : [null];
 
-  const discordUserData = session?.user ? await rest.get(Routes.user(session.user.userId)).catch(() => null) : null;
-  const parsedDiscordUser = discordUserData ? discordUserSchema.safeParse(camelize(discordUserData)) : null;
+  const discordUserData = session?.user
+    ? await rest.get(Routes.user(session.user.userId)).catch(() => null)
+    : null;
+  const parsedDiscordUser = discordUserData
+    ? discordUserSchema.safeParse(camelize(discordUserData))
+    : null;
 
   if (!parsedDiscordUser?.success) {
     console.warn(parsedDiscordUser?.error);
-    console.warn('GOT', discordUserData)
+    console.warn('GOT', discordUserData);
   }
 
-  const discordUser = parsedDiscordUser?.success ? parsedDiscordUser.data : null;
+  const discordUser = parsedDiscordUser?.success
+    ? parsedDiscordUser.data
+    : null;
 
   return {
+    session,
     drizzle,
     dbUser,
-    discordUser
+    discordUser,
   };
 };
 
@@ -116,7 +128,8 @@ const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
 export const createTRPCContext = async (opts: Opts) => {
   const { authRequest } = opts;
 
-  const session = await authRequest.validate();
+  const session =
+    (await authRequest.validate()) || (await authRequest.validateBearerToken());
 
   return createInnerTRPCContext({
     ...opts,
@@ -124,23 +137,33 @@ export const createTRPCContext = async (opts: Opts) => {
   });
 };
 
-export const createWSContext = async ({req} : {req: IncomingMessage}) => {
-  const authRequest = auth.handleRequest({req});
+export const createWSContext = async ({ req }: { req: IncomingMessage }) => {
+  const authRequest = auth.handleRequest({ req });
 
   return createTRPCContext({ req, authRequest });
-}
+};
 
-export const createApiContext = async ({req, context} : {req: NextRequest, context: NonNullable<Parameters<typeof auth.handleRequest>['1']>}) => {
+export const createApiContext = async ({
+  req,
+  context,
+}: {
+  req: NextRequest;
+  context: NonNullable<Parameters<typeof auth.handleRequest>['1']>;
+}) => {
   const authRequest = auth.handleRequest(req.method, context);
 
   return createTRPCContext({ req, authRequest });
-}
+};
 
-export const createRscContext = async ({ context } : {context: NonNullable<Parameters<typeof auth.handleRequest>['1']>}) => {
+export const createRscContext = async ({
+  context,
+}: {
+  context: NonNullable<Parameters<typeof auth.handleRequest>['1']>;
+}) => {
   const authRequest = auth.handleRequest('GET', context);
 
   return createTRPCContext({ authRequest });
-}
+};
 
 export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 

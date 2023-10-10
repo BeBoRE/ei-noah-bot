@@ -35,10 +35,8 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
   const { authInfo } = useAuth();
   const appState = useAppState();
 
-  api.lobby.lobbyUpdate.useSubscription(authInfo?.accessToken || '', {
-    enabled:
-      !!authInfo?.accessToken &&
-      (appState === 'active' || appState === 'inactive'),
+  api.lobby.lobbyUpdate.useSubscription(authInfo || undefined, {
+    enabled: !!authInfo && (appState === 'active' || appState === 'inactive'),
     onData: (data) => {
       setLobby(data);
     },

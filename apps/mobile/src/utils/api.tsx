@@ -11,7 +11,6 @@ import {
 } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import {
-  createTRPCProxyClient,
   createWSClient,
   httpBatchLink,
   loggerLink,
@@ -66,19 +65,6 @@ export const getBaseUrl = (ws = false) => {
 export const api = createTRPCReact<AppRouter>();
 export { type RouterInputs, type RouterOutputs } from '@ei/trpc';
 
-export const createVanillaApi = (token: string) =>
-  createTRPCProxyClient<AppRouter>({
-    transformer: superjson,
-    links: [
-      httpBatchLink({
-        url: `${getBaseUrl()}/api/trpc`,
-        headers: {
-          authorization: token,
-        },
-      }),
-    ],
-  });
-
 const asyncStoragePersistor = createAsyncStoragePersister({
   storage: AsyncStorage,
 });
@@ -121,6 +107,19 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
     [isLoggedIn],
   );
 
+  const httpLink = React.useMemo(
+    () =>
+      httpBatchLink({
+        url: `${getBaseUrl()}/api/trpc`,
+        headers: authInfo
+          ? {
+              Cookie: `auth_session=${authInfo}`,
+            }
+          : undefined,
+      }),
+    [authInfo],
+  );
+
   const trpcClient = React.useMemo(
     () =>
       api.createClient({
@@ -131,21 +130,16 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
               process.env.NODE_ENV === 'development' ||
               (opts.direction === 'down' && opts.result instanceof Error),
           }),
-          splitLink({
-            condition: ({ type }) => type === 'subscription',
-            true: wsLink({ client: wsClient }),
-            false: httpBatchLink({
-              url: `${getBaseUrl()}/api/trpc`,
-              headers: authInfo
-                ? {
-                    authorization: `Bearer ${authInfo}`,
-                  }
-                : undefined,
-            }),
-          }),
+          wsClient
+            ? splitLink({
+                condition: ({ type }) => type === 'subscription',
+                true: wsLink({ client: wsClient }),
+                false: httpLink,
+              })
+            : httpLink,
         ],
       }),
-    [authInfo],
+    [httpLink],
   );
 
   useEffect(() => {

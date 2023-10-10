@@ -1,13 +1,13 @@
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
+import { parse } from 'expo-linking';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { openAuthSessionAsync } from 'expo-web-browser';
 import Button from 'src/components/Button';
 import Text from 'src/components/Text';
 import { useAuth } from 'src/context/auth';
-import {openAuthSessionAsync} from 'expo-web-browser'
-import { parse } from 'expo-linking';
 import { getBaseUrl } from 'src/utils/api';
 
 function SignIn() {
@@ -18,13 +18,13 @@ function SignIn() {
   const prompt = async () => {
     const result = await openAuthSessionAsync(
       `${getBaseUrl()}/login/discord?platform=mobile`,
-      'ei://auth'
-    )
+      'ei://auth',
+    );
 
     if (result.type !== 'success') {
       console.log(result);
       return;
-    };
+    }
 
     const url = parse(result.url);
 
@@ -33,10 +33,10 @@ function SignIn() {
     if (!sessionToken) {
       console.log('No session token found');
       return;
-    };
+    }
 
     signIn(sessionToken);
-  }
+  };
 
   return (
     <>

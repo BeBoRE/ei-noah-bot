@@ -1,11 +1,10 @@
+import * as context from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
-
 import rscApi from 'utils/rsc';
-import * as context from 'next/headers'
+
 import ei from '../public/ei.png';
 import HeaderUser from './_components/HeaderUser';
-
 
 async function Header() {
   const api = await rscApi(context);

@@ -5,5 +5,5 @@
   "compilerOptions": {
     "lib": ["ESNext", "DOM"],
     "types": ["node"]
-  },
+  }
 }
