@@ -60,11 +60,16 @@ export const GET = async (request: NextRequest) => {
       context
     )
 
+    const platform = context.cookies().get('discord_oauth_platform')?.value;
+
+    const redirect = platform === 'mobile' ? `ei://auth?session_token=${session.sessionId}}` : '/'
+    console.log('Redirecting to', redirect);
+
     authRequest.setSession(session);
     return new Response(null, {
       status: 302,
       headers: {
-        Location: '/', // redirect to profile page
+        Location: redirect, // redirect to profile page
       },
     });
   } catch (e) {

@@ -44,14 +44,13 @@ export const discordUserSchema = z.object({
   id: z.string(),
   username: z.string(),
   avatar: z.string().nullable(),
-  globalName: z.string().nullable(),
-  locale: z.string().nullable(),
+  globalName: z.string().nullable()
 });
 
 export const bearerSchema = z.string().min(1);
 
 type Opts = { 
-  req: NextRequest | IncomingMessage,
+  req?: NextRequest | IncomingMessage,
   authRequest : ReturnType<typeof auth.handleRequest>
 }
 
@@ -92,11 +91,12 @@ const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
     .from(users)
     .where(eq(users.id, session?.user.userId)) : [null];
 
-  const discordUserData = session?.user ? await rest.get(Routes.user(session.user.id)).catch(() => null) : null;
+  const discordUserData = session?.user ? await rest.get(Routes.user(session.user.userId)).catch(() => null) : null;
   const parsedDiscordUser = discordUserData ? discordUserSchema.safeParse(camelize(discordUserData)) : null;
 
   if (!parsedDiscordUser?.success) {
-    console.warn(parsedDiscordUser?.error, discordUserData);
+    console.warn(parsedDiscordUser?.error);
+    console.warn('GOT', discordUserData)
   }
 
   const discordUser = parsedDiscordUser?.success ? parsedDiscordUser.data : null;
@@ -134,6 +134,12 @@ export const createApiContext = async ({req, context} : {req: NextRequest, conte
   const authRequest = auth.handleRequest(req.method, context);
 
   return createTRPCContext({ req, authRequest });
+}
+
+export const createRscContext = async ({ context } : {context: NonNullable<Parameters<typeof auth.handleRequest>['1']>}) => {
+  const authRequest = auth.handleRequest('GET', context);
+
+  return createTRPCContext({ authRequest });
 }
 
 export type Context = Awaited<ReturnType<typeof createTRPCContext>>;

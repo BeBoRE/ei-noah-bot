@@ -13,7 +13,6 @@ import {
   useRootNavigationState,
   useSegments,
 } from 'expo-router';
-import { isTokenExpired, refreshToken } from 'src/utils/auth';
 import {
   secureStorage,
   SecureStoreInput,
@@ -21,8 +20,8 @@ import {
 } from 'src/utils/storage/secureStorage';
 
 type AuthContextType = {
-  authInfo: SecureStoreOutput<'discordOauth'> | null;
-  signIn: (info: SecureStoreInput<'discordOauth'>) => void;
+  authInfo: SecureStoreOutput<'sessionToken'> | null;
+  signIn: (info: SecureStoreInput<'sessionToken'>) => void;
   signOut: () => void;
 };
 
@@ -32,18 +31,18 @@ registerDevMenuItems([
   {
     name: 'Sign out',
     callback: async () => {
-      await secureStorage.delete('discordOauth');
+      await secureStorage.delete('sessionToken');
     },
   },
-  {
-    name: 'Refresh token',
-    callback: async () => {
-      const info = await secureStorage.get('discordOauth').catch(() => null);
-      console.log(info);
-      const refreshed = await refreshToken(info, true);
-      console.log(refreshed);
-    },
-  },
+  // {
+  //   name: 'Refresh token',
+  //   callback: async () => {
+  //     const info = await secureStorage.get('sessionToken').catch(() => null);
+  //     console.log(info);
+  //     const refreshed = await refreshToken(info, true);
+  //     console.log(refreshed);
+  //   },
+  // },
 ]);
 
 const authContext = createContext<AuthContextType>({
@@ -59,7 +58,7 @@ export function useAuth() {
 }
 
 function useProtectedRoute(
-  token: SecureStoreOutput<'discordOauth'> | null,
+  token: SecureStoreOutput<'sessionToken'> | null,
   isReady: boolean,
 ) {
   const segments = useSegments();
@@ -80,19 +79,14 @@ function useProtectedRoute(
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authInfo, setAuthInfo] =
-    useState<SecureStoreOutput<'discordOauth'> | null>(null);
+    useState<SecureStoreOutput<'sessionToken'> | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   // Get token from storage on app start
   useEffect(() => {
     (async () => {
-      const info = await secureStorage.get('discordOauth').catch(() => null);
+      const info = await secureStorage.get('sessionToken').catch(() => null);
       // const refreshed = await refreshToken(info);
-
-      if (isTokenExpired(info)) {
-        setAuthInfo(null);
-        return;
-      }
 
       setAuthInfo(info);
     })().finally(() => {
@@ -101,27 +95,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // Refresh token when it expires
-  useEffect(() => {
-    if (!authInfo || !authInfo.expiresAt) return undefined;
-
-    const timeout = setTimeout(async () => {
-      const newToken = await refreshToken(authInfo);
-
-      setAuthInfo(newToken);
-    }, authInfo.expiresAt.getTime() - Date.now());
-
-    return () => clearTimeout(timeout);
-  }, [authInfo]);
-
-  const signIn = useCallback(async (info: SecureStoreInput<'discordOauth'>) => {
-    const result = await secureStorage.set('discordOauth', info);
+  const signIn = useCallback(async (info: SecureStoreInput<'sessionToken'>) => {
+    const result = await secureStorage.set('sessionToken', info);
 
     if (result.success) setAuthInfo(result.data);
   }, []);
 
   const signOut = useCallback(async () => {
-    await secureStorage.delete('discordOauth');
+    await secureStorage.delete('sessionToken');
 
     setAuthInfo(null);
   }, []);

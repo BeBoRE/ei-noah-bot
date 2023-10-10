@@ -1,46 +1,42 @@
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { exchangeCodeAsync, useAuthRequest } from 'expo-auth-session';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import Button from 'src/components/Button';
 import Text from 'src/components/Text';
-import config from 'src/config';
 import { useAuth } from 'src/context/auth';
-import { authConfig, discovery, expiresAt, redirectUri } from 'src/utils/auth';
+import {openAuthSessionAsync} from 'expo-web-browser'
+import { parse } from 'expo-linking';
+import { getBaseUrl } from 'src/utils/api';
 
 function SignIn() {
   const { signIn } = useAuth();
 
-  const [request, , promptAsync] = useAuthRequest(authConfig, discovery);
-
   const insets = useSafeAreaInsets();
 
-  const prompt = () =>
-    promptAsync().then((res) => {
-      if (res.type === 'success' && res.params.code) {
-        exchangeCodeAsync(
-          {
-            clientId: config.discord.clientId,
-            code: res.params.code,
-            extraParams: request?.codeVerifier
-              ? { code_verifier: request.codeVerifier }
-              : undefined,
-            redirectUri,
-          },
-          discovery,
-        ).then((exchangeRes) =>
-          signIn({
-            accessToken: exchangeRes.accessToken,
-            refreshToken: exchangeRes.refreshToken,
-            expiresAt:
-              exchangeRes.expiresIn && expiresAt(exchangeRes.expiresIn),
-            scope: exchangeRes.scope || '',
-          }),
-        );
-      }
-    });
+  const prompt = async () => {
+    const result = await openAuthSessionAsync(
+      `${getBaseUrl()}/login/discord?platform=mobile`,
+      'ei://auth'
+    )
+
+    if (result.type !== 'success') {
+      console.log(result);
+      return;
+    };
+
+    const url = parse(result.url);
+
+    const sessionToken = url?.queryParams?.session_token?.toString() ?? null;
+
+    if (!sessionToken) {
+      console.log('No session token found');
+      return;
+    };
+
+    signIn(sessionToken);
+  }
 
   return (
     <>
@@ -60,7 +56,6 @@ function SignIn() {
         <View>
           <Text className="mb-3 text-center text-3xl">Sign Into Discord</Text>
           <Button
-            disabled={!request}
             onPress={() => prompt()}
             className="flex-row items-center justify-center bg-[#5865F2] opacity-100 transition-opacity active:opacity-80 disabled:opacity-50"
           >

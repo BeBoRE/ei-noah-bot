@@ -53,6 +53,7 @@
     "expo-status-bar": "~1.6.0",
     "expo-system-ui": "~2.4.0",
     "expo-updates": "^0.18.11",
+    "expo-web-browser": "^12.5.0",
     "javascript-time-ago": "^2.5.9",
     "lodash": "^4.17.21",
     "lucide-react-native": "^0.270.0",

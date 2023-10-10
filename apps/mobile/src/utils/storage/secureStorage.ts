@@ -25,6 +25,7 @@ export const secureStorage = createSecureStore({
       .transform((v) => v.split(' '))
       .refine((v) => v.includes('identify')),
   }),
+  sessionToken: z.string()
 });
 
 export type SecureStoreInput<K extends string> = ManagerInputs<

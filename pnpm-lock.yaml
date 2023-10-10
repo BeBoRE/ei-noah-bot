@@ -288,6 +288,9 @@ importers:
       expo-updates:
         specifier: ^0.18.11
         version: 0.18.12(expo@49.0.6)
+      expo-web-browser:
+        specifier: ^12.5.0
+        version: 12.5.0(expo@49.0.6)
       javascript-time-ago:
         specifier: ^2.5.9
         version: 2.5.9
@@ -448,6 +451,9 @@ importers:
       drizzle-orm:
         specifier: ^0.28.6
         version: 0.28.6(@types/pg@8.10.3)(pg@8.11.1)
+      ip:
+        specifier: ^1.1.8
+        version: 1.1.8
       lucide-react:
         specifier: ^0.279.0
         version: 0.279.0(react@18.2.0)
@@ -491,6 +497,9 @@ importers:
       '@ei/tsconfig':
         specifier: '*'
         version: link:../../packages/tsconfig
+      '@types/ip':
+        specifier: ^1.1.1
+        version: 1.1.1
       '@types/node':
         specifier: ^18.16.0
         version: 18.16.0
@@ -2939,7 +2948,7 @@ packages:
       eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
     dependencies:
       eslint: 8.46.0
-      eslint-visitor-keys: 3.4.2
+      eslint-visitor-keys: 3.4.3
     dev: true
 
   /@eslint-community/eslint-utils@4.4.0(eslint@8.51.0):
@@ -4860,6 +4869,12 @@ packages:
       i18next: 19.9.2
     dev: true
 
+  /@types/ip@1.1.1:
+    resolution: {integrity: sha512-/v+XZuKNBQHJi3dKeFt9LySLzWNkgmaYRtnFfg27Ag0MO9tQLzHUuAA8zOhPtbDvDGkcnZGr4pVZQPGNft/WYA==}
+    dependencies:
+      '@types/node': 18.17.18
+    dev: true
+
   /@types/is-ci@3.0.1:
     resolution: {integrity: sha512-mnb1ngaGQPm6LFZaNdh3xPOoQMkrQb/KBPhPPN2p2Wk8XgeUqWj6xPnvyQ8rvcK/VFritVmQG8tvQuy7g+9/nQ==}
     dependencies:
@@ -6234,7 +6249,7 @@ packages:
       normalize-path: 3.0.0
       readdirp: 3.6.0
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
 
   /chownr@1.1.4:
     resolution: {integrity: sha512-jJ0bqzaylmJtVnNgzTeSOs8DPavpbYgEr/b0YL8/2GO3xJEhInFmhKMUnEJQjZumK7KXGFhUy89PrsJWlakBVg==}
@@ -8724,6 +8739,16 @@ packages:
       url: 0.11.1
     dev: false
 
+  /expo-web-browser@12.5.0(expo@49.0.6):
+    resolution: {integrity: sha512-3uDzP19DqcEicLOB4ZH6pGWzxlCQ8mLHSmWMmfXEBhZjooUkHUrysbzkNvQQa24ijy3uoUybX4jW0xPss594kA==}
+    peerDependencies:
+      expo: '*'
+    dependencies:
+      compare-urls: 2.0.0
+      expo: 49.0.6(@babel/core@7.22.9)
+      url: 0.11.1
+    dev: false
+
   /expo@49.0.6(@babel/core@7.22.9):
     resolution: {integrity: sha512-prwW1DNTehTdJh2xp+HrEMVrO53WfFNdCC9c2yo3BfsqASGhP8LUePC+RyNgNZzOTL0OsXY7pxkEd0zH1idudA==}
     hasBin: true
@@ -9155,19 +9180,11 @@ packages:
   /fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
 
-  /fsevents@2.3.2:
-    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
-    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
-    os: [darwin]
-    requiresBuild: true
-    optional: true
-
   /fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     requiresBuild: true
-    dev: true
     optional: true
 
   /function-bind@1.1.1:
@@ -10908,7 +10925,7 @@ packages:
       nullthrows: 1.1.1
       walker: 1.0.8
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -13423,7 +13440,7 @@ packages:
     engines: {node: '>=14.18.0', npm: '>=8.0.0'}
     hasBin: true
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: true
 
   /run-applescript@5.0.0:

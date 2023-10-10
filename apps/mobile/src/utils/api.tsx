@@ -41,7 +41,7 @@ function onAppStateChange(status: AppStateStatus) {
  * Extend this function when going to production by
  * setting the baseUrl to your production API URL.
  */
-const getBaseUrl = (ws = false) => {
+export const getBaseUrl = (ws = false) => {
   const debuggerHost = Constants.expoConfig?.hostUri;
   const localhost = debuggerHost?.split(':')[0];
 
@@ -136,16 +136,16 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
             true: wsLink({ client: wsClient }),
             false: httpBatchLink({
               url: `${getBaseUrl()}/api/trpc`,
-              headers: authInfo?.accessToken
+              headers: authInfo
                 ? {
-                    authorization: authInfo?.accessToken,
+                    authorization: `Bearer ${authInfo}`,
                   }
                 : undefined,
             }),
           }),
         ],
       }),
-    [authInfo?.accessToken],
+    [authInfo],
   );
 
   useEffect(() => {
