@@ -15,7 +15,7 @@ export const auth = lucia({
     user: 'user',
   }),
   experimental: {
-    debugMode: process.env.NODE_ENV !== 'production',
+    debugMode: true,
   },
 });
 
@@ -28,10 +28,6 @@ if (!clientId || !clientSecret) {
 
 // Get's the hosts ip when in development mode
 const getHost = () => {
-  if (process.env.NODE_ENV === 'production') {
-    return 'https://ei.sweaties.net';
-  }
-
   return `http://${ip.address(undefined, 'ipv4')}:3000`;
 };
 

@@ -3,6 +3,7 @@ import _ from 'lodash';
 export type Config = {
   api: {
     url?: string | null;
+    wsUrl?: string | null;
   };
   discord: {
     clientId: string;

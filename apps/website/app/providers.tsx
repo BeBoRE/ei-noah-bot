@@ -44,6 +44,12 @@ type Props = {
   children: React.ReactNode;
 };
 
+const wsUrl = getWsUrl();
+
+const wsClient = createWSClient({
+  url: wsUrl,
+});
+
 export default function TRPCReactProvider({ children }: Props) {
   const [queryClient] = useState(
     () =>
@@ -55,16 +61,6 @@ export default function TRPCReactProvider({ children }: Props) {
         },
       }),
   );
-
-  const wsUrl = getWsUrl();
-
-  const wsClient = createWSClient({
-    url: wsUrl,
-  });
-
-  useEffect(() => () => {
-    wsClient.close();
-  });
 
   const [trpcClient] = useState(() =>
     api.createClient({
