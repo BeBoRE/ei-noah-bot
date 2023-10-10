@@ -45,7 +45,8 @@ export const getBaseUrl = (ws = false) => {
   const localhost = debuggerHost?.split(':')[0];
 
   if (config.api.url) {
-    if (ws) return config.api.url.replace('https', 'wss');
+    if (ws && config.api.wsUrl) return config.api.wsUrl;
+    else if (ws) return config.api.url.replace('https', 'wss');
     return config.api.url;
   }
 

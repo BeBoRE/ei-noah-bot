@@ -15,6 +15,7 @@ services:
       - ei
     ports:
       - "3000:3000"
+      - "3001:3001"
     environment:
       - REDIS_URL=redis://redis
       - DBHOST=host.docker.internal

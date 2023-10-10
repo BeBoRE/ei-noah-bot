@@ -73,8 +73,6 @@ export const lobbyRouter = createTRPCRouter({
         (token && (await auth.validateSession(token).catch(() => null))) ||
         null;
 
-      console.log('Active session', activeSession);
-
       if (!activeSession)
         throw new TRPCError({
           code: 'UNAUTHORIZED',

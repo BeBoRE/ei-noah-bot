@@ -9,7 +9,9 @@
     "dev": "run-p dev:*",
     "clean": "rm -rf .turbo node_modules .next",
     "build": "next build",
-    "start": "tsx ./server/production.ts",
+    "start:next": "next start",
+    "start:wss": "tsx ./server/development.ts",
+    "start": "run-p start:*",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:typecheck": "tsc --noEmit"

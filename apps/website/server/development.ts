@@ -16,16 +16,16 @@ const handler = applyWSSHandler({
 console.log('Starting WebSocket Server...');
 
 wss.on('listening', () => {
-  console.log('✅ WebSocket Server listening');
+  console.log('WebSocket Server listening');
 });
 
 wss.on('connection', (socket) => {
-  console.log(`➕➕ Connection (${wss.clients.size})`);
+  console.log(`Connection opened (${wss.clients.size})`);
   socket.once('close', () => {
-    console.log(`➖➖ Connection (${wss.clients.size})`);
+    console.log(`Connection closed (${wss.clients.size})`);
   });
 });
-console.log('✅ WebSocket Server listening on ws://localhost:3001');
+console.log('WebSocket Server listening on ws://localhost:3001');
 
 process.on('SIGTERM', (signal) => {
   console.log('SIGTERM', signal);

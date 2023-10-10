@@ -27,10 +27,10 @@ const getWsUrl = () => {
     const { protocol, host } = window.location;
 
     if (protocol === 'https:') {
-      return `wss://${host}`;
+      return `wss://ws.sweaties.net`;
     }
 
-    if (host === 'localhost:3000' && process.env.NODE_ENV !== 'production') {
+    if (host === 'localhost:3000') {
       return 'ws://localhost:3001'; // dev client should use localhost
     }
 

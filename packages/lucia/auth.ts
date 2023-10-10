@@ -15,7 +15,7 @@ export const auth = lucia({
     user: 'user',
   }),
   experimental: {
-    debugMode: true,
+    debugMode: process.env.NODE_ENV !== 'production',
   },
 });
 
