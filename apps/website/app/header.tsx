@@ -4,6 +4,8 @@ import Link from 'next/link';
 import rscApi from 'utils/rsc';
 import HeaderUser from './_components/HeaderUser';
 
+import ei from '../public/ei.png'
+
 async function Header() {
   const api = await rscApi(context);
   const user = await api.user.me().catch(() => null);
@@ -13,7 +15,7 @@ async function Header() {
       <div className="container flex place-content-between py-1">
         <div className="flex flex-1 place-items-center items-stretch">
           <Link className="flex place-items-center gap-1" href="/">
-            <Image alt="ei Noah Logo" src='/ei.png' width={30} height={30} />
+            <Image alt="ei Noah Logo" src={ei} width={30} height={30} />
             <h1 className="text-xl font-bold text-primary-300">ei Noah</h1>
           </Link>
         </div>
