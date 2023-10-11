@@ -15,7 +15,7 @@ export const auth = lucia({
     user: 'user',
   }),
   csrfProtection: process.env.NODE_ENV === 'production' ? {
-    host: 'https://ei.sweaties.net'
+    host: 'ei.sweaties.net'
   } : undefined,
   experimental: {
     debugMode: true,
