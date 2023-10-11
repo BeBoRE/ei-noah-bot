@@ -5,7 +5,7 @@ import {
   useLastNotificationResponse,
 } from 'expo-notifications';
 import { useAuth } from 'src/context/auth';
-import { api, createVanillaApi } from 'src/utils/api';
+import { api, RouterInputs } from 'src/utils/api';
 import { isTokenExpired } from 'src/utils/auth';
 import registerForPushNotificationsAsync from 'src/utils/registerForPushNotifications';
 import { secureStorage } from 'src/utils/storage/secureStorage';
@@ -14,6 +14,7 @@ import { userAddNotificationSchema } from '@ei/lobby';
 
 export const onAcceptResponse = async (
   response: NotificationResponse | undefined | null,
+  onAccept: (lobbyChange: RouterInputs['lobby']['addUser']) => void,
 ) => {
   if (!response) return;
 
@@ -32,9 +33,7 @@ export const onAcceptResponse = async (
     if (!actualAuthInfo) return;
     if (isTokenExpired(actualAuthInfo)) return;
 
-    const client = createVanillaApi(actualAuthInfo.accessToken);
-
-    await client.lobby.addUser.mutate({
+    onAccept({
       user: {
         id: data.data.userId,
       },
@@ -45,6 +44,11 @@ export const onAcceptResponse = async (
 const useNotifications = () => {
   const { authInfo } = useAuth();
   const { mutate: setToken } = api.notification.setToken.useMutation({
+    onError: (error) => {
+      console.log(error);
+    },
+  });
+  const { mutate: addUser } = api.lobby.addUser.useMutation({
     onError: (error) => {
       console.log(error);
     },
@@ -66,7 +70,7 @@ const useNotifications = () => {
   }, []);
 
   useEffect(() => {
-    if (!authInfo?.accessToken) return;
+    if (!authInfo) return;
 
     registerForPushNotificationsAsync()
       .then((token) => {
@@ -77,14 +81,14 @@ const useNotifications = () => {
       .catch((error) => {
         console.log(error);
       });
-  }, [authInfo?.accessToken, setToken]);
+  }, [authInfo, setToken]);
 
   const response = useLastNotificationResponse();
   useEffect(() => {
     (async () => {
-      onAcceptResponse(response);
+      onAcceptResponse(response, addUser);
     })();
-  }, [response]);
+  }, [response, addUser]);
 };
 
 export default useNotifications;

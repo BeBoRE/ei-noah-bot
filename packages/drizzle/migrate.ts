@@ -1,11 +1,15 @@
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 
-import { client, getDrizzleClient } from './client';
+import { getConnectedPgClient, getDrizzleClient } from './client';
 
 getDrizzleClient()
   .then(async (c) => {
-    await migrate(c, { migrationsFolder: './tables' }).catch(console.error);
+    await migrate(c, { migrationsFolder: './tables' });
   })
-  .finally(() => {
-    client.end();
+  .catch((err) => {
+    console.error('error', err);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    (await getConnectedPgClient()).end();
   });

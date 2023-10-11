@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ReactQueryStreamedHydration } from '@tanstack/react-query-next-experimental';
@@ -25,12 +25,13 @@ const getBaseUrl = () => {
 const getWsUrl = () => {
   if (typeof window !== 'undefined') {
     const { protocol, host } = window.location;
+    const [hostname] = host.split(':');
 
     if (protocol === 'https:') {
-      return `wss://${host}`;
+      return `wss://ws.sweaties.net`;
     }
 
-    return `ws://${host}`;
+    return `ws://${hostname}:3001`;
   }
 
   return 'ws://localhost:3001'; // dev SSR should use localhost
@@ -39,6 +40,8 @@ const getWsUrl = () => {
 type Props = {
   children: React.ReactNode;
 };
+
+const wsUrl = getWsUrl();
 
 export default function TRPCReactProvider({ children }: Props) {
   const [queryClient] = useState(
@@ -52,13 +55,15 @@ export default function TRPCReactProvider({ children }: Props) {
       }),
   );
 
-  const wsClient = createWSClient({
-    url: getWsUrl(),
-  });
+  const wsClient = useMemo(
+    () =>
+      createWSClient({
+        url: wsUrl,
+      }),
+    [],
+  );
 
-  useEffect(() => () => {
-    wsClient.close();
-  });
+  useEffect(() => () => wsClient.close());
 
   const [trpcClient] = useState(() =>
     api.createClient({

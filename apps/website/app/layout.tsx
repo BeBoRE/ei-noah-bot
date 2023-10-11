@@ -3,10 +3,9 @@ import { Inter } from 'next/font/google';
 
 import '../styles/globals.css';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
-import ei from '../public/ei.png';
+import Header from './header';
 import TRPCReactProvider from './providers';
 
 const fontSans = Inter({
@@ -29,11 +28,11 @@ type Props = {
   children: React.ReactNode;
 };
 
-export default function Layout({ children }: Props) {
+export default async function Layout({ children }: Props) {
   return (
     <html
       lang="en"
-      className="flex min-h-[100dvh] bg-primary-950 text-primary-100"
+      className="dark flex min-h-[100dvh] bg-primary-950 text-primary-100"
     >
       <link rel="icon" href="/favicon.ico" sizes="any" />
       <body
@@ -45,17 +44,7 @@ export default function Layout({ children }: Props) {
           'flex-col',
         ].join(' ')}
       >
-        <header className="flex justify-center bg-primary-900">
-          <div className="container flex place-content-between py-3">
-            <Link
-              href="/"
-              className="flex gap-2 text-xl font-bold text-primary-500"
-            >
-              <Image src={ei} alt="logo" height={30} className="inline-block" />
-              <span>ei Noah</span>
-            </Link>
-          </div>
-        </header>
+        <Header />
         <TRPCReactProvider>{children}</TRPCReactProvider>
         <footer className="flex place-content-center bg-primary-900 p-3">
           <div className="container text-sm hover:underline">

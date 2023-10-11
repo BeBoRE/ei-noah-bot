@@ -116,25 +116,26 @@ function Index() {
             </HeaderButtons>
           ),
           headerLeft:
-            user &&
-            // eslint-disable-next-line react/no-unstable-nested-components
-            (() => (
-              <View className="flex flex-row items-center">
-                {user.avatar && (
-                  <Image
-                    source={getUserImageUrl({
-                      id: user.id,
-                      avatar: user.avatar,
-                    })}
-                    className="mr-2 h-10 w-10 rounded-full"
-                    alt=""
-                  />
-                )}
-                <Text className="text-2xl font-bold text-primary-950">
-                  {user.globalName || ''}
-                </Text>
-              </View>
-            )),
+            (user &&
+              // eslint-disable-next-line react/no-unstable-nested-components
+              (() => (
+                <View className="flex flex-row items-center">
+                  {user.avatar && (
+                    <Image
+                      source={getUserImageUrl({
+                        id: user.id,
+                        avatar: user.avatar,
+                      })}
+                      className="mr-2 h-10 w-10 rounded-full"
+                      alt=""
+                    />
+                  )}
+                  <Text className="text-2xl font-bold text-primary-950">
+                    {user.globalName || ''}
+                  </Text>
+                </View>
+              ))) ||
+            undefined,
         }}
       />
       <SafeAreaView edges={['left', 'right']} className="flex-1 to-primary-950">

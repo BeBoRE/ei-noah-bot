@@ -64,7 +64,7 @@ jobs:
         run: pnpm install
 
       - name: Build
-        run: pnpm build
+        run: npx turbo build --filter=mobile
 
       - name: Run update
         run: pnpm expo-update

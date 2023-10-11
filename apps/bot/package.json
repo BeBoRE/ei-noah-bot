@@ -5,6 +5,7 @@
   "private": true,
   "main": "./dist/index.js",
   "scripts": {
+    "clean": "rm -rf .turbo node_modules",
     "start": "ts-node ./src/index.ts",
     "dev": "ts-node-dev -T ./src/index.ts -watch ./locales/**/*.json",
     "test": "echo \"Error: no test specified\" && exit 1",

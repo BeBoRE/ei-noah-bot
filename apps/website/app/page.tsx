@@ -4,7 +4,7 @@ import ei from '../public/ei.png';
 
 export default function Page() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center py-5">
+    <main className="flex flex-1 flex-col items-center justify-center py-5">
       <h1 className="mb-5 text-center text-5xl font-bold text-primary-500">
         ei Noah
       </h1>
@@ -28,6 +28,6 @@ export default function Page() {
           Invite to your server
         </button>
       </a>
-    </div>
+    </main>
   );
 }

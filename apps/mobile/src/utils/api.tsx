@@ -11,7 +11,6 @@ import {
 } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import {
-  createTRPCProxyClient,
   createWSClient,
   httpBatchLink,
   loggerLink,
@@ -41,11 +40,12 @@ function onAppStateChange(status: AppStateStatus) {
  * Extend this function when going to production by
  * setting the baseUrl to your production API URL.
  */
-const getBaseUrl = (ws = false) => {
+export const getBaseUrl = (ws = false) => {
   const debuggerHost = Constants.expoConfig?.hostUri;
   const localhost = debuggerHost?.split(':')[0];
 
   if (config.api.url) {
+    if (ws && config.api.wsUrl) return config.api.wsUrl;
     if (ws) return config.api.url.replace('https', 'wss');
     return config.api.url;
   }
@@ -65,19 +65,6 @@ const getBaseUrl = (ws = false) => {
  */
 export const api = createTRPCReact<AppRouter>();
 export { type RouterInputs, type RouterOutputs } from '@ei/trpc';
-
-export const createVanillaApi = (token: string) =>
-  createTRPCProxyClient<AppRouter>({
-    transformer: superjson,
-    links: [
-      httpBatchLink({
-        url: `${getBaseUrl()}/api/trpc`,
-        headers: {
-          authorization: token,
-        },
-      }),
-    ],
-  });
 
 const asyncStoragePersistor = createAsyncStoragePersister({
   storage: AsyncStorage,
@@ -111,14 +98,27 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
     () =>
       new QueryClient({
         defaultOptions: {
-          queries: { 
-            staleTime: 1000 * 1, 
+          queries: {
+            staleTime: 1000 * 1,
             enabled: isLoggedIn,
             cacheTime: 1000 * 60 * 60 * 24,
           },
         },
       }),
     [isLoggedIn],
+  );
+
+  const httpLink = React.useMemo(
+    () =>
+      httpBatchLink({
+        url: `${getBaseUrl()}/api/trpc`,
+        headers: authInfo
+          ? {
+              Cookie: `auth_session=${authInfo}`,
+            }
+          : undefined,
+      }),
+    [authInfo],
   );
 
   const trpcClient = React.useMemo(
@@ -131,21 +131,16 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
               process.env.NODE_ENV === 'development' ||
               (opts.direction === 'down' && opts.result instanceof Error),
           }),
-          splitLink({
-            condition: ({ type }) => type === 'subscription',
-            true: wsLink({ client: wsClient }),
-            false: httpBatchLink({
-              url: `${getBaseUrl()}/api/trpc`,
-              headers: authInfo?.accessToken
-                ? {
-                    authorization: authInfo?.accessToken,
-                  }
-                : undefined,
-            }),
-          }),
+          wsClient
+            ? splitLink({
+                condition: ({ type }) => type === 'subscription',
+                true: wsLink({ client: wsClient }),
+                false: httpLink,
+              })
+            : httpLink,
         ],
       }),
-    [authInfo?.accessToken],
+    [httpLink],
   );
 
   useEffect(() => {

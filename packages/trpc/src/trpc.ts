@@ -6,20 +6,20 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end
  */
-import type { NextIncomingMessage } from 'next/dist/server/request-meta';
+import { IncomingMessage } from 'http';
+import type { NextRequest } from 'next/server';
 import { REST } from '@discordjs/rest';
 import { initTRPC, TRPCError } from '@trpc/server';
-import type { CreateNextContextOptions } from '@trpc/server/adapters/next';
-import { NodeHTTPCreateContextFnOptions } from '@trpc/server/dist/adapters/node-http';
 import { Routes } from 'discord-api-types/v10';
 import { eq } from 'drizzle-orm';
-import { camelCase, isArray, isObject, transform } from 'lodash';
 import superjson from 'superjson';
-import type ws from 'ws';
 import { z, ZodError } from 'zod';
 
 import { getDrizzleClient } from '@ei/drizzle';
-import { guildUsers, tempChannels } from '@ei/drizzle/tables/schema';
+import { guildUsers, tempChannels, users } from '@ei/drizzle/tables/schema';
+import { auth, Session } from '@ei/lucia';
+
+import { camelize } from './utils';
 
 /**
  * User res {
@@ -40,19 +40,19 @@ import { guildUsers, tempChannels } from '@ei/drizzle/tables/schema';
  * }
  */
 
-const userSchema = z.object({
+export const discordUserSchema = z.object({
   id: z.string(),
   username: z.string(),
   avatar: z.string().nullable(),
-  globalName: z.string(),
-  locale: z.string(),
+  globalName: z.string().nullable(),
 });
 
 export const bearerSchema = z.string().min(1);
 
-type Opts =
-  | NodeHTTPCreateContextFnOptions<NextIncomingMessage, ws>
-  | CreateNextContextOptions;
+type Opts = {
+  req?: NextRequest | IncomingMessage;
+  authRequest: ReturnType<typeof auth.handleRequest>;
+};
 
 /**
  * 1. CONTEXT
@@ -64,11 +64,16 @@ type Opts =
  *
  */
 type CreateInnerContextOptions = Partial<Opts> & {
-  session?: {
-    user: z.infer<typeof userSchema>;
-    userRestClient: REST;
-  } | null;
+  session: Session | null;
 };
+
+if (!process.env.CLIENT_TOKEN) {
+  console.warn('Missing environment variable CLIENT_TOKEN');
+}
+
+export const rest = new REST({ version: '10' }).setToken(
+  process.env.CLIENT_TOKEN || '',
+);
 
 /**
  * This helper generates the "internals" for a tRPC context. If you need to use
@@ -83,49 +88,36 @@ const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
   const drizzle = await getDrizzleClient();
   const { session } = opts;
 
+  const [dbUser] =
+    session?.user.userId !== undefined
+      ? await drizzle
+          .select()
+          .from(users)
+          .where(eq(users.id, session?.user.userId))
+      : [null];
+
+  const discordUserData = session?.user
+    ? await rest.get(Routes.user(session.user.userId)).catch(() => null)
+    : null;
+  const parsedDiscordUser = discordUserData
+    ? discordUserSchema.safeParse(camelize(discordUserData))
+    : null;
+
+  if (!parsedDiscordUser?.success) {
+    console.warn(parsedDiscordUser?.error);
+    console.warn('GOT', discordUserData);
+  }
+
+  const discordUser = parsedDiscordUser?.success
+    ? parsedDiscordUser.data
+    : null;
+
   return {
-    drizzle,
     session,
+    drizzle,
+    dbUser,
+    discordUser,
   };
-};
-
-const camelize = (obj: unknown) => {
-  if (!isObject(obj)) return obj;
-
-  return transform(
-    obj,
-    (result: Record<string, unknown>, value: unknown, key: string, target) => {
-      const camelKey = isArray(target) ? key : camelCase(key);
-      // eslint-disable-next-line no-param-reassign
-      result[camelKey] = isObject(value)
-        ? camelize(value as Record<string, unknown>)
-        : value;
-    },
-  );
-};
-
-export const getSession = async (token: string) => {
-  const rest = new REST({ version: '10', authPrefix: 'Bearer' }).setToken(
-    token,
-  );
-  const userRes = await rest.get(Routes.user()).catch(() => null);
-
-  if (!userRes) {
-    return null;
-  }
-
-  const user = userSchema.safeParse(camelize(userRes));
-
-  if (user.success) {
-    return {
-      user: user.data,
-      userRestClient: rest,
-    };
-  }
-
-  console.warn(user.error);
-
-  return null;
 };
 
 /**
@@ -134,30 +126,43 @@ export const getSession = async (token: string) => {
  * @link https://trpc.io/docs/context
  */
 export const createTRPCContext = async (opts: Opts) => {
-  const { req } = opts;
+  const { authRequest } = opts;
 
-  const tokenData = bearerSchema.safeParse(req.headers.authorization);
-  if (!tokenData.success) {
-    return createInnerTRPCContext({
-      ...opts,
-      session: null,
-    });
-  }
-
-  const { data: token } = tokenData;
-  const session = token !== undefined && (await getSession(token));
-
-  if (!session) {
-    return createInnerTRPCContext({
-      ...opts,
-      session: null,
-    });
-  }
+  const session =
+    (await authRequest.validate()) || (await authRequest.validateBearerToken());
 
   return createInnerTRPCContext({
     ...opts,
     session,
   });
+};
+
+export const createWSContext = async ({ req }: { req: IncomingMessage }) => {
+  const authRequest = auth.handleRequest({ req });
+
+  return createTRPCContext({ req, authRequest });
+};
+
+export const createApiContext = async ({
+  req,
+  context,
+}: {
+  req: NextRequest;
+  context: NonNullable<Parameters<typeof auth.handleRequest>['1']>;
+}) => {
+  const authRequest = auth.handleRequest(req.method, context);
+
+  return createTRPCContext({ req, authRequest });
+};
+
+export const createRscContext = async ({
+  context,
+}: {
+  context: NonNullable<Parameters<typeof auth.handleRequest>['1']>;
+}) => {
+  const authRequest = auth.handleRequest('GET', context);
+
+  return createTRPCContext({ authRequest });
 };
 
 export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
@@ -209,13 +214,13 @@ export const publicProcedure = t.procedure;
  * procedure
  */
 const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
-  if (!ctx.session?.user) {
+  if (!ctx.dbUser) {
     throw new TRPCError({ code: 'UNAUTHORIZED' });
   }
   return next({
     ctx: {
       // infers the `session` as non-nullable
-      session: { ...ctx.session, user: ctx.session.user },
+      dbUser: { ...ctx.dbUser },
     },
   });
 });
@@ -234,7 +239,7 @@ export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
 const enforceUserHasLobby = enforceUserIsAuthed.unstable_pipe(
   async ({ ctx, next }) => {
     const { drizzle } = ctx;
-    const { user } = ctx.session;
+    const user = ctx.dbUser;
 
     const [lobby] = await drizzle
       .select()

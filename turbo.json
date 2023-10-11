@@ -11,6 +11,8 @@
     "NODE_ENV",
     "LOGGING_WEBHOOK",
     "CLIENT_TOKEN",
+    "CLIENT_SECRET",
+    "CLIENT_ID",
     "ERROR_CHANNEL",
     "VERCEL_URL",
     "WEBPACK",
@@ -53,6 +55,9 @@
     "db:create": {
       "inputs": ["tables/**"],
       "outputs": ["tables/**"],
+      "cache": false
+    },
+    "clean": {
       "cache": false
     }
   }

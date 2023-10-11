@@ -21,6 +21,8 @@ export const userSchema = z.object({
   isKickable: z.boolean(),
 });
 
+export type User = z.infer<typeof userSchema>;
+
 export const lobbyChangeSchema = z
   .object({
     user: z.object({

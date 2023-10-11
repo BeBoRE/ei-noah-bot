@@ -10,8 +10,8 @@ export const clientConfig = {
 } satisfies ClientConfig;
 
 const config: Config = {
-  schema: './schema.ts',
-  out: './tables',
+  schema: './tables/schema.ts', // schema: './schema.ts',
+  out: './tables', // out: './tables',
   driver: 'pg',
   dbCredentials: clientConfig,
 };

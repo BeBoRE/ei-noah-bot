@@ -1,0 +1,26 @@
+{
+  "name": "@ei/lucia",
+  "private": true,
+  "version": "0.0.1",
+  "main": "auth.ts",
+  "types": "auth.ts",
+  "scripts": {
+    "clean": "rm -rf .turbo node_modules",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ei/drizzle": "*",
+    "@lucia-auth/adapter-postgresql": "^2.0.1",
+    "@lucia-auth/oauth": "^3.3.0",
+    "lucia": "^2.7.1",
+    "ip": "^1.1.8"
+  },
+  "devDependencies": {
+    "@ei/tsconfig": "*",
+    "@types/ip": "^1.1.1",
+    "eslint": "^8.46.0",
+    "typescript": "^5.1.6"
+  }
+}

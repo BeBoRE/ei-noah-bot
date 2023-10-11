@@ -12,9 +12,7 @@ import config from 'src/config';
 import { secureStorage, SecureStoreOutput } from './storage/secureStorage';
 
 export const discovery: DiscoveryDocument = {
-  authorizationEndpoint: 'https://discord.com/oauth2/authorize',
-  tokenEndpoint: 'https://discord.com/api/oauth2/token',
-  revocationEndpoint: 'https://discord.com/api/oauth2/token/revoke',
+  authorizationEndpoint: 'http://localhost:3000/login/discord',
 };
 
 export const redirectUri = makeRedirectUri({
@@ -28,8 +26,7 @@ const tokenRequestConfig: TokenRequestConfig = {
 
 export const authConfig: AuthRequestConfig = {
   ...tokenRequestConfig,
-  responseType: ResponseType.Code,
-  usePKCE: true,
+  responseType: ResponseType.Token,
   redirectUri,
 };
 
