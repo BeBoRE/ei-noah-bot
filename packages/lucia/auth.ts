@@ -27,7 +27,7 @@ if (!clientId || !clientSecret) {
 }
 
 // Get's the hosts ip when in development mode
-const getHost = () => `http://${ip.address(undefined, 'ipv4')}:3000`;
+const getHost = () => process.env.NODE_ENV === 'production' ? 'https://ei.sweaties.net' : `http://${ip.address(undefined, 'ipv4')}:3000`;
 
 console.log('Host is', getHost());
 
