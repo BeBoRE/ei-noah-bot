@@ -68,11 +68,11 @@ type CreateInnerContextOptions = Partial<Opts> & {
 };
 
 if (!process.env.CLIENT_TOKEN) {
-  throw new Error('Missing environment variable CLIENT_TOKEN');
+  console.warn('Missing environment variable CLIENT_TOKEN');
 }
 
 export const rest = new REST({ version: '10' }).setToken(
-  process.env.CLIENT_TOKEN,
+  process.env.CLIENT_TOKEN || '',
 );
 
 /**
