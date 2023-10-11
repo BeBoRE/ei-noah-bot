@@ -72,7 +72,9 @@ function HeaderUser({ user }: Props) {
 
   return (
     <Button variant="outline" asChild>
-      <Link prefetch={false} href="/login/discord">Login</Link>
+      <Link prefetch={false} href="/login/discord">
+        Login
+      </Link>
     </Button>
   );
 }

@@ -1,6 +1,6 @@
 import Image from 'next/image';
 
-import ei from '../public/ei.png'
+import ei from '../public/ei.png';
 
 export default function Page() {
   return (

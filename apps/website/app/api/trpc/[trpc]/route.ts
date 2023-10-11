@@ -24,10 +24,6 @@ export function OPTIONS() {
 }
 
 const handler = async (req: NextRequest) => {
-  console.log('>>> tRPC Request', req.nextUrl.pathname);
-  console.log('>>> Authorization Header', context.headers().get('Authorization'));
-  console.log('>>> Session Cookie', context.cookies().get('auth_session')?.value);
-
   const response = await fetchRequestHandler({
     endpoint: '/api/trpc',
     router: appRouter,

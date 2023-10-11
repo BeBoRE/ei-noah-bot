@@ -14,11 +14,14 @@ export const auth = lucia({
     session: 'session',
     user: 'user',
   }),
-  csrfProtection: process.env.NODE_ENV === 'production' ? {
-    host: 'ei.sweaties.net'
-  } : undefined,
+  csrfProtection:
+    process.env.NODE_ENV === 'production'
+      ? {
+          host: 'ei.sweaties.net',
+        }
+      : undefined,
   experimental: {
-    debugMode: true,
+    debugMode: process.env.NODE_ENV !== 'production',
   },
 });
 
@@ -30,7 +33,10 @@ if (!clientId || !clientSecret) {
 }
 
 // Get's the hosts ip when in development mode
-const getHost = () => process.env.NODE_ENV === 'production' ? 'https://ei.sweaties.net' : `http://${ip.address(undefined, 'ipv4')}:3000`;
+const getHost = () =>
+  process.env.NODE_ENV === 'production'
+    ? 'https://ei.sweaties.net'
+    : `http://${ip.address(undefined, 'ipv4')}:3000`;
 
 console.log('Host is', getHost());
 

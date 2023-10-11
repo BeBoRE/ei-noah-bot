@@ -150,10 +150,6 @@ export const createApiContext = async ({
   req: NextRequest;
   context: NonNullable<Parameters<typeof auth.handleRequest>['1']>;
 }) => {
-  console.log('>>> creating API Context', req.nextUrl.pathname);
-  console.log('>>> Authorization Header', context.headers().get('authorization'));
-  console.log('>>> Session Cookie', context.cookies().get('auth_session')?.value);
-
   const authRequest = auth.handleRequest(req.method, context);
 
   return createTRPCContext({ req, authRequest });
