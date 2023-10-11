@@ -19,6 +19,7 @@ module.exports = {
     'max-len': 'off',
     'no-console': 'off',
     '@typescript-eslint/no-empty-function': 'off',
+    'import/prefer-default-export': 'off',
   },
   env: {
     node: true,

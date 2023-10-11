@@ -55,6 +55,20 @@ export const users = pgTable(
   }),
 );
 
+export const loginTokens = pgTable('login_token', {
+  token: varchar('token', {
+    length: 72,
+  }).primaryKey(),
+  userId: varchar('user_id', {
+    length: 255,
+  })
+    .notNull()
+    .references(() => users.id),
+  expires: bigint('expires', {
+    mode: 'number',
+  }).notNull(),
+});
+
 export const session = pgTable('session', {
   id: varchar('id', {
     length: 128,

@@ -13,6 +13,7 @@ export const GET = async (request: NextRequest) => {
   const url = new URL(request.url);
   const state = url.searchParams.get('state');
   const code = url.searchParams.get('code');
+
   // validate state
   if (!storedState || !state || storedState !== state || !code) {
     console.warn('Invalid state or code');
@@ -71,6 +72,7 @@ export const GET = async (request: NextRequest) => {
     console.log('Redirecting to', redirect);
 
     authRequest.setSession(session);
+
     return new Response(null, {
       status: 302,
       headers: {

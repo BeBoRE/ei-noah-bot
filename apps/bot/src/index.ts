@@ -32,6 +32,7 @@ import { getDrizzleClient } from '@ei/drizzle';
 import { guilds } from '@ei/drizzle/tables/schema';
 
 import EiNoah from './EiNoah';
+import { loginHandler } from './handler/login';
 import logger from './logger';
 import { BothHandler, HandlerType } from './router/Router';
 import Birthday from './routes/Birthday';
@@ -106,6 +107,10 @@ process.title = 'Ei Noah Bot';
       description: 'Het heerlijke Ei Noah menu, geniet ervan :P)',
     },
   );
+
+  eiNoah.use('login', loginHandler, HandlerType.BOTH, {
+    description: 'Login with a magic token',
+  });
 
   // LobbyRouter wordt gebruikt wanneer mensen "ei lobby" aanroepen
   eiNoah.use('lobby', LobbyRouter);

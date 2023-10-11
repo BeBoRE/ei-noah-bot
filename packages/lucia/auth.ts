@@ -1,8 +1,10 @@
+import crypto from 'crypto';
 import { pg as postgresAdapter } from '@lucia-auth/adapter-postgresql';
 import { discord } from '@lucia-auth/oauth/providers';
 import ip from 'ip';
 import { lucia } from 'lucia';
 import { nextjs_future as middleware } from 'lucia/middleware';
+import { generateRandomString } from 'lucia/utils';
 
 import { luciaPgClient } from '@ei/drizzle';
 
@@ -32,14 +34,18 @@ if (!clientId || !clientSecret) {
   console.warn('Missing environment variables CLIENT_ID and CLIENT_SECRET');
 }
 
+export const generateLoginToken = () => generateRandomString(72);
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore generateRandomString needs crypto
+global.crypto = crypto;
+
 // Get's the hosts ip when in development mode
-const getHost = () =>
+export const getHost = () =>
   process.env.NODE_ENV === 'production'
     ? 'https://ei.sweaties.net'
     : `http://${ip.address(undefined, 'ipv4')}:3000`;
 
-console.log('Host is', getHost());
-
+console.log('Redirect host is', getHost());
 export const discordAuth = discord(auth, {
   clientId: clientId || '',
   clientSecret: clientSecret || '',

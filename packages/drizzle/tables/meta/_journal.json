@@ -22,6 +22,13 @@
       "when": 1696884676562,
       "tag": "0002_lyrical_firelord",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1697033557849,
+      "tag": "0003_faulty_bruce_banner",
+      "breakpoints": true
     }
   ]
 }
