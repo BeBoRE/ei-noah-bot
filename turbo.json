@@ -39,7 +39,7 @@
       "dependsOn": ["^build"]
     },
     "update": {
-      "env": ["EXPO_TOKEN", "CI"]
+      "env": ["EXPO_TOKEN", "CI", "BRANCH"]
     },
     "build": {
       "dependsOn": ["^build"],

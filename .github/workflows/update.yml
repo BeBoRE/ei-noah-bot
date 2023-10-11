@@ -66,5 +66,10 @@ jobs:
       - name: Build
         run: npx turbo build --filter=mobile
 
+      - uses: actions/checkout@v2
+      - name: Get Branch Name
+        run: |
+          echo BRANCH=$(git rev-parse --abbrev-ref HEAD) >> $GITHUB_ENV
+
       - name: Run update
         run: pnpm expo-update
