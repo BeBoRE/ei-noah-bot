@@ -45,7 +45,7 @@ function HeaderUser({ user }: Props) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant={'ghost'} className="flex items-center gap-2">
+          <Button variant="ghost" className="flex items-center gap-2">
             <Image
               className="rounded-full"
               src={getUserImageUrl(user)}
@@ -57,9 +57,9 @@ function HeaderUser({ user }: Props) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56">
-          <Form action="/logout" className='flex-1 flex'>
+          <Form action="/logout" className="flex flex-1">
             <DropdownMenuItem asChild>
-              <button className='flex-1'>
+              <button type="submit" className="flex-1">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Logout</span>
               </button>

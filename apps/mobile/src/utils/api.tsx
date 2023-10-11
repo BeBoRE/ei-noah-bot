@@ -46,7 +46,7 @@ export const getBaseUrl = (ws = false) => {
 
   if (config.api.url) {
     if (ws && config.api.wsUrl) return config.api.wsUrl;
-    else if (ws) return config.api.url.replace('https', 'wss');
+    if (ws) return config.api.url.replace('https', 'wss');
     return config.api.url;
   }
 

@@ -27,9 +27,7 @@ if (!clientId || !clientSecret) {
 }
 
 // Get's the hosts ip when in development mode
-const getHost = () => {
-  return `http://${ip.address(undefined, 'ipv4')}:3000`;
-};
+const getHost = () => `http://${ip.address(undefined, 'ipv4')}:3000`;
 
 console.log('Host is', getHost());
 

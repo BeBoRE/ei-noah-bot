@@ -2,15 +2,15 @@
 
 import { useRouter } from 'next/navigation';
 
-const Form = ({
+function Form({
   children,
   action,
-  className
+  className,
 }: {
   children: React.ReactNode;
   action: string;
   className?: string;
-}) => {
+}) {
   const router = useRouter();
   return (
     <form
@@ -29,13 +29,13 @@ const Form = ({
         if (response.status === 0) {
           // redirected
           // when using `redirect: "manual"`, response status 0 is returned
-          return router.refresh();
+          router.refresh();
         }
       }}
     >
       {children}
     </form>
   );
-};
+}
 
 export default Form;

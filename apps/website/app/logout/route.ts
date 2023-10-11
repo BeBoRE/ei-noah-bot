@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 
 import { auth } from '@ei/lucia';
 
+// eslint-disable-next-line import/prefer-default-export
 export const POST = async (request: NextRequest) => {
   const authRequest = auth.handleRequest(request.method, context);
   // check if user is authenticated
