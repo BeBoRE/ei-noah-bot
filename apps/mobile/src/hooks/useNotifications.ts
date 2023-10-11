@@ -6,9 +6,7 @@ import {
 } from 'expo-notifications';
 import { useAuth } from 'src/context/auth';
 import { api, RouterInputs } from 'src/utils/api';
-import { isTokenExpired } from 'src/utils/auth';
 import registerForPushNotificationsAsync from 'src/utils/registerForPushNotifications';
-import { secureStorage } from 'src/utils/storage/secureStorage';
 
 import { userAddNotificationSchema } from '@ei/lobby';
 
@@ -28,10 +26,6 @@ export const onAcceptResponse = async (
     );
 
     if (!data.success) return;
-
-    const actualAuthInfo = await secureStorage.get('discordOauth');
-    if (!actualAuthInfo) return;
-    if (isTokenExpired(actualAuthInfo)) return;
 
     onAccept({
       user: {

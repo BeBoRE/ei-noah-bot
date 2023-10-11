@@ -114,7 +114,7 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
         url: `${getBaseUrl()}/api/trpc`,
         headers: authInfo
           ? {
-              Cookie: `auth_session=${authInfo}`,
+              Authorization: `Bearer ${authInfo}`,
             }
           : undefined,
       }),
