@@ -55,12 +55,15 @@ export default function TRPCReactProvider({ children }: Props) {
       }),
   );
 
+  const wsClient = useMemo(
+    () =>
+      createWSClient({
+        url: wsUrl,
+      }),
+    [],
+  );
 
-  const wsClient = useMemo(() => createWSClient({
-    url: wsUrl,
-  }), []);
-
-  useEffect(() => () => wsClient.close())
+  useEffect(() => () => wsClient.close());
 
   const [trpcClient] = useState(() =>
     api.createClient({

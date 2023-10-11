@@ -10,7 +10,7 @@ import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { api } from 'src/utils/api';
 
-import { ChannelType, userSchema } from '@ei/lobby';
+import { ChannelType, User } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
 import Text from './Text';
@@ -70,7 +70,7 @@ function UserItem({
   user,
   channelType,
 }: {
-  user: Zod.infer<typeof userSchema>;
+  user: User;
   channelType: ChannelType;
 }) {
   const { mutate: addUser } = api.lobby.addUser.useMutation();

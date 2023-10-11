@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
-import { ChannelType, userSchema } from '@ei/lobby';
+import { ChannelType, User } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
 import UserItem from './UserItem';
@@ -11,7 +11,7 @@ function UsersSheet({
   users,
   channelType,
 }: {
-  users: Zod.infer<typeof userSchema>[];
+  users: User[];
   channelType: ChannelType;
 }) {
   const sheetRef = useRef<BottomSheet>(null);

@@ -5,13 +5,13 @@ import ReactTimeAgo from 'react-time-ago';
 import EmojiPicker, { emojisByCategory } from 'rn-emoji-keyboard';
 import { api } from 'src/utils/api';
 
-import { generateLobbyName, lobbyChangeSchema } from '@ei/lobby';
+import { generateLobbyName, LobbyChange } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
 import Text, { AnimatedText } from './Text';
 
 type Props = {
-  lobby: NonNullable<Zod.infer<typeof lobbyChangeSchema>>;
+  lobby: NonNullable<LobbyChange>;
 };
 
 const LobbyName = forwardRef<View, Props>(({ lobby }: Props, ref) => {
