@@ -35,13 +35,13 @@
     "build": "tsup ./channel.ts --format cjs,esm --dts"
   },
   "devDependencies": {
-    "eslint": "^8.46.0",
+    "eslint": "^8.51.0",
     "tsup": "^7.2.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.2.2"
   },
   "dependencies": {
     "ioredis": "^5.3.2",
     "superjson": "1.13.1",
-    "zod": "^3.21.4"
+    "zod": "^3.22.4"
   }
 }
