@@ -15,6 +15,8 @@ export const GET = async (
 
   const existingSession = await authRequest.validate();
 
+  console.log('User Agent:', request.headers.get('User-Agent'))
+
   const uri = request.nextUrl.searchParams.get('redirect') ?? '/';
 
   console.log(uri);
@@ -52,8 +54,6 @@ export const GET = async (
   });
 
   authRequest.setSession(session);
-
-  console.log(request)
 
   await drizzle.delete(loginTokens).where(eq(loginTokens.token, token));
 
