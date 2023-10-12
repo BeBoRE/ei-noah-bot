@@ -1,0 +1,1 @@
+ALTER TABLE "guild" ADD COLUMN "role_menu_channel_id" varchar(255);

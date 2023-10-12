@@ -31,6 +31,7 @@ export const guilds = pgTable('guild', {
   birthdayChannel: varchar('birthday_channel', { length: 255 }),
   birthdayRole: varchar('birthday_role', { length: 255 }),
   roleMenuId: varchar('role_menu_id', { length: 255 }),
+  roleMenuChannelId: varchar('role_menu_channel_id', { length: 255 }),
   defaultColor: varchar('default_color', { length: 255 }),
   requiredRole: varchar('required_role', { length: 255 }),
   category: varchar('category', { length: 255 }),
@@ -103,13 +104,13 @@ export const keys = pgTable('key', {
 export const guildUsers = pgTable(
   'guild_user',
   {
+    id: serial('id').primaryKey().notNull(),
     guildId: varchar('guild_id', { length: 255 })
       .notNull()
-      .references(() => guilds.id, { onUpdate: 'cascade' }),
+      .references(() => guilds.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
     userId: varchar('user_id', { length: 255 })
       .notNull()
-      .references(() => users.id, { onUpdate: 'cascade' }),
-    id: serial('id').primaryKey().notNull(),
+      .references(() => users.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
     birthdayMsg: varchar('birthday_msg', { length: 20 }),
   },
   (table) => ({
@@ -119,19 +120,21 @@ export const guildUsers = pgTable(
   }),
 );
 
-export const customRoles = pgTable('custom_role', {
+export const roles = pgTable('role', {
   id: varchar('id', { length: 255 }).primaryKey().notNull(),
-  ownerId: integer('owner_id')
-    .notNull()
-    .references(() => guildUsers.id, { onUpdate: 'cascade' }),
-  roleName: varchar('role_name', { length: 255 }).notNull(),
-  maxUsers: integer('max_users'),
-  expireDate: timestamp('expire_date', { withTimezone: true, mode: 'string' }),
-  reactionIcon: varchar('reaction_icon', { length: 255 }).notNull(),
-  channelId: varchar('channel_id', { length: 255 }),
   guildId: varchar('guild_id', { length: 255 })
     .notNull()
-    .references(() => guilds.id, { onUpdate: 'cascade' }),
+    .references(() => guilds.id, { 
+      onUpdate: 'cascade', 
+      onDelete: 'cascade' 
+    }),
+  name: varchar('name', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at', {
+    withTimezone: true,
+    mode: 'string',
+  }).defaultNow(),
+  createdBy: integer('created_by')
+    .references(() => guildUsers.id, { onUpdate: 'cascade', onDelete: 'set null' })
 });
 
 export const categories = pgTable('category', {
