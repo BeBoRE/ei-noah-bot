@@ -113,6 +113,9 @@ importers:
       moment:
         specifier: ^2.29.4
         version: 2.29.4
+      nanoid:
+        specifier: ^5.0.1
+        version: 5.0.1
       node-canvas-with-twemoji-and-discord-emoji:
         specifier: ^1.2.1
         version: 1.2.1
@@ -634,6 +637,9 @@ importers:
       lucia:
         specifier: ^2.7.1
         version: 2.7.1
+      nanoid:
+        specifier: ^5.0.1
+        version: 5.0.1
     devDependencies:
       '@ei/tsconfig':
         specifier: '*'
@@ -12121,6 +12127,12 @@ packages:
     resolution: {integrity: sha512-BGcqMMJuToF7i1rt+2PWSNVnWIkGCU78jBG3RxO/bZlnZPK2Cmi2QaffxGO/2RvWi9sL+FAiRiXMgsyxQ1DIDA==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
+
+  /nanoid@5.0.1:
+    resolution: {integrity: sha512-vWeVtV5Cw68aML/QaZvqN/3QQXc6fBfIieAlu05m7FZW2Dgb+3f0xc0TTxuJW+7u30t7iSDTV/j3kVI0oJqIfQ==}
+    engines: {node: ^18 || >=20}
+    hasBin: true
+    dev: false
 
   /napi-build-utils@1.0.2:
     resolution: {integrity: sha512-ONmRUqK7zj7DWX0D9ADe03wbwOBZxNAfF20PlGfCWQcD3+/MakShIHrMqx9YwPTfxDdF1zLeL+RGZiR9kGMLdg==}

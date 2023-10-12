@@ -14,8 +14,9 @@
     "@ei/drizzle": "*",
     "@lucia-auth/adapter-postgresql": "^2.0.1",
     "@lucia-auth/oauth": "^3.3.0",
+    "ip": "^1.1.8",
     "lucia": "^2.7.1",
-    "ip": "^1.1.8"
+    "nanoid": "^5.0.1"
   },
   "devDependencies": {
     "@ei/tsconfig": "*",

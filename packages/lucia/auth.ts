@@ -1,12 +1,11 @@
-import crypto from 'crypto';
 import { pg as postgresAdapter } from '@lucia-auth/adapter-postgresql';
 import { discord } from '@lucia-auth/oauth/providers';
 import ip from 'ip';
 import { lucia } from 'lucia';
 import { nextjs_future as middleware } from 'lucia/middleware';
-import { generateRandomString } from 'lucia/utils';
 
 import { luciaPgClient } from '@ei/drizzle';
+import { nanoid } from 'nanoid';
 
 export const auth = lucia({
   env: process.env.NODE_ENV === 'production' ? 'PROD' : 'DEV',
@@ -34,10 +33,7 @@ if (!clientId || !clientSecret) {
   console.warn('Missing environment variables CLIENT_ID and CLIENT_SECRET');
 }
 
-export const generateLoginToken = () => generateRandomString(72);
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore generateRandomString needs crypto
-global.crypto = crypto;
+export const generateLoginToken = () => nanoid(72);
 
 // Get's the hosts ip when in development mode
 export const getHost = () =>
