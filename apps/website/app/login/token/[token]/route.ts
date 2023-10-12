@@ -53,6 +53,8 @@ export const GET = async (
 
   authRequest.setSession(session);
 
+  console.log(request)
+
   await drizzle.delete(loginTokens).where(eq(loginTokens.token, token));
 
   return new Response(null, {
