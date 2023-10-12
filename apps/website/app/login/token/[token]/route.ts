@@ -13,14 +13,21 @@ export const GET = async (
   const drizzle = await getDrizzleClient();
   const authRequest = auth.handleRequest(request.method, context);
 
-  const existingSession = await authRequest.validate();
-
-  console.log('User Agent:', request.headers.get('User-Agent'))
+  const userAgent = request.headers.get('User-Agent');
+  const isDiscord = userAgent?.includes('Discordbot');
 
   const uri = request.nextUrl.searchParams.get('redirect') ?? '/';
 
-  console.log(uri);
+  if (isDiscord) {
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: uri,
+      },
+    });
+  }
 
+  const existingSession = await authRequest.validate();
   if (existingSession) {
     await drizzle.delete(loginTokens).where(eq(loginTokens.token, token));
 
