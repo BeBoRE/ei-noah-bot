@@ -3,8 +3,8 @@ import Link from 'next/link';
 import rscApi from 'utils/rsc';
 
 import HeaderUser from './_components/HeaderUser';
-import { NavMenu } from './_components/NavMenu';
 import { Icons } from './_components/Icons';
+import { NavMenu } from './_components/NavMenu';
 
 async function Header() {
   const api = await rscApi(context);
@@ -18,7 +18,7 @@ async function Header() {
       <div className="container flex place-content-between py-1">
         <div className="flex flex-1 place-items-center items-stretch gap-2">
           <Link className="flex place-items-center gap-1" href="/">
-            <Icons.Logo className='w-6 h-6' />
+            <Icons.Logo className="h-6 w-6" />
             <h1 className="text-xl font-bold text-primary-300">ei Noah</h1>
           </Link>
           {guilds && <NavMenu guilds={guilds} />}

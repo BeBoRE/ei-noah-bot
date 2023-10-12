@@ -95,12 +95,8 @@
           "name": "guild_user_guild_id_guild_id_fk",
           "tableFrom": "guild_user",
           "tableTo": "guild",
-          "columnsFrom": [
-            "guild_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["guild_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -108,12 +104,8 @@
           "name": "guild_user_user_id_user_id_fk",
           "tableFrom": "guild_user",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         }
@@ -123,10 +115,7 @@
         "guild_user_guild_id_user_id_unique": {
           "name": "guild_user_guild_id_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "guild_id",
-            "user_id"
-          ]
+          "columns": ["guild_id", "user_id"]
         }
       }
     },
@@ -231,12 +220,8 @@
           "name": "key_user_id_user_id_fk",
           "tableFrom": "key",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -276,9 +261,7 @@
       "indexes": {
         "lobby_name_change_guild_user_id_index": {
           "name": "lobby_name_change_guild_user_id_index",
-          "columns": [
-            "guild_user_id"
-          ],
+          "columns": ["guild_user_id"],
           "isUnique": false
         }
       },
@@ -287,12 +270,8 @@
           "name": "lobby_name_change_guild_user_id_guild_user_id_fk",
           "tableFrom": "lobby_name_change",
           "tableTo": "guild_user",
-          "columnsFrom": [
-            "guild_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["guild_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "cascade"
         }
@@ -329,12 +308,8 @@
           "name": "login_token_user_id_user_id_fk",
           "tableFrom": "login_token",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -412,12 +387,8 @@
           "name": "quote_guild_user_id_guild_user_id_fk",
           "tableFrom": "quote",
           "tableTo": "guild_user",
-          "columnsFrom": [
-            "guild_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["guild_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "cascade"
         },
@@ -425,12 +396,8 @@
           "name": "quote_creator_id_guild_user_id_fk",
           "tableFrom": "quote",
           "tableTo": "guild_user",
-          "columnsFrom": [
-            "creator_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["creator_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "cascade"
         }
@@ -480,12 +447,8 @@
           "name": "role_guild_id_guild_id_fk",
           "tableFrom": "role",
           "tableTo": "guild",
-          "columnsFrom": [
-            "guild_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["guild_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "cascade"
         },
@@ -493,12 +456,8 @@
           "name": "role_created_by_guild_user_id_fk",
           "tableFrom": "role",
           "tableTo": "guild_user",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "cascade"
         }
@@ -541,12 +500,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -601,12 +556,8 @@
           "name": "temp_channel_guild_user_id_guild_user_id_fk",
           "tableFrom": "temp_channel",
           "tableTo": "guild_user",
-          "columnsFrom": [
-            "guild_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["guild_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "cascade"
         }
@@ -616,9 +567,7 @@
         "temp_channel_guild_user_id_unique": {
           "name": "temp_channel_guild_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "guild_user_id"
-          ]
+          "columns": ["guild_user_id"]
         }
       }
     },
@@ -667,9 +616,7 @@
       "indexes": {
         "user_birthday_index": {
           "name": "user_birthday_index",
-          "columns": [
-            "birthday"
-          ],
+          "columns": ["birthday"],
           "isUnique": false
         }
       },

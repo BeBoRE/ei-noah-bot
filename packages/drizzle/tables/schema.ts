@@ -107,7 +107,10 @@ export const guildUsers = pgTable(
     id: serial('id').primaryKey().notNull(),
     guildId: varchar('guild_id', { length: 255 })
       .notNull()
-      .references(() => guilds.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
+      .references(() => guilds.id, {
+        onUpdate: 'cascade',
+        onDelete: 'cascade',
+      }),
     userId: varchar('user_id', { length: 255 })
       .notNull()
       .references(() => users.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
@@ -124,17 +127,19 @@ export const roles = pgTable('role', {
   id: varchar('id', { length: 255 }).primaryKey().notNull(),
   guildId: varchar('guild_id', { length: 255 })
     .notNull()
-    .references(() => guilds.id, { 
-      onUpdate: 'cascade', 
-      onDelete: 'cascade' 
+    .references(() => guilds.id, {
+      onUpdate: 'cascade',
+      onDelete: 'cascade',
     }),
   name: varchar('name', { length: 255 }).notNull(),
   createdAt: timestamp('created_at', {
     withTimezone: true,
     mode: 'string',
   }).defaultNow(),
-  createdBy: integer('created_by')
-    .references(() => guildUsers.id, { onUpdate: 'cascade', onDelete: 'set null' })
+  createdBy: integer('created_by').references(() => guildUsers.id, {
+    onUpdate: 'cascade',
+    onDelete: 'set null',
+  }),
 });
 
 export const categories = pgTable('category', {
