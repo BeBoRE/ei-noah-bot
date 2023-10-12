@@ -1,6 +1,6 @@
 import Image from 'next/image';
 
-import ei from '../public/ei.png';
+import { Icons } from './_components/Icons';
 
 export default function Page() {
   return (
@@ -8,7 +8,9 @@ export default function Page() {
       <h1 className="mb-5 text-center text-5xl font-bold text-primary-500">
         ei Noah
       </h1>
-      <Image alt="ei Noah" src={ei} width={300} height={300} className="mb-5" />
+      <div>
+        <Icons.Logo className="h-72 w-auto" />
+      </div>
       <q className="text-center text-4xl font-semibold text-primary-500">
         The best in class lobby manager for Discord
       </q>

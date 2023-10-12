@@ -1,11 +1,10 @@
 import * as context from 'next/headers';
-import Image from 'next/image';
 import Link from 'next/link';
 import rscApi from 'utils/rsc';
 
-import ei from '../public/ei.png';
 import HeaderUser from './_components/HeaderUser';
 import { NavMenu } from './_components/NavMenu';
+import { Icons } from './_components/Icons';
 
 async function Header() {
   const api = await rscApi(context);
@@ -19,7 +18,7 @@ async function Header() {
       <div className="container flex place-content-between py-1">
         <div className="flex flex-1 place-items-center items-stretch gap-2">
           <Link className="flex place-items-center gap-1" href="/">
-            <Image alt="ei Noah Logo" src={ei} width={30} height={30} />
+            <Icons.Logo className='w-6 h-6' />
             <h1 className="text-xl font-bold text-primary-300">ei Noah</h1>
           </Link>
           {guilds && <NavMenu guilds={guilds} />}
