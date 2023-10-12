@@ -142,6 +142,8 @@ export const roles = pgTable('role', {
   }),
 });
 
+export type Role = typeof roles.$inferSelect;
+
 export const categories = pgTable('category', {
   id: varchar('id', { length: 255 }).primaryKey().notNull(),
   publicVoice: varchar('public_voice', { length: 255 }),

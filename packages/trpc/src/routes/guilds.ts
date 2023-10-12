@@ -1,5 +1,5 @@
 import { Routes } from 'discord-api-types/v10';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { guilds, guildUsers } from '@ei/drizzle/tables/schema';
@@ -34,6 +34,30 @@ const guildRouter = createTRPCRouter({
 
     return discordGuilds;
   }),
+  get: protectedProcedure
+    .input(z.object({ guildId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const [dbGuild] = await ctx.drizzle
+        .select()
+        .from(guilds)
+        .innerJoin(guildUsers, eq(guildUsers.guildId, guilds.id))
+        .where(
+          and(
+            eq(guilds.id, input.guildId),
+            eq(guildUsers.userId, ctx.dbUser.id),
+          ),
+        )
+        .then((gu) => gu.map((g) => g.guild));
+
+      if (!dbGuild) {
+        return null;
+      }
+
+      const discordGuild = await rest.get(Routes.guild(input.guildId));
+      const validatedGuild = ApiGuildSchema.parse(discordGuild);
+
+      return validatedGuild;
+    }),
 });
 
 export default guildRouter;

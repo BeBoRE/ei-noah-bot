@@ -1,10 +1,25 @@
+import { MessageCreateOptions } from 'discord.js';
 import { eq } from 'drizzle-orm';
 
-import { guilds } from '@ei/drizzle/tables/schema';
+import { guilds, Role, roles } from '@ei/drizzle/tables/schema';
 
 import Router, { HandlerType } from '../../router/Router';
 
 const rolesRouter = new Router('Subscribe to roles');
+
+const roleMenuOptions = (roleList: Role[]): MessageCreateOptions => {
+  const text = roleList.length
+    ? roleList.map((r) => `<@&${r.id}>`).join('\n')
+    : '*No roles available*';
+
+  return {
+    content: `**Roles:**\n${text}`,
+    allowedMentions: {
+      roles: [],
+      users: [],
+    },
+  };
+};
 
 rolesRouter.use(
   'create-menu',
@@ -32,7 +47,12 @@ rolesRouter.use(
       }
     }
 
-    const message = await msg.channel.send('This is a role menu');
+    const roleList = await drizzle
+      .select()
+      .from(roles)
+      .where(eq(roles.guildId, guildUser.guildId));
+
+    const message = await msg.channel.send(roleMenuOptions(roleList));
 
     await drizzle
       .update(guilds)
