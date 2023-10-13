@@ -3,7 +3,7 @@ import { Routes } from 'discord-api-types/v10';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { guilds, guildUsers } from '@ei/drizzle/tables/schema';
+import { guilds, guildUsers, roles } from '@ei/drizzle/tables/schema';
 
 import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
 
@@ -19,7 +19,7 @@ export const ApiRoleSchema = z.object({
 export type ApiRole = z.infer<typeof ApiRoleSchema>;
 
 const roleRouter = createTRPCRouter({
-  guild: protectedProcedure
+  guildAll: protectedProcedure
     .input(z.object({ guildId: z.string() }))
     .query(async ({ ctx, input }) => {
       const [dbGuild] = await ctx.drizzle
@@ -47,6 +47,23 @@ const roleRouter = createTRPCRouter({
         );
 
       return discordRoles;
+    }),
+  guildCustom: protectedProcedure
+    .input(z.object({ guildId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const dbRoles = await ctx.drizzle
+        .select()
+        .from(roles)
+        .innerJoin(guildUsers, eq(guildUsers.guildId, roles.guildId))
+        .where(
+          and(
+            eq(roles.guildId, input.guildId),
+            eq(guildUsers.userId, ctx.dbUser.id),
+          ),
+        )
+        .then((gu) => gu.map((g) => g.role));
+
+      return dbRoles;
     }),
 });
 
