@@ -30,7 +30,7 @@ function RolePage() {
 
   return (
     <div className="container flex flex-1 flex-col p-4">
-      <h1 className="flex items-center justify-center gap-3 p-3 text-center text-4xl text-primary-900 dark:text-primary-300">
+      <h1 className="flex items-center justify-center gap-3 pb-3 text-center text-4xl text-primary-900 dark:text-primary-300">
         <span>
           {icon && (
             <Image

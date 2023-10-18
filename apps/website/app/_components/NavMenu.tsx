@@ -43,7 +43,7 @@ const Guild = React.forwardRef<React.ElementRef<'a'>, GuildProps>(
             'flex flex-1 justify-start gap-2 py-7',
           ])}
         >
-          <Link ref={ref} href={`/roles/${guild.id}`}>
+          <Link ref={ref} href={`/guild/${guild.id}/roles`}>
             <Avatar>
               {icon && <AvatarImage src={icon} />}
               <AvatarFallback>{fallbackText}</AvatarFallback>
