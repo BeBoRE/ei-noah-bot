@@ -4,7 +4,7 @@ import TailwindAnimate from 'tailwindcss-animate';
 import baseConfig from '@ei/tailwind-config';
 
 export default {
-  darkMode: ['class'],
+  darkMode: 'media',
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',

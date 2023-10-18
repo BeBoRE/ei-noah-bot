@@ -1,10 +1,10 @@
 function PrivacyPage() {
   return (
     <div className="container mx-auto flex flex-1 flex-col items-center py-6">
-      <h1 className="pb-3 text-center text-4xl text-primary-500">
+      <h1 className="pb-3 text-center text-4xl text-primary-950 dark:text-primary-500">
         Privacy Policy
       </h1>
-      <h2 className="text-center text-2xl text-primary-300">
+      <h2 className="text-center text-2xl dark:text-primary-300">
         What data do we collect?
       </h2>
       <p className="max-w-2xl pb-3 text-justify">
@@ -32,7 +32,7 @@ function PrivacyPage() {
         push notifications to your device. This token is stored and is only used
         for the purpose of sending push notifications to your device.
       </p>
-      <h2 className="text-center text-2xl text-primary-300">
+      <h2 className="text-center text-2xl dark:text-primary-300">
         What do we do with your data?
       </h2>
       <p className="max-w-2xl pb-3 text-justify">
@@ -42,7 +42,7 @@ function PrivacyPage() {
         functionality of our bot, website and mobile app, unless you have
         explicitly given us permission to do so.
       </p>
-      <h2 className="text-center text-2xl text-primary-300">
+      <h2 className="text-center text-2xl dark:text-primary-300">
         I want to have my data removed
       </h2>
       <p className="max-w-2xl pb-3 text-justify">
@@ -54,12 +54,12 @@ function PrivacyPage() {
         Most personal data, such as your date of birth, can be removed by the
         use of slash commands. To remove your date of birth you can use the
         command{' '}
-        <code className="rounded-md bg-primary-900 p-1">
+        <code className="rounded-md bg-primary-100 p-1 dark:bg-primary-900">
           /birthday set remove
         </code>
         .
       </p>
-      <h2 className="text-center text-2xl text-primary-300">
+      <h2 className="text-center text-2xl dark:text-primary-300">
         Further questions?
       </h2>
       <p className="max-w-2xl pb-3 text-justify">

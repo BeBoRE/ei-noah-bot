@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/v10';
+import cn from 'utils/utils';
 
 import { ApiGuild } from '@ei/trpc/src/routes/guilds';
 
@@ -13,6 +14,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from './ui/navigation-menu';
+import navigationMenuTriggerStyle from './ui/navigationMenuStyle';
 
 type GuildProps = {
   guild: ApiGuild;
@@ -33,16 +35,22 @@ const Guild = React.forwardRef<React.ElementRef<'a'>, GuildProps>(
       )}`;
 
     return (
-      <li>
-        <Link passHref ref={ref} href={`/roles/${guild.id}`}>
-          <NavigationMenuLink className="flex select-none items-center gap-2 space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-primary-900 hover:text-primary-100 focus:bg-primary-900 focus:text-primary-200">
+      <li className="flex">
+        <NavigationMenuLink
+          asChild
+          className={cn([
+            navigationMenuTriggerStyle(),
+            'flex flex-1 justify-start gap-2 py-7',
+          ])}
+        >
+          <Link ref={ref} href={`/roles/${guild.id}`}>
             <Avatar>
               {icon && <AvatarImage src={icon} />}
               <AvatarFallback>{fallbackText}</AvatarFallback>
             </Avatar>
             <div className="text-md font-bold leading-none">{guild.name}</div>
-          </NavigationMenuLink>
-        </Link>
+          </Link>
+        </NavigationMenuLink>
       </li>
     );
   },

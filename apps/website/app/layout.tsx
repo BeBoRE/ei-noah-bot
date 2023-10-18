@@ -32,7 +32,7 @@ export default async function Layout({ children }: Props) {
   return (
     <html
       lang="en"
-      className="dark flex min-h-[100dvh] bg-primary-950 text-primary-100"
+      className="flex min-h-[100dvh] bg-primary-200 text-primary-900 dark:bg-primary-950 dark:text-primary-100"
     >
       <link rel="icon" href="/favicon.ico" sizes="any" />
       <body
@@ -46,7 +46,7 @@ export default async function Layout({ children }: Props) {
       >
         <Header />
         <TRPCReactProvider>{children}</TRPCReactProvider>
-        <footer className="flex place-content-center bg-primary-900 p-3">
+        <footer className="flex place-content-center bg-primary-100 p-3 dark:bg-primary-900">
           <div className="container text-sm hover:underline">
             <Link href="/privacy">Privacy Policy</Link>
           </div>

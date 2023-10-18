@@ -2,9 +2,10 @@
 
 import * as React from 'react';
 import * as NavigationMenuPrimitive from '@radix-ui/react-navigation-menu';
-import { cva } from 'class-variance-authority';
 import { ChevronDown } from 'lucide-react';
 import { cn } from 'utils/utils';
+
+import navigationMenuTriggerStyle from './navigationMenuStyle';
 
 const NavigationMenuViewport = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Viewport>,
@@ -13,7 +14,7 @@ const NavigationMenuViewport = React.forwardRef<
   <div className={cn('absolute left-0 top-full flex justify-center')}>
     <NavigationMenuPrimitive.Viewport
       className={cn(
-        'origin-top-center bg-white data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 relative h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border border-primary-200 text-primary-950 shadow-lg dark:border-primary-800 dark:bg-primary-950 dark:text-primary-50 md:w-[var(--radix-navigation-menu-viewport-width)]',
+        'origin-top-center bg-white data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90 relative h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-md border border-primary-200 bg-primary-100 text-primary-950 shadow-lg dark:border-primary-800 dark:bg-primary-950 dark:text-primary-50 md:w-[var(--radix-navigation-menu-viewport-width)]',
         className,
       )}
       ref={ref}
@@ -58,10 +59,6 @@ const NavigationMenuList = React.forwardRef<
 NavigationMenuList.displayName = NavigationMenuPrimitive.List.displayName;
 
 const NavigationMenuItem = NavigationMenuPrimitive.Item;
-
-const navigationMenuTriggerStyle = cva(
-  'group inline-flex h-10 w-max items-center justify-center rounded-md bg-white px-3 py-3 text-sm font-medium transition-colors hover:bg-primary-100 hover:text-primary-900 focus:bg-primary-100 focus:text-primary-900 focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-primary-100/50 data-[state=open]:bg-primary-100/50 dark:bg-primary-950 dark:hover:bg-primary-800 dark:hover:text-primary-50 dark:focus:bg-primary-800 dark:focus:text-primary-50 dark:data-[active]:bg-primary-800/50 dark:data-[state=open]:bg-primary-800/50',
-);
 
 const NavigationMenuTrigger = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Trigger>,
@@ -110,14 +107,13 @@ const NavigationMenuIndicator = React.forwardRef<
     )}
     {...props}
   >
-    <div className="relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm bg-primary-200 shadow-md dark:bg-primary-800" />
+    <div className="relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm bg-primary-100 shadow-md dark:bg-primary-800" />
   </NavigationMenuPrimitive.Indicator>
 ));
 NavigationMenuIndicator.displayName =
   NavigationMenuPrimitive.Indicator.displayName;
 
 export {
-  navigationMenuTriggerStyle,
   NavigationMenu,
   NavigationMenuList,
   NavigationMenuItem,

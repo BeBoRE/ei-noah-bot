@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from 'app/_components/ui/button';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/v10';
-import { Plus, PlusCircle } from 'lucide-react';
+import { Plus, Settings2 } from 'lucide-react';
 import { api } from 'utils/api';
 
 function RolePage() {
@@ -30,7 +30,7 @@ function RolePage() {
 
   return (
     <div className="container flex flex-1 flex-col p-4">
-      <h1 className="flex items-center justify-center gap-3 p-3 text-center text-4xl text-primary-300">
+      <h1 className="flex items-center justify-center gap-3 p-3 text-center text-4xl text-primary-900 dark:text-primary-300">
         <span>
           {icon && (
             <Image
@@ -44,20 +44,29 @@ function RolePage() {
         </span>
         {guild?.name}
       </h1>
-      <div className="relative flex min-h-[30em] flex-col rounded-xl bg-primary-900 py-3">
-        <Button
-          asChild
-          variant="secondary"
-          className="absolute right-3 top-3 aspect-square rounded-full p-2"
-        >
-          <Link href={`/roles/${guildId}/create`}>
-            <PlusCircle className="h-6 w-6 text-primary-100 hover:text-primary-300" />
-          </Link>
-        </Button>
+      <div className="relative flex min-h-[30em] flex-col rounded-xl dark:bg-primary-900 bg-primary-100 py-3">
+        <div className='flex absolute right-3 top-3 gap-2'>
+          <Button
+            asChild
+            className=" aspect-square rounded-full p-2"
+          >
+            <Link href={`/roles/${guildId}/create`}>
+              <Plus className="h-6 w-6"/>
+            </Link>
+          </Button>
+          <Button
+            asChild
+            className="aspect-square rounded-full p-2"
+          >
+            <Link href={`/roles/${guildId}/settings`}>
+              <Settings2 className="h-6 w-6"/>
+            </Link>
+          </Button>
+        </div>
         <h2 className="text-center text-2xl">Roles:</h2>
         <div className="flex flex-1 items-center justify-center">
           {customRoles?.length === 0 ? (
-            <div className="text-center text-xl text-primary-300">
+            <div className="text-center text-xl dark:text-primary-300 text-primary-500">
               No roles found.
             </div>
           ) : (
