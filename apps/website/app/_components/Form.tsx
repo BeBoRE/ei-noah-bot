@@ -6,10 +6,12 @@ function Form({
   children,
   action,
   className,
+  onSubmitted,
 }: {
   children: React.ReactNode;
   action: string;
   className?: string;
+  onSubmitted?: (e: React.FormEvent<HTMLFormElement>) => void;
 }) {
   const router = useRouter();
   return (
@@ -30,6 +32,7 @@ function Form({
           // redirected
           // when using `redirect: "manual"`, response status 0 is returned
           router.refresh();
+          onSubmitted?.(e);
         }
       }}
     >

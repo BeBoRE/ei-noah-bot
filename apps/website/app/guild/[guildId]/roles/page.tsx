@@ -29,7 +29,7 @@ function RolePage() {
     )}`;
 
   return (
-    <div className="container flex flex-1 flex-col p-4">
+    <div className="container flex flex-1 flex-col py-4">
       <h1 className="flex items-center justify-center gap-3 pb-3 text-center text-4xl text-primary-900 dark:text-primary-300">
         <span>
           {icon && (
@@ -66,8 +66,8 @@ function RolePage() {
         <h2 className="text-center text-2xl">Roles:</h2>
         <div className="flex flex-1 items-center justify-center">
           {customRoles?.length === 0 ? (
-            <div className="text-xl dark:text-primary-300 text-primary-500 flex flex-col items-center bg-primary-50 dark:bg-primary-800 md:p-10 p-2 rounded-xl aspect-square place-content-center">
-              <X className="h-8 w-8" />
+            <div className="text-xl font-bold dark:text-primary-300 text-primary-500 flex flex-col items-center bg-primary-50 dark:bg-primary-800 sm:p-10 p-2 rounded-xl aspect-square place-content-center">
+              <X className="sm:h-24 sm:w-24 h-8 w-8" />
               <span>No roles found</span>
             </div>
           ) : (

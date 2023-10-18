@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -11,7 +9,6 @@ import {
 import { LogOut } from 'lucide-react';
 
 import { RouterOutputs } from '@ei/trpc';
-
 import Form from './Form';
 import { Button } from './ui/button';
 import {
