@@ -22,7 +22,7 @@ export const auth = lucia({
         }
       : undefined,
   experimental: {
-    debugMode: process.env.NODE_ENV !== 'production',
+    debugMode: process.env.DEBUG === 'true',
   },
 });
 

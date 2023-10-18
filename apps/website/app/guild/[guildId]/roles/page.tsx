@@ -21,7 +21,7 @@ function RolePage() {
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col rounded-md dark:bg-primary-900 bg-primary-100 p-4">
         <div className='flex place-content-between'>
-          <h1 className="text-3xl flex-1">Role selection</h1>
+          <h1 className="text-3xl flex-1">Role Selection</h1>
           <div className='flex gap-2'>
             <Button
               asChild
