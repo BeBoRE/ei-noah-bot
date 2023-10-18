@@ -1,11 +1,9 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from 'app/_components/ui/button';
-import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/v10';
-import { Plus, Settings2, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { api } from 'utils/api';
 
 function RolePage() {
@@ -18,52 +16,23 @@ function RolePage() {
 
   const { data: member } = api.user.memberMe.useQuery({ guildId });
   const { data: customRoles } = api.roles.guildCustom.useQuery({ guildId });
-  const { data: guild } = api.guild.get.useQuery({ guildId });
-
-  const icon =
-    guild?.icon &&
-    `${RouteBases.cdn}/${CDNRoutes.guildIcon(
-      guild.id,
-      guild.icon,
-      ImageFormat.PNG,
-    )}`;
 
   return (
-    <div className="container flex flex-1 flex-col py-4">
-      <h1 className="flex items-center justify-center gap-3 pb-3 text-center text-4xl text-primary-900 dark:text-primary-300">
-        <span>
-          {icon && (
-            <Image
-              src={icon}
-              alt={`${guild.name} icon`}
-              width={64}
-              height={64}
-              className="rounded-full"
-            />
-          )}
-        </span>
-        {guild?.name}
-      </h1>
-      <div className="relative flex flex-1 flex-col rounded-xl dark:bg-primary-900 bg-primary-100 py-3">
-        <div className='flex absolute right-3 top-3 gap-2'>
-          <Button
-            asChild
-            className=" aspect-square rounded-full p-2"
-          >
-            <Link href={`/roles/${guildId}/create`}>
-              <Plus className="h-6 w-6"/>
-            </Link>
-          </Button>
-          <Button
-            asChild
-            className="aspect-square rounded-full p-2"
-          >
-            <Link href={`/roles/${guildId}/settings`}>
-              <Settings2 className="h-6 w-6"/>
-            </Link>
-          </Button>
+    <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col rounded-md dark:bg-primary-900 bg-primary-100 p-4">
+        <div className='flex place-content-between'>
+          <h1 className="text-3xl flex-1">Role selection</h1>
+          <div className='flex gap-2'>
+            <Button
+              asChild
+              className=" aspect-square rounded-full p-2"
+            >
+              <Link href={`/roles/${guildId}/create`}>
+                <Plus className="h-6 w-6"/>
+              </Link>
+            </Button>
+          </div>
         </div>
-        <h2 className="text-center text-2xl">Roles:</h2>
         <div className="flex flex-1 items-center justify-center">
           {customRoles?.length === 0 ? (
             <div className="text-xl font-bold dark:text-primary-300 text-primary-500 flex flex-col items-center bg-primary-50 dark:bg-primary-800 sm:p-10 p-2 rounded-xl aspect-square place-content-center">

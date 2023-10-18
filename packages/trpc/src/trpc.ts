@@ -44,7 +44,13 @@ export const discordUserSchema = z.object({
   id: z.string(),
   username: z.string(),
   avatar: z.string().nullable(),
+  publicFlags: z.number(),
+  flags: z.number(),
+  banner: z.string().nullable(),
+  accentColor: z.number(),
   globalName: z.string().nullable(),
+  avatarDecorationData: z.string().nullable(),
+  bannerColor: z.string().nullable(),
 });
 
 export const bearerSchema = z.string().min(1);
@@ -97,10 +103,10 @@ const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
       : [null];
 
   const discordUserData = session?.user
-    ? await rest.get(Routes.user(session.user.userId)).catch(() => null)
+    ? await rest.get(Routes.user(session.user.userId)).then(res => camelize(res)).catch(() => null)
     : null;
   const parsedDiscordUser = discordUserData
-    ? discordUserSchema.safeParse(camelize(discordUserData))
+    ? discordUserSchema.safeParse(discordUserData)
     : null;
 
   if (!parsedDiscordUser?.success) {
