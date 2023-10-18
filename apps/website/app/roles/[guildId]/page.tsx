@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from 'app/_components/ui/button';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/v10';
-import { Plus, Settings2 } from 'lucide-react';
+import { Plus, Settings2, X } from 'lucide-react';
 import { api } from 'utils/api';
 
 function RolePage() {
@@ -44,7 +44,7 @@ function RolePage() {
         </span>
         {guild?.name}
       </h1>
-      <div className="relative flex min-h-[30em] flex-col rounded-xl dark:bg-primary-900 bg-primary-100 py-3">
+      <div className="relative flex flex-1 flex-col rounded-xl dark:bg-primary-900 bg-primary-100 py-3">
         <div className='flex absolute right-3 top-3 gap-2'>
           <Button
             asChild
@@ -66,8 +66,9 @@ function RolePage() {
         <h2 className="text-center text-2xl">Roles:</h2>
         <div className="flex flex-1 items-center justify-center">
           {customRoles?.length === 0 ? (
-            <div className="text-center text-xl dark:text-primary-300 text-primary-500">
-              No roles found.
+            <div className="text-xl dark:text-primary-300 text-primary-500 flex flex-col items-center bg-primary-50 dark:bg-primary-800 md:p-10 p-2 rounded-xl aspect-square place-content-center">
+              <X className="h-8 w-8" />
+              <span>No roles found</span>
             </div>
           ) : (
             customRoles?.map((role) => (
