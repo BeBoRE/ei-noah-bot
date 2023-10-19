@@ -8,7 +8,7 @@ import { guilds, guildUsers } from '@ei/drizzle/tables/schema';
 import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
 import { camelize } from '../utils';
 
-const channelSchema = z.object({
+export const channelSchema = z.object({
   id: z.string(),
   type: z.number(),
   guildId: z.string(),
