@@ -23,7 +23,7 @@ function RolePage() {
           <h1 className="flex-1 text-3xl">Role Selection</h1>
           <div className="flex gap-2">
             <Button asChild className=" aspect-square rounded-full p-2">
-              <Link href={`/roles/${guildId}/create`}>
+              <Link href={`/guild/${guildId}/roles/create`}>
                 <Plus className="h-6 w-6" />
               </Link>
             </Button>
