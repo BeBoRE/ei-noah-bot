@@ -15,7 +15,7 @@ function RolePage() {
   }
 
   const { data: customRoles } = api.roles.guildCustom.useQuery({ guildId });
-  const { data: member } = api.user.memberMe.useQuery({guildId})
+  const { data: member } = api.user.memberMe.useQuery({ guildId });
 
   return (
     <div className="flex flex-1 flex-col">
@@ -30,9 +30,9 @@ function RolePage() {
             </Button>
           </div>
         </div>
-        <div className="grid grid-cols-4 justify-items-start items-start place-content-start gap-2 p-2">
+        <div className="grid grid-cols-4 place-content-start items-start justify-items-start gap-2 p-2">
           {customRoles?.length === 0 ? (
-            <div className="flex w-full aspect-square flex-col place-content-center items-center rounded-xl bg-primary-50 text-xl font-bold text-primary-500 dark:bg-primary-800 dark:text-primary-300">
+            <div className="flex aspect-square w-full flex-col place-content-center items-center rounded-xl bg-primary-50 text-xl font-bold text-primary-500 dark:bg-primary-800 dark:text-primary-300">
               <X className="h-8 w-8 sm:h-24 sm:w-24" />
               <span>No roles found</span>
             </div>
@@ -40,14 +40,23 @@ function RolePage() {
             customRoles?.map((role) => {
               const addable = !member?.roles?.find((id) => id === role.id);
 
-              const buttonStyle = "w-full aspect-square flex flex-col bg-primary-800 rounded-md min-h-[10em] justify-center items-center"
-
               return (
-              <Button variant='secondary' key={role.id} className={`${buttonStyle} ${addable ? '' : 'ring-primary-500'}`}>
-                {addable ? <Plus className="h-8 w-8" /> : <Minus className="h-8 w-8" />}
-                <span className='text-xl'>{role.name}</span>
-              </Button>
-            )})
+                <Button
+                  variant="secondary"
+                  key={role.id}
+                  className={`flex aspect-square h-auto w-full flex-col items-center justify-center rounded-md bg-primary-800 transition ${
+                    addable ? '' : 'ring-4 ring-accept'
+                  }`}
+                >
+                  {addable ? (
+                    <Plus className="h-8 w-8" />
+                  ) : (
+                    <Minus className="h-8 w-8" />
+                  )}
+                  <span className="text-xl">{role.name}</span>
+                </Button>
+              );
+            })
           )}
         </div>
       </div>

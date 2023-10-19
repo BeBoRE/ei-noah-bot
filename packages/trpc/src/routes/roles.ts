@@ -66,10 +66,12 @@ const roleRouter = createTRPCRouter({
       return dbRoles;
     }),
   createRole: protectedProcedure
-    .input(z.object({
-      guildId: z.string(),
-      name: z.string().trim().max(99),
-    }))
+    .input(
+      z.object({
+        guildId: z.string(),
+        name: z.string().trim().max(99),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const [dbGuildUser] = await ctx.drizzle
         .select()
@@ -80,7 +82,7 @@ const roleRouter = createTRPCRouter({
             eq(guilds.id, input.guildId),
             eq(guildUsers.userId, ctx.dbUser.id),
           ),
-        )
+        );
 
       if (!dbGuildUser) {
         throw new TRPCError({
@@ -97,17 +99,17 @@ const roleRouter = createTRPCRouter({
         })
         .then((res) => ApiRoleSchema.parse(res));
 
-      const dbRole = await ctx.drizzle
-        .insert(roles)
-        .values([{
+      const dbRole = await ctx.drizzle.insert(roles).values([
+        {
           guildId: input.guildId,
           id: discordRole.id,
           name: discordRole.name,
           createdBy: dbUser.id,
-        }])
+        },
+      ]);
 
       return dbRole;
-    })
+    }),
 });
 
 export default roleRouter;

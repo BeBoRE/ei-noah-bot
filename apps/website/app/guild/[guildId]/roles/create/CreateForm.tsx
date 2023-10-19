@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from 'app/_components/ui/button';
 import { Input } from 'app/_components/ui/input';
 import { Label } from 'app/_components/ui/label';
 import { Plus } from 'lucide-react';
 import { api } from 'utils/api';
-import { useRouter } from 'next/navigation';
 
 const maxLength = 99;
 
@@ -14,26 +14,26 @@ type Props = {
   guildId: string;
 };
 
-function CreateForm({guildId} : Props) {
+function CreateForm({ guildId }: Props) {
   const [name, setName] = useState<string | null>(null);
-  const router = useRouter()
+  const router = useRouter();
 
   const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value.trimStart().toLowerCase());
   };
 
-  const {mutate: createRole} = api.roles.createRole.useMutation({
+  const { mutate: createRole } = api.roles.createRole.useMutation({
     onSuccess: () => {
-      router.push(`.`)
-    }
-  })
-  
-  const submit = () => {
-    if(!name) return;
+      router.push(`.`);
+    },
+  });
 
-    createRole({guildId, name})
+  const submit = () => {
+    if (!name) return;
+
+    createRole({ guildId, name });
     console.log(name);
-  }
+  };
 
   return (
     <>
