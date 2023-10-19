@@ -18,17 +18,36 @@ function CreateForm({ guildId }: Props) {
   const [name, setName] = useState<string | null>(null);
   const router = useRouter();
 
+  const context = api.useContext();
+
   const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value.trimStart().toLowerCase());
   };
 
   const { mutate: createRole } = api.roles.createRole.useMutation({
-    onSuccess: () => {
+    onMutate: async () => {
+      await context.roles.guildCustom.cancel({ guildId });
+      await context.roles.guildAll.cancel({ guildId });
+    },
+    onSuccess: async ({ dbRole, discordRole }) => {
+      context.roles.guildCustom.setData({ guildId }, (prev) => [
+        ...(prev || []),
+        dbRole,
+      ]);
+
+      context.roles.guildAll.setData({ guildId }, (prev) => [
+        ...(prev || []),
+        discordRole,
+      ]);
+
+      await context.roles.guildCustom.invalidate({ guildId });
+      await context.roles.guildAll.invalidate({ guildId });
       router.push(`.`);
     },
   });
 
-  const submit = () => {
+  const submit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (!name) return;
 
     createRole({ guildId, name });
@@ -36,7 +55,7 @@ function CreateForm({ guildId }: Props) {
   };
 
   return (
-    <>
+    <form onSubmit={submit} className="flex flex-col">
       <Label className="pb-1" htmlFor="name">
         Role name:
       </Label>
@@ -53,12 +72,11 @@ function CreateForm({ guildId }: Props) {
         type="submit"
         className="mt-2 w-auto justify-start self-end"
         variant="outline"
-        onClick={submit}
       >
         <Plus className="mr-2 h-4 w-4" />
         Create
       </Button>
-    </>
+    </form>
   );
 }
 

@@ -33,8 +33,8 @@ const GuildLayout = async ({ children, params: { guildId } }: Props) => {
   }
 
   return (
-    <div className="container flex flex-1 gap-2 py-4">
-      <div className="flex w-3/12 flex-col gap-2">
+    <div className="container flex flex-1 flex-col gap-2 py-4 sm:flex-row">
+      <div className="flex flex-col gap-2 sm:w-3/12">
         <h1 className="flex items-center justify-center gap-3 rounded-md p-2 text-center text-2xl  text-primary-900 dark:text-primary-300 ">
           <span>
             {icon && (

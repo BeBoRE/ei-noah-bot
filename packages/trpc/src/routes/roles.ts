@@ -99,16 +99,83 @@ const roleRouter = createTRPCRouter({
         })
         .then((res) => ApiRoleSchema.parse(res));
 
-      const dbRole = await ctx.drizzle.insert(roles).values([
-        {
-          guildId: input.guildId,
-          id: discordRole.id,
-          name: discordRole.name,
-          createdBy: dbUser.id,
-        },
-      ]);
+      const [dbRole] = await ctx.drizzle
+        .insert(roles)
+        .values([
+          {
+            guildId: input.guildId,
+            id: discordRole.id,
+            name: discordRole.name,
+            createdBy: dbUser.id,
+          },
+        ])
+        .returning();
 
-      return dbRole;
+      if (!dbRole) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+        });
+      }
+
+      return { dbRole, discordRole };
+    }),
+  addRole: protectedProcedure
+    .input(
+      z.object({
+        guildId: z.string(),
+        roleId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [dbGuildUser] = await ctx.drizzle
+        .select()
+        .from(guilds)
+        .innerJoin(guildUsers, eq(guildUsers.guildId, guilds.id))
+        .where(
+          and(
+            eq(guilds.id, input.guildId),
+            eq(guildUsers.userId, ctx.dbUser.id),
+          ),
+        );
+
+      if (!dbGuildUser) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+        });
+      }
+
+      await rest.put(
+        Routes.guildMemberRole(input.guildId, ctx.dbUser.id, input.roleId),
+      );
+    }),
+  removeRole: protectedProcedure
+    .input(
+      z.object({
+        guildId: z.string(),
+        roleId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [dbGuildUser] = await ctx.drizzle
+        .select()
+        .from(guilds)
+        .innerJoin(guildUsers, eq(guildUsers.guildId, guilds.id))
+        .where(
+          and(
+            eq(guilds.id, input.guildId),
+            eq(guildUsers.userId, ctx.dbUser.id),
+          ),
+        );
+
+      if (!dbGuildUser) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+        });
+      }
+
+      await rest.delete(
+        Routes.guildMemberRole(input.guildId, ctx.dbUser.id, input.roleId),
+      );
     }),
 });
 

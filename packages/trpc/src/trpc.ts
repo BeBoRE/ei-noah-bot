@@ -47,7 +47,7 @@ export const discordUserSchema = z.object({
   publicFlags: z.number(),
   flags: z.number(),
   banner: z.string().nullable(),
-  accentColor: z.number(),
+  accentColor: z.number().nullable(),
   globalName: z.string().nullable(),
   avatarDecorationData: z.string().nullable(),
   bannerColor: z.string().nullable(),
