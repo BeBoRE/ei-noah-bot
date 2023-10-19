@@ -1,6 +1,7 @@
 import * as context from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { Button } from 'app/_components/ui/button';
 import { Separator } from 'app/_components/ui/separator';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/v10';
@@ -26,6 +27,10 @@ const GuildLayout = async ({ children, params: { guildId } }: Props) => {
       guild.icon,
       ImageFormat.PNG,
     )}`;
+
+  if (!guild) {
+    notFound();
+  }
 
   return (
     <div className="container flex flex-1 gap-2 py-4">

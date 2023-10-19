@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import {
   Select,
   SelectContent,
@@ -10,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from 'app/_components/ui/select';
-import React from 'react';
 import { api, RouterOutputs } from 'utils/api';
 
 type Props = {
@@ -31,30 +31,31 @@ function Settings({ guildData, guildId, channelData }: Props) {
 
   const context = api.useContext();
 
-  const {mutate: setRoleMenuChannel} = api.guild.setRoleMenuChannel.useMutation({
-    onMutate: async ({channelId}) => {
-      await context.guild.get.cancel({guildId})
+  const { mutate: setRoleMenuChannel } =
+    api.guild.setRoleMenuChannel.useMutation({
+      onMutate: async ({ channelId }) => {
+        await context.guild.get.cancel({ guildId });
 
-      const prevGuild = context.guild.get.getData({guildId})
-      const newGuild = prevGuild && {
-        ...prevGuild,
-        db: {
-          ...prevGuild.db,
-          roleMenuChannelId: channelId
-        }
-      }
+        const prevGuild = context.guild.get.getData({ guildId });
+        const newGuild = prevGuild && {
+          ...prevGuild,
+          db: {
+            ...prevGuild.db,
+            roleMenuChannelId: channelId,
+          },
+        };
 
-      context.guild.get.setData({guildId}, newGuild);
+        context.guild.get.setData({ guildId }, newGuild);
 
-      return {prevGuild};
-    },
-    onError(_1, _2, prev) {
-      context.guild.get.setData({guildId}, prev && prev.prevGuild);
-    },
-    onSettled: () => {
-      context.guild.get.invalidate({guildId})
-    }
-  })
+        return { prevGuild };
+      },
+      onError(_1, _2, prev) {
+        context.guild.get.setData({ guildId }, prev && prev.prevGuild);
+      },
+      onSettled: () => {
+        context.guild.get.invalidate({ guildId });
+      },
+    });
 
   const textChannels = channels?.filter((channel) => channel.type === 0);
 
@@ -77,9 +78,12 @@ function Settings({ guildData, guildId, channelData }: Props) {
   return (
     <>
       <h3 className="pl-3">Channel for role menu</h3>
-      <Select value={currentSelectedRoleMenuChannel?.id || undefined} onValueChange={(value) => {
-        setRoleMenuChannel({guildId, channelId: value})
-      }}>
+      <Select
+        value={currentSelectedRoleMenuChannel?.id || undefined}
+        onValueChange={(value) => {
+          setRoleMenuChannel({ guildId, channelId: value });
+        }}
+      >
         <SelectTrigger>
           <SelectValue placeholder="Select a channel" />
         </SelectTrigger>
