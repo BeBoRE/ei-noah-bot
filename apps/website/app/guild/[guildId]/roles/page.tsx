@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from 'app/_components/ui/button';
-import { Plus, X } from 'lucide-react';
+import { Minus, Plus, X } from 'lucide-react';
 import { api } from 'utils/api';
 
 function RolePage() {
@@ -15,6 +15,7 @@ function RolePage() {
   }
 
   const { data: customRoles } = api.roles.guildCustom.useQuery({ guildId });
+  const { data: member } = api.user.memberMe.useQuery({guildId})
 
   return (
     <div className="flex flex-1 flex-col">
@@ -29,23 +30,24 @@ function RolePage() {
             </Button>
           </div>
         </div>
-        <div className="flex flex-1 items-center justify-center">
+        <div className="grid grid-cols-4 justify-items-start items-start place-content-start gap-2 p-2">
           {customRoles?.length === 0 ? (
-            <div className="flex aspect-square flex-col place-content-center items-center rounded-xl bg-primary-50 p-2 text-xl font-bold text-primary-500 dark:bg-primary-800 dark:text-primary-300 sm:p-10">
+            <div className="flex w-full aspect-square flex-col place-content-center items-center rounded-xl bg-primary-50 text-xl font-bold text-primary-500 dark:bg-primary-800 dark:text-primary-300">
               <X className="h-8 w-8 sm:h-24 sm:w-24" />
               <span>No roles found</span>
             </div>
           ) : (
-            customRoles?.map((role) => (
-              <div key={role.id} className="flex items-center gap-2">
-                <div className="flex-1">{role.name}</div>
-                <button
-                  type="button"
-                  aria-label="Add role"
-                  className="rounded-md bg-primary-900 p-1 text-primary-100"
-                />
-              </div>
-            ))
+            customRoles?.map((role) => {
+              const addable = !member?.roles?.find((id) => id === role.id);
+
+              const buttonStyle = "w-full aspect-square flex flex-col bg-primary-800 rounded-md min-h-[10em] justify-center items-center"
+
+              return (
+              <Button variant='secondary' key={role.id} className={`${buttonStyle} ${addable ? '' : 'ring-primary-500'}`}>
+                {addable ? <Plus className="h-8 w-8" /> : <Minus className="h-8 w-8" />}
+                <span className='text-xl'>{role.name}</span>
+              </Button>
+            )})
           )}
         </div>
       </div>

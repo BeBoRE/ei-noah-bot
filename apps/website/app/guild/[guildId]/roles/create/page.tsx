@@ -22,7 +22,7 @@ function CreatePage({ params: { guildId } }: Props) {
           </Button>
           <h1 className="flex-1 text-3xl">Create a new role</h1>
         </div>
-        <CreateForm />
+        <CreateForm guildId={guildId} />
       </div>
     </div>
   );
