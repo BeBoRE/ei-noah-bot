@@ -1,7 +1,26 @@
-function SettingsPage() {
+import * as context from 'next/headers';
+import rscApi from 'utils/rsc';
+
+import Settings from './Settings';
+
+type Props = {
+  params: {
+    guildId: string;
+  };
+};
+
+async function SettingsPage({ params: { guildId } }: Props) {
+  const api = await rscApi(context);
+
+  const [guild, channels] = await Promise.all([
+    await api.guild.get({ guildId }),
+    await api.channel.all({ guildId }),
+  ]);
+
   return (
-    <div className="flex-1 rounded-md dark:bg-primary-900 bg-primary-100 p-4">
-      <h1 className="text-3xl">Settings</h1>
+    <div className="flex-1 rounded-md bg-primary-100 p-4 dark:bg-primary-900">
+      <h1 className="pb-4 text-3xl">Settings</h1>
+      <Settings guildId={guildId} guildData={guild} channelData={channels} />
     </div>
   );
 }

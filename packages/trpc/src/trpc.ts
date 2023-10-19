@@ -103,7 +103,10 @@ const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
       : [null];
 
   const discordUserData = session?.user
-    ? await rest.get(Routes.user(session.user.userId)).then(res => camelize(res)).catch(() => null)
+    ? await rest
+        .get(Routes.user(session.user.userId))
+        .then((res) => camelize(res))
+        .catch(() => null)
     : null;
   const parsedDiscordUser = discordUserData
     ? discordUserSchema.safeParse(discordUserData)

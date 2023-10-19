@@ -56,7 +56,10 @@ const guildRouter = createTRPCRouter({
       const discordGuild = await rest.get(Routes.guild(input.guildId));
       const validatedGuild = ApiGuildSchema.parse(discordGuild);
 
-      return validatedGuild;
+      return {
+        discord: validatedGuild,
+        db: dbGuild,
+      };
     }),
 });
 

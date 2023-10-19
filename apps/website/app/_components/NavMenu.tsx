@@ -45,7 +45,14 @@ const Guild = React.forwardRef<React.ElementRef<'a'>, GuildProps>(
         >
           <Link ref={ref} href={`/guild/${guild.id}/roles`}>
             <Avatar>
-              {icon && <AvatarImage src={icon} alt={`${guild.name} icon`} width={32} height={32} />}
+              {icon && (
+                <AvatarImage
+                  src={icon}
+                  alt={`${guild.name} icon`}
+                  width={32}
+                  height={32}
+                />
+              )}
               <AvatarFallback>{fallbackText}</AvatarFallback>
             </Avatar>
             <div className="text-md font-bold leading-none">{guild.name}</div>

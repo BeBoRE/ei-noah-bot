@@ -57,9 +57,11 @@ export default function TRPCReactProvider({ children }: Props) {
 
   const wsClient = useMemo(
     () =>
-      typeof window !== undefined ? createWSClient({
-        url: wsUrl,
-      }) : null,
+      typeof window !== undefined
+        ? createWSClient({
+            url: wsUrl,
+          })
+        : null,
     [],
   );
 
@@ -74,18 +76,17 @@ export default function TRPCReactProvider({ children }: Props) {
             process.env.NODE_ENV === 'development' ||
             (opts.direction === 'down' && opts.result instanceof Error),
         }),
-        wsClient ?
-          splitLink({
-            condition: ({ type }) => type === 'subscription',
-            true: wsLink({ client: wsClient }),
-            false: httpBatchLink({
+        wsClient
+          ? splitLink({
+              condition: ({ type }) => type === 'subscription',
+              true: wsLink({ client: wsClient }),
+              false: httpBatchLink({
+                url: `${getBaseUrl()}/api/trpc`,
+              }),
+            })
+          : httpBatchLink({
               url: `${getBaseUrl()}/api/trpc`,
             }),
-          }) : (
-            httpBatchLink({
-              url: `${getBaseUrl()}/api/trpc`,
-            })
-          )
       ],
     }),
   );

@@ -1,12 +1,17 @@
+import { DiscordAPIError } from '@discordjs/rest';
+import { TRPCError } from '@trpc/server';
 import { Routes } from 'discord-api-types/v10';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { guildUsers } from '@ei/drizzle/tables/schema';
 
-import { DiscordAPIError } from '@discordjs/rest';
-import { TRPCError } from '@trpc/server';
-import { createTRPCRouter, discordUserSchema, protectedProcedure, rest } from '../trpc';
+import {
+  createTRPCRouter,
+  discordUserSchema,
+  protectedProcedure,
+  rest,
+} from '../trpc';
 import { camelize } from '../utils';
 
 // Uncamalized member object
@@ -50,7 +55,6 @@ export const discordMemberSchema = z.object({
   user: discordUserSchema,
 });
 
-
 export const userRouter = createTRPCRouter({
   me: protectedProcedure.query(async ({ ctx }) => ctx.discordUser),
   memberMe: protectedProcedure
@@ -71,13 +75,12 @@ export const userRouter = createTRPCRouter({
         return null;
       }
 
-      const discordMember = await rest.get(
-        Routes.guildMember(input.guildId, ctx.dbUser.id),
-      )
+      const discordMember = await rest
+        .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
         .then((res) => camelize(res))
         .then((res) => discordMemberSchema.parse(res))
         .catch((err) => {
-          if (err instanceof DiscordAPIError){
+          if (err instanceof DiscordAPIError) {
             if (err.code === 404) {
               throw new TRPCError({
                 code: 'NOT_FOUND',

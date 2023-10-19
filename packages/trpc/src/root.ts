@@ -1,5 +1,6 @@
 import { observable } from '@trpc/server/observable';
 
+import channelRouter from './routes/channels';
 import guildRouter from './routes/guilds';
 import { lobbyRouter } from './routes/lobby';
 import { notificationRouter } from './routes/notification';
@@ -25,6 +26,7 @@ export const appRouter = createTRPCRouter({
   notification: notificationRouter,
   guild: guildRouter,
   roles: roleRouter,
+  channel: channelRouter,
 });
 
 // export type definition of API

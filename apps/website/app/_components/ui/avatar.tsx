@@ -1,10 +1,10 @@
 'use client';
 
 import * as React from 'react';
+import type { ImageProps } from 'next/dist/shared/lib/get-img-props';
+import Image from 'next/image';
 import * as AvatarPrimitive from '@radix-ui/react-avatar';
 import { cn } from 'utils/utils';
-import Image from 'next/image';
-import type { ImageProps } from 'next/dist/shared/lib/get-img-props';
 
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
