@@ -1,15 +1,16 @@
+import * as context from 'next/headers';
 import rscApi from 'utils/rsc';
-import * as context from 'next/headers'
+
 import RoleScreen from './RoleScreen';
 
 type Props = {
   params: {
     guildId: string;
   };
-}
+};
 
-async function RolePage({params: {guildId}}: Props) {
-  const api = await rscApi(context)
+async function RolePage({ params: { guildId } }: Props) {
+  const api = await rscApi(context);
 
   const [customRoles, member, dbRoles] = await Promise.all([
     api.roles.guildCustom({ guildId }),
@@ -18,11 +19,13 @@ async function RolePage({params: {guildId}}: Props) {
   ]);
 
   return (
-    <RoleScreen initialData={{
-      customRoles,
-      member,
-      dbRoles,
-    }} />
+    <RoleScreen
+      initialData={{
+        customRoles,
+        member,
+        dbRoles,
+      }}
+    />
   );
 }
 

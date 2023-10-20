@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from 'app/_components/ui/button';
 import { Plus, X } from 'lucide-react';
-import { RouterOutputs, api } from 'utils/api';
+import { api, RouterOutputs } from 'utils/api';
 
 import baseConfig from '@ei/tailwind-config';
 
@@ -14,7 +14,7 @@ type Props = {
     member: RouterOutputs['user']['memberMe'];
     dbRoles: RouterOutputs['roles']['guildAll'];
   };
-}
+};
 
 function RoleScreen({ initialData }: Props) {
   const params = useParams();
@@ -64,9 +64,18 @@ function RoleScreen({ initialData }: Props) {
     },
   });
 
-  const { data: customRoles } = api.roles.guildCustom.useQuery({ guildId }, {initialData: initialData.customRoles});
-  const { data: member } = api.user.memberMe.useQuery({ guildId }, {initialData: initialData.member});
-  const { data: dbRoles } = api.roles.guildAll.useQuery({ guildId }, {initialData: initialData.dbRoles});
+  const { data: customRoles } = api.roles.guildCustom.useQuery(
+    { guildId },
+    { initialData: initialData.customRoles },
+  );
+  const { data: member } = api.user.memberMe.useQuery(
+    { guildId },
+    { initialData: initialData.member },
+  );
+  const { data: dbRoles } = api.roles.guildAll.useQuery(
+    { guildId },
+    { initialData: initialData.dbRoles },
+  );
 
   return (
     <div className="flex flex-1 flex-col">

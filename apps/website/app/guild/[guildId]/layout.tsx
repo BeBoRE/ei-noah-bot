@@ -2,12 +2,12 @@ import * as context from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import { TRPCError } from '@trpc/server';
 import { Button } from 'app/_components/ui/button';
 import { Separator } from 'app/_components/ui/separator';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/v10';
 import { Settings, Users } from 'lucide-react';
 import rscApi from 'utils/rsc';
-import { TRPCError } from '@trpc/server';
 
 type Props = {
   children?: React.ReactNode;
@@ -19,18 +19,19 @@ type Props = {
 const GuildLayout = async ({ children, params: { guildId } }: Props) => {
   const api = await rscApi(context);
 
-  const guild = (await api.guild.get({ guildId })
-    .catch(err => {
-      if(err instanceof TRPCError) {
+  const guild = (
+    await api.guild.get({ guildId }).catch((err) => {
+      if (err instanceof TRPCError) {
         if (err.code === 'NOT_FOUND') {
           notFound();
         }
 
         if (err.code === 'UNAUTHORIZED') {
-          redirect('/login/discord');
+          redirect('/');
         }
       }
-    }))?.discord;
+    })
+  )?.discord;
 
   const icon =
     guild?.icon &&

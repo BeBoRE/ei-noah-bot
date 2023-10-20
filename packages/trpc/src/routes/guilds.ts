@@ -147,7 +147,7 @@ const guildRouter = createTRPCRouter({
       const newRoleMenuMessage = await rest
         .post(Routes.channelMessages(newRoleMenuChannel.id), {
           body: {
-            content: '**Role Menu:**\n*No roles available*',
+            content: '**Available Roles:**\n*No roles available*',
             components: [
               {
                 type: 1,
@@ -160,7 +160,7 @@ const guildRouter = createTRPCRouter({
                   },
                 ],
               },
-            ]
+            ],
           },
         })
         .then((res) => camelize(res))
