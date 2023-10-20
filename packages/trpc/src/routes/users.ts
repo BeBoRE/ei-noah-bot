@@ -6,13 +6,9 @@ import { z } from 'zod';
 
 import { guildUsers } from '@ei/drizzle/tables/schema';
 
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  rest,
-} from '../trpc';
-import { camelize } from '../utils';
 import { discordMemberSchema } from '../schemas';
+import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
+import { camelize } from '../utils';
 
 export const userRouter = createTRPCRouter({
   me: protectedProcedure.query(async ({ ctx }) => ctx.discordUser),

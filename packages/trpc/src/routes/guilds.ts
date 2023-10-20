@@ -96,9 +96,9 @@ const guildRouter = createTRPCRouter({
       }
 
       const member = await rest
-      .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
-      .then((res) => camelize(res))
-      .then((res) => discordMemberSchema.parse(res));
+        .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
+        .then((res) => camelize(res))
+        .then((res) => discordMemberSchema.parse(res));
 
       if (!member) {
         throw new TRPCError({
