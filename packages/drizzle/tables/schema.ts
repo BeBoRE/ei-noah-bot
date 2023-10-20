@@ -69,6 +69,7 @@ export const loginTokens = pgTable('login_token', {
   expires: bigint('expires', {
     mode: 'number',
   }).notNull(),
+  used: boolean('used').default(false).notNull(),
 });
 
 export const session = pgTable('session', {

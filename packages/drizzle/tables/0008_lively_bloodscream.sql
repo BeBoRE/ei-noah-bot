@@ -1,0 +1,1 @@
+ALTER TABLE "login_token" ADD COLUMN "used" boolean DEFAULT false NOT NULL;
