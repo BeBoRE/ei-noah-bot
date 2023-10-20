@@ -39,8 +39,8 @@ export const userIsAdmin = (
 ) => {
   if (guild.ownerId === member.user.id) return true;
 
-  // eslint-disable-next-line no-bitwise
   const adminRoles = roles.filter(
+    // eslint-disable-next-line no-bitwise
     (role) => BigInt(role.permissions) & BigInt(8),
   );
 

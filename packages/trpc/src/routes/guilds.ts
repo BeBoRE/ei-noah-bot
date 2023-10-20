@@ -5,15 +5,19 @@ import { z } from 'zod';
 
 import { guilds, guildUsers } from '@ei/drizzle/tables/schema';
 
+import { DiscordAPIError } from '@discordjs/rest';
 import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
-import { camelize } from '../utils';
+import { camelize, highestRole, userIsAdmin } from '../utils';
 import { channelSchema } from './channels';
+import { ApiRoleSchema } from './roles';
+import { discordMemberSchema } from './users';
 
 export const apiGuildSchema = z.object({
   id: z.string(),
   name: z.string(),
   icon: z.string().optional().nullable(),
   ownerId: z.string(),
+  roles: z.array(ApiRoleSchema),
 });
 
 export const apiMessageSchema = z.object({
@@ -190,6 +194,86 @@ const guildRouter = createTRPCRouter({
 
       return newGuild;
     }),
+  setRoleCreatorRole: protectedProcedure
+    .input(
+      z.object({
+        guildId: z.string(),
+        roleId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const member = await rest
+        .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
+        .then((res) => camelize(res))
+        .then((res) => discordMemberSchema.parse(res))
+
+      if (!member) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You are not in this guild',
+        });
+      }
+
+      const discordGuild = await rest
+        .get(Routes.guild(input.guildId))
+        .then((res) => camelize(res))
+        .then((res) => apiGuildSchema.parse(res))
+        .catch(err => {
+          if (err instanceof DiscordAPIError) {
+            if (err.code === 404) {
+              throw new TRPCError({
+                code: 'NOT_FOUND',
+              });
+            }
+          }
+
+          throw err;
+        });
+
+      const newRoleCreatorRole = discordGuild.roles.find(
+        (role) => role.id === input.roleId,
+      );
+
+      if (!newRoleCreatorRole) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Role not found',
+        });
+      }
+
+      const isAdmin = userIsAdmin(discordGuild.roles, member, discordGuild);
+      const isOwner = discordGuild.ownerId === member.user.id;
+
+      const usersHighestRole = highestRole(discordGuild.roles, member);
+
+      const roleIsHigherThanMember = newRoleCreatorRole.position >= usersHighestRole.position;
+
+      const isAllowed = isOwner || (isAdmin && !roleIsHigherThanMember);
+
+      if (!isAllowed) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You are not allowed to set this role',
+        });
+      }
+
+      const [newGuild] = await ctx.drizzle
+        .update(guilds)
+        .set({
+          roleCreatorRoleId: newRoleCreatorRole.id,
+        })
+        .where(eq(guilds.id, input.guildId))
+        .returning();
+
+      if (!newGuild) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+        });
+      }
+
+      return newGuild;
+    }
+  ),
 });
 
 export default guildRouter;

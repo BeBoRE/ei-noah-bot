@@ -22,6 +22,33 @@ function RoleCreatorRoleSelect({ guildId }: Props) {
   const { data: guild } = api.guild.get.useQuery({ guildId });
   const { data: customRoles } = api.roles.guildCustom.useQuery({ guildId });
 
+  const context = api.useContext();
+
+  const {mutate: setRoleCreatorRole, isLoading} = api.guild.setRoleCreatorRole.useMutation({
+    onMutate: async ({roleId}) => {
+      await context.guild.get.cancel({guildId});
+
+      const prevGuild = context.guild.get.getData({guildId});
+      const newGuild = prevGuild && {
+        ...prevGuild,
+        db: {
+          ...prevGuild.db,
+          roleCreatorRoleId: roleId,
+        },
+      };
+
+      context.guild.get.setData({guildId}, newGuild);
+
+      return {prevGuild};
+    },
+    onError(_1, _2, prev) {
+      context.guild.get.setData({guildId}, prev && prev.prevGuild);
+    },
+    onSettled: () => {
+      context.guild.get.invalidate({guildId});
+    },
+  })
+
   const highest = roles && member ? highestRole(roles, member) : null;
   const isOwner = !!(
     guild?.discord &&
@@ -36,7 +63,12 @@ function RoleCreatorRoleSelect({ guildId }: Props) {
   return (
     <div>
       <h3 className="pl-3">Role creation role</h3>
-      <Select>
+      <Select
+        disabled={isLoading}
+        value={guild?.db?.roleCreatorRoleId || ''}
+        onValueChange={(id) => {
+          setRoleCreatorRole({guildId, roleId: id})
+      }}>
         <SelectTrigger>
           <SelectValue placeholder="None" />
         </SelectTrigger>

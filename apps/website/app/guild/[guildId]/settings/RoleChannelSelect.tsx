@@ -31,7 +31,7 @@ function RoleChannelSelect({ guildData, guildId, channelData }: Props) {
 
   const context = api.useContext();
 
-  const { mutate: setRoleMenuChannel } =
+  const { mutate: setRoleMenuChannel, isLoading } =
     api.guild.setRoleMenuChannel.useMutation({
       onMutate: async ({ channelId }) => {
         await context.guild.get.cancel({ guildId });
@@ -79,6 +79,7 @@ function RoleChannelSelect({ guildData, guildId, channelData }: Props) {
     <div className="pb-2">
       <h3 className="pl-3">Channel for role menu</h3>
       <Select
+        disabled={isLoading}
         value={currentSelectedRoleMenuChannel?.id || undefined}
         onValueChange={(value) => {
           setRoleMenuChannel({ guildId, channelId: value });
