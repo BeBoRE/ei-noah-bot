@@ -8,19 +8,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from 'app/_components/ui/select';
-import { api } from 'utils/api';
+import { RouterOutputs, api } from 'utils/api';
 
 import { highestRole } from '@ei/trpc/src/utils';
 
 type Props = {
   guildId: string;
+  initialData: {
+    member: RouterOutputs['user']['memberMe'];
+    guild: RouterOutputs['guild']['get'];
+    customRoles: RouterOutputs['roles']['guildCustom'];
+  }
 };
 
-function RoleCreatorRoleSelect({ guildId }: Props) {
-  const { data: roles } = api.roles.guildAll.useQuery({ guildId });
-  const { data: member } = api.user.memberMe.useQuery({ guildId });
-  const { data: guild } = api.guild.get.useQuery({ guildId });
-  const { data: customRoles } = api.roles.guildCustom.useQuery({ guildId });
+function RoleCreatorRoleSelect({ guildId, initialData }: Props) {
+  const { data: member } = api.user.memberMe.useQuery({ guildId }, {
+    initialData: initialData.member,
+  });
+  const { data: guild } = api.guild.get.useQuery({ guildId }, {
+    initialData: initialData.guild,
+  });
+  const { data: customRoles } = api.roles.guildCustom.useQuery({ guildId }, {
+    initialData: initialData.customRoles,
+  });
+
+  const roles = guild?.discord?.roles;
 
   const context = api.useContext();
 

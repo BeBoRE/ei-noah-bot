@@ -11,9 +11,13 @@ type Props = {
   guildId: string;
   guildData: RouterOutputs['guild']['get'];
   channelData: RouterOutputs['channel']['all'];
+  memberData: RouterOutputs['user']['memberMe'];
+  customRolesData: RouterOutputs['roles']['guildCustom'];
 };
 
-function Settings({ guildData, guildId, channelData }: Props) {
+function Settings({ guildData, guildId, channelData, memberData, customRolesData }: Props) {
+
+
   return (
     <>
       <RoleChannelSelect
@@ -21,7 +25,11 @@ function Settings({ guildData, guildId, channelData }: Props) {
         guildData={guildData}
         guildId={guildId}
       />
-      <RoleCreatorRoleSelect guildId={guildId} />
+      <RoleCreatorRoleSelect guildId={guildId} initialData={{
+        member: memberData,
+        guild: guildData,
+        customRoles: customRolesData,
+      }} />
     </>
   );
 }
