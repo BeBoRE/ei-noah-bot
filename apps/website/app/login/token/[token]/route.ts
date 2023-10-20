@@ -27,8 +27,19 @@ export const GET = async (
     });
   }
 
+  const now = Date.now();
+
+  const [databaseToken] = await drizzle
+    .select()
+    .from(loginTokens)
+    .where(and(eq(loginTokens.token, token), gt(loginTokens.expires, now)));
+
   const existingSession = await authRequest.validate();
-  if (existingSession) {
+
+  const alreadyLoggedIn = !!existingSession;
+  const isSameUser = existingSession && databaseToken && existingSession.userId === databaseToken.userId;
+
+  if (alreadyLoggedIn && isSameUser) {
     await drizzle.delete(loginTokens).where(eq(loginTokens.token, token));
 
     return new Response(null, {
@@ -39,14 +50,11 @@ export const GET = async (
     });
   }
 
-  const now = Date.now();
+  if (existingSession) {
+    await auth.invalidateSession(existingSession.sessionId)
+  }
 
-  const [existingToken] = await drizzle
-    .select()
-    .from(loginTokens)
-    .where(and(eq(loginTokens.token, token), gt(loginTokens.expires, now)));
-
-  if (!existingToken) {
+  if (!databaseToken) {
     return new Response(null, {
       status: 302,
       headers: {
@@ -56,7 +64,7 @@ export const GET = async (
   }
 
   const session = await auth.createSession({
-    userId: existingToken.userId,
+    userId: databaseToken.userId,
     attributes: {},
   });
 
