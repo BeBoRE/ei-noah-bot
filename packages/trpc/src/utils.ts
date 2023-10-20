@@ -1,6 +1,6 @@
 import { camelCase, isArray, isObject, transform } from 'lodash';
 
-import { Guild } from '@ei/drizzle/tables/schema';
+import { Guild, Role } from '@ei/drizzle/tables/schema';
 
 import { ApiGuild, ApiRole, DiscordMember } from './schemas';
 
@@ -56,4 +56,13 @@ export const canCreateRoles = (
   );
 
   return isAdmin || hasRoleCreatorRole;
+};
+
+export const generateRoleMenuContent = (roles: Role[]) => {
+  const roleText =
+    roles.length > 0
+      ? roles.map((r) => `<@&${r.id}>`).join('\n')
+      : '*No roles found*';
+
+  return `**Roles**\n${roleText}`;
 };

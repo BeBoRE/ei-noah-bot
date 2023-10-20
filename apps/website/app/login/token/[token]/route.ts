@@ -37,7 +37,10 @@ export const GET = async (
   const existingSession = await authRequest.validate();
 
   const alreadyLoggedIn = !!existingSession;
-  const isSameUser = existingSession && databaseToken && existingSession.user.userId === databaseToken.userId;
+  const isSameUser =
+    existingSession &&
+    databaseToken &&
+    existingSession.user.userId === databaseToken.userId;
 
   if (alreadyLoggedIn && isSameUser) {
     if (!databaseToken.used) {
@@ -58,7 +61,7 @@ export const GET = async (
   }
 
   if (existingSession) {
-    await auth.invalidateSession(existingSession.sessionId)
+    await auth.invalidateSession(existingSession.sessionId);
   }
 
   if (!databaseToken || databaseToken.used) {

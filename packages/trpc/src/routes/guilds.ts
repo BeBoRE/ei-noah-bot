@@ -4,7 +4,7 @@ import { Routes } from 'discord-api-types/v10';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { guilds, guildUsers } from '@ei/drizzle/tables/schema';
+import { guilds, guildUsers, roles } from '@ei/drizzle/tables/schema';
 
 import {
   apiGuildSchema,
@@ -13,7 +13,12 @@ import {
   discordMemberSchema,
 } from '../schemas';
 import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
-import { camelize, highestRole, userIsAdmin } from '../utils';
+import {
+  camelize,
+  generateRoleMenuContent,
+  highestRole,
+  userIsAdmin,
+} from '../utils';
 
 const guildRouter = createTRPCRouter({
   all: protectedProcedure.query(async ({ ctx }) => {
@@ -181,10 +186,15 @@ const guildRouter = createTRPCRouter({
         }
       }
 
+      const customRoles = await ctx.drizzle
+        .select()
+        .from(roles)
+        .where(eq(roles.guildId, input.guildId));
+
       const newRoleMenuMessage = await rest
         .post(Routes.channelMessages(newRoleMenuChannel.id), {
           body: {
-            content: '**Available Roles:**\n*No roles available*',
+            content: generateRoleMenuContent(customRoles),
             components: [
               {
                 type: 1,
