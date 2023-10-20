@@ -26,7 +26,11 @@ export const generateLoginURL = async (
   const [existingToken] = await drizzle
     .select()
     .from(loginTokens)
-    .where(and(eq(loginTokens.userId, userId), gt(loginTokens.expires, now)));
+    .where(and(
+      eq(loginTokens.userId, userId), 
+      gt(loginTokens.expires, now),
+      eq(loginTokens.used, false),
+    ));
 
   if (existingToken) {
     return tokenUrl(existingToken.token, redirectUri);
