@@ -95,6 +95,43 @@ const guildRouter = createTRPCRouter({
         });
       }
 
+      const member = await rest
+      .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
+      .then((res) => camelize(res))
+      .then((res) => discordMemberSchema.parse(res));
+
+      if (!member) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You are not in this guild',
+        });
+      }
+
+      const discordGuild = await rest
+        .get(Routes.guild(input.guildId))
+        .then((res) => camelize(res))
+        .then((res) => apiGuildSchema.parse(res))
+        .catch((err) => {
+          if (err instanceof DiscordAPIError) {
+            if (err.code === 404) {
+              throw new TRPCError({
+                code: 'NOT_FOUND',
+              });
+            }
+          }
+
+          throw err;
+        });
+
+      const isAdmin = userIsAdmin(member, discordGuild);
+
+      if (!isAdmin) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You are not allowed to set this channel',
+        });
+      }
+
       const newRoleMenuChannel = await rest
         .get(Routes.channel(input.channelId))
         .then((res) => camelize(res))
