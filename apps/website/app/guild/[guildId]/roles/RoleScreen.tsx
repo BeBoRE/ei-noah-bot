@@ -44,6 +44,15 @@ function RoleScreen({ initialData }: Props) {
     onSettled: () => {
       context.user.memberMe.invalidate({ guildId });
     },
+    onError: async (err, {roleId}) => {
+      if(err.data?.code === 'NOT_FOUND') {
+        await context.roles.guildCustom.cancel({ guildId });
+
+        context.roles.guildCustom.setData({ guildId }, (prev) => prev?.filter((role) => role.id !== roleId));
+
+        context.roles.guildCustom.invalidate({ guildId });
+      }
+    }
   });
 
   const { mutate: removeRole } = api.roles.removeRole.useMutation({
@@ -63,6 +72,15 @@ function RoleScreen({ initialData }: Props) {
     onSettled: () => {
       context.user.memberMe.invalidate({ guildId });
     },
+    onError: async (err, {roleId}) => {
+      if(err.data?.code === 'NOT_FOUND') {
+        await context.roles.guildCustom.cancel({ guildId });
+
+        context.roles.guildCustom.setData({ guildId }, (prev) => prev?.filter((role) => role.id !== roleId));
+
+        context.roles.guildCustom.invalidate({ guildId });
+      }
+    }
   });
 
   const { data: customRoles } = api.roles.guildCustom.useQuery(
