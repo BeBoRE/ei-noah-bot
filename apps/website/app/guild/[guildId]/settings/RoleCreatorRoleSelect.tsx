@@ -97,10 +97,11 @@ function RoleCreatorRoleSelect({ guildId, initialData }: Props) {
           <SelectTrigger>
             <SelectValue placeholder="None" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className='max-h-80 overflow-auto'>
             <SelectGroup>
               {rolesToDisplay
-                ?.sort((a, b) => a.position + b.position)
+                ?.sort((a, b) => a.position - b.position)
+                .reverse()
                 ?.map((role) => {
                   const color =
                     role.color !== 0
