@@ -64,5 +64,5 @@ export const generateRoleMenuContent = (roles: Role[]) => {
       ? roles.map((r) => `<@&${r.id}>`).join('\n')
       : '*No roles found*';
 
-  return `**Roles**\n${roleText}`;
+  return `**Roles Available:**\n${roleText}`;
 };

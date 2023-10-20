@@ -8,7 +8,7 @@ import { guilds, guildUsers, roles } from '@ei/drizzle/tables/schema';
 
 import { apiGuildSchema, ApiRoleSchema, discordMemberSchema } from '../schemas';
 import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
-import { camelize, canCreateRoles } from '../utils';
+import { camelize, canCreateRoles, generateRoleMenuContent } from '../utils';
 
 const roleRouter = createTRPCRouter({
   guildAll: protectedProcedure
@@ -153,6 +153,26 @@ const roleRouter = createTRPCRouter({
         });
       }
 
+      const roleMenuChannel = dbGuildUser.guild.roleMenuChannelId;
+      const roleMenuMessage = dbGuildUser.guild.roleMenuId;
+
+      ctx.drizzle
+        .select()
+        .from(roles)
+        .where(eq(roles.guildId, input.guildId))
+        .then((customRoles) => {
+          if (roleMenuChannel && roleMenuMessage) {
+            rest.patch(
+              Routes.channelMessage(roleMenuChannel, roleMenuMessage),
+              {
+                body: {
+                  content: generateRoleMenuContent(customRoles),
+                },
+              },
+            );
+          }
+        });
+
       return { dbRole, discordRole };
     }),
   addRole: protectedProcedure
@@ -193,6 +213,28 @@ const roleRouter = createTRPCRouter({
                     eq(roles.id, input.roleId),
                   ),
                 );
+
+              ctx.drizzle
+                .select()
+                .from(roles)
+                .where(eq(roles.guildId, input.guildId))
+                .then((customRoles) => {
+                  const roleMenuChannel = dbGuildUser.guild.roleMenuChannelId;
+                  const roleMenuMessage = dbGuildUser.guild.roleMenuId;
+
+                  if (roleMenuChannel && roleMenuMessage) {
+                    return rest.patch(
+                      Routes.channelMessage(roleMenuChannel, roleMenuMessage),
+                      {
+                        body: {
+                          content: generateRoleMenuContent(customRoles),
+                        },
+                      },
+                    );
+                  }
+
+                  return null;
+                });
 
               throw new TRPCError({
                 code: 'NOT_FOUND',

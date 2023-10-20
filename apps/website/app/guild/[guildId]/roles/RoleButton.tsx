@@ -93,10 +93,6 @@ function RoleButton({ role, member, guild }: Props) {
     ? `#${discordRole.color.toString(16).padStart(6, '0')}`
     : baseConfig.theme.colors.primary[500];
 
-  if (!discordRole) {
-    return null;
-  }
-
   return (
     <Button
       variant="secondary"
