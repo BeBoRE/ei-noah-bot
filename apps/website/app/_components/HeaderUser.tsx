@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -26,7 +24,8 @@ type Props = {
 };
 
 const getUserImageUrl = (user: { avatar?: string | null; id: string }) => {
-  const index = Number(BigInt(user.id) % BigInt(5));
+  // eslint-disable-next-line no-bitwise
+  const index = Number((BigInt(user.id) >> BigInt(22)) % BigInt(6));
 
   if (!user.avatar)
     return `${RouteBases.cdn}${CDNRoutes.defaultUserAvatar(

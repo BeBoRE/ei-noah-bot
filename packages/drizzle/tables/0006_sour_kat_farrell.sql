@@ -1,0 +1,1 @@
+ALTER TABLE "guild" ADD COLUMN "role_creator_role_id" varchar(255);

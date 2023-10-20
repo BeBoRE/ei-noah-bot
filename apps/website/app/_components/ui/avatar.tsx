@@ -1,6 +1,8 @@
 'use client';
 
 import * as React from 'react';
+import type { ImageProps } from 'next/dist/shared/lib/get-img-props';
+import Image from 'next/image';
 import * as AvatarPrimitive from '@radix-ui/react-avatar';
 import { cn } from 'utils/utils';
 
@@ -21,13 +23,16 @@ Avatar.displayName = AvatarPrimitive.Root.displayName;
 
 const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
-  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>
+  React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image> & ImageProps
 >(({ className, ...props }, ref) => (
   <AvatarPrimitive.Image
     ref={ref}
     className={cn('aspect-square h-full w-full', className)}
+    asChild
     {...props}
-  />
+  >
+    <Image {...props} />
+  </AvatarPrimitive.Image>
 ));
 AvatarImage.displayName = AvatarPrimitive.Image.displayName;
 

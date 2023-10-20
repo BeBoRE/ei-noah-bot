@@ -39,6 +39,7 @@ import Birthday from './routes/Birthday';
 import LobbyRouter from './routes/LobbyRouter';
 import LocaleRouter from './routes/Locale';
 import QuoteRouter from './routes/QuoteRouter';
+import rolesRouter from './routes/Roles/RoleRouter';
 
 dotenv.config();
 
@@ -520,6 +521,8 @@ process.title = 'Ei Noah Bot';
   eiNoah.use('quote', QuoteRouter);
 
   eiNoah.use('locale', LocaleRouter);
+
+  eiNoah.use('roles', rolesRouter);
 
   eiNoah.onInit = async (client) => {
     const updatePrecense = () => {

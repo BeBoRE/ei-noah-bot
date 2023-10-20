@@ -4,7 +4,7 @@ import TailwindAnimate from 'tailwindcss-animate';
 import baseConfig from '@ei/tailwind-config';
 
 export default {
-  darkMode: ['class'],
+  darkMode: 'media',
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -14,7 +14,7 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: '2rem',
+      padding: '1rem',
       screens: {
         '2xl': '1400px',
       },

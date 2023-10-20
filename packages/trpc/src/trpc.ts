@@ -19,6 +19,7 @@ import { getDrizzleClient } from '@ei/drizzle';
 import { guildUsers, tempChannels, users } from '@ei/drizzle/tables/schema';
 import { auth, Session } from '@ei/lucia';
 
+import { discordUserSchema } from './schemas';
 import { camelize } from './utils';
 
 /**
@@ -39,13 +40,6 @@ import { camelize } from './utils';
  *   premium_type: 0
  * }
  */
-
-export const discordUserSchema = z.object({
-  id: z.string(),
-  username: z.string(),
-  avatar: z.string().nullable(),
-  globalName: z.string().nullable(),
-});
 
 export const bearerSchema = z.string().min(1);
 
@@ -97,10 +91,13 @@ const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
       : [null];
 
   const discordUserData = session?.user
-    ? await rest.get(Routes.user(session.user.userId)).catch(() => null)
+    ? await rest
+        .get(Routes.user(session.user.userId))
+        .then((res) => camelize(res))
+        .catch(() => null)
     : null;
   const parsedDiscordUser = discordUserData
-    ? discordUserSchema.safeParse(camelize(discordUserData))
+    ? discordUserSchema.safeParse(discordUserData)
     : null;
 
   if (!parsedDiscordUser?.success) {

@@ -27,9 +27,30 @@ export const GET = async (
     });
   }
 
+  const now = Date.now();
+
+  const [databaseToken] = await drizzle
+    .select()
+    .from(loginTokens)
+    .where(and(eq(loginTokens.token, token), gt(loginTokens.expires, now)));
+
   const existingSession = await authRequest.validate();
-  if (existingSession) {
-    await drizzle.delete(loginTokens).where(eq(loginTokens.token, token));
+
+  const alreadyLoggedIn = !!existingSession;
+  const isSameUser =
+    existingSession &&
+    databaseToken &&
+    existingSession.user.userId === databaseToken.userId;
+
+  if (alreadyLoggedIn && isSameUser) {
+    if (!databaseToken.used) {
+      await drizzle
+        .update(loginTokens)
+        .set({
+          used: true,
+        })
+        .where(eq(loginTokens.token, token));
+    }
 
     return new Response(null, {
       status: 302,
@@ -39,14 +60,11 @@ export const GET = async (
     });
   }
 
-  const now = Date.now();
+  if (existingSession) {
+    await auth.invalidateSession(existingSession.sessionId);
+  }
 
-  const [existingToken] = await drizzle
-    .select()
-    .from(loginTokens)
-    .where(and(eq(loginTokens.token, token), gt(loginTokens.expires, now)));
-
-  if (!existingToken) {
+  if (!databaseToken || databaseToken.used) {
     return new Response(null, {
       status: 302,
       headers: {
@@ -56,13 +74,18 @@ export const GET = async (
   }
 
   const session = await auth.createSession({
-    userId: existingToken.userId,
+    userId: databaseToken.userId,
     attributes: {},
   });
 
   authRequest.setSession(session);
 
-  await drizzle.delete(loginTokens).where(eq(loginTokens.token, token));
+  await drizzle
+    .update(loginTokens)
+    .set({
+      used: true,
+    })
+    .where(eq(loginTokens.token, token));
 
   return new Response(null, {
     status: 302,

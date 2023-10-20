@@ -1,11 +1,11 @@
 import { pg as postgresAdapter } from '@lucia-auth/adapter-postgresql';
 import { discord } from '@lucia-auth/oauth/providers';
-import ip from 'ip';
 import { lucia } from 'lucia';
 import { nextjs_future as middleware } from 'lucia/middleware';
 
 import { luciaPgClient } from '@ei/drizzle';
-import { nanoid } from 'nanoid';
+
+import { getHost } from './utils';
 
 export const auth = lucia({
   env: process.env.NODE_ENV === 'production' ? 'PROD' : 'DEV',
@@ -22,7 +22,7 @@ export const auth = lucia({
         }
       : undefined,
   experimental: {
-    debugMode: process.env.NODE_ENV !== 'production',
+    debugMode: process.env.DEBUG === 'true',
   },
 });
 
@@ -33,13 +33,9 @@ if (!clientId || !clientSecret) {
   console.warn('Missing environment variables CLIENT_ID and CLIENT_SECRET');
 }
 
-export const generateLoginToken = () => nanoid(72);
+export { generateLoginURL } from './token';
 
-// Get's the hosts ip when in development mode
-export const getHost = () =>
-  process.env.NODE_ENV === 'production'
-    ? 'https://ei.sweaties.net'
-    : `http://${ip.address(undefined, 'ipv4')}:3000`;
+export { getHost };
 
 console.log('Redirect host is', getHost());
 export const discordAuth = discord(auth, {

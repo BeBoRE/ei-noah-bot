@@ -29,6 +29,41 @@
       "when": 1697033557849,
       "tag": "0003_faulty_bruce_banner",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1697135364778,
+      "tag": "0004_slim_shadowcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1697135658785,
+      "tag": "0005_modern_vanisher",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1697807828114,
+      "tag": "0006_sour_kat_farrell",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1697817745688,
+      "tag": "0007_abnormal_karma",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1697819278082,
+      "tag": "0008_lively_bloodscream",
+      "breakpoints": true
     }
   ]
 }
