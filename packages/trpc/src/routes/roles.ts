@@ -181,9 +181,28 @@ const roleRouter = createTRPCRouter({
         });
       }
 
-      await rest.put(
-        Routes.guildMemberRole(input.guildId, ctx.dbUser.id, input.roleId),
-      );
+      await rest
+        .put(Routes.guildMemberRole(input.guildId, ctx.dbUser.id, input.roleId))
+        .catch(async (err) => {
+          if (err instanceof DiscordAPIError) {
+            if (err.status === 404) {
+              await ctx.drizzle
+                .delete(roles)
+                .where(
+                  and(
+                    eq(roles.guildId, input.guildId),
+                    eq(roles.id, input.roleId),
+                  ),
+                );
+
+              throw new TRPCError({
+                code: 'NOT_FOUND',
+              });
+            }
+          }
+
+          throw err;
+        });
     }),
   removeRole: protectedProcedure
     .input(
@@ -210,9 +229,30 @@ const roleRouter = createTRPCRouter({
         });
       }
 
-      await rest.delete(
-        Routes.guildMemberRole(input.guildId, ctx.dbUser.id, input.roleId),
-      );
+      await rest
+        .delete(
+          Routes.guildMemberRole(input.guildId, ctx.dbUser.id, input.roleId),
+        )
+        .catch(async (err) => {
+          if (err instanceof DiscordAPIError) {
+            if (err.status === 404) {
+              await ctx.drizzle
+                .delete(roles)
+                .where(
+                  and(
+                    eq(roles.guildId, input.guildId),
+                    eq(roles.id, input.roleId),
+                  ),
+                );
+
+              throw new TRPCError({
+                code: 'NOT_FOUND',
+              });
+            }
+          }
+
+          throw err;
+        });
     }),
 });
 
