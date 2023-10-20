@@ -27,7 +27,7 @@ function CreateForm({ guildId }: Props) {
   const { mutate: createRole, error } = api.roles.createRole.useMutation({
     onMutate: async () => {
       await context.roles.guildCustom.cancel({ guildId });
-      await context.roles.guildAll.cancel({ guildId });
+      await context.guild.get.cancel({ guildId });
     },
     onSuccess: async ({ dbRole, discordRole }) => {
       context.roles.guildCustom.setData({ guildId }, (prev) => [
@@ -35,13 +35,17 @@ function CreateForm({ guildId }: Props) {
         dbRole,
       ]);
 
-      context.roles.guildAll.setData({ guildId }, (prev) => [
-        ...(prev || []),
-        discordRole,
-      ]);
+      context.guild.get.setData({ guildId }, (prev) => {
+        if (!prev) return prev;
+
+        const guild = { ...prev };
+        guild.discord.roles = [...guild.discord.roles, discordRole];
+
+        return guild;
+      });
 
       await context.roles.guildCustom.invalidate({ guildId });
-      await context.roles.guildAll.invalidate({ guildId });
+      await context.guild.get.invalidate({ guildId });
       router.push(`.`);
     },
   });
