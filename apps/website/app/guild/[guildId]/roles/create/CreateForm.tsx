@@ -21,7 +21,7 @@ function CreateForm({ guildId }: Props) {
   const context = api.useContext();
 
   const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value.trimStart().toLowerCase());
+    setName(e.target.value.trimStart());
   };
 
   const { mutate: createRole, error } = api.roles.createRole.useMutation({
