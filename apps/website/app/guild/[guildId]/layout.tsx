@@ -9,6 +9,8 @@ import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/v10';
 import { Settings, Users } from 'lucide-react';
 import rscApi from 'utils/rsc';
 
+import { userIsAdmin } from '@ei/trpc/src/utils';
+
 type Props = {
   children?: React.ReactNode;
   params: {
@@ -26,12 +28,18 @@ const GuildLayout = async ({ children, params: { guildId } }: Props) => {
           notFound();
         }
 
-        if (err.code === 'UNAUTHORIZED') {
+        if (err.code === 'FORBIDDEN' || err.code === 'UNAUTHORIZED') {
           redirect('/');
         }
       }
+
+      throw err;
     })
   )?.discord;
+
+  const member = await api.user.memberMe({ guildId });
+
+  const isAdmin = userIsAdmin(member, guild);
 
   const icon =
     guild?.icon &&
@@ -71,15 +79,23 @@ const GuildLayout = async ({ children, params: { guildId } }: Props) => {
               </Link>
             </Button>
           </div>
-          <Separator />
-          <div className="py-2">
-            <Button asChild className="w-full justify-start" variant="outline">
-              <Link href={`/guild/${guildId}/settings`}>
-                <Settings className="h-w mr-2 w-4" />
-                Settings
-              </Link>
-            </Button>
-          </div>
+          {isAdmin && (
+            <>
+              <Separator />
+              <div className="py-2">
+                <Button
+                  asChild
+                  className="w-full justify-start"
+                  variant="outline"
+                >
+                  <Link href={`/guild/${guildId}/settings`}>
+                    <Settings className="h-w mr-2 w-4" />
+                    Settings
+                  </Link>
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </div>
       {children}

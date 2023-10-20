@@ -59,7 +59,10 @@ const guildRouter = createTRPCRouter({
         .then((gu) => gu.map((g) => g.guild));
 
       if (!dbGuild) {
-        return null;
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You are not in this guild',
+        });
       }
 
       const discordGuild = await rest
