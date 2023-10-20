@@ -80,7 +80,7 @@ const guildRouter = createTRPCRouter({
     .input(
       z.object({
         guildId: z.string(),
-        channelId: z.string(),
+        channelId: z.string().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -140,14 +140,17 @@ const guildRouter = createTRPCRouter({
         });
       }
 
-      const newRoleMenuChannel = await rest
-        .get(Routes.channel(input.channelId))
-        .then((res) => camelize(res))
-        .then((res) => channelSchema.parse(res));
+      const newRoleMenuChannel = input.channelId
+        ? await rest
+            .get(Routes.channel(input.channelId))
+            .then((res) => camelize(res))
+            .then((res) => channelSchema.parse(res))
+        : null;
 
       if (
-        newRoleMenuChannel.guildId !== input.guildId ||
-        newRoleMenuChannel.type !== 0
+        newRoleMenuChannel &&
+        (newRoleMenuChannel.guildId !== input.guildId ||
+          newRoleMenuChannel.type !== 0)
       ) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -189,38 +192,41 @@ const guildRouter = createTRPCRouter({
         }
       }
 
-      const customRoles = await ctx.drizzle
-        .select()
-        .from(roles)
-        .where(eq(roles.guildId, input.guildId));
+      let newRoleMenuMessage;
+      if (newRoleMenuChannel) {
+        const customRoles = await ctx.drizzle
+          .select()
+          .from(roles)
+          .where(eq(roles.guildId, input.guildId));
 
-      const newRoleMenuMessage = await rest
-        .post(Routes.channelMessages(newRoleMenuChannel.id), {
-          body: {
-            content: generateRoleMenuContent(customRoles),
-            components: [
-              {
-                type: 1,
-                components: [
-                  {
-                    type: 2,
-                    style: 1,
-                    label: 'Edit Your Roles',
-                    custom_id: 'getRoleLoginToken',
-                  },
-                ],
-              },
-            ],
-          },
-        })
-        .then((res) => camelize(res))
-        .then((res) => apiMessageSchema.parse(res));
+        newRoleMenuMessage = await rest
+          .post(Routes.channelMessages(newRoleMenuChannel.id), {
+            body: {
+              content: generateRoleMenuContent(customRoles),
+              components: [
+                {
+                  type: 1,
+                  components: [
+                    {
+                      type: 2,
+                      style: 1,
+                      label: 'Edit Your Roles',
+                      custom_id: 'getRoleLoginToken',
+                    },
+                  ],
+                },
+              ],
+            },
+          })
+          .then((res) => camelize(res))
+          .then((res) => apiMessageSchema.parse(res));
+      }
 
       const [newGuild] = await ctx.drizzle
         .update(guilds)
         .set({
-          roleMenuChannelId: newRoleMenuChannel.id,
-          roleMenuId: newRoleMenuMessage.id,
+          roleMenuChannelId: newRoleMenuChannel?.id || null,
+          roleMenuId: newRoleMenuMessage?.id || null,
         })
         .where(eq(guilds.id, input.guildId))
         .returning();
@@ -237,7 +243,7 @@ const guildRouter = createTRPCRouter({
     .input(
       z.object({
         guildId: z.string(),
-        roleId: z.string(),
+        roleId: z.string().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -269,11 +275,11 @@ const guildRouter = createTRPCRouter({
           throw err;
         });
 
-      const newRoleCreatorRole = discordGuild.roles.find(
-        (role) => role.id === input.roleId,
-      );
+      const newRoleCreatorRole = input.roleId
+        ? discordGuild.roles.find((role) => role.id === input.roleId)
+        : null;
 
-      if (!newRoleCreatorRole) {
+      if (newRoleCreatorRole !== null && !newRoleCreatorRole) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Role not found',
@@ -286,6 +292,7 @@ const guildRouter = createTRPCRouter({
       const usersHighestRole = highestRole(discordGuild.roles, member);
 
       const roleIsHigherThanMember =
+        newRoleCreatorRole !== null &&
         newRoleCreatorRole.position >= usersHighestRole.position;
 
       const isAllowed = isOwner || (isAdmin && !roleIsHigherThanMember);
@@ -300,7 +307,7 @@ const guildRouter = createTRPCRouter({
       const [newGuild] = await ctx.drizzle
         .update(guilds)
         .set({
-          roleCreatorRoleId: newRoleCreatorRole.id,
+          roleCreatorRoleId: newRoleCreatorRole ? newRoleCreatorRole.id : null,
         })
         .where(eq(guilds.id, input.guildId))
         .returning();

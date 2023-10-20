@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from 'app/_components/ui/button';
 import {
   Select,
   SelectContent,
@@ -85,46 +86,57 @@ function RoleCreatorRoleSelect({ guildId, initialData }: Props) {
   return (
     <div>
       <h3 className="pl-3">Role creation role</h3>
-      <Select
-        disabled={isLoading}
-        value={guild?.db?.roleCreatorRoleId || ''}
-        onValueChange={(id) => {
-          setRoleCreatorRole({ guildId, roleId: id });
-        }}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="None" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {rolesToDisplay
-              ?.sort((a, b) => a.position + b.position)
-              ?.map((role) => {
-                const color =
-                  role.color !== 0
-                    ? role.color.toString(16).padStart(6, '0')
-                    : null;
+      <div className="flex gap-2">
+        <Select
+          disabled={isLoading}
+          value={guild?.db?.roleCreatorRoleId || ''}
+          onValueChange={(id) => {
+            setRoleCreatorRole({ guildId, roleId: id });
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="None" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {rolesToDisplay
+                ?.sort((a, b) => a.position + b.position)
+                ?.map((role) => {
+                  const color =
+                    role.color !== 0
+                      ? role.color.toString(16).padStart(6, '0')
+                      : null;
 
-                const canSelect =
-                  isOwner ||
-                  (highest !== null ? role.position < highest.position : true);
+                  const canSelect =
+                    isOwner ||
+                    (highest !== null
+                      ? role.position < highest.position
+                      : true);
 
-                return (
-                  <SelectItem
-                    style={{
-                      color: color ? `#${color}` : undefined,
-                    }}
-                    value={role.id}
-                    key={role.id}
-                    disabled={!canSelect}
-                  >
-                    {role.name}
-                  </SelectItem>
-                );
-              })}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+                  return (
+                    <SelectItem
+                      style={{
+                        color: color ? `#${color}` : undefined,
+                      }}
+                      value={role.id}
+                      key={role.id}
+                      disabled={!canSelect}
+                    >
+                      {role.name}
+                    </SelectItem>
+                  );
+                })}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        <Button
+          disabled={isLoading}
+          variant="outline"
+          onClick={() => setRoleCreatorRole({ guildId, roleId: null })}
+        >
+          Remove
+        </Button>
+      </div>
     </div>
   );
 }

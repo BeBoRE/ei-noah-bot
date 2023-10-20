@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Button } from 'app/_components/ui/button';
 import {
   Select,
   SelectContent,
@@ -78,57 +79,66 @@ function RoleChannelSelect({ guildData, guildId, channelData }: Props) {
   return (
     <div className="pb-2">
       <h3 className="pl-3">Channel for role menu</h3>
-      <Select
-        disabled={isLoading}
-        value={currentSelectedRoleMenuChannel?.id || undefined}
-        onValueChange={(value) => {
-          setRoleMenuChannel({ guildId, channelId: value });
-        }}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Select a channel" />
-        </SelectTrigger>
-        <SelectContent>
-          {Array.from(channelsGrouped.entries())
-            .sort(([parentIdA], [parentIdB]) => {
-              const categoryA = channels.find(
-                (channel) => channel.id === parentIdA,
-              );
-              const categoryB = channels.find(
-                (channel) => channel.id === parentIdB,
-              );
+      <div className="flex gap-2">
+        <Select
+          disabled={isLoading}
+          value={currentSelectedRoleMenuChannel?.id || undefined}
+          onValueChange={(value) => {
+            setRoleMenuChannel({ guildId, channelId: value });
+          }}
+        >
+          <SelectTrigger className="flex-1">
+            <SelectValue placeholder="Select a channel" />
+          </SelectTrigger>
+          <SelectContent>
+            {Array.from(channelsGrouped.entries())
+              .sort(([parentIdA], [parentIdB]) => {
+                const categoryA = channels.find(
+                  (channel) => channel.id === parentIdA,
+                );
+                const categoryB = channels.find(
+                  (channel) => channel.id === parentIdB,
+                );
 
-              if (!categoryA || !categoryB) {
-                return 0;
-              }
+                if (!categoryA || !categoryB) {
+                  return 0;
+                }
 
-              return categoryA.position - categoryB.position;
-            })
-            .map(([parentId, channelList], index) => (
-              <React.Fragment key={parentId}>
-                {index !== 0 && <SelectSeparator />}
-                <SelectGroup>
-                  {parentId && (
-                    <SelectLabel>
-                      {channels.find((channel) => channel.id === parentId)
-                        ?.name || 'Invalid Category'}
-                    </SelectLabel>
-                  )}
-                  {channelList
-                    .sort(
-                      (channelA, channelB) =>
-                        channelA.position - channelB.position,
-                    )
-                    .map((channel) => (
-                      <SelectItem key={channel.id} value={channel.id}>
-                        {channel.name}
-                      </SelectItem>
-                    ))}
-                </SelectGroup>
-              </React.Fragment>
-            ))}
-        </SelectContent>
-      </Select>
+                return categoryA.position - categoryB.position;
+              })
+              .map(([parentId, channelList], index) => (
+                <React.Fragment key={parentId}>
+                  {index !== 0 && <SelectSeparator />}
+                  <SelectGroup>
+                    {parentId && (
+                      <SelectLabel>
+                        {channels.find((channel) => channel.id === parentId)
+                          ?.name || 'Invalid Category'}
+                      </SelectLabel>
+                    )}
+                    {channelList
+                      .sort(
+                        (channelA, channelB) =>
+                          channelA.position - channelB.position,
+                      )
+                      .map((channel) => (
+                        <SelectItem key={channel.id} value={channel.id}>
+                          {channel.name}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                </React.Fragment>
+              ))}
+          </SelectContent>
+        </Select>
+        <Button
+          disabled={isLoading}
+          variant="outline"
+          onClick={() => setRoleMenuChannel({ guildId, channelId: null })}
+        >
+          Remove
+        </Button>
+      </div>
     </div>
   );
 }
