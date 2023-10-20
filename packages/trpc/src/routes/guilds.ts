@@ -148,6 +148,19 @@ const guildRouter = createTRPCRouter({
         .post(Routes.channelMessages(newRoleMenuChannel.id), {
           body: {
             content: '**Role Menu:**\n*No roles available*',
+            components: [
+              {
+                type: 1,
+                components: [
+                  {
+                    type: 2,
+                    style: 1,
+                    label: 'Edit Your Roles',
+                    custom_id: 'getRoleLoginToken',
+                  },
+                ],
+              },
+            ]
           },
         })
         .then((res) => camelize(res))
