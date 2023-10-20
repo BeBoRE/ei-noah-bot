@@ -33,6 +33,7 @@
     "@ei/lobby": "*",
     "@ei/lucia": "*",
     "@ei/redis": "*",
+    "@ei/trpc": "*",
     "@types/chart.js": "^2.9.34",
     "@types/cron": "^1.7.2",
     "@types/node-fetch": "^2.5.7",

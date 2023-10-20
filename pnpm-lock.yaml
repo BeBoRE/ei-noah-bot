@@ -50,6 +50,9 @@ importers:
       '@ei/redis':
         specifier: '*'
         version: link:../../packages/redis
+      '@ei/trpc':
+        specifier: '*'
+        version: link:../../packages/trpc
       '@types/chart.js':
         specifier: ^2.9.34
         version: 2.9.34

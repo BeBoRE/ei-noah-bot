@@ -9,6 +9,7 @@ import { eq } from 'drizzle-orm';
 
 import { guilds, Role, roles } from '@ei/drizzle/tables/schema';
 import { generateLoginURL } from '@ei/lucia';
+import { generateRoleMenuContent } from '@ei/trpc/src/utils';
 
 import Router, { HandlerType } from '../../router/Router';
 
@@ -133,6 +134,44 @@ rolesRouter.onInit = (client, drizzle) => {
 
   client.on('roleDelete', async (role) => {
     await drizzle.delete(roles).where(eq(roles.id, role.id)).execute();
+
+    const [guild] = await drizzle
+      .select()
+      .from(guilds)
+      .where(eq(guilds.id, role.guild.id));
+
+    if (!guild) {
+      return;
+    }
+
+    const customRoles = await drizzle
+      .select()
+      .from(roles)
+      .where(eq(roles.guildId, role.guild.id));
+
+    const content = generateRoleMenuContent(customRoles);
+
+    if (!guild.roleMenuChannelId || !guild.roleMenuId) {
+      return;
+    }
+
+    client.channels
+      .fetch(guild.roleMenuChannelId, { cache: true })
+      .then((channel) => {
+        if (!guild.roleMenuChannelId || !guild.roleMenuId) {
+          return;
+        }
+
+        if (channel?.isTextBased()) {
+          channel.messages
+            .fetch({ message: guild.roleMenuId, cache: true })
+            .then((message) => {
+              if (message) {
+                message.edit({ content });
+              }
+            });
+        }
+      });
   });
 };
 
