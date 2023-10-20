@@ -149,7 +149,7 @@ function RoleScreen({ initialData }: Props) {
                       textShadow: `0 0 0.2rem #000`,
                     }}
                   >
-                    {role.name}
+                    {discordRole?.name}
                   </span>
                 </Button>
               );

@@ -142,7 +142,6 @@ const roleRouter = createTRPCRouter({
           {
             guildId: input.guildId,
             id: discordRole.id,
-            name: discordRole.name,
             createdBy: dbUser.id,
           },
         ])

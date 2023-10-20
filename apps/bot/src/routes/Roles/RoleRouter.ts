@@ -130,6 +130,13 @@ rolesRouter.onInit = (client, drizzle) => {
       components: [row],
     });
   });
+
+  client.on('roleDelete', async (role) => {
+    await drizzle
+      .delete(roles)
+      .where(eq(roles.id, role.id))
+      .execute();
+  })
 };
 
 export default rolesRouter;

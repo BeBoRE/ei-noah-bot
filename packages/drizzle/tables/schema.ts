@@ -132,7 +132,6 @@ export const roles = pgTable('role', {
       onUpdate: 'cascade',
       onDelete: 'cascade',
     }),
-  name: varchar('name', { length: 255 }).notNull(),
   createdAt: timestamp('created_at', {
     withTimezone: true,
     mode: 'string',
