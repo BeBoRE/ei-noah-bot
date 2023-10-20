@@ -43,6 +43,13 @@
       "when": 1697135658785,
       "tag": "0005_modern_vanisher",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1697807828114,
+      "tag": "0006_sour_kat_farrell",
+      "breakpoints": true
     }
   ]
 }

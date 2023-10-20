@@ -13,6 +13,7 @@ export const apiGuildSchema = z.object({
   id: z.string(),
   name: z.string(),
   icon: z.string().optional().nullable(),
+  ownerId: z.string(),
 });
 
 export const apiMessageSchema = z.object({
@@ -32,7 +33,10 @@ const guildRouter = createTRPCRouter({
 
     const discordGuilds = Promise.all(
       guildList.map(async (guild) => {
-        const discordGuild = await rest.get(Routes.guild(guild.id));
+        const discordGuild = await rest
+          .get(Routes.guild(guild.id))
+          .then((res) => camelize(res));
+
         const validatedGuild = apiGuildSchema.parse(discordGuild);
 
         return validatedGuild;
@@ -60,7 +64,10 @@ const guildRouter = createTRPCRouter({
         return null;
       }
 
-      const discordGuild = await rest.get(Routes.guild(input.guildId));
+      const discordGuild = await rest
+        .get(Routes.guild(input.guildId))
+        .then((res) => camelize(res));
+
       const validatedGuild = apiGuildSchema.parse(discordGuild);
 
       return {

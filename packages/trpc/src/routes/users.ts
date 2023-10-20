@@ -55,6 +55,8 @@ export const discordMemberSchema = z.object({
   user: discordUserSchema,
 });
 
+export type DiscordMember = z.infer<typeof discordMemberSchema>;
+
 export const userRouter = createTRPCRouter({
   me: protectedProcedure.query(async ({ ctx }) => ctx.discordUser),
   memberMe: protectedProcedure

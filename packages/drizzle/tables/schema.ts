@@ -32,6 +32,7 @@ export const guilds = pgTable('guild', {
   birthdayRole: varchar('birthday_role', { length: 255 }),
   roleMenuId: varchar('role_menu_id', { length: 255 }),
   roleMenuChannelId: varchar('role_menu_channel_id', { length: 255 }),
+  roleCreatorRoleId: varchar('role_creator_role_id', { length: 255 }),
   defaultColor: varchar('default_color', { length: 255 }),
   requiredRole: varchar('required_role', { length: 255 }),
   category: varchar('category', { length: 255 }),
