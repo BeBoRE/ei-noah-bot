@@ -5,18 +5,9 @@ import { z } from 'zod';
 
 import { guilds, guildUsers } from '@ei/drizzle/tables/schema';
 
+import { channelSchema } from '../schemas';
 import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
 import { camelize } from '../utils';
-
-export const channelSchema = z.object({
-  id: z.string(),
-  type: z.number(),
-  guildId: z.string(),
-  position: z.number(),
-  permissionOverwrites: z.array(z.unknown()),
-  name: z.string(),
-  parentId: z.string().nullable(),
-});
 
 const channelRouter = createTRPCRouter({
   all: protectedProcedure

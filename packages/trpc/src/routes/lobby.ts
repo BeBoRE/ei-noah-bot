@@ -22,9 +22,9 @@ import {
   subscribeToLobbyUpdate,
 } from '@ei/redis';
 
+import { discordUserSchema } from '../schemas';
 import {
   createTRPCRouter,
-  discordUserSchema,
   protectedProcedureWithLobby,
   publicProcedure,
 } from '../trpc';

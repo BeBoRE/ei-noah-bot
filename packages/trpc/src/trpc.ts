@@ -19,6 +19,7 @@ import { getDrizzleClient } from '@ei/drizzle';
 import { guildUsers, tempChannels, users } from '@ei/drizzle/tables/schema';
 import { auth, Session } from '@ei/lucia';
 
+import { discordUserSchema } from './schemas';
 import { camelize } from './utils';
 
 /**
@@ -39,19 +40,6 @@ import { camelize } from './utils';
  *   premium_type: 0
  * }
  */
-
-export const discordUserSchema = z.object({
-  id: z.string(),
-  username: z.string(),
-  avatar: z.string().nullable(),
-  publicFlags: z.number(),
-  flags: z.number(),
-  banner: z.string().nullable(),
-  accentColor: z.number().nullable(),
-  globalName: z.string().nullable(),
-  avatarDecorationData: z.string().nullable(),
-  bannerColor: z.string().nullable(),
-});
 
 export const bearerSchema = z.string().min(1);
 

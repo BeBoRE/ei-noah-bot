@@ -12,10 +12,10 @@ type Props = {
 async function RolePage({ params: { guildId } }: Props) {
   const api = await rscApi(context);
 
-  const [customRoles, member, dbRoles] = await Promise.all([
+  const [customRoles, member, guild] = await Promise.all([
     api.roles.guildCustom({ guildId }),
     api.user.memberMe({ guildId }),
-    api.roles.guildAll({ guildId }),
+    api.guild.get({ guildId }),
   ]);
 
   return (
@@ -23,7 +23,7 @@ async function RolePage({ params: { guildId } }: Props) {
       initialData={{
         customRoles,
         member,
-        dbRoles,
+        guild,
       }}
     />
   );

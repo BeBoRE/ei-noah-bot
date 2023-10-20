@@ -7,12 +7,13 @@ import { Plus, X } from 'lucide-react';
 import { api, RouterOutputs } from 'utils/api';
 
 import baseConfig from '@ei/tailwind-config';
+import { canCreateRoles } from '@ei/trpc/src/utils';
 
 type Props = {
   initialData: {
     customRoles: RouterOutputs['roles']['guildCustom'];
     member: RouterOutputs['user']['memberMe'];
-    dbRoles: RouterOutputs['roles']['guildAll'];
+    guild: RouterOutputs['guild']['get'];
   };
 };
 
@@ -72,10 +73,15 @@ function RoleScreen({ initialData }: Props) {
     { guildId },
     { initialData: initialData.member },
   );
-  const { data: dbRoles } = api.roles.guildAll.useQuery(
+  const { data: guild } = api.guild.get.useQuery(
     { guildId },
-    { initialData: initialData.dbRoles },
+    {
+      initialData: initialData.guild,
+    },
   );
+
+  const allowedToCreateRoles =
+    member && guild ? canCreateRoles(member, guild?.discord, guild?.db) : false;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -92,7 +98,9 @@ function RoleScreen({ initialData }: Props) {
           ) : (
             customRoles?.map((role) => {
               const addable = !member?.roles?.find((id) => id === role.id);
-              const discordRole = dbRoles?.find((r) => r.id === role.id);
+              const discordRole = guild?.discord.roles?.find(
+                (r) => r.id === role.id,
+              );
 
               const color = discordRole?.color
                 ? `#${discordRole.color.toString(16).padStart(6, '0')}`
@@ -129,15 +137,17 @@ function RoleScreen({ initialData }: Props) {
               );
             })
           )}
-          <Button
-            asChild
-            className="flex aspect-square h-auto w-full flex-col items-center justify-center gap-1 rounded-md transition"
-          >
-            <Link href={`/guild/${guildId}/roles/create`}>
-              <span className="text-center text-lg">Create New Role</span>
-              <Plus className="h-6 w-6" />
-            </Link>
-          </Button>
+          {allowedToCreateRoles && (
+            <Button
+              asChild
+              className="flex aspect-square h-auto w-full flex-col items-center justify-center gap-1 rounded-md transition"
+            >
+              <Link href={`/guild/${guildId}/roles/create`}>
+                <span className="text-center text-lg">Create New Role</span>
+                <Plus className="h-6 w-6" />
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     </div>

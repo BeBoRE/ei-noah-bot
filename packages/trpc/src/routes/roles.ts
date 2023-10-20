@@ -1,3 +1,4 @@
+import { DiscordAPIError } from '@discordjs/rest';
 import { TRPCError } from '@trpc/server';
 import { Routes } from 'discord-api-types/v10';
 import { and, eq } from 'drizzle-orm';
@@ -5,18 +6,9 @@ import { z } from 'zod';
 
 import { guilds, guildUsers, roles } from '@ei/drizzle/tables/schema';
 
+import { apiGuildSchema, ApiRoleSchema, discordMemberSchema } from '../schemas';
 import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
-
-export const ApiRoleSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  color: z.number(),
-  hoist: z.boolean(),
-  position: z.number(),
-  permissions: z.string(),
-});
-
-export type ApiRole = z.infer<typeof ApiRoleSchema>;
+import { camelize, canCreateRoles } from '../utils';
 
 const roleRouter = createTRPCRouter({
   guildAll: protectedProcedure
@@ -89,7 +81,52 @@ const roleRouter = createTRPCRouter({
           code: 'FORBIDDEN',
         });
       }
+
       const dbUser = dbGuildUser.guild_user;
+
+      const [member, guild] = await Promise.all([
+        await rest
+          .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
+          .then((res) => camelize(res))
+          .then((res) => discordMemberSchema.parse(res))
+          .catch((err) => {
+            if (err instanceof DiscordAPIError) {
+              if (err.code === 404) {
+                throw new TRPCError({
+                  code: 'FORBIDDEN',
+                  message: 'You are not in this guild',
+                });
+              }
+            }
+
+            throw err;
+          }),
+        await rest
+          .get(Routes.guild(input.guildId))
+          .then((res) => camelize(res))
+          .then((res) => apiGuildSchema.parse(res))
+          .catch((err) => {
+            if (err instanceof DiscordAPIError) {
+              if (err.code === 404) {
+                throw new TRPCError({
+                  code: 'NOT_FOUND',
+                  message: 'This guild does not exist',
+                });
+              }
+            }
+
+            throw err;
+          }),
+      ]);
+
+      const allowed = canCreateRoles(member, guild, dbGuildUser.guild);
+
+      if (!allowed) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to create roles',
+        });
+      }
 
       const discordRole = await rest
         .post(Routes.guildRoles(input.guildId), {

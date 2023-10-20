@@ -24,7 +24,7 @@ function CreateForm({ guildId }: Props) {
     setName(e.target.value.trimStart().toLowerCase());
   };
 
-  const { mutate: createRole } = api.roles.createRole.useMutation({
+  const { mutate: createRole, error } = api.roles.createRole.useMutation({
     onMutate: async () => {
       await context.roles.guildCustom.cancel({ guildId });
       await context.roles.guildAll.cancel({ guildId });
@@ -67,15 +67,13 @@ function CreateForm({ guildId }: Props) {
         maxLength={maxLength}
         onChange={changeName}
       />
-      <Button
-        disabled={!name}
-        type="submit"
-        className="mt-2 w-auto justify-start self-end"
-        variant="outline"
-      >
-        <Plus className="mr-2 h-4 w-4" />
-        Create
-      </Button>
+      <div className="mt-2 flex items-center justify-between">
+        <p className="text-reject">{error?.message}</p>
+        <Button disabled={!name} type="submit" variant="outline">
+          <Plus className="mr-2 h-4 w-4" />
+          Create
+        </Button>
+      </div>
     </form>
   );
 }

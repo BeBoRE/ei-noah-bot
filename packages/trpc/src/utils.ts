@@ -1,8 +1,8 @@
 import { camelCase, isArray, isObject, transform } from 'lodash';
 
-import type { ApiGuild } from './routes/guilds';
-import type { ApiRole } from './routes/roles';
-import type { DiscordMember } from './routes/users';
+import { Guild } from '@ei/drizzle/tables/schema';
+
+import { ApiGuild, ApiRole, DiscordMember } from './schemas';
 
 /* eslint-disable import/prefer-default-export */
 export const camelize = (obj: unknown) => {
@@ -32,14 +32,10 @@ export const highestRole = (roles: ApiRole[], member: DiscordMember) => {
   return role;
 };
 
-export const userIsAdmin = (
-  roles: ApiRole[],
-  member: DiscordMember,
-  guild: ApiGuild,
-) => {
+export const userIsAdmin = (member: DiscordMember, guild: ApiGuild) => {
   if (guild.ownerId === member.user.id) return true;
 
-  const adminRoles = roles.filter(
+  const adminRoles = guild.roles.filter(
     // eslint-disable-next-line no-bitwise
     (role) => BigInt(role.permissions) & BigInt(8),
   );
@@ -47,4 +43,17 @@ export const userIsAdmin = (
   return member.roles.some((role) =>
     adminRoles.some((adminRole) => adminRole.id === role),
   );
+};
+
+export const canCreateRoles = (
+  member: DiscordMember,
+  guild: ApiGuild,
+  dbGuild: Guild,
+) => {
+  const isAdmin = userIsAdmin(member, guild);
+  const hasRoleCreatorRole = member.roles.some(
+    (id) => id === dbGuild.roleCreatorRoleId,
+  );
+
+  return isAdmin || hasRoleCreatorRole;
 };

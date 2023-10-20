@@ -1,3 +1,4 @@
+import { DiscordAPIError } from '@discordjs/rest';
 import { TRPCError } from '@trpc/server';
 import { Routes } from 'discord-api-types/v10';
 import { and, eq } from 'drizzle-orm';
@@ -5,26 +6,14 @@ import { z } from 'zod';
 
 import { guilds, guildUsers } from '@ei/drizzle/tables/schema';
 
-import { DiscordAPIError } from '@discordjs/rest';
+import {
+  apiGuildSchema,
+  apiMessageSchema,
+  channelSchema,
+  discordMemberSchema,
+} from '../schemas';
 import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
 import { camelize, highestRole, userIsAdmin } from '../utils';
-import { channelSchema } from './channels';
-import { ApiRoleSchema } from './roles';
-import { discordMemberSchema } from './users';
-
-export const apiGuildSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  icon: z.string().optional().nullable(),
-  ownerId: z.string(),
-  roles: z.array(ApiRoleSchema),
-});
-
-export const apiMessageSchema = z.object({
-  id: z.string(),
-});
-
-export type ApiGuild = z.infer<typeof apiGuildSchema>;
 
 const guildRouter = createTRPCRouter({
   all: protectedProcedure.query(async ({ ctx }) => {
@@ -205,7 +194,7 @@ const guildRouter = createTRPCRouter({
       const member = await rest
         .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
         .then((res) => camelize(res))
-        .then((res) => discordMemberSchema.parse(res))
+        .then((res) => discordMemberSchema.parse(res));
 
       if (!member) {
         throw new TRPCError({
@@ -218,7 +207,7 @@ const guildRouter = createTRPCRouter({
         .get(Routes.guild(input.guildId))
         .then((res) => camelize(res))
         .then((res) => apiGuildSchema.parse(res))
-        .catch(err => {
+        .catch((err) => {
           if (err instanceof DiscordAPIError) {
             if (err.code === 404) {
               throw new TRPCError({
@@ -241,12 +230,13 @@ const guildRouter = createTRPCRouter({
         });
       }
 
-      const isAdmin = userIsAdmin(discordGuild.roles, member, discordGuild);
+      const isAdmin = userIsAdmin(member, discordGuild);
       const isOwner = discordGuild.ownerId === member.user.id;
 
       const usersHighestRole = highestRole(discordGuild.roles, member);
 
-      const roleIsHigherThanMember = newRoleCreatorRole.position >= usersHighestRole.position;
+      const roleIsHigherThanMember =
+        newRoleCreatorRole.position >= usersHighestRole.position;
 
       const isAllowed = isOwner || (isAdmin && !roleIsHigherThanMember);
 
@@ -272,8 +262,7 @@ const guildRouter = createTRPCRouter({
       }
 
       return newGuild;
-    }
-  ),
+    }),
 });
 
 export default guildRouter;
