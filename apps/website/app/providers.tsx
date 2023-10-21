@@ -28,7 +28,7 @@ const getWsUrl = () => {
     const [hostname] = host.split(':');
 
     if (protocol === 'https:') {
-      return `wss://ws.sweaties.net`;
+      return `wss://ei.sweaties.net/ws`;
     }
 
     return `ws://${hostname}:3001`;
