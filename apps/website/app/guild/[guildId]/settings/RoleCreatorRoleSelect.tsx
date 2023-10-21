@@ -97,7 +97,7 @@ function RoleCreatorRoleSelect({ guildId, initialData }: Props) {
           <SelectTrigger>
             <SelectValue placeholder="None" />
           </SelectTrigger>
-          <SelectContent className='max-h-80 overflow-auto'>
+          <SelectContent className="max-h-80 overflow-auto">
             <SelectGroup>
               {rolesToDisplay
                 ?.sort((a, b) => a.position - b.position)

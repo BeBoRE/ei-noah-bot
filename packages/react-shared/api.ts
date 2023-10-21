@@ -1,4 +1,5 @@
-import { AppRouter } from "@ei/trpc";
-import { createTRPCReact } from "@trpc/react-query";
+import { createTRPCReact } from '@trpc/react-query';
+
+import { AppRouter } from '@ei/trpc';
 
 export const api = createTRPCReact<AppRouter>();

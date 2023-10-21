@@ -4,6 +4,7 @@ import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/v10';
 import cn from 'utils/utils';
 
 import { ApiGuild } from '@ei/trpc/src/schemas';
+
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
   NavigationMenu,

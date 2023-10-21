@@ -219,7 +219,7 @@ const guildRouter = createTRPCRouter({
               allowed_mentions: {
                 users: [],
                 roles: [],
-              }
+              },
             },
           })
           .then((res) => camelize(res))

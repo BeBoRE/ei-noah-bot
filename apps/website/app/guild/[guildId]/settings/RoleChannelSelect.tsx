@@ -90,7 +90,7 @@ function RoleChannelSelect({ guildData, guildId, channelData }: Props) {
           <SelectTrigger className="flex-1">
             <SelectValue placeholder="Select a channel" />
           </SelectTrigger>
-          <SelectContent className='max-h-80 overflow-auto'>
+          <SelectContent className="max-h-80 overflow-auto">
             {Array.from(channelsGrouped.entries())
               .sort(([parentIdA], [parentIdB]) => {
                 const categoryA = channels.find(

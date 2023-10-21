@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
 import { createContext, useContext, useMemo, useState } from 'react';
 import type { alert } from 'burnt';
-import { ChannelType, LobbyChange } from '@ei/lobby';
-import { api } from '../api';
 
+import { ChannelType, LobbyChange } from '@ei/lobby';
+
+import { api } from '../api';
 
 type LobbyContextProps = {
   lobby: LobbyChange | null;
@@ -37,7 +38,12 @@ type ProviderProps = {
   alert?: typeof alert;
 };
 
-export function LobbyProvider({ children, enabled, token, alert } : ProviderProps) {
+export function LobbyProvider({
+  children,
+  enabled,
+  token,
+  alert,
+}: ProviderProps) {
   const [lobby, setLobby] = useState<LobbyChange | null>(null);
 
   const { mutate: changeLobby } = api.lobby.changeLobby.useMutation();
@@ -118,7 +124,7 @@ export function LobbyProvider({ children, enabled, token, alert } : ProviderProp
               alert?.({
                 title: 'Error',
                 message: err.message,
-                preset: 'error'
+                preset: 'error',
               });
 
               if (err.data?.code === 'NOT_FOUND') {

@@ -3046,7 +3046,11 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
   };
 
   client.on('channelUpdate', async (oldChannel, newChannel) => {
-    if (!oldChannel.isVoiceBased() || !newChannel.isVoiceBased() || !newChannel.guild) {
+    if (
+      !oldChannel.isVoiceBased() ||
+      !newChannel.isVoiceBased() ||
+      !newChannel.guild
+    ) {
       return;
     }
 
@@ -3066,7 +3070,7 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
           newChannel.permissionOverwrites.cache.get(overwrite.id)?.allow
             .bitfield,
     );
-    
+
     if (!permissionsChanged) return;
 
     const owner = await newChannel.guild.members.fetch({
@@ -3081,8 +3085,8 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
       guild: newChannel.guild,
       drizzle,
       i18n: _i18n,
-    })
-  })
+    });
+  });
 
   client.on('voiceStateUpdate', async (oldState, newState) => {
     // Check of iemand een temp lobby heeft verlaten

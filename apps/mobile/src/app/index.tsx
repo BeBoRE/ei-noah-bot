@@ -9,6 +9,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useAppState } from '@react-native-community/hooks';
+import { alert } from 'burnt';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/rest/v10';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 import JoinLobby from 'src/components/JoinLobby';
@@ -18,12 +20,11 @@ import { AnimatedTypeSelector } from 'src/components/TypeSelector';
 import { AnimatedUserLimitSelector } from 'src/components/UserLimits';
 import UsersSheet from 'src/components/UsersSheet';
 import { useAuth } from 'src/context/auth';
-import { LobbyProvider, useLobby } from '@ei/react-shared/context/lobby';
 import useNotifications from 'src/hooks/useNotifications';
 import { baseConfig } from 'tailwind.config';
 
-import { useAppState } from '@react-native-community/hooks';
-import { alert } from 'burnt';
+import { LobbyProvider, useLobby } from '@ei/react-shared/context/lobby';
+
 import { api } from '../utils/api';
 
 function Screen() {
@@ -104,7 +105,8 @@ function Index() {
   const { authInfo } = useAuth();
   const appState = useAppState();
 
-  const enabled = !!authInfo && (appState === 'active' || appState === 'inactive')
+  const enabled =
+    !!authInfo && (appState === 'active' || appState === 'inactive');
 
   return (
     <>

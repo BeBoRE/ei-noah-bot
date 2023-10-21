@@ -45,7 +45,7 @@ const wsUrl = getWsUrl();
 
 const wsClient = createWSClient({
   url: wsUrl,
-})
+});
 
 export default function TRPCReactProvider({ children }: Props) {
   const [queryClient] = useState(
