@@ -31,10 +31,10 @@ const getWsUrl = () => {
       return `wss://ei.sweaties.net/ws`;
     }
 
-    return `ws://${hostname}:3001`;
+    return `ws://${hostname}:5000/ws`;
   }
 
-  return 'ws://localhost:3001'; // dev SSR should use localhost
+  return 'ws://localhost:5000/ws'; // dev SSR should use localhost
 };
 
 type Props = {

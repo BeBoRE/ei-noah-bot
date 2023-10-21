@@ -22,7 +22,7 @@ export const auth = lucia({
       ? {
           host: 'ei.sweaties.net',
         }
-      : undefined,
+      : false,
   experimental: {
     debugMode: process.env.DEBUG === 'true',
   },
