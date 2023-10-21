@@ -6,12 +6,12 @@ function LobbyScreen() {
   const { lobby } = useLobby()
 
   return (
-    <div>
-      <p>
+    <div className='flex-1'>
+      <pre>
         {
-          JSON.stringify(lobby)
+          JSON.stringify(lobby, null, 2)
         }
-      </p>
+      </pre>
     </div>
   )
 }

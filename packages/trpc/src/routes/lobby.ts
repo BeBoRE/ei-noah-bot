@@ -68,8 +68,6 @@ export const lobbyRouter = createTRPCRouter({
   lobbyUpdate: publicProcedure
     .input(z.string().optional())
     .subscription(async ({ ctx: { drizzle, session }, input: token }) => {
-      console.log('session', session)
-
       const activeSession =
         session ||
         (token && (await auth.validateSession(token).catch(() => null))) ||
