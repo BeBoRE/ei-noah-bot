@@ -1,7 +1,3 @@
-import { createTRPCReact } from '@trpc/react-query';
-
-import type { AppRouter } from '@ei/trpc';
-
-export const api = createTRPCReact<AppRouter>();
+export { api } from '@ei/react-shared/api';
 
 export { type RouterInputs, type RouterOutputs } from '@ei/trpc';

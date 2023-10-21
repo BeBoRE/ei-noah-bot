@@ -1,0 +1,24 @@
+{
+  "name": "@ei/react-shared",
+  "version": "0.0.0",
+  "main": "api.ts",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf .turbo node_modules",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "lint:typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ei/trpc": "^0.0.0",
+    "@ei/lobby": "^1.0.0",
+    "@trpc/react-query": "^10.40.0",
+    "react": "18.2.0"
+  },
+  "devDependencies": {
+    "@ei/tsconfig": "*",
+    "@types/react": "^18.2.27",
+    "eslint": "^8.51.0",
+    "typescript": "^5.2.2"
+  }
+}

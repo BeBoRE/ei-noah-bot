@@ -1,0 +1,24 @@
+{
+  "name": "@ei/subscriptions",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "tsx watch ./server.ts",
+    "start": "tsx ./server.ts",
+    "clean": "rm -rf .turbo node_modules",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ei/trpc": "*",
+    "@trpc/server": "^10.40.0",
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "@ei/tsconfig": "*",
+    "eslint": "^8.51.0",
+    "eslint-config-custom": "*",
+    "tsx": "^3.13.0",
+    "typescript": "5.1.6"
+  }
+}

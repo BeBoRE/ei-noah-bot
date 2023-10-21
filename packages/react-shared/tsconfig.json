@@ -1,0 +1,9 @@
+{
+  "extends": "@ei/tsconfig/expo.json",
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "module": "CommonJS",
+    "isolatedModules": true
+  }
+}

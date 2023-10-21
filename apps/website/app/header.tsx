@@ -5,6 +5,7 @@ import rscApi from 'utils/rsc';
 import HeaderUser from './_components/HeaderUser';
 import { Icons } from './_components/Icons';
 import { NavMenu } from './_components/NavMenu';
+import GotoLobby from './GotoLobby';
 
 async function Header() {
   const api = await rscApi(context);
@@ -19,11 +20,12 @@ async function Header() {
         <div className="flex flex-1 place-items-center items-stretch gap-2">
           <Link className="flex place-items-center gap-1" href="/">
             <Icons.Logo className="h-8 w-8" />
-            <h1 className="text-xl font-bold text-primary-800 dark:text-primary-300">
+            <h1 className="hidden text-xl font-bold text-primary-800 dark:text-primary-300 sm:block">
               ei Noah
             </h1>
           </Link>
           {guilds && <NavMenu guilds={guilds} />}
+          <GotoLobby />
         </div>
         <div className="flex place-items-center">
           <HeaderUser user={user} />

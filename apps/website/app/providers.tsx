@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ReactQueryStreamedHydration } from '@tanstack/react-query-next-experimental';
@@ -12,6 +12,8 @@ import {
   wsLink,
 } from '@trpc/client';
 import superjson from 'superjson';
+
+import { LobbyProvider } from '@ei/react-shared/context/lobby';
 
 import { api } from '../utils/api';
 
@@ -34,7 +36,7 @@ const getWsUrl = () => {
     return `ws://${hostname}:5000/ws`;
   }
 
-  return 'ws://localhost:5000/ws'; // dev SSR should use localhost
+  return 'ws://localhost:3001'; // dev SSR should use localhost
 };
 
 type Props = {
@@ -42,6 +44,10 @@ type Props = {
 };
 
 const wsUrl = getWsUrl();
+
+const wsClient = createWSClient({
+  url: wsUrl,
+});
 
 export default function TRPCReactProvider({ children }: Props) {
   const [queryClient] = useState(
@@ -54,18 +60,6 @@ export default function TRPCReactProvider({ children }: Props) {
         },
       }),
   );
-
-  const wsClient = useMemo(
-    () =>
-      typeof window !== undefined
-        ? createWSClient({
-            url: wsUrl,
-          })
-        : null,
-    [],
-  );
-
-  useEffect(() => () => wsClient?.close());
 
   const [trpcClient] = useState(() =>
     api.createClient({
@@ -95,7 +89,7 @@ export default function TRPCReactProvider({ children }: Props) {
     <QueryClientProvider client={queryClient}>
       <ReactQueryStreamedHydration>
         <api.Provider client={trpcClient} queryClient={queryClient}>
-          {children}
+          <LobbyProvider>{children}</LobbyProvider>
         </api.Provider>
       </ReactQueryStreamedHydration>
       <ReactQueryDevtools initialIsOpen={false} />

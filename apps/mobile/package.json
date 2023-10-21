@@ -17,6 +17,7 @@
     "@ei/lobby": "^1.0.0",
     "@ei/tailwind-config": "*",
     "@ei/trpc": "^0.0.0",
+    "@ei/react-shared": "*",
     "@expo/config": "^8.1.2",
     "@expo/metro-config": "^0.10.7",
     "@expo/vector-icons": "^13.0.0",

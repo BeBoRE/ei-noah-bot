@@ -44,7 +44,10 @@ function HeaderUser({ user }: Props) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            className="flex aspect-square items-center gap-2 p-0 sm:aspect-auto sm:px-4 sm:py-2"
+          >
             <Image
               className="rounded-full"
               src={getUserImageUrl(user)}
@@ -52,7 +55,9 @@ function HeaderUser({ user }: Props) {
               width={32}
               height={32}
             />
-            <span>{user.globalName || user.username}</span>
+            <span className="hidden sm:block">
+              {user.globalName || user.username}
+            </span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56">

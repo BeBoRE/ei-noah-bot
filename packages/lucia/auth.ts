@@ -1,13 +1,12 @@
 import { pg as postgresAdapter } from '@lucia-auth/adapter-postgresql';
 import { discord } from '@lucia-auth/oauth/providers';
+import ip from 'ip';
 import { lucia } from 'lucia';
 import { nextjs_future as middleware } from 'lucia/middleware';
 
 import { luciaPgClient } from '@ei/drizzle';
 
-import ip from 'ip';
 import { getHost } from './utils';
-
 
 export const auth = lucia({
   env: process.env.NODE_ENV === 'production' ? 'PROD' : 'DEV',
@@ -28,9 +27,12 @@ export const auth = lucia({
   },
   sessionCookie: {
     attributes: {
-      domain: process.env.NODE_ENV === 'production' ? 'sweaties.net' : ip.address(undefined, 'ipv4'),
-    }
-  }
+      domain:
+        process.env.NODE_ENV === 'production'
+          ? 'sweaties.net'
+          : ip.address(undefined, 'ipv4'),
+    },
+  },
 });
 
 const clientId = process.env.CLIENT_ID;

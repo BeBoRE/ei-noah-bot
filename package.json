@@ -9,7 +9,7 @@
     "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo clean",
     "dev": "dotenv -- turbo dev",
-    "start": "dotenv -- turbo start --filter=bot --filter=website",
+    "start": "dotenv -- turbo start",
     "build": "dotenv -- turbo build",
     "expo-update": "dotenv -- turbo update",
     "lint": "dotenv -- turbo lint",

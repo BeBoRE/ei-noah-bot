@@ -38,6 +38,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
   User,
+  VoiceBasedChannel,
   VoiceChannel,
 } from 'discord.js';
 import {
@@ -125,7 +126,7 @@ function toDenyText(type: ChannelType) {
   return [];
 }
 
-function getChannelType(channel: VoiceChannel) {
+function getChannelType(channel: VoiceBasedChannel) {
   if (
     !channel.permissionOverwrites
       .resolve(channel.guild.id)
@@ -1022,7 +1023,7 @@ router.use(
 );
 
 const generateComponents = async (
-  voiceChannel: VoiceChannel,
+  voiceChannel: VoiceBasedChannel,
   drizzle: DrizzleClient,
   guildUser: GuildUser,
   owner: GuildMember,
@@ -1204,7 +1205,7 @@ const pushLobbyToUser = (
     member: GuildMember;
     guild: DiscordGuild;
     tempChannel: TempChannel;
-    voiceChannel: VoiceChannel;
+    voiceChannel: VoiceBasedChannel;
     timeTillLobbyChange: Duration | null;
   } | null,
 ) => {
@@ -1264,7 +1265,7 @@ const changeLobby = (() => {
   return async (
     requiredOptions: {
       tempChannel: TempChannel;
-      voiceChannel: VoiceChannel;
+      voiceChannel: VoiceBasedChannel;
       owner: GuildMember;
       guild: DiscordGuild;
       drizzle: DrizzleClient;
@@ -2639,8 +2640,6 @@ const createRedisSubscriptionListeners = (
       textChannel,
       i18n,
     });
-
-    refresh();
   };
 
   const removeUserHandler = async (data: RemoveUser) => {
@@ -2669,8 +2668,6 @@ const createRedisSubscriptionListeners = (
       i18n,
       drizzle,
     );
-
-    refresh();
   };
 
   addSubscriptionUnsubber(
@@ -2702,7 +2699,6 @@ const createRedisSubscriptionListeners = (
     subscribeToAddUser(
       {
         onData: (data) => {
-          globalLogger.debug('add user', data);
           addUserHandler(data);
         },
       },
@@ -2715,7 +2711,6 @@ const createRedisSubscriptionListeners = (
     subscribeToRemoveUser(
       {
         onData: (data) => {
-          globalLogger.debug('remove user', data);
           removeUserHandler(data);
         },
       },
@@ -3049,6 +3044,49 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
 
     setTimeout(checkTempLobbies, 1000 * 60);
   };
+
+  client.on('channelUpdate', async (oldChannel, newChannel) => {
+    if (
+      !oldChannel.isVoiceBased() ||
+      !newChannel.isVoiceBased() ||
+      !newChannel.guild
+    ) {
+      return;
+    }
+
+    const [tempChannel] = await drizzle
+      .select()
+      .from(tempChannels)
+      .where(eq(tempChannels.channelId, newChannel.id))
+      .innerJoin(guildUsers, eq(tempChannels.guildUserId, guildUsers.id))
+      .innerJoin(users, eq(guildUsers.userId, users.id));
+
+    if (!tempChannel) return;
+
+    const permissionsChanged = oldChannel.permissionOverwrites.cache.some(
+      (overwrite) =>
+        !newChannel.permissionOverwrites.cache.has(overwrite.id) ||
+        overwrite.allow.bitfield !==
+          newChannel.permissionOverwrites.cache.get(overwrite.id)?.allow
+            .bitfield,
+    );
+
+    if (!permissionsChanged) return;
+
+    const owner = await newChannel.guild.members.fetch({
+      user: `${BigInt(tempChannel.user.id)}`,
+      cache: true,
+    });
+
+    await changeLobby({
+      tempChannel: tempChannel.temp_channel,
+      voiceChannel: newChannel,
+      owner,
+      guild: newChannel.guild,
+      drizzle,
+      i18n: _i18n,
+    });
+  });
 
   client.on('voiceStateUpdate', async (oldState, newState) => {
     // Check of iemand een temp lobby heeft verlaten

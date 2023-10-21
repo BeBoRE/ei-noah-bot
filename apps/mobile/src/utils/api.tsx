@@ -17,12 +17,11 @@ import {
   splitLink,
   wsLink,
 } from '@trpc/client';
-import { createTRPCReact } from '@trpc/react-query';
 import config from 'src/config';
 import { useAuth } from 'src/context/auth';
 import superjson from 'superjson';
 
-import type { AppRouter } from '@ei/trpc';
+import { api } from '@ei/react-shared';
 
 onlineManager.setEventListener((setOnline) =>
   NetInfo.addEventListener((state) => {
@@ -63,7 +62,7 @@ export const getBaseUrl = (ws = false) => {
 /**
  * A set of typesafe hooks for consuming your API.
  */
-export const api = createTRPCReact<AppRouter>();
+export { api };
 export { type RouterInputs, type RouterOutputs } from '@ei/trpc';
 
 const asyncStoragePersistor = createAsyncStoragePersister({
