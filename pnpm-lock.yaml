@@ -415,6 +415,9 @@ importers:
       '@ei/drizzle':
         specifier: ^0.0.1
         version: link:../../packages/drizzle
+      '@ei/lobby':
+        specifier: '*'
+        version: link:../../packages/lobby
       '@ei/lucia':
         specifier: ^0.0.1
         version: link:../../packages/lucia
@@ -484,6 +487,9 @@ importers:
       drizzle-orm:
         specifier: ^0.28.6
         version: 0.28.6(@types/pg@8.10.3)(pg@8.11.1)
+      framer-motion:
+        specifier: ^10.16.4
+        version: 10.16.4(react-dom@18.2.0)(react@18.2.0)
       lucide-react:
         specifier: ^0.279.0
         version: 0.279.0(react@18.2.0)
@@ -2494,7 +2500,7 @@ packages:
       discord-api-types: 0.37.60
       fast-deep-equal: 3.1.3
       ts-mixer: 6.0.3
-      tslib: 2.6.1
+      tslib: 2.6.2
     dev: false
 
   /@discordjs/collection@1.5.1:
@@ -2544,7 +2550,7 @@ packages:
       '@types/ws': 8.5.5
       '@vladfrangu/async_event_emitter': 2.2.2
       discord-api-types: 0.37.60
-      tslib: 2.6.1
+      tslib: 2.6.2
       ws: 8.14.2
     transitivePeerDependencies:
       - bufferutil
@@ -3460,7 +3466,7 @@ packages:
       fs-extra: 10.1.0
       http-call: 5.3.0
       semver: 7.3.8
-      tslib: 2.4.1
+      tslib: 2.6.2
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -4122,7 +4128,7 @@ packages:
       strip-ansi: 6.0.1
       supports-color: 8.1.1
       supports-hyperlinks: 2.3.0
-      tslib: 2.4.1
+      tslib: 2.6.2
       widest-line: 3.1.0
       wrap-ansi: 7.0.0
     dev: false
@@ -9677,6 +9683,24 @@ packages:
     resolution: {integrity: sha512-MhLuK+2gUcnZe8ZHlaaINnQLl0xRIGRfcGk2yl8xoQAfHrSsL3rYu6FCmBdkdbhc9EPlwyGHewaRsvwRMJtAlA==}
     dev: true
 
+  /framer-motion@10.16.4(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-p9V9nGomS3m6/CALXqv6nFGMuFOxbWsmaOrdmhyQimMIlLl3LC7h7l86wge/Js/8cRu5ktutS/zlzgR7eBOtFA==}
+    peerDependencies:
+      react: ^18.0.0
+      react-dom: ^18.0.0
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+      tslib: 2.6.2
+    optionalDependencies:
+      '@emotion/is-prop-valid': 0.8.8
+    dev: false
+
   /framer-motion@6.5.1(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-o1BGqqposwi7cgDrtg0dNONhkmPsUFDaLcKXigzuTFC5x58mE8iyTazxSudFzmT6MEyJKfjjU8ItoMe3W+3fiw==}
     peerDependencies:
@@ -10036,7 +10060,7 @@ packages:
       graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
     dependencies:
       graphql: 15.8.0
-      tslib: 2.4.1
+      tslib: 2.6.2
     dev: false
 
   /graphql-tag@2.12.6(graphql@16.6.0):
@@ -10046,7 +10070,7 @@ packages:
       graphql: ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
     dependencies:
       graphql: 16.6.0
-      tslib: 2.4.1
+      tslib: 2.6.2
     dev: false
 
   /graphql@15.8.0:
@@ -15265,7 +15289,7 @@ packages:
     engines: {node: ^14.18.0 || >=16.0.0}
     dependencies:
       '@pkgr/utils': 2.4.2
-      tslib: 2.6.1
+      tslib: 2.6.2
     dev: false
 
   /tailwind-merge@1.14.0:
