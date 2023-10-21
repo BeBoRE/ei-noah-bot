@@ -5,7 +5,6 @@ import { appRouter, createWSContext } from '@ei/trpc';
 
 const wss = new ws.Server({
   port: 3001,
-  path: '/ws',
 });
 
 const handler = applyWSSHandler({
