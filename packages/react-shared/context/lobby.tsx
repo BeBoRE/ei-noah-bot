@@ -1,3 +1,5 @@
+"use client";
+
 import { createContext, useContext, useMemo, useState } from 'react';
 import type { alert } from 'burnt';
 import { ChannelType, LobbyChange } from '@ei/lobby';
