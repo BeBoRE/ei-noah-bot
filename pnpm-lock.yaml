@@ -410,6 +410,34 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2
 
+  apps/subscriptions:
+    dependencies:
+      '@ei/trpc':
+        specifier: '*'
+        version: link:../../packages/trpc
+      '@trpc/server':
+        specifier: ^10.40.0
+        version: 10.40.0
+      ws:
+        specifier: ^8.14.2
+        version: 8.14.2
+    devDependencies:
+      '@ei/tsconfig':
+        specifier: '*'
+        version: link:../../packages/tsconfig
+      eslint:
+        specifier: ^8.51.0
+        version: 8.51.0
+      eslint-config-custom:
+        specifier: '*'
+        version: link:../../packages/eslint-config-custom
+      tsx:
+        specifier: ^3.13.0
+        version: 3.13.0
+      typescript:
+        specifier: 5.1.6
+        version: 5.1.6
+
   apps/website:
     dependencies:
       '@ei/drizzle':
@@ -526,9 +554,6 @@ importers:
       webpack-node-externals:
         specifier: ^3.0.0
         version: 3.0.0
-      ws:
-        specifier: ^8.14.2
-        version: 8.14.2
     devDependencies:
       '@ei/tsconfig':
         specifier: '*'
@@ -554,9 +579,6 @@ importers:
       ts-node-dev:
         specifier: ^2.0.0
         version: 2.0.0(@types/node@18.18.4)(typescript@5.2.2)
-      tsx:
-        specifier: ^3.13.0
-        version: 3.13.0
       typescript:
         specifier: ^5.2.2
         version: 5.2.2
