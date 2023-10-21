@@ -5,6 +5,7 @@ import cn from 'utils/utils';
 
 import { ApiGuild } from '@ei/trpc/src/schemas';
 
+import { Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
   NavigationMenu,
@@ -72,7 +73,10 @@ export function NavMenu({ guilds }: Props) {
     <NavigationMenu>
       <NavigationMenuList>
         <NavigationMenuItem>
-          <NavigationMenuTrigger>Roles</NavigationMenuTrigger>
+          <NavigationMenuTrigger>
+            <Users className="mr-2 h-4 w-4" />
+            Roles
+          </NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="flex min-w-[10em] flex-col gap-3 p-2">
               {guilds.map((guild) => (
