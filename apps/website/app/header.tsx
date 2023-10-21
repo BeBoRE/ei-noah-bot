@@ -20,7 +20,7 @@ async function Header() {
         <div className="flex flex-1 place-items-center items-stretch gap-2">
           <Link className="flex place-items-center gap-1" href="/">
             <Icons.Logo className="h-8 w-8" />
-            <h1 className="text-xl font-bold text-primary-800 dark:text-primary-300 hidden sm:block">
+            <h1 className="hidden text-xl font-bold text-primary-800 dark:text-primary-300 sm:block">
               ei Noah
             </h1>
           </Link>

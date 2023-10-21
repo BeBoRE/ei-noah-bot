@@ -62,7 +62,7 @@ export default async function Layout({ children }: Props) {
                 className="flex gap-2 p-2 focus:no-underline"
               >
                 <Link href="https://github.com/BeBoRE/ei-noah-bot">
-                  <span className='hidden sm:inline'>Proudly open-source</span>
+                  <span className="hidden sm:inline">Proudly open-source</span>
                   <GithubIcon className="h-8 w-8" />
                 </Link>
               </Button>
