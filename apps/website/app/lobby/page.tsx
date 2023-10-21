@@ -79,10 +79,10 @@ function LobbyScreen() {
                   </AnimatePresence>
                 </Button>
               </div>
-                <NameInput
-                  currentName={nameInfo?.name || null}
-                  onNameChange={(name) => changeName(name)}
-                />
+              <NameInput
+                currentName={nameInfo?.name || null}
+                onNameChange={(name) => changeName(name)}
+              />
             </div>
             <div className="flex h-16 justify-center gap-8 rounded-full bg-primary-900 p-2 text-center text-2xl font-bold">
               {[ChannelType.Public, ChannelType.Mute, ChannelType.Nojoin].map(
