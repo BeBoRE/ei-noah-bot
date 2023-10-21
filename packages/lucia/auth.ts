@@ -24,6 +24,11 @@ export const auth = lucia({
   experimental: {
     debugMode: process.env.DEBUG === 'true',
   },
+  sessionCookie: {
+    attributes: {
+      domain: process.env.NODE_ENV === 'production' ? 'sweaties.net' : undefined,
+    }
+  }
 });
 
 const clientId = process.env.CLIENT_ID;
