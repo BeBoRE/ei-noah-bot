@@ -21,6 +21,7 @@
     "@ei/lucia": "^0.0.1",
     "@ei/tailwind-config": "*",
     "@ei/trpc": "^0.0.0",
+    "@ei/react-shared": "*",
     "@lucia-auth/oauth": "^3.3.1",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-dropdown-menu": "^2.0.6",

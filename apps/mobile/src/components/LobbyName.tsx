@@ -3,7 +3,6 @@ import { Pressable, TextInput, View } from 'react-native';
 import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import ReactTimeAgo from 'react-time-ago';
 import EmojiPicker, { emojisByCategory } from 'rn-emoji-keyboard';
-import { api } from 'src/utils/api';
 
 import { generateLobbyName, LobbyChange } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
@@ -12,11 +11,10 @@ import Text, { AnimatedText } from './Text';
 
 type Props = {
   lobby: NonNullable<LobbyChange>;
+  onNameChange: (name: string) => void;
 };
 
-const LobbyName = forwardRef<View, Props>(({ lobby }: Props, ref) => {
-  const { mutate: changeLobby } = api.lobby.changeLobby.useMutation();
-
+const LobbyName = forwardRef<View, Props>(({ lobby, onNameChange }: Props, ref) => {
   const nameInfo = generateLobbyName(
     lobby.channel.type,
     lobby.user,
@@ -38,12 +36,6 @@ const LobbyName = forwardRef<View, Props>(({ lobby }: Props, ref) => {
   useEffect(() => {
     setName(nameInfo?.name);
   }, [nameInfo?.name]);
-
-  const onNameChange = (newName: string) => {
-    changeLobby({
-      name: newName,
-    });
-  };
 
   return (
     <View

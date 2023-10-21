@@ -183,6 +183,9 @@ importers:
       '@ei/lobby':
         specifier: ^1.0.0
         version: link:../../packages/lobby
+      '@ei/react-shared':
+        specifier: '*'
+        version: link:../../packages/react-shared
       '@ei/tailwind-config':
         specifier: '*'
         version: link:../../packages/tailwind-config
@@ -415,6 +418,9 @@ importers:
       '@ei/lucia':
         specifier: ^0.0.1
         version: link:../../packages/lucia
+      '@ei/react-shared':
+        specifier: '*'
+        version: link:../../packages/react-shared
       '@ei/tailwind-config':
         specifier: '*'
         version: link:../../packages/tailwind-config
@@ -671,6 +677,34 @@ importers:
       typescript:
         specifier: ^5.1.6
         version: 5.1.6
+
+  packages/react-shared:
+    dependencies:
+      '@ei/lobby':
+        specifier: ^1.0.0
+        version: link:../lobby
+      '@ei/trpc':
+        specifier: ^0.0.0
+        version: link:../trpc
+      '@trpc/react-query':
+        specifier: ^10.40.0
+        version: 10.40.0(@tanstack/react-query@4.36.1)(@trpc/client@10.40.0)(@trpc/server@10.40.0)(react-dom@18.2.0)(react@18.2.0)
+      react:
+        specifier: 18.2.0
+        version: 18.2.0
+    devDependencies:
+      '@ei/tsconfig':
+        specifier: '*'
+        version: link:../tsconfig
+      '@types/react':
+        specifier: ^18.2.27
+        version: 18.2.27
+      eslint:
+        specifier: ^8.51.0
+        version: 8.51.0
+      typescript:
+        specifier: ^5.2.2
+        version: 5.2.2
 
   packages/redis:
     dependencies:

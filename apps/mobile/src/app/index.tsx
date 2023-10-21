@@ -18,16 +18,18 @@ import { AnimatedTypeSelector } from 'src/components/TypeSelector';
 import { AnimatedUserLimitSelector } from 'src/components/UserLimits';
 import UsersSheet from 'src/components/UsersSheet';
 import { useAuth } from 'src/context/auth';
-import { LobbyProvider, useLobby } from 'src/context/lobby';
+import { LobbyProvider, useLobby } from '@ei/react-shared/context/lobby';
 import useNotifications from 'src/hooks/useNotifications';
 import { baseConfig } from 'tailwind.config';
 
+import { useAppState } from '@react-native-community/hooks';
+import { alert } from 'burnt';
 import { api } from '../utils/api';
 
 function Screen() {
   useNotifications();
 
-  const { lobby, changeChannelType, changeUserLimit } = useLobby();
+  const { lobby, changeChannelType, changeUserLimit, changeName } = useLobby();
 
   if (!lobby) {
     return <JoinLobby />;
@@ -67,6 +69,7 @@ function Screen() {
         </AnimatedText>
       </Animated.View>
       <AnimatedLobbyName
+        onNameChange={changeName}
         lobby={lobby}
         entering={FadeInDown.duration(200).delay(400)}
       />
@@ -97,6 +100,11 @@ const getUserImageUrl = (user: { avatar: string; id: string }) =>
 function Index() {
   const { signOut } = useAuth();
   const { data: user } = api.user.me.useQuery();
+
+  const { authInfo } = useAuth();
+  const appState = useAppState();
+
+  const enabled = !!authInfo && (appState === 'active' || appState === 'inactive')
 
   return (
     <>
@@ -139,7 +147,7 @@ function Index() {
         }}
       />
       <SafeAreaView edges={['left', 'right']} className="flex-1 to-primary-950">
-        <LobbyProvider>
+        <LobbyProvider enabled={enabled} token={authInfo} alert={alert}>
           <Screen />
         </LobbyProvider>
         <StatusBar style="dark" />

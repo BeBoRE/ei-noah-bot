@@ -1,16 +1,14 @@
 import { createContext, useContext, useMemo, useState } from 'react';
-import { useAppState } from '@react-native-community/hooks';
-import { alert } from 'burnt';
-import { api } from 'src/utils/api';
-
+import type { alert } from 'burnt';
 import { ChannelType, LobbyChange } from '@ei/lobby';
+import { api } from '../api';
 
-import { useAuth } from './auth';
 
 type LobbyContextProps = {
   lobby: LobbyChange | null;
   changeChannelType: (type: ChannelType) => void;
   changeUserLimit: (limit: number) => void;
+  changeName: (name: string) => void;
 };
 
 const lobbyContext = createContext<LobbyContextProps>({
@@ -21,22 +19,29 @@ const lobbyContext = createContext<LobbyContextProps>({
   changeUserLimit: () => {
     throw new Error('Outside of provider');
   },
+  changeName: () => {
+    throw new Error('Outside of provider');
+  },
 });
 
 export function useLobby() {
   return useContext(lobbyContext);
 }
 
-export function LobbyProvider({ children }: { children: React.ReactNode }) {
+type ProviderProps = {
+  children?: React.ReactNode;
+  enabled?: boolean;
+  token?: string | null;
+  alert?: typeof alert;
+};
+
+export function LobbyProvider({ children, enabled, token, alert } : ProviderProps) {
   const [lobby, setLobby] = useState<LobbyChange | null>(null);
 
   const { mutate: changeLobby } = api.lobby.changeLobby.useMutation();
 
-  const { authInfo } = useAuth();
-  const appState = useAppState();
-
-  api.lobby.lobbyUpdate.useSubscription(authInfo || undefined, {
-    enabled: !!authInfo && (appState === 'active' || appState === 'inactive'),
+  api.lobby.lobbyUpdate.useSubscription(token || undefined, {
+    enabled: enabled === undefined || enabled,
     onData: (data) => {
       setLobby(data);
     },
@@ -68,9 +73,10 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
           },
           {
             onError: (err) => {
-              alert({
+              alert?.({
                 title: 'Error',
                 message: err.message,
+                preset: 'error',
               });
 
               if (err.data?.code === 'NOT_FOUND') {
@@ -107,9 +113,50 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
           },
           {
             onError: (err) => {
-              alert({
+              alert?.({
                 title: 'Error',
                 message: err.message,
+                preset: 'error'
+              });
+
+              if (err.data?.code === 'NOT_FOUND') {
+                // Channel was deleted
+                setLobby(null);
+                return;
+              }
+
+              setLobby(currentState);
+            },
+          },
+        );
+      },
+      changeName: (name: string) => {
+        let currentState: LobbyChange | null = null;
+
+        // Optimistic update
+        setLobby((prev) => {
+          if (!prev) return prev;
+          currentState = prev;
+
+          return {
+            ...prev,
+            channel: {
+              ...prev.channel,
+              name,
+            },
+          };
+        });
+
+        changeLobby(
+          {
+            name,
+          },
+          {
+            onError: (err) => {
+              alert?.({
+                title: 'Error',
+                message: err.message,
+                preset: 'error',
               });
 
               if (err.data?.code === 'NOT_FOUND') {
@@ -124,7 +171,7 @@ export function LobbyProvider({ children }: { children: React.ReactNode }) {
         );
       },
     }),
-    [changeLobby, lobby],
+    [changeLobby, lobby, alert],
   );
 
   return (
