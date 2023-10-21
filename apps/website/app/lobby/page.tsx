@@ -43,7 +43,7 @@ function LobbyScreen() {
 
   return (
     <div className="flex flex-1 justify-center">
-      <div className="container flex justify-center">
+      <div className="container flex justify-center items-center">
         {lobby && (
           <div className="flex w-full max-w-md flex-col gap-3 p-4">
             <div className="flex flex-row items-center justify-center gap-4">
@@ -51,7 +51,7 @@ function LobbyScreen() {
                 {lobby.guild.icon ? (
                   <img
                     src={lobby.guild.icon}
-                    className="h-24 w-24 rounded-full bg-primary-900"
+                    className="h-20 w-20 rounded-full bg-primary-900"
                     alt=""
                   />
                 ) : (
