@@ -13,6 +13,7 @@ import {
 } from '@trpc/client';
 import superjson from 'superjson';
 
+import { LobbyProvider } from '@ei/react-shared/context/lobby';
 import { api } from '../utils/api';
 
 const getBaseUrl = () => {
@@ -87,7 +88,9 @@ export default function TRPCReactProvider({ children }: Props) {
     <QueryClientProvider client={queryClient}>
       <ReactQueryStreamedHydration>
         <api.Provider client={trpcClient} queryClient={queryClient}>
-          {children}
+          <LobbyProvider>
+            {children}
+          </LobbyProvider>
         </api.Provider>
       </ReactQueryStreamedHydration>
       <ReactQueryDevtools initialIsOpen={false} />

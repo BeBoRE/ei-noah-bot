@@ -46,8 +46,10 @@ export default async function Layout({ children }: Props) {
           'flex-col',
         ].join(' ')}
       >
-        <Header />
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <TRPCReactProvider>
+          <Header />
+          {children}
+        </TRPCReactProvider>
         <footer className="flex place-content-center bg-primary-100 p-3 dark:bg-primary-900">
           <div className="container flex items-center justify-between text-sm">
             <Button variant="link" asChild className="flex items-center">
@@ -60,7 +62,7 @@ export default async function Layout({ children }: Props) {
                 className="flex gap-2 p-2 focus:no-underline"
               >
                 <Link href="https://github.com/BeBoRE/ei-noah-bot">
-                  <span>Proudly open-source</span>
+                  <span className='hidden sm:inline'>Proudly open-source</span>
                   <GithubIcon className="h-8 w-8" />
                 </Link>
               </Button>
