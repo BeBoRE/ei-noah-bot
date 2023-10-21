@@ -18,7 +18,7 @@ function GotoLobby() {
           className="flex items-center"
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 50 }}
+          exit={{ opacity: 0, x: 0 }}
         >
           <Button variant="default" asChild className="gap-1">
             <Link href="/lobby">
