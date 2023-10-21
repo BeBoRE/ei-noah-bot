@@ -6,6 +6,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ChannelType, generateLobbyName } from '@ei/lobby';
 import { useLobby } from '@ei/react-shared/context/lobby';
 
+import NameInput from './NameInput';
+
 const lobbyTypeEmoji = {
   [ChannelType.Public]: '🔊',
   [ChannelType.Mute]: '🙊',
@@ -13,7 +15,7 @@ const lobbyTypeEmoji = {
 };
 
 function LobbyScreen() {
-  const { lobby, changeChannelType, changeUserLimit } = useLobby();
+  const { lobby, changeChannelType, changeUserLimit, changeName } = useLobby();
 
   if (!lobby)
     return (
@@ -29,7 +31,7 @@ function LobbyScreen() {
       </div>
     );
 
-  const name = generateLobbyName(
+  const nameInfo = generateLobbyName(
     lobby.channel.type,
     {
       displayName: lobby.user.displayName,
@@ -59,25 +61,28 @@ function LobbyScreen() {
               <div className="text-4xl font-bold">{lobby.guild.name}</div>
             </div>
             <div className="flex h-16 rounded-full bg-primary-900 p-2 text-center text-2xl font-bold">
-              <Button
-                variant="secondary"
-                className="relative aspect-square h-full overflow-hidden rounded-full text-2xl"
-              >
-                <AnimatePresence initial={false}>
-                  <motion.span
-                    key={name?.icon}
-                    className="absolute inset-0 flex items-center justify-center"
-                    initial={{ y: -50, opacity: 1 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 50, opacity: 1 }}
-                  >
-                    {name?.icon}
-                  </motion.span>
-                </AnimatePresence>
-              </Button>
-              <div className="flex flex-1 items-center justify-center">
-                <span>{name?.name}</span>
+              <div className="aspect-square h-full">
+                <Button
+                  variant="secondary"
+                  className="relative aspect-square h-full overflow-hidden rounded-full text-2xl"
+                >
+                  <AnimatePresence initial={false}>
+                    <motion.span
+                      key={nameInfo?.icon}
+                      className="absolute inset-0 flex items-center justify-center"
+                      initial={{ y: -50, opacity: 1 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 50, opacity: 1 }}
+                    >
+                      {nameInfo?.icon}
+                    </motion.span>
+                  </AnimatePresence>
+                </Button>
               </div>
+                <NameInput
+                  currentName={nameInfo?.name || null}
+                  onNameChange={(name) => changeName(name)}
+                />
             </div>
             <div className="flex h-16 justify-center gap-8 rounded-full bg-primary-900 p-2 text-center text-2xl font-bold">
               {[ChannelType.Public, ChannelType.Mute, ChannelType.Nojoin].map(
