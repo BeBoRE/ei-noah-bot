@@ -2893,7 +2893,7 @@ const checkTempChannel = async (
               ? { messageReference: tempChannel.controlDashboardId }
               : undefined,
             content: i18n.t('lobby.ownershipTransferred', {
-              user: newOwner.user.toString(),
+              user: newOwnerMember.user.toString(),
             }),
           }),
         ]).catch((err) => logger.error(err.message, { error: err }));
