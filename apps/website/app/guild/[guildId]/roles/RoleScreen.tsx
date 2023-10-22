@@ -51,7 +51,7 @@ function RoleScreen({ initialData }: Props) {
           <h1 className="flex-1 text-3xl">Role Selection</h1>
         </div>
         <div className="grid grid-cols-2 place-content-start items-start justify-items-start gap-4 py-2 md:grid-cols-4 xl:grid-cols-5">
-          {!allowedToCreateRoles && (
+          {!allowedToCreateRoles && !customRoles.length && (
             <div className="flex aspect-square w-full flex-col place-content-center items-center rounded-xl bg-primary-50 text-xl font-bold text-primary-500 dark:bg-primary-800 dark:text-primary-300">
               <X className="h-8 w-8 sm:h-24 sm:w-24" />
               <span>No roles found</span>
