@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+import data from '@emoji-mart/data';
+import Picker from '@emoji-mart/react';
 import { Button } from 'app/_components/ui/button';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -16,6 +19,7 @@ const lobbyTypeEmoji = {
 
 function LobbyScreen() {
   const { lobby, changeChannelType, changeUserLimit, changeName } = useLobby();
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
 
   if (!lobby)
     return (
@@ -43,7 +47,7 @@ function LobbyScreen() {
 
   return (
     <div className="flex flex-1 justify-center">
-      <div className="container flex justify-center items-center">
+      <div className="container flex items-center justify-center">
         {lobby && (
           <div className="flex w-full max-w-md flex-col gap-3 p-4">
             <div className="flex flex-row items-center justify-center gap-4">
@@ -61,10 +65,11 @@ function LobbyScreen() {
               <div className="text-4xl font-bold">{lobby.guild.name}</div>
             </div>
             <div className="flex h-16 rounded-full bg-primary-900 p-2 text-center text-2xl font-bold">
-              <div className="aspect-square h-full">
+              <div className="relative z-10 aspect-square h-full">
                 <Button
                   variant="secondary"
                   className="relative aspect-square h-full overflow-hidden rounded-full text-2xl"
+                  onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
                 >
                   <AnimatePresence initial={false}>
                     <motion.span
@@ -78,6 +83,22 @@ function LobbyScreen() {
                     </motion.span>
                   </AnimatePresence>
                 </Button>
+                {emojiPickerOpen && (
+                  <Picker
+                    className="top-2"
+                    data={data}
+                    onEmojiSelect={(emoji: unknown) => {
+                      if (
+                        emoji &&
+                        typeof emoji === 'object' &&
+                        'native' in emoji
+                      ) {
+                        changeName(`${emoji.native} ${nameInfo?.name || ''}`);
+                      }
+                    }}
+                    noCountryFlags
+                  />
+                )}
               </div>
               <NameInput
                 currentName={nameInfo?.name || null}
@@ -99,7 +120,7 @@ function LobbyScreen() {
                         className="absolute inset-0 rounded-full bg-primary-800"
                       />
                     )}
-                    <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="absolute inset-0 z-0 flex items-center justify-center">
                       {lobbyTypeEmoji[type]}
                     </span>
                   </Button>

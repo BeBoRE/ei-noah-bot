@@ -431,6 +431,12 @@ importers:
       '@ei/trpc':
         specifier: ^0.0.0
         version: link:../../packages/trpc
+      '@emoji-mart/data':
+        specifier: ^1.1.2
+        version: 1.1.2
+      '@emoji-mart/react':
+        specifier: ^1.1.1
+        version: 1.1.1(emoji-mart@5.5.2)(react@18.2.0)
       '@lucia-auth/oauth':
         specifier: ^3.3.1
         version: 3.3.1(lucia@2.7.1)
@@ -488,6 +494,12 @@ importers:
       drizzle-orm:
         specifier: ^0.28.6
         version: 0.28.6(@types/pg@8.10.3)(pg@8.11.1)
+      emoji-mart:
+        specifier: ^5.5.2
+        version: 5.5.2
+      emoji-mart-lazy:
+        specifier: 3.0.1-k
+        version: 3.0.1-k(react@18.2.0)
       framer-motion:
         specifier: ^10.16.4
         version: 10.16.4(react-dom@18.2.0)(react@18.2.0)
@@ -500,6 +512,9 @@ importers:
       react:
         specifier: 18.2.0
         version: 18.2.0
+      react-click-away-listener:
+        specifier: ^2.2.3
+        version: 2.2.3(react-dom@18.2.0)(react@18.2.0)
       react-dom:
         specifier: 18.2.0
         version: 18.2.0(react@18.2.0)
@@ -522,6 +537,9 @@ importers:
       '@ei/tsconfig':
         specifier: '*'
         version: link:../../packages/tsconfig
+      '@types/emoji-mart':
+        specifier: ^3.0.11
+        version: 3.0.11
       '@types/node':
         specifier: ^18.18.4
         version: 18.18.4
@@ -676,10 +694,10 @@ importers:
         specifier: ^0.0.0
         version: link:../trpc
       '@trpc/react-query':
-        specifier: ^10.40.0
+        specifier: '>=10.40.0'
         version: 10.40.0(@tanstack/react-query@4.36.1)(@trpc/client@10.40.0)(@trpc/server@10.40.0)(react-dom@18.2.0)(react@18.2.0)
       react:
-        specifier: 18.2.0
+        specifier: '>=16.8.0'
         version: 18.2.0
     devDependencies:
       '@ei/tsconfig':
@@ -2530,6 +2548,20 @@ packages:
     engines: {node: '>=0.8.0'}
     dependencies:
       '@types/hammerjs': 2.0.42
+    dev: false
+
+  /@emoji-mart/data@1.1.2:
+    resolution: {integrity: sha512-1HP8BxD2azjqWJvxIaWAMyTySeZY0Osr83ukYjltPVkNXeJvTz7yDrPLBtnrD5uqJ3tg4CcLuuBW09wahqL/fg==}
+    dev: false
+
+  /@emoji-mart/react@1.1.1(emoji-mart@5.5.2)(react@18.2.0):
+    resolution: {integrity: sha512-NMlFNeWgv1//uPsvLxvGQoIerPuVdXwK/EUek8OOkJ6wVOWPUizRBJU0hDqWZCOROVpfBgCemaC3m6jDOXi03g==}
+    peerDependencies:
+      emoji-mart: ^5.2
+      react: ^16.8 || ^17 || ^18
+    dependencies:
+      emoji-mart: 5.5.2
+      react: 18.2.0
     dev: false
 
   /@emotion/is-prop-valid@0.8.8:
@@ -5218,6 +5250,12 @@ packages:
       moment: 2.29.4
     dev: false
 
+  /@types/emoji-mart@3.0.11:
+    resolution: {integrity: sha512-E0/sO/ueRL33DDov4qGIn8uNv9PZaTULaLMp6zSXB5bIWRb2zpV37Z1OxXRCiV5g+YL1F8tdn5zDNXk2Wdd+ig==}
+    dependencies:
+      '@types/react': 18.2.27
+    dev: true
+
   /@types/emoji-regex@9.2.0:
     resolution: {integrity: sha512-Q2BaUWiokKV2ZWk15twerRiNIex/VOGIz3pAgPMk6JZAeuGT9oAm/kA2Ri9InUtPc84bY0UQZzn/Pd2yUd33Ig==}
     deprecated: This is a stub types definition. emoji-regex provides its own type definitions, so you do not need this installed.
@@ -7635,6 +7673,21 @@ packages:
     resolution: {integrity: sha512-fbS3QJpzGHhujvBULSKXcvsYmVg+1ldfI3VVXG3jnFuniZtkp7rz/OcTcQjbp3m43BYxmiJgKmaoOUPxXQupRQ==}
     dev: false
 
+  /emoji-mart-lazy@3.0.1-k(react@18.2.0):
+    resolution: {integrity: sha512-0LlSqM58XIJqPml0apwnvfUSB8paOEbdbNMHevI7iYLjWu3BqWoCgXfn5UwP3Tnbf9IdOwmlHfFtVx2PLnuLRQ==}
+    peerDependencies:
+      react: ^0.14.0 || ^15.0.0-0 || ^16.0.0 || ^17.0.0
+    dependencies:
+      '@babel/runtime': 7.23.1
+      intersection-observer: 0.12.2
+      prop-types: 15.8.1
+      react: 18.2.0
+    dev: false
+
+  /emoji-mart@5.5.2:
+    resolution: {integrity: sha512-Sqc/nso4cjxhOwWJsp9xkVm8OF5c+mJLZJFoFfzRuKO+yWiN7K8c96xmtughYb0d/fZ8UC6cLIQ/p4BR6Pv3/A==}
+    dev: false
+
   /emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
     requiresBuild: true
@@ -9863,6 +9916,10 @@ packages:
       get-intrinsic: 1.2.1
       has: 1.0.3
       side-channel: 1.0.4
+
+  /intersection-observer@0.12.2:
+    resolution: {integrity: sha512-7m1vEcPCxXYI8HqnL8CKI6siDyD+eIWSwgB3DZA+ZTogxk9I4CDnj4wilt9x/+/QbHI4YG5YZNmC6458/e9Ktg==}
+    dev: false
 
   /invariant@2.2.4:
     resolution: {integrity: sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==}
@@ -12719,23 +12776,6 @@ packages:
       camelcase-css: 2.0.1
       postcss: 8.4.31
 
-  /postcss-load-config@4.0.1(postcss@8.4.27):
-    resolution: {integrity: sha512-vEJIc8RdiBRu3oRAI0ymerOn+7rPuMvRXslTvZUKZonDHFIczxztIyJ1urxM1x9JXEikvpWWTUUqal5j/8QgvA==}
-    engines: {node: '>= 14'}
-    peerDependencies:
-      postcss: '>=8.0.9'
-      ts-node: '>=9.0.0'
-    peerDependenciesMeta:
-      postcss:
-        optional: true
-      ts-node:
-        optional: true
-    dependencies:
-      lilconfig: 2.1.0
-      postcss: 8.4.27
-      yaml: 2.3.2
-    dev: true
-
   /postcss-load-config@4.0.1(postcss@8.4.31):
     resolution: {integrity: sha512-vEJIc8RdiBRu3oRAI0ymerOn+7rPuMvRXslTvZUKZonDHFIczxztIyJ1urxM1x9JXEikvpWWTUUqal5j/8QgvA==}
     engines: {node: '>= 14'}
@@ -13148,6 +13188,16 @@ packages:
       ini: 1.3.8
       minimist: 1.2.8
       strip-json-comments: 2.0.1
+    dev: false
+
+  /react-click-away-listener@2.2.3(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-p63JRQtK9d085+QHUJ2Pje22P/N4tEaXsS2x7tbbptriQqZ9o8xEk7G1JrxwND5YmEVc/VO4fC3+cSBsqqgLUQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
     dev: false
 
   /react-devtools-core@4.28.4:
@@ -15052,7 +15102,7 @@ packages:
       execa: 5.1.1
       globby: 11.1.0
       joycon: 3.1.1
-      postcss-load-config: 4.0.1(postcss@8.4.27)
+      postcss-load-config: 4.0.1(postcss@8.4.31)
       resolve-from: 5.0.0
       rollup: 3.29.4
       source-map: 0.8.0-beta.0
