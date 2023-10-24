@@ -49,7 +49,7 @@ function LobbyScreen() {
     <div className="flex flex-1 justify-center">
       <div className="container flex items-center justify-center">
         {lobby && (
-          <div className="flex w-full max-w-md flex-col gap-3 p-4">
+          <div className="flex flex-col gap-3 p-0 sm:p-4">
             <div className="flex flex-row items-center justify-center gap-4">
               <div>
                 {lobby.guild.icon ? (
@@ -64,7 +64,7 @@ function LobbyScreen() {
               </div>
               <div className="text-4xl font-bold">{lobby.guild.name}</div>
             </div>
-            <div className="flex h-16 rounded-full bg-primary-900 p-2 text-center text-2xl font-bold">
+            <div className="flex gap-2 h-16 rounded-full bg-primary-900 p-2 text-center text-2xl font-bold">
               <div className="relative z-10 aspect-square h-full">
                 <Button
                   variant="secondary"
@@ -83,22 +83,32 @@ function LobbyScreen() {
                     </motion.span>
                   </AnimatePresence>
                 </Button>
+                <AnimatePresence>
                 {emojiPickerOpen && (
-                  <Picker
-                    className="top-2"
-                    data={data}
-                    onEmojiSelect={(emoji: unknown) => {
-                      if (
-                        emoji &&
-                        typeof emoji === 'object' &&
-                        'native' in emoji
-                      ) {
-                        changeName(`${emoji.native} ${nameInfo?.name || ''}`);
-                      }
-                    }}
-                    noCountryFlags
-                  />
+                    <motion.div 
+                      className="absolute inset-0 top-full sm:top-0 sm:left-full pt-2 sm:pl-2 sm:pt-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Picker
+                        className="top-2"
+                        data={data}
+                        onEmojiSelect={(emoji: unknown) => {
+                          if (
+                            emoji &&
+                            typeof emoji === 'object' &&
+                            'native' in emoji
+                          ) {
+                            changeName(`${emoji.native} ${nameInfo?.name || ''}`);
+                          }
+                        }}
+                        noCountryFlags
+                    />
+                    </motion.div>
                 )}
+                </AnimatePresence>
               </div>
               <NameInput
                 currentName={nameInfo?.name || null}

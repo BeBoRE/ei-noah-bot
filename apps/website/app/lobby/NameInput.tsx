@@ -16,14 +16,14 @@ function NameInput({ currentName, onNameChange }: Props) {
 
   return (
     <form
-      className="flex items-center justify-center"
+      className="flex flex-1 items-center justify-center"
       onSubmit={(e) => {
         e.preventDefault();
         if (name) onNameChange(name);
       }}
     >
       <input
-        className="rounded-full bg-[#0000] text-center"
+        className="rounded-full w-64 sm:w-72 bg-[#0000] text-center"
         type="text"
         value={name || undefined}
         onChange={(e) => setName(e.target.value)}
