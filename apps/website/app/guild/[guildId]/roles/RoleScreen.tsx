@@ -46,7 +46,7 @@ function RoleScreen({ initialData }: Props) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex flex-1 flex-col rounded-md bg-primary-100 p-4 dark:bg-primary-900">
+      <div className="flex flex-1 flex-col rounded-md p-4 bg-primary-100 dark:bg-background">
         <div className="flex place-content-between">
           <h1 className="flex-1 text-3xl">Role Selection</h1>
         </div>

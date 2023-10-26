@@ -20,7 +20,7 @@ async function SettingsPage({ params: { guildId } }: Props) {
   ]);
 
   return (
-    <div className="flex-1 rounded-md bg-primary-100 p-4 dark:bg-primary-900">
+    <div className="flex-1 rounded-md p-4 bg-primary-100 dark:bg-background">
       <h1 className="pb-4 text-3xl">Settings</h1>
       <Settings
         guildId={guildId}

@@ -70,7 +70,7 @@ const GuildLayout = async ({ children, params: { guildId } }: Props) => {
           </span>
           {guild?.name}
         </h1>
-        <div className="rounded-md bg-primary-100 p-2 dark:bg-primary-900">
+        <div className="rounded-md bg-primary-100 p-2 dark:bg-primary-900 sm:dark:bg-gradient-to-b sm:dark:from-primary-900 sm:dark:to-primary-950 flex-1">
           <div className="py-2">
             <Button asChild className="w-full justify-start" variant="outline">
               <Link href={`/guild/${guildId}/roles`}>
