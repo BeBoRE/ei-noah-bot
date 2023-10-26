@@ -10,7 +10,7 @@ import { createTRPCRouter, protectedProcedure, publicProcedure } from './trpc';
 
 export const appRouter = createTRPCRouter({
   healthcheck: publicProcedure.query(() => 'OK'),
-  subscription: protectedProcedure.subscription(() =>
+  time: protectedProcedure.subscription(() =>
     observable<number>((emit) => {
       const interval = setInterval(() => {
         emit.next(Date.now());

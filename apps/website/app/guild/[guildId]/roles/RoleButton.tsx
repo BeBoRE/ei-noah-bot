@@ -2,9 +2,10 @@
 
 import { useParams } from 'next/navigation';
 import { Button } from 'app/_components/ui/button';
-import { api, RouterOutputs } from 'utils/api';
+import { api } from 'trpc/react';
 
 import baseConfig from '@ei/tailwind-config';
+import { RouterOutputs } from '@ei/trpc';
 
 type Props = {
   role: RouterOutputs['roles']['guildCustom'][0];

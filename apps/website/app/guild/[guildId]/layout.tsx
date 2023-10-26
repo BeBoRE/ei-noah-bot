@@ -1,4 +1,3 @@
-import * as context from 'next/headers';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -7,9 +6,10 @@ import { Button } from 'app/_components/ui/button';
 import { Separator } from 'app/_components/ui/separator';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/v10';
 import { Settings, Users } from 'lucide-react';
-import rscApi from 'utils/rsc';
 
 import { userIsAdmin } from '@ei/trpc/src/utils';
+import { Suspense } from 'react';
+import rscApi from 'trpc/server';
 
 type Props = {
   children?: React.ReactNode;
@@ -19,7 +19,7 @@ type Props = {
 };
 
 const GuildLayout = async ({ children, params: { guildId } }: Props) => {
-  const api = await rscApi(context);
+  const api = await rscApi();
 
   const guild = (
     await api.guild.get({ guildId }).catch((err) => {
@@ -98,7 +98,7 @@ const GuildLayout = async ({ children, params: { guildId } }: Props) => {
           )}
         </div>
       </div>
-      {children}
+      <Suspense>{children}</Suspense>
     </div>
   );
 };

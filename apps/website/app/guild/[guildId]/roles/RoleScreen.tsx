@@ -4,21 +4,13 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Button } from 'app/_components/ui/button';
 import { Plus, X } from 'lucide-react';
-import { api, RouterOutputs } from 'utils/api';
+import { api } from 'trpc/react';
 
 import { canCreateRoles } from '@ei/trpc/src/utils';
 
 import RoleButton from './RoleButton';
 
-type Props = {
-  initialData: {
-    customRoles: RouterOutputs['roles']['guildCustom'];
-    member: RouterOutputs['user']['memberMe'];
-    guild: RouterOutputs['guild']['get'];
-  };
-};
-
-function RoleScreen({ initialData }: Props) {
+function RoleScreen() {
   const params = useParams();
   const { guildId } = params;
 
@@ -26,20 +18,9 @@ function RoleScreen({ initialData }: Props) {
     return null;
   }
 
-  const { data: customRoles } = api.roles.guildCustom.useQuery(
-    { guildId },
-    { initialData: initialData.customRoles },
-  );
-  const { data: member } = api.user.memberMe.useQuery(
-    { guildId },
-    { initialData: initialData.member },
-  );
-  const { data: guild } = api.guild.get.useQuery(
-    { guildId },
-    {
-      initialData: initialData.guild,
-    },
-  );
+  const [customRoles] = api.roles.guildCustom.useSuspenseQuery({ guildId });
+  const [member] = api.user.memberMe.useSuspenseQuery({ guildId });
+  const [guild] = api.guild.get.useSuspenseQuery({ guildId },);
 
   const allowedToCreateRoles =
     member && guild ? canCreateRoles(member, guild?.discord, guild?.db) : false;

@@ -30,7 +30,7 @@ const handler = async (req: NextRequest) => {
     req: req as unknown as Request,
     createContext: () => createApiContext({ req, context }),
     onError({ error, path }) {
-      console.error(`>>> tRPC Error on '${path}'`, error);
+      console.error(`>>> tRPC Error on '${path ?? '<no-path>'}'`, error.message);
     },
   });
 

@@ -1,5 +1,4 @@
-import * as context from 'next/headers';
-import rscApi from 'utils/rsc';
+import rscApi from 'trpc/server';
 
 import Settings from './Settings';
 
@@ -10,7 +9,7 @@ type Props = {
 };
 
 async function SettingsPage({ params: { guildId } }: Props) {
-  const api = await rscApi(context);
+  const api = await rscApi();
 
   const [guild, channels, member, customRoles] = await Promise.all([
     await api.guild.get({ guildId }),

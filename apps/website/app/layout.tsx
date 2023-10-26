@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { Button } from './_components/ui/button';
 import GithubIcon from './GithubIcon';
 import Header from './header';
-import TRPCReactProvider from './providers';
+import Providers from './providers';
 
 const fontSans = Inter({
   subsets: ['latin'],
@@ -46,10 +46,10 @@ export default async function Layout({ children }: Props) {
           'flex-col',
         ].join(' ')}
       >
-        <TRPCReactProvider>
+        <Providers>
           <Header />
           {children}
-        </TRPCReactProvider>
+        </Providers>
         <footer className="flex place-content-center bg-primary-100 p-3 dark:bg-primary-900">
           <div className="container flex items-center justify-between text-sm">
             <Button variant="link" asChild className="flex items-center">

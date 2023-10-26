@@ -1,6 +1,5 @@
-import * as context from 'next/headers';
 import Link from 'next/link';
-import rscApi from 'utils/rsc';
+import rscApi from 'trpc/server';
 
 import HeaderUser from './_components/HeaderUser';
 import { Icons } from './_components/Icons';
@@ -8,7 +7,7 @@ import { NavMenu } from './_components/NavMenu';
 import GotoLobby from './GotoLobby';
 
 async function Header() {
-  const api = await rscApi(context);
+  const api = await rscApi();
   const [user, guilds] = await Promise.all([
     api.user.me().catch(() => null),
     api.guild.all().catch(() => null),
