@@ -1,7 +1,7 @@
-import { LobbyProvider } from '@ei/react-shared/context/lobby';
-
-import TRPCReactProvider from 'trpc/react';
 import { headers } from 'next/headers';
+import TRPCReactProvider from 'trpc/react';
+
+import { LobbyProvider } from '@ei/react-shared/context/lobby';
 
 type Props = {
   children: React.ReactNode;

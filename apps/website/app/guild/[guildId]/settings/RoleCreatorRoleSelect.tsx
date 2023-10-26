@@ -10,9 +10,9 @@ import {
   SelectValue,
 } from 'app/_components/ui/select';
 
-import { highestRole } from '@ei/trpc/src/utils';
-import { RouterOutputs } from '@ei/trpc';
 import { api } from '@ei/react-shared';
+import { RouterOutputs } from '@ei/trpc';
+import { highestRole } from '@ei/trpc/src/utils';
 
 type Props = {
   guildId: string;

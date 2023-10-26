@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -6,10 +7,9 @@ import { Button } from 'app/_components/ui/button';
 import { Separator } from 'app/_components/ui/separator';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/v10';
 import { Settings, Users } from 'lucide-react';
+import rscApi from 'trpc/server';
 
 import { userIsAdmin } from '@ei/trpc/src/utils';
-import { Suspense } from 'react';
-import rscApi from 'trpc/server';
 
 type Props = {
   children?: React.ReactNode;
@@ -70,7 +70,7 @@ const GuildLayout = async ({ children, params: { guildId } }: Props) => {
           </span>
           {guild?.name}
         </h1>
-        <div className="rounded-md bg-primary-100 p-2 dark:bg-primary-900 sm:dark:bg-gradient-to-b sm:dark:from-primary-900 sm:dark:to-primary-950 flex-1">
+        <div className="flex-1 rounded-md bg-primary-100 p-2 dark:bg-primary-900 sm:dark:bg-gradient-to-b sm:dark:from-primary-900 sm:dark:to-primary-950">
           <div className="py-2">
             <Button asChild className="w-full justify-start" variant="outline">
               <Link href={`/guild/${guildId}/roles`}>

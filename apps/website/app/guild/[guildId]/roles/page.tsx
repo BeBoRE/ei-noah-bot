@@ -1,9 +1,7 @@
 import RoleScreen from './RoleScreen';
 
 async function RolePage() {
-  return (
-    <RoleScreen />
-  );
+  return <RoleScreen />;
 }
 
 export default RolePage;

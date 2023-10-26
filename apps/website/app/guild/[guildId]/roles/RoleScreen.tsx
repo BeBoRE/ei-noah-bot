@@ -20,14 +20,14 @@ function RoleScreen() {
 
   const [customRoles] = api.roles.guildCustom.useSuspenseQuery({ guildId });
   const [member] = api.user.memberMe.useSuspenseQuery({ guildId });
-  const [guild] = api.guild.get.useSuspenseQuery({ guildId },);
+  const [guild] = api.guild.get.useSuspenseQuery({ guildId });
 
   const allowedToCreateRoles =
     member && guild ? canCreateRoles(member, guild?.discord, guild?.db) : false;
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex flex-1 flex-col rounded-md p-4 bg-primary-100 dark:bg-background">
+      <div className="flex flex-1 flex-col rounded-md bg-primary-100 p-4 dark:bg-background">
         <div className="flex place-content-between">
           <h1 className="flex-1 text-3xl">Role Selection</h1>
         </div>

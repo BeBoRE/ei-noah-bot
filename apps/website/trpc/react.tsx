@@ -13,15 +13,19 @@ import {
 } from '@trpc/client';
 
 import { api } from '@ei/react-shared/api';
+
 import { getApiUrl, getWsUrl, transformer } from './shared';
 
-export { api }
+export { api };
 
 const wsUrl = getWsUrl();
 
-const wsClient = wsUrl !== null ? createWSClient({
-  url: wsUrl,
-}) : null;
+const wsClient =
+  wsUrl !== null
+    ? createWSClient({
+        url: wsUrl,
+      })
+    : null;
 
 type Props = {
   children: React.ReactNode;
@@ -44,7 +48,7 @@ export default function TRPCReactProvider({ children, headers }: Props) {
     url: getApiUrl(),
     headers() {
       const heads = new Map(headers);
-      heads.set("x-trpc-source", "react");
+      heads.set('x-trpc-source', 'react');
       return Object.fromEntries(heads);
     },
   });
@@ -62,9 +66,9 @@ export default function TRPCReactProvider({ children, headers }: Props) {
           ? splitLink({
               condition: ({ type }) => type === 'subscription',
               true: wsLink({ client: wsClient }),
-              false: httpLink
+              false: httpLink,
             })
-          : httpLink
+          : httpLink,
       ],
     }),
   );

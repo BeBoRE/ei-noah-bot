@@ -503,6 +503,9 @@ importers:
       framer-motion:
         specifier: ^10.16.4
         version: 10.16.4(react-dom@18.2.0)(react@18.2.0)
+      javascript-time-ago:
+        specifier: ^2.5.9
+        version: 2.5.9
       lucide-react:
         specifier: ^0.279.0
         version: 0.279.0(react@18.2.0)
@@ -515,6 +518,9 @@ importers:
       react-dom:
         specifier: 18.2.0
         version: 18.2.0(react@18.2.0)
+      react-time-ago:
+        specifier: ^7.2.1
+        version: 7.2.1(javascript-time-ago@2.5.9)(react-dom@18.2.0)(react@18.2.0)
       sharp:
         specifier: ^0.32.6
         version: 0.32.6
@@ -694,7 +700,7 @@ importers:
         specifier: '>=10.40.0'
         version: 10.40.0(@tanstack/react-query@4.36.1)(@trpc/client@10.40.0)(@trpc/server@10.40.0)(react-dom@18.2.0)(react@18.2.0)
       react:
-        specifier: '>=16.8.0'
+        specifier: '>=18.2.0'
         version: 18.2.0
     devDependencies:
       '@ei/tsconfig':

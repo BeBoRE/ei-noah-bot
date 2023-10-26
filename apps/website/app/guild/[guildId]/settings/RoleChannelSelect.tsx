@@ -12,8 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from 'app/_components/ui/select';
-import { RouterOutputs } from '@ei/trpc';
+
 import { api } from '@ei/react-shared';
+import { RouterOutputs } from '@ei/trpc';
 
 type Props = {
   guildId: string;
