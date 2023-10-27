@@ -21,6 +21,8 @@ function CreateForm({ guildId }: Props) {
 
   const context = api.useContext();
 
+  const [me] = api.user.me.useSuspenseQuery();
+
   const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value.trimStart());
   };
@@ -36,7 +38,7 @@ function CreateForm({ guildId }: Props) {
       if (notApprovedRole) {
         context.roles.guildNotApproved.setData({ guildId }, (prev) => [
           ...(prev || []),
-          notApprovedRole,
+          {...notApprovedRole, createdByUserId: me?.id || ''},
         ]);
 
         promises.push(context.roles.guildNotApproved.invalidate({ guildId }));

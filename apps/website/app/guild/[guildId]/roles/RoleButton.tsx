@@ -6,16 +6,22 @@ import { api } from 'trpc/react';
 
 import baseConfig from '@ei/tailwind-config';
 import { RouterOutputs } from '@ei/trpc';
+import { SearchCheck } from 'lucide-react';
 
-type Props = {
+type Props = ({
   role: RouterOutputs['roles']['guildCustom'][0];
+} | {
+  notApprovedRole: RouterOutputs['roles']['guildNotApproved'][0];
+}) & {
   member: RouterOutputs['user']['memberMe'];
   guild: RouterOutputs['guild']['get'];
-};
+}
 
-function RoleButton({ role, member, guild }: Props) {
+function RoleButton({ member, guild, ...props }: Props) {
   const params = useParams();
   const { guildId } = params;
+
+  const isApproved = 'role' in props;
 
   if (!guildId || typeof guildId !== 'string') {
     return null;
@@ -87,8 +93,8 @@ function RoleButton({ role, member, guild }: Props) {
       },
     });
 
-  const addable = !member?.roles?.find((id) => id === role.id);
-  const discordRole = guild?.discord.roles?.find((r) => r.id === role.id);
+  const addable = isApproved ? !member?.roles?.find((id) => id === props.role.id) : true;
+  const discordRole = isApproved ? guild?.discord.roles?.find((r) => r.id === props.role.id) : null;
 
   const color = discordRole?.color
     ? `#${discordRole.color.toString(16).padStart(6, '0')}`
@@ -97,19 +103,21 @@ function RoleButton({ role, member, guild }: Props) {
   return (
     <Button
       variant="secondary"
-      key={role.id}
-      className={`flex aspect-square h-auto w-full flex-col items-center justify-center rounded-md transition ${
+      key={isApproved ? props.role.id : props.notApprovedRole.id}
+      className={`flex aspect-square h-auto w-full flex-col items-center justify-center rounded-md transition relative ${
         addable ? '' : `outline outline-4`
       }`}
       style={{
         outlineColor: color,
       }}
-      disabled={isAdding || isRemoving}
+      disabled={isAdding || isRemoving || !isApproved}
       onClick={() => {
+        if (!isApproved) return;
+
         if (addable) {
-          addRole({ guildId, roleId: role.id });
+          addRole({ guildId, roleId: props.role.id });
         } else {
-          removeRole({ guildId, roleId: role.id });
+          removeRole({ guildId, roleId: props.role.id });
         }
       }}
     >
@@ -120,8 +128,9 @@ function RoleButton({ role, member, guild }: Props) {
           textShadow: `0 0 0.2rem #000`,
         }}
       >
-        {discordRole?.name}
+        {isApproved ? discordRole?.name : props.notApprovedRole.name}
       </span>
+      {!isApproved && <SearchCheck className="h-6 w-6 top-1 right-1 absolute text-primary-400" />}
     </Button>
   );
 }

@@ -7,7 +7,6 @@ import { Plus, X } from 'lucide-react';
 import { api } from 'trpc/react';
 
 import { canCreateRoles } from '@ei/trpc/src/utils';
-
 import RoleButton from './RoleButton';
 
 function RoleScreen() {
@@ -19,11 +18,11 @@ function RoleScreen() {
   }
 
   const [customRoles] = api.roles.guildCustom.useSuspenseQuery({ guildId });
+  const [notApprovedRoles] = api.roles.guildNotApproved.useSuspenseQuery({ guildId });
   const [member] = api.user.memberMe.useSuspenseQuery({ guildId });
   const [guild] = api.guild.get.useSuspenseQuery({ guildId });
 
-  const allowedToCreateRoles =
-    member && guild ? canCreateRoles(member, guild?.discord, guild?.db) : false;
+  const allowedToCreateRoles = member && guild ? canCreateRoles(member, guild?.discord, guild?.db) : false;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -38,7 +37,24 @@ function RoleScreen() {
               <span>No roles found</span>
             </div>
           )}
-          {customRoles?.map((role) => (
+          {notApprovedRoles
+            .filter((role) => {
+              if (allowedToCreateRoles) return true;
+
+              if (role.createdByUserId === member.user.id) return true;
+
+              return false;
+            })
+            ?.map((role) => (
+            <RoleButton
+              key={role.id}
+              notApprovedRole={role}
+              member={member}
+              guild={guild}
+            />
+          ))}
+          {customRoles
+            .map((role) => (
             <RoleButton
               key={role.id}
               role={role}
@@ -46,17 +62,15 @@ function RoleScreen() {
               guild={guild}
             />
           ))}
-          {allowedToCreateRoles && (
-            <Button
-              asChild
-              className="flex aspect-square h-auto w-full flex-col items-center justify-center gap-1 rounded-md transition"
-            >
-              <Link href={`/guild/${guildId}/roles/create`}>
-                <span className="text-center text-lg">Create New Role</span>
-                <Plus className="h-6 w-6" />
-              </Link>
-            </Button>
-          )}
+          <Button
+            asChild
+            className="flex aspect-square h-auto w-full flex-col items-center justify-center gap-1 rounded-md transition"
+          >
+            <Link href={`/guild/${guildId}/roles/create`}>
+              <span className="text-center text-lg">Create New Role</span>
+              <Plus className="h-6 w-6" />
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

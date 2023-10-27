@@ -174,12 +174,7 @@ export const nonApprovedRoles = pgTable(
       onUpdate: 'cascade',
       onDelete: 'set null',
     }),
-  },
-  (table) => ({
-    nonApprovedRoleGuildIdUnique: unique('non_approved_role_guild_id_unique').on(
-      table.guildId,
-    ),
-  }),
+  }
 );
 
 export const categories = pgTable('category', {

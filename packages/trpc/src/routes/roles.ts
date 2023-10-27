@@ -1,7 +1,7 @@
 import { DiscordAPIError } from '@discordjs/rest';
 import { TRPCError } from '@trpc/server';
 import { Routes } from 'discord-api-types/v10';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { guilds, guildUsers, nonApprovedRoles, roles } from '@ei/drizzle/tables/schema';
@@ -84,9 +84,27 @@ const roleRouter = createTRPCRouter({
       }
 
       const dbNonApprovedRoles = await ctx.drizzle
-        .select()
+        .select({
+          id: nonApprovedRoles.id,
+          name: nonApprovedRoles.name,
+          guildId: nonApprovedRoles.guildId,
+          createdByUserId: guildUsers.userId,
+          createdBy: nonApprovedRoles.createdBy,
+          approvedRoleId: nonApprovedRoles.approvedRoleId,
+          approvedAt: nonApprovedRoles.approvedAt,
+          approvedBy: nonApprovedRoles.approvedBy,
+        })
         .from(nonApprovedRoles)
-        .where(eq(nonApprovedRoles.guildId, input.guildId))
+        .leftJoin(guildUsers, and(
+          eq(guildUsers.guildId, nonApprovedRoles.guildId),
+          eq(guildUsers.id, nonApprovedRoles.createdBy),
+        ))
+        .where(
+          and(
+            eq(nonApprovedRoles.guildId, input.guildId),
+            isNull(nonApprovedRoles.approvedAt),
+          ) 
+        )
 
       return dbNonApprovedRoles;
     }),
