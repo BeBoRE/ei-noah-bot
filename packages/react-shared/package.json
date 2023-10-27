@@ -1,6 +1,6 @@
 {
   "name": "@ei/react-shared",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "main": "api.ts",
   "private": true,
   "scripts": {
@@ -10,7 +10,7 @@
     "lint:typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ei/trpc": "^0.0.0",
+    "@ei/trpc": "^0.0.1",
     "@ei/lobby": "^1.0.0"
   },
   "devDependencies": {

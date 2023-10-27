@@ -10,6 +10,11 @@ Allows for the creation of typesafe Redis Pub/Sub channels. This is does this by
 pnpm i zod-redis-pussub
 ```
 
+Peer dependencies:
+```bash
+pnpm i redis zod superjson
+```
+
 ## Usage
 
 ### Initializing the channel creator
@@ -58,7 +63,7 @@ channel.publish({
 // Subscribing to the channel
 channel.subscribe({
   onData: (data) => {
-    console.log(data); // => { id: '1', name: 'John Doe' }
+    console.log(data); // => { id: '1', name: 'John Doe', email: 'john.doe@example' }
   },
   onSubscribe: () => {
     console.log('Subscribed to channel');
@@ -80,7 +85,7 @@ You can then subscribe to the channel by passing the parameters to the `subscrib
 channel.subscribe(
   {
     onData: (data) => {
-      console.log(data); // => { id: '1', name: 'John Doe' }
+      console.log(data); // => { id: '1', name: 'John Doe', email: 'john.doe@example' }
     },
     onSubscribe: () => {
       console.log('Subscribed to channel');

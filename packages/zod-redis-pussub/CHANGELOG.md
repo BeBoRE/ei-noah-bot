@@ -1,5 +1,11 @@
 # zod-redis-pubsub
 
+## 2.0.0
+
+### Major Changes
+
+- Zod, redisio and superjson are now peer dependencies instead of dependencies for better compatibility
+
 ## 1.3.0
 
 ### Minor Changes

@@ -19,7 +19,7 @@
     "db:create": "dotenv -- turbo db:create",
     "format": "prettier --write \"**/*.{js,cjs,mjs,ts,tsx,md,json}\" --ignore-path .gitignore",
     "format:check": "prettier --check \"**/*.{js,cjs,mjs,ts,tsx,md,json}\" --ignore-path .gitignore",
-    "publish-packages": "turbo run build lint && changeset version && changeset publish"
+    "publish-packages": "turbo run build lint lint:typecheck && changeset version && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.26.2",

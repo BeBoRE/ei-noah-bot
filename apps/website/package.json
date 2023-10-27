@@ -1,6 +1,6 @@
 {
   "name": "@ei/website",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "main": "server/production.ts",
   "scripts": {
@@ -18,7 +18,7 @@
     "@ei/lucia": "^0.0.1",
     "@ei/react-shared": "*",
     "@ei/tailwind-config": "*",
-    "@ei/trpc": "^0.0.0",
+    "@ei/trpc": "^0.0.1",
     "@emoji-mart/data": "^1.1.2",
     "@emoji-mart/react": "^1.1.1",
     "@lucia-auth/oauth": "^3.3.1",

@@ -1,6 +1,6 @@
 {
   "name": "@ei/mobile",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "main": "index.tsx",
   "private": true,
   "scripts": {
@@ -17,7 +17,7 @@
     "@ei/lobby": "^1.0.0",
     "@ei/react-shared": "*",
     "@ei/tailwind-config": "*",
-    "@ei/trpc": "^0.0.0",
+    "@ei/trpc": "^0.0.1",
     "@expo/config": "^8.1.2",
     "@expo/metro-config": "^0.10.7",
     "@expo/vector-icons": "^13.0.0",
