@@ -142,7 +142,7 @@ function TermsOfServiePage() {
           We may update these terms at any time. We will notify you of any
           changes to these terms. By continuing to use our service, you agree to
           the updated terms. We can notify you of changes to these terms via
-          Discord DM&aspos;s or email.
+          Discord DM&apos;s or email.
         </p>
         <h2 className="text-center text-2xl dark:text-primary-300">
           Termination and Suspension
