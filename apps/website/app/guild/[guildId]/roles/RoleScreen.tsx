@@ -42,6 +42,8 @@ function RoleScreen() {
               .filter((role) => {
                 if (!('name' in role)) return true;
 
+                if (customRoles.find((r) => r.id === role.id.toString())) return false;
+
                 if (allowedToCreateRoles) return true;
                 if (role.createdByUserId === member.user.id) return true;
 
