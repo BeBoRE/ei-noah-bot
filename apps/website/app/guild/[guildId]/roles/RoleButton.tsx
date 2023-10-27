@@ -8,6 +8,8 @@ import { api } from 'trpc/react';
 import baseConfig from '@ei/tailwind-config';
 import { RouterOutputs } from '@ei/trpc';
 import { canCreateRoles } from '@ei/trpc/src/utils';
+import { Tooltip, TooltipContent, TooltipProvider } from 'app/_components/ui/tooltip';
+import { TooltipTrigger } from '@radix-ui/react-tooltip';
 
 type Props = (
   | {
@@ -267,7 +269,16 @@ function RoleButton({ member, guild, ...props }: Props) {
         </span>
       </Button>
       {!isApproved && (
-        <SearchCheck className="absolute right-1 top-1 h-6 w-6 text-primary-400" />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <SearchCheck className="absolute right-1 top-1 h-6 w-6 text-primary-400" />
+            </TooltipTrigger>
+            <TooltipContent>
+              This role is awaiting approval by a moderator.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
       {showRejectOrApprove && !isApproved && (
         <div className="absolute bottom-0 flex w-full overflow-hidden rounded-b">

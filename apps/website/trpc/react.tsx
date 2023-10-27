@@ -14,6 +14,7 @@ import {
 
 import { api } from '@ei/react-shared/api';
 
+import { LobbyProvider } from '@ei/react-shared/context/lobby';
 import { getApiUrl, getWsUrl, transformer } from './shared';
 
 export { api };
@@ -77,7 +78,7 @@ export default function TRPCReactProvider({ children, headers }: Props) {
     <QueryClientProvider client={queryClient}>
       <ReactQueryStreamedHydration>
         <api.Provider client={trpcClient} queryClient={queryClient}>
-          {children}
+          <LobbyProvider api={api}>{children}</LobbyProvider>
         </api.Provider>
       </ReactQueryStreamedHydration>
       <ReactQueryDevtools initialIsOpen={false} />
