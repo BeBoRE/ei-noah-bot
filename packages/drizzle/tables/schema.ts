@@ -145,6 +145,44 @@ export const roles = pgTable('role', {
 
 export type Role = typeof roles.$inferSelect;
 
+export const nonApprovedRoles = pgTable(
+  'non_approved_role',
+  {
+    id: serial('id').primaryKey().notNull(),
+    name: varchar('name', { length: 99 }).notNull(),
+    guildId: varchar('guild_id', { length: 255 })
+      .notNull()
+      .references(() => guilds.id, {
+        onUpdate: 'cascade',
+        onDelete: 'cascade',
+      }),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).defaultNow(),
+    createdBy: integer('created_by').references(() => guildUsers.id, {
+      onUpdate: 'cascade',
+      onDelete: 'set null',
+    }),
+    approvedRoleId: varchar('approved_role_id', { length: 255 })
+      .references(() => roles.id, { onUpdate: 'cascade', onDelete: 'set null' })
+      .notNull(),
+    approvedAt: timestamp('approved_at', {
+      withTimezone: true,
+      mode: 'string',
+    }),
+    approvedBy: integer('approved_by').references(() => guildUsers.id, {
+      onUpdate: 'cascade',
+      onDelete: 'set null',
+    }),
+  },
+  (table) => ({
+    nonApprovedRoleGuildIdUnique: unique('non_approved_role_guild_id_unique').on(
+      table.guildId,
+    ),
+  }),
+);
+
 export const categories = pgTable('category', {
   id: varchar('id', { length: 255 }).primaryKey().notNull(),
   publicVoice: varchar('public_voice', { length: 255 }),
