@@ -4,7 +4,12 @@ import { Routes } from 'discord-api-types/v10';
 import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { guilds, guildUsers, nonApprovedRoles, roles } from '@ei/drizzle/tables/schema';
+import {
+  guilds,
+  guildUsers,
+  nonApprovedRoles,
+  roles,
+} from '@ei/drizzle/tables/schema';
 
 import { apiGuildSchema, ApiRoleSchema, discordMemberSchema } from '../schemas';
 import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
@@ -15,11 +20,7 @@ const roleRouter = createTRPCRouter({
     .input(z.object({ guildId: z.string() }))
     .query(async ({ ctx, input }) => {
       const dbRoles = await ctx.drizzle
-        .select({
-          id: roles.id,
-          guildId: roles.guildId,
-          createdByUserId: guildUsers.userId,
-        })
+        .select()
         .from(roles)
         .innerJoin(guildUsers, eq(guildUsers.guildId, roles.guildId))
         .where(
@@ -28,6 +29,7 @@ const roleRouter = createTRPCRouter({
             eq(guildUsers.userId, ctx.dbUser.id),
           ),
         )
+        .then((res) => res.map((role) => role.role));
 
       return dbRoles;
     }),
@@ -69,16 +71,19 @@ const roleRouter = createTRPCRouter({
           approvedBy: nonApprovedRoles.approvedBy,
         })
         .from(nonApprovedRoles)
-        .leftJoin(guildUsers, and(
-          eq(guildUsers.guildId, nonApprovedRoles.guildId),
-          eq(guildUsers.id, nonApprovedRoles.createdBy),
-        ))
+        .leftJoin(
+          guildUsers,
+          and(
+            eq(guildUsers.guildId, nonApprovedRoles.guildId),
+            eq(guildUsers.id, nonApprovedRoles.createdBy),
+          ),
+        )
         .where(
           and(
             eq(nonApprovedRoles.guildId, input.guildId),
             isNull(nonApprovedRoles.approvedAt),
-          ) 
-        )
+          ),
+        );
 
       return dbNonApprovedRoles;
     }),
@@ -157,9 +162,9 @@ const roleRouter = createTRPCRouter({
               guildId: input.guildId,
               name: input.name,
               createdBy: dbUser.id,
-            }
+            },
           ])
-          .returning()
+          .returning();
 
         if (!notApprovedRole) {
           throw new TRPCError({
@@ -167,7 +172,7 @@ const roleRouter = createTRPCRouter({
           });
         }
 
-        return { notApprovedRole }
+        return { notApprovedRole };
       }
 
       const discordRole = await rest
@@ -365,6 +370,102 @@ const roleRouter = createTRPCRouter({
       }
 
       return { dbRole, discordRole };
+    }),
+  rejectRole: protectedProcedure
+    .input(
+      z.object({
+        guildId: z.string(),
+        roleId: z.number().int().positive(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [dbGuildUser] = await ctx.drizzle
+        .select()
+        .from(guilds)
+        .innerJoin(guildUsers, eq(guildUsers.guildId, guilds.id))
+        .where(
+          and(
+            eq(guilds.id, input.guildId),
+            eq(guildUsers.userId, ctx.dbUser.id),
+          ),
+        );
+
+      if (!dbGuildUser) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+        });
+      }
+
+      const [dbNonApprovedRole] = await ctx.drizzle
+        .select()
+        .from(nonApprovedRoles)
+        .where(
+          and(
+            eq(nonApprovedRoles.guildId, input.guildId),
+            eq(nonApprovedRoles.id, input.roleId),
+            isNull(nonApprovedRoles.approvedAt),
+          ),
+        );
+
+      if (!dbNonApprovedRole) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+        });
+      }
+
+      const [member, guild] = await Promise.all([
+        await rest
+          .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
+          .then((res) => camelize(res))
+          .then((res) => discordMemberSchema.parse(res))
+          .catch((err) => {
+            if (err instanceof DiscordAPIError) {
+              if (err.code === 404) {
+                throw new TRPCError({
+                  code: 'FORBIDDEN',
+                  message: 'You are not in this guild',
+                });
+              }
+            }
+
+            throw err;
+          }),
+        await rest
+          .get(Routes.guild(input.guildId))
+          .then((res) => camelize(res))
+          .then((res) => apiGuildSchema.parse(res))
+          .catch((err) => {
+            if (err instanceof DiscordAPIError) {
+              if (err.code === 404) {
+                throw new TRPCError({
+                  code: 'NOT_FOUND',
+                  message: 'This guild does not exist',
+                });
+              }
+            }
+
+            throw err;
+          }),
+      ]);
+
+      const allowed = canCreateRoles(member, guild, dbGuildUser.guild);
+
+      if (!allowed) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+        });
+      }
+
+      await ctx.drizzle
+        .delete(nonApprovedRoles)
+        .where(
+          and(
+            eq(nonApprovedRoles.guildId, input.guildId),
+            eq(nonApprovedRoles.id, input.roleId),
+          ),
+        );
+
+      return { dbNonApprovedRole };
     }),
   addRole: protectedProcedure
     .input(

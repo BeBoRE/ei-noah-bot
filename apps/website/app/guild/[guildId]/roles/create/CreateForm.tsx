@@ -34,11 +34,11 @@ function CreateForm({ guildId }: Props) {
     },
     onSuccess: async ({ dbRole, discordRole, notApprovedRole }) => {
       const promises = [];
-      
+
       if (notApprovedRole) {
         context.roles.guildNotApproved.setData({ guildId }, (prev) => [
           ...(prev || []),
-          {...notApprovedRole, createdByUserId: me?.id || ''},
+          { ...notApprovedRole, createdByUserId: me?.id || '' },
         ]);
 
         promises.push(context.roles.guildNotApproved.invalidate({ guildId }));
@@ -56,10 +56,10 @@ function CreateForm({ guildId }: Props) {
       if (discordRole) {
         context.guild.get.setData({ guildId }, (prev) => {
           if (!prev) return prev;
-  
+
           const guild = { ...prev };
           guild.discord.roles = [...guild.discord.roles, discordRole];
-  
+
           return guild;
         });
 
