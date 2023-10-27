@@ -1,0 +1,1 @@
+ALTER TABLE "non_approved_role" ALTER COLUMN "approved_role_id" DROP NOT NULL;

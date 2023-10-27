@@ -11,6 +11,7 @@ pnpm i zod-redis-pussub
 ```
 
 Peer dependencies:
+
 ```bash
 pnpm i redis zod superjson
 ```

@@ -1,0 +1,1 @@
+ALTER TABLE "non_approved_role" DROP CONSTRAINT "non_approved_role_guild_id_unique";

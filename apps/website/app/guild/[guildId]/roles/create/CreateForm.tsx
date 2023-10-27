@@ -21,6 +21,8 @@ function CreateForm({ guildId }: Props) {
 
   const context = api.useContext();
 
+  const [me] = api.user.me.useSuspenseQuery();
+
   const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value.trimStart());
   };
@@ -30,23 +32,42 @@ function CreateForm({ guildId }: Props) {
       await context.roles.guildCustom.cancel({ guildId });
       await context.guild.get.cancel({ guildId });
     },
-    onSuccess: async ({ dbRole, discordRole }) => {
-      context.roles.guildCustom.setData({ guildId }, (prev) => [
-        ...(prev || []),
-        dbRole,
-      ]);
+    onSuccess: async ({ dbRole, discordRole, notApprovedRole }) => {
+      const promises = [];
 
-      context.guild.get.setData({ guildId }, (prev) => {
-        if (!prev) return prev;
+      if (notApprovedRole) {
+        context.roles.guildNotApproved.setData({ guildId }, (prev) => [
+          ...(prev || []),
+          { ...notApprovedRole, createdByUserId: me?.id || '' },
+        ]);
 
-        const guild = { ...prev };
-        guild.discord.roles = [...guild.discord.roles, discordRole];
+        promises.push(context.roles.guildNotApproved.invalidate({ guildId }));
+      }
 
-        return guild;
-      });
+      if (dbRole) {
+        context.roles.guildCustom.setData({ guildId }, (prev) => [
+          ...(prev || []),
+          dbRole,
+        ]);
 
-      await context.roles.guildCustom.invalidate({ guildId });
-      await context.guild.get.invalidate({ guildId });
+        promises.push(context.roles.guildCustom.invalidate({ guildId }));
+      }
+
+      if (discordRole) {
+        context.guild.get.setData({ guildId }, (prev) => {
+          if (!prev) return prev;
+
+          const guild = { ...prev };
+          guild.discord.roles = [...guild.discord.roles, discordRole];
+
+          return guild;
+        });
+
+        promises.push(await context.guild.get.invalidate({ guildId }));
+      }
+
+      await Promise.all(promises);
+
       router.push(`.`);
     },
   });
