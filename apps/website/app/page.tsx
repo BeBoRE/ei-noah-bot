@@ -4,7 +4,7 @@ import { Icons } from './_components/Icons';
 
 export default function Page() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center py-5">
+    <main className="flex flex-1 flex-col items-center justify-center py-5 container">
       <h1 className="mb-5 text-center text-5xl font-bold text-primary-900 dark:text-primary-500">
         ei Noah
       </h1>
