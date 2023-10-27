@@ -37,26 +37,39 @@ function RoleScreen() {
           <h1 className="flex-1 text-3xl">Role Selection</h1>
         </div>
         <div className="grid grid-cols-2 place-content-start items-start justify-items-start gap-4 py-2 md:grid-cols-4 xl:grid-cols-5">
-          {
-            combinedRoles
-              .filter((role) => {
-                if (!('name' in role)) return true;
+          {combinedRoles
+            .filter((role) => {
+              if (!('name' in role)) return true;
 
-                if (customRoles.find((r) => r.id === role.id.toString())) return false;
-
-                if (allowedToCreateRoles) return true;
-                if (role.createdByUserId === member.user.id) return true;
-
+              if (customRoles.find((r) => r.id === role.id.toString()))
                 return false;
-              })
-              .map((role) => {
-                if ('name' in role) {
-                  return <RoleButton key={role.id.toString()} notApprovedRole={role} member={member} guild={guild} />;
-                }
 
-                return <RoleButton key={role.id} role={role} member={member} guild={guild} />;
-              })
-          }
+              if (allowedToCreateRoles) return true;
+              if (role.createdByUserId === member.user.id) return true;
+
+              return false;
+            })
+            .map((role) => {
+              if ('name' in role) {
+                return (
+                  <RoleButton
+                    key={role.id.toString()}
+                    notApprovedRole={role}
+                    member={member}
+                    guild={guild}
+                  />
+                );
+              }
+
+              return (
+                <RoleButton
+                  key={role.id}
+                  role={role}
+                  member={member}
+                  guild={guild}
+                />
+              );
+            })}
           <Button
             asChild
             className="flex aspect-square h-auto w-full flex-col items-center justify-center gap-1 rounded-md transition"

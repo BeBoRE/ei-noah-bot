@@ -6,9 +6,5 @@ type Props = {
 };
 
 export default function Providers({ children }: Props) {
-  return (
-    <TRPCReactProvider headers={headers()}>
-      {children}
-    </TRPCReactProvider>
-  );
+  return <TRPCReactProvider headers={headers()}>{children}</TRPCReactProvider>;
 }

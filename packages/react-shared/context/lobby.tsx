@@ -44,7 +44,7 @@ export function LobbyProvider({
   enabled,
   token,
   alert,
-  api
+  api,
 }: ProviderProps) {
   const [lobby, setLobby] = useState<LobbyChange | null>(null);
 

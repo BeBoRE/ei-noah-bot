@@ -19,7 +19,7 @@
     "eslint": "^8.51.0",
     "typescript": "^5.2.2",
     "@trpc/react-query": ">=10.40.0"
-  }, 
+  },
   "peerDependencies": {
     "react": ">=18.2.0",
     "react-dom": ">=18.2.0"

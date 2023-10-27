@@ -1,15 +1,19 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import { Button } from 'app/_components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+} from 'app/_components/ui/tooltip';
 import { Check, SearchCheck, X } from 'lucide-react';
 import { api } from 'trpc/react';
 
 import baseConfig from '@ei/tailwind-config';
 import { RouterOutputs } from '@ei/trpc';
 import { canCreateRoles } from '@ei/trpc/src/utils';
-import { Tooltip, TooltipContent, TooltipProvider } from 'app/_components/ui/tooltip';
-import { TooltipTrigger } from '@radix-ui/react-tooltip';
 
 type Props = (
   | {
