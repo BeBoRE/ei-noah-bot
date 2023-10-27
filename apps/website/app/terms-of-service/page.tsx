@@ -2,32 +2,30 @@ import Link from 'next/link';
 
 function TermsOfServiePage() {
   return (
-    <div className="container mx-auto flex flex-1 py-6 justify-center">
-      <div className='max-w-2xl'>
+    <div className="container mx-auto flex flex-1 justify-center py-6">
+      <div className="max-w-2xl">
         <h1 className="text-center text-4xl text-primary-950 dark:text-primary-500">
           Terms of Service
         </h1>
-        <p className="pb-3 text-center">
-          October 27, 2023
-        </p>
+        <p className="pb-3 text-center">October 27, 2023</p>
         <h2 className="text-center text-2xl dark:text-primary-300">
           Introduction
         </h2>
         <p className="pb-3 text-justify">
-          Ei Noah is a service that provides a Discord bot, a website and a mobile
-          app to Discord users. This service can be used to create and manage
-          voice channels in Discord servers, manage roles and announce birthdays.
-          This service is provided by BeBoRE. By using our service, you agree to
-          these terms of service.
+          Ei Noah is a service that provides a Discord bot, a website and a
+          mobile app to Discord users. This service can be used to create and
+          manage voice channels in Discord servers, manage roles and announce
+          birthdays. This service is provided by BeBoRE. By using our service,
+          you agree to these terms of service.
         </p>
         <h2 className="text-center text-2xl dark:text-primary-300">
           Definitions
         </h2>
         <p className="pb-3 text-justify">
           &quot;Our service&quot; refers to the Ei Noah Discord bot, website and
-          mobile app. &quot;We&quot;, &quot;us&quot; and &quot;our&quot; refers to
-          the owner of the service. &quot;You&quot; and &quot;your&quot; refers to
-          you, the user.
+          mobile app. &quot;We&quot;, &quot;us&quot; and &quot;our&quot; refers
+          to the owner of the service. &quot;You&quot; and &quot;your&quot;
+          refers to you, the user.
         </p>
         <h2 className="text-center text-2xl dark:text-primary-300">
           Using our service
@@ -35,9 +33,9 @@ function TermsOfServiePage() {
         <p className="pb-3 text-justify">
           You must be at least 13 years old to use our service. If you are under
           18 years old, you must have permission from your parent or legal
-          guardian to use our service. By using our service, you confirm that you
-          are at least 13 years old or have permission from your parent or legal
-          guardian.
+          guardian to use our service. By using our service, you confirm that
+          you are at least 13 years old or have permission from your parent or
+          legal guardian.
         </p>
         <p className="pb-3 text-justify">
           You must follow the Discord Terms of Service and Community Guidelines
@@ -56,7 +54,8 @@ function TermsOfServiePage() {
         </h2>
         <p className="pb-3 text-justify">
           We aim to make our service accessible to everyone. If you have any
-          accessibility issues, please contact us. You can contact us by email at{' '}
+          accessibility issues, please contact us. You can contact us by email
+          at{' '}
           <a
             className="text-primary-500 hover:underline"
             href="mailto:ayrton@bebore.com"
@@ -68,8 +67,8 @@ function TermsOfServiePage() {
         <h2 className="text-center text-2xl dark:text-primary-300">Privacy</h2>
         <p className="pb-3 text-justify">
           We collect some data from you when you use our service. This data is
-          stored securely on our servers and is not shared with any third parties.
-          By using our service, you agree to our{' '}
+          stored securely on our servers and is not shared with any third
+          parties. By using our service, you agree to our{' '}
           <Link className="text-primary-500 hover:underline" href="/privacy">
             Privacy Policy
           </Link>
@@ -82,12 +81,12 @@ function TermsOfServiePage() {
           Accounts are created automatically when you use our service. You
           don&apos;t need to provide any personal information to create an
           account. You can delete your account at any time by contacting us. We
-          may delete your account if you have not used our service for an extended
-          period of time.
+          may delete your account if you have not used our service for an
+          extended period of time.
         </p>
         <p className="pb-3 text-justify">
-          You are responsible for all activity that occurs under your account. You
-          must not share your account with anyone else. You must notify us
+          You are responsible for all activity that occurs under your account.
+          You must not share your account with anyone else. You must notify us
           immediately if you become aware of any breach of security or
           unauthorized use of your account.
         </p>
@@ -113,9 +112,9 @@ function TermsOfServiePage() {
           Content and Ownership
         </h2>
         <p className="pb-3 text-justify">
-          Assets used in our service such as the Discord and Github logo are owned
-          by their respective owners. You may not use any of our assets without
-          our permission.
+          Assets used in our service such as the Discord and Github logo are
+          owned by their respective owners. You may not use any of our assets
+          without our permission.
         </p>
         <p className="pb-3 text-justify">
           The code used in our service is open-source, it&apos;s license can be
@@ -140,10 +139,10 @@ function TermsOfServiePage() {
           Changes to these terms
         </h2>
         <p className="pb-3 text-justify">
-          We may update these terms at any time. We will notify you of any changes
-          to these terms. By continuing to use our service, you agree to the
-          updated terms. We can notify you of changes to these terms via Discord
-          DM&aspos;s or email.
+          We may update these terms at any time. We will notify you of any
+          changes to these terms. By continuing to use our service, you agree to
+          the updated terms. We can notify you of changes to these terms via
+          Discord DM&aspos;s or email.
         </p>
         <h2 className="text-center text-2xl dark:text-primary-300">
           Termination and Suspension
@@ -152,7 +151,9 @@ function TermsOfServiePage() {
           We may terminate or suspend your account at any time without notice or
           liability.
         </p>
-        <h2 className="text-center text-2xl dark:text-primary-300">Disclaimer</h2>
+        <h2 className="text-center text-2xl dark:text-primary-300">
+          Disclaimer
+        </h2>
         <p className="pb-3 text-justify">
           Our service is provided &quot;as is&quot; without any warranty of any
           kind. We are not responsible for any damages or losses related to your
@@ -174,10 +175,12 @@ function TermsOfServiePage() {
           These terms are governed by the laws of the Netherlands. You agree to
           submit to the exclusive jurisdiction of the courts of the Netherlands.
         </p>
-        <h2 className="text-center text-2xl dark:text-primary-300">Contact Us</h2>
+        <h2 className="text-center text-2xl dark:text-primary-300">
+          Contact Us
+        </h2>
         <p className="pb-3 text-justify">
-          If you have any questions about these terms, please contact us. You can
-          contact us by email at{' '}
+          If you have any questions about these terms, please contact us. You
+          can contact us by email at{' '}
           <a
             className="text-primary-500 hover:underline"
             href="mailto:about@bebore.com"
