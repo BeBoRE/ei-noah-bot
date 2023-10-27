@@ -4,7 +4,7 @@ import { Routes } from 'discord-api-types/v10';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { guilds, guildUsers, roles } from '@ei/drizzle/tables/schema';
+import { guilds, guildUsers, nonApprovedRoles, roles } from '@ei/drizzle/tables/schema';
 
 import { apiGuildSchema, ApiRoleSchema, discordMemberSchema } from '../schemas';
 import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
@@ -56,6 +56,39 @@ const roleRouter = createTRPCRouter({
         .then((gu) => gu.map((g) => g.role));
 
       return dbRoles;
+    }),
+  guildNotApproved: protectedProcedure
+    .input(z.object({ guildId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const member = await rest
+        .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
+        .then((res) => camelize(res))
+        .then((res) => discordMemberSchema.parse(res))
+        .catch((err) => {
+          if (err instanceof DiscordAPIError) {
+            if (err.code === 404) {
+              throw new TRPCError({
+                code: 'FORBIDDEN',
+                message: 'You are not in this guild',
+              });
+            }
+          }
+
+          throw err;
+        });
+
+      if (!member) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+        });
+      }
+
+      const dbNonApprovedRoles = await ctx.drizzle
+        .select()
+        .from(nonApprovedRoles)
+        .where(eq(nonApprovedRoles.guildId, input.guildId))
+
+      return dbNonApprovedRoles;
     }),
   createRole: protectedProcedure
     .input(
@@ -122,10 +155,27 @@ const roleRouter = createTRPCRouter({
       const allowed = canCreateRoles(member, guild, dbGuildUser.guild);
 
       if (!allowed) {
-        throw new TRPCError({
-          code: 'FORBIDDEN',
-          message: 'You do not have permission to create roles',
-        });
+        const [notApprovedRole] = await ctx.drizzle
+          .insert(nonApprovedRoles)
+          .values([
+            {
+              approvedRoleId: null,
+              approvedAt: null,
+              approvedBy: null,
+              guildId: input.guildId,
+              name: input.name,
+              createdBy: dbUser.id,
+            }
+          ])
+          .returning()
+
+        if (!notApprovedRole) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+          });
+        }
+
+        return { notApprovedRole }
       }
 
       const discordRole = await rest

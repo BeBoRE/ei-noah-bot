@@ -165,8 +165,7 @@ export const nonApprovedRoles = pgTable(
       onDelete: 'set null',
     }),
     approvedRoleId: varchar('approved_role_id', { length: 255 })
-      .references(() => roles.id, { onUpdate: 'cascade', onDelete: 'set null' })
-      .notNull(),
+      .references(() => roles.id, { onUpdate: 'cascade', onDelete: 'set null' }),
     approvedAt: timestamp('approved_at', {
       withTimezone: true,
       mode: 'string',

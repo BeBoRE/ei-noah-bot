@@ -71,6 +71,13 @@
       "when": 1698408022512,
       "tag": "0009_small_robbie_robertson",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1698410169673,
+      "tag": "0010_same_hobgoblin",
+      "breakpoints": true
     }
   ]
 }
