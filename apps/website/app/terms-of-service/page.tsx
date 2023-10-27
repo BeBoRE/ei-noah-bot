@@ -7,7 +7,7 @@ function TermsOfServiePage() {
         Terms of Service
       </h1>
       <p className="pb-3 text-center">
-        October 21, 2023
+        October 27, 2023
       </p>
       <h2 className="text-center text-2xl dark:text-primary-300">
         Introduction
