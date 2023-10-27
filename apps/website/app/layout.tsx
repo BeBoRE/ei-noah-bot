@@ -52,9 +52,14 @@ export default async function Layout({ children }: Props) {
         </Providers>
         <footer className="flex place-content-center bg-primary-100 p-3 dark:bg-primary-900">
           <div className="container flex items-center justify-between text-sm">
-            <Button variant="link" asChild className="flex items-center">
-              <Link href="/privacy">Privacy Policy</Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="link" asChild className="flex items-center">
+                <Link href="/privacy">Privacy Policy</Link>
+              </Button>
+              <Button variant="link" asChild className="flex items-center">
+                <Link href="/terms-of-service">Terms of Service</Link>
+              </Button>
+            </div>
             <div>
               <Button
                 asChild
