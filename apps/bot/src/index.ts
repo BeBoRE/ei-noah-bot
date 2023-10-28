@@ -85,7 +85,7 @@ process.title = 'Ei Noah Bot';
     {
       initImmediate: false,
       fallbackLng: ['en', 'nl'],
-      lng: 'nl',
+      lng: 'en',
       preload: preloadLanguages,
       interpolation: {
         escapeValue: false,
