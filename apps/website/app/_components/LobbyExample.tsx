@@ -32,7 +32,7 @@ const exampleUser: User = {
 };
 
 const friendUser: User = {
-  id: '1331243214324357',
+  id: '1331242323212',
   avatar: null,
   username: 'Friend',
   globalName: 'Friend',
@@ -473,7 +473,7 @@ function LobbyExample() {
 
   return (
     <div className="w-full overflow-hidden rounded-lg bg-primary-900">
-      <div className="h-[50dvh] md:flex">
+      <div className="md:flex">
         <div className="flex flex-col items-center bg-primary-800 p-2 md:w-64 md:items-stretch">
           <div className="flex flex-col">
             <p className="text-xs uppercase text-primary-300">
@@ -512,7 +512,7 @@ function LobbyExample() {
             )}
           </div>
         </div>
-        <div className="max-h-full flex-1 overflow-x-auto" ref={chatRef}>
+        <div className="h-[50vh] flex-1 overflow-x-auto" ref={chatRef}>
           {Array.from(messageList).length ? (
             <TextBubble>
               {Array.from(messageList).map((message) =>
