@@ -397,8 +397,8 @@ function LobbyExample() {
     `,
     mute: `
       You have just created a mute lobby. Anyone that joins your lobby,
-      unless you give them the permission to talk, will be muted. If this is
-      too strict for you, you can change the type of lobby from your dashboard.
+      unless you give them the permission to talk, will be muted. Let's
+      see if there is anyone that wants to join our lobby.
     `,
     private: `
       You have just created a private lobby. Only people you have given the permission
@@ -411,8 +411,8 @@ function LobbyExample() {
       not strict enough for you, change your lobby to private.
     `,
     'public-to-private': `
-      You have just changed your lobby from public to private. Only people you have given the permission
-      can join this lobby. If this is too strict, change your lobby to mute or back to public.
+      You have just changed your lobby from public to private. Anyone that was already in your lobby or
+      you have given the permission to join are allowed into your lobby. If this is too strict, change your lobby to mute.
     `,
     'mute-to-public': `
       You have just changed your lobby from mute to public. Anyone can join this lobby and talk.
