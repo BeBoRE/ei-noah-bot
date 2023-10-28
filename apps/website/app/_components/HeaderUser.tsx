@@ -23,7 +23,10 @@ type Props = {
   user: RouterOutputs['user']['me'];
 };
 
-const getUserImageUrl = (user: { avatar?: string | null; id: string }) => {
+export const getUserImageUrl = (user: {
+  avatar?: string | null;
+  id: string;
+}) => {
   // eslint-disable-next-line no-bitwise
   const index = Number((BigInt(user.id) >> BigInt(22)) % BigInt(6));
 

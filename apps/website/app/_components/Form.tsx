@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { api } from 'trpc/react';
 
 function Form({
   children,
@@ -14,6 +15,9 @@ function Form({
   onSubmitted?: (e: React.FormEvent<HTMLFormElement>) => void;
 }) {
   const router = useRouter();
+
+  const context = api.useContext();
+
   return (
     <form
       className={className}
@@ -32,6 +36,7 @@ function Form({
           // redirected
           // when using `redirect: "manual"`, response status 0 is returned
           router.refresh();
+          context.invalidate();
           onSubmitted?.(e);
         }
       }}

@@ -32,10 +32,7 @@ type Props = {
 
 export default async function Layout({ children }: Props) {
   return (
-    <html
-      lang="en"
-      className="dark flex min-h-[100dvh]"
-    >
+    <html lang="en" className="dark flex min-h-[100dvh]">
       <link rel="icon" href="/favicon.ico" sizes="any" />
       <body
         className={[
@@ -44,7 +41,7 @@ export default async function Layout({ children }: Props) {
           'flex-1',
           'flex',
           'flex-col',
-          'bg-primary-200 text-primary-900 dark:bg-primary-950 dark:text-primary-100'
+          'bg-primary-200 text-primary-900 dark:bg-primary-950 dark:text-primary-100',
         ].join(' ')}
       >
         <Providers>
