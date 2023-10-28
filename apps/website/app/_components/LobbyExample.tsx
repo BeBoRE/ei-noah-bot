@@ -71,41 +71,6 @@ function UserButton({ user, ...props }: UserButtonProps) {
   );
 }
 
-type VoiceChannelProps = ButtonProps & {
-  limit?: number;
-  users?: UserButtonProps['user'][];
-};
-
-function VoiceChannel({ limit, users, ...props }: VoiceChannelProps) {
-  return (
-    <>
-      <Button
-        variant="secondary"
-        className="justify-start dark:hover:bg-primary-700"
-        {...props}
-      >
-        <Image
-          src={voiceIcon}
-          alt="Voice Channel Icon"
-          width={20}
-          height={20}
-          className="mr-2 inline-block"
-        />
-        <div className="flex flex-1 justify-start">{props.children}</div>
-        {limit ? (
-          <div className="flex min-w-[2rem] overflow-hidden rounded bg-primary-700 text-xs">
-            <span className="px-1">01</span>
-            <span className="bg-primary-900 px-1">
-              {limit < 10 ? `0${limit}` : limit}
-            </span>
-          </div>
-        ) : null}
-      </Button>
-      {users?.map((user) => <UserButton key={user.id} user={user} />)}
-    </>
-  );
-}
-
 const lobbyTypes = [
   {
     type: 'public',
@@ -127,7 +92,48 @@ const lobbyTypes = [
 type LobbyTypes = (typeof lobbyTypes)[number]['type'];
 type ChannelTypes = 'create' | 'lobby';
 
-const randomDelay = () => (Math.random() / 2) * 1000 + 100;
+type VoiceChannelProps = ButtonProps & {
+  limit?: number;
+  users?: UserButtonProps['user'][];
+  lobbyType: LobbyTypes;
+  owner?: User;
+};
+
+function VoiceChannel({ limit, users, lobbyType, owner, ...props }: VoiceChannelProps) {
+  const type = lobbyTypes.find(({ type: t }) => t === lobbyType)!;
+
+  const name = owner ? `${type.icon} ${owner.globalName || owner.username}'s Lobby` : `${type.icon} Create ${type.name} Lobby`;
+
+  return (
+    <>
+      <Button
+        variant="secondary"
+        className="justify-start dark:hover:bg-primary-700"
+        {...props}
+      >
+        <Image
+          src={voiceIcon}
+          alt="Voice Channel Icon"
+          width={20}
+          height={20}
+          className="mr-2 inline-block"
+        />
+        <div className="flex flex-1 justify-start">{name}</div>
+        {limit ? (
+          <div className="flex min-w-[2rem] overflow-hidden rounded bg-primary-700 text-xs">
+            <span className="px-1">01</span>
+            <span className="bg-primary-900 px-1">
+              {limit < 10 ? `0${limit}` : limit}
+            </span>
+          </div>
+        ) : null}
+      </Button>
+      {users?.map((user) => <UserButton key={user.id} user={user} />)}
+    </>
+  );
+}
+
+const randomDelay = () => (Math.random() / 4) * 1000 + 300;
 
 function TextBubble({ children }: { children: React.ReactNode }) {
   const date = useMemo(() => new Date(), []);
@@ -257,6 +263,10 @@ function LobbyExample() {
   const [friendInLobby, setFriendInLobby] = useState(false);
   const [friendIsAllowed, setFriendIsAllowed] = useState<boolean | null>(null);
 
+  const [transferredType, setTransferredType] = useState<LobbyTypes | null>(null);
+  const [friendInTransferred, setFriendInTransferred] = useState(false);
+  const [transferredNameChanged, setTransferredNameChanged] = useState(false);
+
   const addTimeout = useTimeouts();
 
   const addMessage = useCallback((message: keyof typeof messages) => {
@@ -279,12 +289,12 @@ function LobbyExample() {
     });
   }, []);
 
-  const changeLobbyType = useCallback((type: LobbyTypes) => {
+  const changeLobbyType = useCallback((type: LobbyTypes | null) => {
     setLobbyType(type);
   }, []);
 
   const changeChannelType = useCallback(
-    (type: ChannelTypes) => {
+    (type: ChannelTypes | null) => {
       setChannelType(type);
 
       if (type === 'lobby') {
@@ -299,13 +309,48 @@ function LobbyExample() {
     [addMessage, removeMessage],
   );
 
-  const joinCreateChannel = (type: LobbyTypes) => {
-    changeChannelType('create');
-    changeLobbyType(type);
+  const leaveChannel = () => {
+    changeChannelType(null);
+    changeLobbyType(null);
 
     setMessageList(new Set([]));
+
+    if (channelType === 'lobby') {
+      if (friendInLobby) {
+        setTransferredType(currentType?.type || null);
+        setFriendInTransferred(true);
+        setTransferredNameChanged(false);
+
+        addTimeout(() => {
+          setTransferredNameChanged(true);
+        }, randomDelay());
+
+        addTimeout(() => {
+          setFriendInTransferred(false);
+
+          addTimeout(() => {
+            setTransferredType(null);
+          }, randomDelay());
+        }, randomDelay() + 3000);
+      } else {
+        setTransferredType(currentType?.type || null);
+        setTransferredNameChanged(false);
+
+        addTimeout(() => {
+          setTransferredType(null);
+        }, randomDelay());
+      }
+    }
+
     setFriendInLobby(false);
     setFriendIsAllowed(null);
+  }
+
+  const joinCreateChannel = (type: LobbyTypes) => {
+    leaveChannel();
+
+    changeChannelType('create');
+    changeLobbyType(type);
 
     const delay = randomDelay();
     addTimeout(() => {
@@ -322,12 +367,20 @@ function LobbyExample() {
     if (lobbyType === type) return;
 
     if (type === 'public' && friendInLobby) {
-      setFriendIsAllowed(true);
+      addTimeout(() => {
+        setFriendIsAllowed(true);
+      }, randomDelay());
     }
 
     const delay = randomDelay();
     addTimeout(() => {
       setLobbyType(type);
+
+      if (type === 'private' && friendInLobby && !friendIsAllowed) {
+        addTimeout(() => {
+          setFriendInLobby(false);
+        }, randomDelay());
+      }
     }, delay);
 
     addTimeout(() => {
@@ -353,6 +406,8 @@ function LobbyExample() {
     if (channelType === 'lobby' && lobbyType === 'mute' && !friendInLobby) {
       const timeout = setTimeout(() => {
         setFriendInLobby(true);
+        setTransferredType(null);
+
         addMessage('addUserMessage');
 
         addTimeout(() => {
@@ -480,36 +535,44 @@ function LobbyExample() {
             <p className="text-xs uppercase text-primary-300">
               ➕ Create Lobby
             </p>
-            {lobbyTypes.map(({ type, icon, name }) => (
+            {lobbyTypes.map(({ type }) => (
               <Fragment key={type}>
-                <VoiceChannel onClick={() => joinCreateChannel(type)}>
-                  {icon} Create {name} Lobby
-                </VoiceChannel>
+                <VoiceChannel onClick={() => joinCreateChannel(type)} lobbyType={type} />
                 {lobbyType === type && channelType === 'create' && (
                   <UserButton user={toDisplayUser} />
                 )}
               </Fragment>
             ))}
             <p className="text-xs uppercase text-primary-300">🔈 voice</p>
+            {
+              transferredType && (
+                <VoiceChannel
+                  lobbyType={transferredType}
+                  owner={transferredNameChanged ? friendUser : toDisplayUser}
+                  limit={limit}
+                  users={friendInTransferred ? [
+                    friendUser
+                  ] : []}
+                />
+              )
+            }
             {currentType && channelType === 'lobby' && (
               <VoiceChannel
+                lobbyType={currentType.type}
+                owner={toDisplayUser}
                 limit={limit}
                 users={
-                  friendInLobby && (lobbyType !== 'private' || friendIsAllowed)
+                  friendInLobby
                     ? [
                         toDisplayUser,
                         {
                           ...friendUser,
-                          isMuted: !friendIsAllowed && lobbyType === 'mute',
+                          isMuted: !friendIsAllowed && (lobbyType === 'mute' || lobbyType === 'private'),
                         },
                       ]
                     : [toDisplayUser]
                 }
-              >
-                {currentType.icon}{' '}
-                {toDisplayUser.globalName || toDisplayUser.username}&apos;s
-                Lobby
-              </VoiceChannel>
+               />
             )}
           </div>
         </div>

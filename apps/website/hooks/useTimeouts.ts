@@ -1,22 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 export const useTimeouts = () => {
-  const [timeouts, setTimeouts] = useState<ReturnType<typeof setTimeout>[]>([]);
+  const timeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(
     () => () => {
-      timeouts.forEach((timeout) => {
+      timeouts.current.forEach((timeout) => {
         clearTimeout(timeout);
       });
     },
-    [timeouts],
+    [],
   );
 
   const addTimeout = (callback: () => void, delay: number) => {
     const timeout = setTimeout(callback, delay);
-    setTimeouts((list) => [...list, timeout]);
+    timeouts.current.push(timeout);
   };
 
   return addTimeout;
