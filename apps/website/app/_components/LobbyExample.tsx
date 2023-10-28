@@ -420,7 +420,8 @@ function LobbyExample() {
     `,
     'mute-to-private': `
       You have just changed your lobby from mute to private. Only people you have given the permission
-      to can join this lobby. If this is too strict, change your lobby back to mute or public.
+      to can join this lobby. Anyone that didn't have permissions to speak before, will be removed from the lobby.
+      If this is too strict, change your lobby back to mute or public.
     `,
     'private-to-public': `
       You have just changed your lobby from private to public. Anyone can now join your lobby and talk.
