@@ -15,7 +15,10 @@ export const useTimeouts = () => {
   );
 
   const addTimeout = (callback: () => void, delay: number) => {
-    const timeout = setTimeout(callback, delay);
+    const timeout = setTimeout(() => {
+      callback();
+      timeouts.current = timeouts.current.filter((t) => t !== timeout);
+    }, delay);
     timeouts.current.push(timeout);
   };
 

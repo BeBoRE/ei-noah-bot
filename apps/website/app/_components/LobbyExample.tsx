@@ -503,7 +503,9 @@ function LobbyExample() {
           className="dark:bg-accept hover:dark:bg-accept/80"
           onClick={() => {
             addTimeout(() => {
-              addMessage('friendNowAllowed');
+              addTimeout(() => {
+                addMessage('friendNowAllowed');
+              }, 600)
               setFriendIsAllowed(true);
             }, randomDelay());
           }}
