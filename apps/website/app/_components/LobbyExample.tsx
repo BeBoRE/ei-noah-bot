@@ -298,7 +298,9 @@ function LobbyExample() {
       setChannelType(type);
 
       if (type === 'lobby') {
-        addMessage('dashboard');
+        addTimeout(() => {
+          addMessage('dashboard');
+        }, randomDelay());
       }
 
       if (type === 'create') {
@@ -306,7 +308,7 @@ function LobbyExample() {
         setLimit(0);
       }
     },
-    [addMessage, removeMessage],
+    [addMessage, removeMessage, addTimeout],
   );
 
   const leaveChannel = () => {
