@@ -121,7 +121,7 @@ function VoiceChannel({ limit, users, lobbyType, owner, ...props }: VoiceChannel
         <div className="flex flex-1 justify-start">{name}</div>
         {limit ? (
           <div className="flex min-w-[2rem] overflow-hidden rounded bg-primary-700 text-xs">
-            <span className="px-1">01</span>
+            <span className="px-1">0{users?.length || 0}</span>
             <span className="bg-primary-900 px-1">
               {limit < 10 ? `0${limit}` : limit}
             </span>

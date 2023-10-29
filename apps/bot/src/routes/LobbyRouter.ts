@@ -2976,7 +2976,9 @@ const checkVoiceCreateChannels = async (
 
   await Promise.all(
     categoryList.map((category) =>
-      createCreateChannels(category, drizzle, client).catch(() => {}),
+      createCreateChannels(category, drizzle, client).catch((err) => {
+        globalLogger.error(err);
+      }),
     ),
   );
 };
@@ -3120,7 +3122,7 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
       // Check of iemand een nieuw kanaal is gejoint
       const { getCategory } = createEntityCache(drizzle);
 
-      const categoryData = getCategory(newState.channel.parent);
+      const categoryData = await getCategory(newState.channel.parent);
       const [guildUser] = await drizzle
         .select()
         .from(guildUsers)
@@ -3146,9 +3148,9 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
         channel &&
         guildUser &&
         member &&
-        (channel.id === (await categoryData).publicVoice ||
-          channel.id === (await categoryData).muteVoice ||
-          channel.id === (await categoryData).privateVoice)
+        (channel.id === categoryData.publicVoice ||
+          channel.id === categoryData.muteVoice ||
+          channel.id === categoryData.privateVoice)
       ) {
         globalLogger.debug('user joined create-lobby channel');
         const activeChannel = await activeTempChannel(
@@ -3167,16 +3169,20 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
           globalLogger.debug('creating new tempChannel');
 
           let type: ChannelType = ChannelType.Public;
-          if (channel.id === (await categoryData).privateVoice)
+          if (channel.id === categoryData.privateVoice)
             type = ChannelType.Nojoin;
-          if (channel.id === (await categoryData).muteVoice)
+          if (channel.id === categoryData.muteVoice)
             type = ChannelType.Mute;
 
+          const lobbyCategory = categoryData.lobbyCategory ? await newState.guild.channels.fetch(
+            `${BigInt(categoryData.lobbyCategory)}`, {
+              cache: true,
+            }
+          ).catch(() => null) : null;
+    
           voiceChannel = await createTempChannel(
             newState.guild,
-            `${BigInt(
-              (await categoryData).lobbyCategory || channel.parent.id,
-            )}`,
+            lobbyCategory?.id || newState.channel.parentId || newState.guild.id,
             [],
             member,
             guildUser.guild.bitrate,
