@@ -99,10 +99,18 @@ type VoiceChannelProps = ButtonProps & {
   owner?: User;
 };
 
-function VoiceChannel({ limit, users, lobbyType, owner, ...props }: VoiceChannelProps) {
+function VoiceChannel({
+  limit,
+  users,
+  lobbyType,
+  owner,
+  ...props
+}: VoiceChannelProps) {
   const type = lobbyTypes.find(({ type: t }) => t === lobbyType)!;
 
-  const name = owner ? `${type.icon} ${owner.globalName || owner.username}'s Lobby` : `${type.icon} Create ${type.name} Lobby`;
+  const name = owner
+    ? `${type.icon} ${owner.globalName || owner.username}'s Lobby`
+    : `${type.icon} Create ${type.name} Lobby`;
 
   return (
     <>
@@ -263,7 +271,9 @@ function LobbyExample() {
   const [friendInLobby, setFriendInLobby] = useState(false);
   const [friendIsAllowed, setFriendIsAllowed] = useState<boolean | null>(null);
 
-  const [transferredType, setTransferredType] = useState<LobbyTypes | null>(null);
+  const [transferredType, setTransferredType] = useState<LobbyTypes | null>(
+    null,
+  );
   const [friendInTransferred, setFriendInTransferred] = useState(false);
   const [transferredNameChanged, setTransferredNameChanged] = useState(false);
 
@@ -346,7 +356,7 @@ function LobbyExample() {
 
     setFriendInLobby(false);
     setFriendIsAllowed(null);
-  }
+  };
 
   const joinCreateChannel = (type: LobbyTypes) => {
     leaveChannel();
@@ -507,7 +517,7 @@ function LobbyExample() {
             addTimeout(() => {
               addTimeout(() => {
                 addMessage('friendNowAllowed');
-              }, 600)
+              }, 600);
               setFriendIsAllowed(true);
             }, randomDelay());
           }}
@@ -541,25 +551,24 @@ function LobbyExample() {
             </p>
             {lobbyTypes.map(({ type }) => (
               <Fragment key={type}>
-                <VoiceChannel onClick={() => joinCreateChannel(type)} lobbyType={type} />
+                <VoiceChannel
+                  onClick={() => joinCreateChannel(type)}
+                  lobbyType={type}
+                />
                 {lobbyType === type && channelType === 'create' && (
                   <UserButton user={toDisplayUser} />
                 )}
               </Fragment>
             ))}
             <p className="text-xs uppercase text-primary-300">🔈 voice</p>
-            {
-              transferredType && (
-                <VoiceChannel
-                  lobbyType={transferredType}
-                  owner={transferredNameChanged ? friendUser : toDisplayUser}
-                  limit={limit}
-                  users={friendInTransferred ? [
-                    friendUser
-                  ] : []}
-                />
-              )
-            }
+            {transferredType && (
+              <VoiceChannel
+                lobbyType={transferredType}
+                owner={transferredNameChanged ? friendUser : toDisplayUser}
+                limit={limit}
+                users={friendInTransferred ? [friendUser] : []}
+              />
+            )}
             {currentType && channelType === 'lobby' && (
               <VoiceChannel
                 lobbyType={currentType.type}
@@ -571,12 +580,14 @@ function LobbyExample() {
                         toDisplayUser,
                         {
                           ...friendUser,
-                          isMuted: !friendIsAllowed && (lobbyType === 'mute' || lobbyType === 'private'),
+                          isMuted:
+                            !friendIsAllowed &&
+                            (lobbyType === 'mute' || lobbyType === 'private'),
                         },
                       ]
                     : [toDisplayUser]
                 }
-               />
+              />
             )}
           </div>
         </div>

@@ -638,8 +638,8 @@ importers:
   packages/lobby:
     dependencies:
       emoji-regex:
-        specifier: ^9.2.2
-        version: 9.2.2
+        specifier: ^10.3.0
+        version: 10.3.0
       zod:
         specifier: ^3.22.4
         version: 3.22.4
@@ -7719,6 +7719,10 @@ packages:
 
   /emoji-mart@5.5.2:
     resolution: {integrity: sha512-Sqc/nso4cjxhOwWJsp9xkVm8OF5c+mJLZJFoFfzRuKO+yWiN7K8c96xmtughYb0d/fZ8UC6cLIQ/p4BR6Pv3/A==}
+    dev: false
+
+  /emoji-regex@10.3.0:
+    resolution: {integrity: sha512-QpLs9D9v9kArv4lfDEgg1X/gN5XLnf/A6l9cs8SPZLRZR3ZkY9+kwIQTxm+fsSej5UMYGE8fdoaZVIBlqG0XTw==}
     dev: false
 
   /emoji-regex@8.0.0:

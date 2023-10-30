@@ -3171,15 +3171,16 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
           let type: ChannelType = ChannelType.Public;
           if (channel.id === categoryData.privateVoice)
             type = ChannelType.Nojoin;
-          if (channel.id === categoryData.muteVoice)
-            type = ChannelType.Mute;
+          if (channel.id === categoryData.muteVoice) type = ChannelType.Mute;
 
-          const lobbyCategory = categoryData.lobbyCategory ? await newState.guild.channels.fetch(
-            `${BigInt(categoryData.lobbyCategory)}`, {
-              cache: true,
-            }
-          ).catch(() => null) : null;
-    
+          const lobbyCategory = categoryData.lobbyCategory
+            ? await newState.guild.channels
+                .fetch(`${BigInt(categoryData.lobbyCategory)}`, {
+                  cache: true,
+                })
+                .catch(() => null)
+            : null;
+
           voiceChannel = await createTempChannel(
             newState.guild,
             lobbyCategory?.id || newState.channel.parentId || newState.guild.id,
