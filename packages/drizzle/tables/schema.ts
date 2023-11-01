@@ -42,16 +42,13 @@ export const guilds = pgTable('guild', {
     .notNull(),
 });
 
-export const users = pgTable(
-  'user',
-  {
-    id: varchar('id', { length: 255 }).primaryKey().notNull(),
-    count: integer('count').default(0).notNull(),
-    language: varchar('language', { length: 255 }),
-    timezone: varchar('timezone', { length: 255 }),
-    expoPushToken: varchar('expo_push_token', { length: 255 }),
-  }
-);
+export const users = pgTable('user', {
+  id: varchar('id', { length: 255 }).primaryKey().notNull(),
+  count: integer('count').default(0).notNull(),
+  language: varchar('language', { length: 255 }),
+  timezone: varchar('timezone', { length: 255 }),
+  expoPushToken: varchar('expo_push_token', { length: 255 }),
+});
 
 export const birthdays = pgTable(
   'birthday',
