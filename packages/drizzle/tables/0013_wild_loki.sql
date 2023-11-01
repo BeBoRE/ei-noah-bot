@@ -1,0 +1,1 @@
+ALTER TABLE "birthday" ALTER COLUMN "date" DROP NOT NULL;
