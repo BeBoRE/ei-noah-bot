@@ -47,15 +47,32 @@ export const users = pgTable(
   {
     id: varchar('id', { length: 255 }).primaryKey().notNull(),
     count: integer('count').default(0).notNull(),
-    birthday: timestamp('birthday', { withTimezone: true, mode: 'string' }),
     language: varchar('language', { length: 255 }),
     timezone: varchar('timezone', { length: 255 }),
     expoPushToken: varchar('expo_push_token', { length: 255 }),
+  }
+);
+
+export const birthdays = pgTable(
+  'birthday',
+  {
+    id: serial('id').primaryKey().notNull(),
+    userId: varchar('user_id', { length: 255 })
+      .notNull()
+      .references(() => users.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
+    date: timestamp('date', { withTimezone: true, mode: 'string' }),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      mode: 'string',
+    }).defaultNow(),
   },
   (table) => ({
-    birthdayIdx: index().on(table.birthday),
+    userIdIdx: index().on(table.userId),
+    dateIndex: index().on(table.date),
   }),
 );
+
+export type Birthday = typeof birthdays.$inferSelect;
 
 export const loginTokens = pgTable('login_token', {
   token: varchar('token', {
