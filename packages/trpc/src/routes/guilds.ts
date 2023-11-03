@@ -1,6 +1,12 @@
 import { DiscordAPIError } from '@discordjs/rest';
 import { TRPCError } from '@trpc/server';
-import { Routes } from 'discord-api-types/v10';
+import {
+  CDNRoutes,
+  DefaultUserAvatarAssets,
+  ImageFormat,
+  RouteBases,
+  Routes,
+} from 'discord-api-types/v10';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -19,6 +25,47 @@ import {
   highestRole,
   userIsAdmin,
 } from '../utils';
+
+export const getUserImageUrl = (user: {
+  avatar?: string | null;
+  id: string;
+}) => {
+  // eslint-disable-next-line no-bitwise
+  const index = Number((BigInt(user.id) >> BigInt(22)) % BigInt(6));
+
+  if (!user.avatar)
+    return `${RouteBases.cdn}${CDNRoutes.defaultUserAvatar(
+      index as DefaultUserAvatarAssets,
+    )}`;
+
+  return `${RouteBases.cdn}${CDNRoutes.userAvatar(
+    user.id,
+    user.avatar,
+    ImageFormat.PNG,
+  )}`;
+};
+
+export const getMemberImageUrl = (
+  member: {
+    user: {
+      avatar?: string | null;
+      id: string;
+    };
+    avatar?: string | null;
+  },
+  guildId: string,
+) => {
+  if (!member.avatar) {
+    return getUserImageUrl(member.user);
+  }
+
+  return `${RouteBases.cdn}${CDNRoutes.guildMemberAvatar(
+    guildId,
+    member.user.id,
+    member.avatar,
+    ImageFormat.PNG,
+  )}`;
+};
 
 const guildRouter = createTRPCRouter({
   all: protectedProcedure.query(async ({ ctx }) => {
@@ -75,6 +122,42 @@ const guildRouter = createTRPCRouter({
         discord: validatedGuild,
         db: dbGuild,
       };
+    }),
+  getAvatar: protectedProcedure
+    .input(
+      z.object({
+        guildId: z.string(),
+        userId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const meMember = await rest
+        .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
+        .then((res) => camelize(res))
+        .then((res) => discordMemberSchema.parse(res));
+
+      if (!meMember) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You are not in this guild',
+        });
+      }
+
+      const member = await rest
+        .get(Routes.guildMember(input.guildId, input.userId))
+        .then((res) => camelize(res))
+        .then((res) => discordMemberSchema.parse(res));
+
+      if (!member) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'User not found',
+        });
+      }
+
+      const avatar = getMemberImageUrl(member, input.guildId);
+
+      return avatar;
     }),
   setRoleMenuChannel: protectedProcedure
     .input(

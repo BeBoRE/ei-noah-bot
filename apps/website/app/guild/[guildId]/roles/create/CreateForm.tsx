@@ -47,7 +47,7 @@ function CreateForm({ guildId }: Props) {
       if (dbRole) {
         context.roles.guildCustom.setData({ guildId }, (prev) => [
           ...(prev || []),
-          dbRole,
+          { ...dbRole, createdByUserId: me?.id || '' },
         ]);
 
         promises.push(context.roles.guildCustom.invalidate({ guildId }));

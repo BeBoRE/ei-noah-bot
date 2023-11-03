@@ -42,6 +42,28 @@ export const getUserImageUrl = (user: {
   )}`;
 };
 
+export const getMemberImageUrl = (
+  member: {
+    user: {
+      avatar?: string | null;
+      id: string;
+    };
+    avatar?: string | null;
+  },
+  guildId: string,
+) => {
+  if (!member.avatar) {
+    return getUserImageUrl(member.user);
+  }
+
+  return `${RouteBases.cdn}${CDNRoutes.guildMemberAvatar(
+    guildId,
+    member.user.id,
+    member.avatar,
+    ImageFormat.PNG,
+  )}`;
+};
+
 function HeaderUser({ user }: Props) {
   if (user) {
     return (

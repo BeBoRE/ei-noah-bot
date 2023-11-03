@@ -19,17 +19,40 @@ const roleRouter = createTRPCRouter({
   guildCustom: protectedProcedure
     .input(z.object({ guildId: z.string() }))
     .query(async ({ ctx, input }) => {
+      await rest
+        .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
+        .then((res) => camelize(res))
+        .then((res) => discordMemberSchema.parse(res))
+        .catch((err) => {
+          if (err instanceof DiscordAPIError) {
+            if (err.code === 404) {
+              throw new TRPCError({
+                code: 'FORBIDDEN',
+                message: 'You are not in this guild',
+              });
+            }
+          }
+
+          throw err;
+        });
+
       const dbRoles = await ctx.drizzle
         .select()
         .from(roles)
-        .innerJoin(guildUsers, eq(guildUsers.guildId, roles.guildId))
+        .leftJoin(guildUsers, eq(guildUsers.guildId, roles.guildId))
         .where(
           and(
             eq(roles.guildId, input.guildId),
-            eq(guildUsers.userId, ctx.dbUser.id),
+            eq(guildUsers.id, roles.createdBy),
           ),
         )
-        .then((res) => res.map((role) => role.role));
+        .then((res) =>
+          res.map((role) =>
+            Object.assign(role.role, {
+              createdByUserId: role.guild_user?.userId,
+            }),
+          ),
+        );
 
       return dbRoles;
     }),
@@ -369,7 +392,10 @@ const roleRouter = createTRPCRouter({
           });
       }
 
-      return { dbRole, discordRole };
+      return {
+        dbRole: { ...dbRole, createdByUserId: dbGuildUser.guild_user.userId },
+        discordRole,
+      };
     }),
   rejectRole: protectedProcedure
     .input(

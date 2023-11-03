@@ -28,16 +28,19 @@ function RoleScreen() {
   const allowedToCreateRoles =
     member && guild ? canCreateRoles(member, guild?.discord, guild?.db) : false;
 
-  const combinedRoles = [...customRoles.sort(
-    (a, b) => {
-      const realA = guild.discord.roles.find((r) => r.id === a.id);
-      const realB = guild.discord.roles.find((r) => r.id === b.id);
+  const combinedRoles = [
+    ...customRoles
+      .sort((a, b) => {
+        const realA = guild.discord.roles.find((r) => r.id === a.id);
+        const realB = guild.discord.roles.find((r) => r.id === b.id);
 
-      if (!realA || !realB) return 0;
+        if (!realA || !realB) return 0;
 
-      return realA.position - realB.position;
-    }
-  ), ...notApprovedRoles];
+        return realA.position - realB.position;
+      })
+      .reverse(),
+    ...notApprovedRoles,
+  ];
 
   return (
     <div className="flex flex-1 flex-col">

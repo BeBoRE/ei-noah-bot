@@ -1,7 +1,9 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useParams } from 'next/navigation';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
+import MemberAvatar from 'app/_components/Avatar';
 import { Button } from 'app/_components/ui/button';
 import {
   Tooltip,
@@ -44,6 +46,8 @@ function RoleButton({ member, guild, ...props }: Props) {
     : null;
   const name = isApproved ? discordRole?.name : props.notApprovedRole.name;
 
+  const role = isApproved ? props.role : props.notApprovedRole;
+
   const { mutate: approveRole, isLoading: isApproving } =
     api.roles.approveRole.useMutation({
       onMutate: async ({ roleId }) => {
@@ -66,6 +70,7 @@ function RoleButton({ member, guild, ...props }: Props) {
           id: roleId.toString(), // Made up ID
           createdAt: new Date().toISOString(),
           createdBy: 0,
+          createdByUserId: role.createdByUserId || undefined,
           guildId,
         };
 
@@ -245,7 +250,7 @@ function RoleButton({ member, guild, ...props }: Props) {
       <Button
         variant="secondary"
         key={isApproved ? props.role.id : props.notApprovedRole.id}
-        className={`flex aspect-square h-full w-full flex-col items-center justify-center transition ${
+        className={`relative flex aspect-square h-full w-full flex-col items-center justify-center transition ${
           addable ? '' : `outline outline-4`
         }`}
         style={{
@@ -262,6 +267,15 @@ function RoleButton({ member, guild, ...props }: Props) {
           }
         }}
       >
+        {role.createdByUserId && (
+          <Suspense fallback={null}>
+            <MemberAvatar
+              className="absolute left-1 top-1"
+              userId={role.createdByUserId}
+              guildId={guildId}
+            />
+          </Suspense>
+        )}
         <span
           className="text-xl"
           style={{

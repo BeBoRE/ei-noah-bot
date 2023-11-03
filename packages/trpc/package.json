@@ -18,7 +18,7 @@
     "@ei/redis": "^0.0.2",
     "@ei/tsconfig": "*",
     "@trpc/server": "^10.40.0",
-    "discord-api-types": "^0.27.3",
+    "discord-api-types": "^0.37.62",
     "drizzle-orm": "^0.28.6",
     "lodash": "^4.17.21",
     "superjson": "1.13.1",
