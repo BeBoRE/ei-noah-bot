@@ -11,7 +11,10 @@ type Props = {
 };
 
 function MemberAvatar({ userId, guildId, className }: Props) {
-  const [avatar] = api.guild.getAvatar.useSuspenseQuery({ guildId, userId });
+  const { data: avatar } = api.guild.getAvatar.useQuery(
+    { guildId, userId },
+    { suspense: false },
+  );
 
   if (!avatar) return null;
 
