@@ -267,15 +267,15 @@ function RoleButton({ member, guild, ...props }: Props) {
           }
         }}
       >
-        {role.createdByUserId && (
-          <Suspense fallback={null}>
+        <Suspense fallback={null}>
+          {role.createdByUserId && (
             <MemberAvatar
               className="absolute left-1 top-1"
               userId={role.createdByUserId}
               guildId={guildId}
             />
-          </Suspense>
-        )}
+          )}
+        </Suspense>
         <span
           className="text-xl"
           style={{
