@@ -44,7 +44,6 @@ export const discordUserSchema = z.object({
   banner: z.string().nullable(),
   accentColor: z.number().nullable(),
   globalName: z.string().nullable(),
-  avatarDecorationData: z.string().nullable(),
   bannerColor: z.string().nullable(),
 });
 
