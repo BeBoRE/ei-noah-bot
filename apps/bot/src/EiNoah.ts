@@ -176,7 +176,7 @@ const getCategoryData = async (
 export const createEntityCache = (drizzle: DrizzleClient) => {
   const userMap = new Map<Snowflake, User>();
   const getUser = async (user: Pick<DiscordUser, 'id'>): Promise<User> => {
-    logger.info('Getting user', { user, callStack: new Error().stack });
+    logger.debug('Getting user', { user, callStack: new Error().stack });
     const cachedUser = userMap.get(user.id);
 
     if (cachedUser) {
