@@ -47,9 +47,9 @@ const getQuoteOptions = async (
   const quoted = guild.client.users.fetch(`${BigInt(quotedUser.id)}`, {
     cache: true,
   });
-  const owner = guild.client.users.fetch(`${BigInt(ownerDb.id)}`, {
+  const owner = await guild.client.users.fetch(`${BigInt(ownerDb.id)}`, {
     cache: true,
-  });
+  }).catch(() => null);
 
   const text = quote.text.replace('`', '\\`');
 
@@ -58,11 +58,13 @@ const getQuoteOptions = async (
 
   const date = quote.date !== null && new Date(quote.date);
 
+  const ownerUserName = owner ? owner.username : 'Unknown';
+
   if (text.match(linkRegex)) {
     return {
       content: `${text}\n> - ${await quoted} ${
         date ? `(<t:${date.getTime() / 1000}:D>)` : ''
-      }\n> ${i18n.t('quote.byUser', { user: (await owner).toString() })}`,
+      }\n> ${i18n.t('quote.byUser', { user: ownerUserName })}`,
     };
   }
 
@@ -76,8 +78,8 @@ const getQuoteOptions = async (
   });
   embed.setDescription(text);
   embed.setFooter({
-    text: i18n.t('quote.byUser', { user: (await owner).username }),
-    iconURL: (await owner).displayAvatarURL({ size: 64 }),
+    text: i18n.t('quote.byUser', { user: ownerUserName }),
+    iconURL: owner && owner.displayAvatarURL({ size: 64 }) || undefined,
   });
   if (date) embed.setTimestamp(date);
   if (color) embed.setColor(color);
