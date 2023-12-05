@@ -25,6 +25,7 @@ import {
 import createMenu from '../createMenu';
 import { createEntityCache } from '../EiNoah';
 import Router, { GuildHandler, HandlerType } from '../router/Router';
+import globalLogger from '../logger';
 
 const router = new Router('Onthoud al');
 
@@ -47,6 +48,8 @@ const getQuoteOptions = async (
   const quoted = guild.client.users.fetch(`${BigInt(quotedUser.id)}`, {
     cache: true,
   });
+
+  globalLogger.debug(ownerDb);
   const owner = await guild.client.users.fetch(`${BigInt(ownerDb.id)}`, {
     cache: true,
   }).catch(() => null);
@@ -63,7 +66,7 @@ const getQuoteOptions = async (
   if (text.match(linkRegex)) {
     return {
       content: `${text}\n> - ${await quoted} ${
-        date ? `(<t:${date.getTime() / 1000}:D>)` : ''
+        date ? `(<t:${(date.getTime() / 1000).toFixed(0)}:D>)` : ''
       }\n> ${i18n.t('quote.byUser', { user: ownerUserName })}`,
     };
   }
@@ -179,7 +182,9 @@ const handler: GuildHandler = async ({
 
     if (quoteList[0]) {
       const quoted = await getUser({ id: quotedUser.userId });
-      const owner = await getUser({ id: quoteList[0].creatorId.toString() });
+
+      const ownerGuildUser = await getGuildUser({id: quoteList[0].creatorId.toString()}, msg.guild);
+      const owner = await getUser({ id: ownerGuildUser.userId });
 
       return getQuoteOptions(msg.guild, quoteList[0], i18n, quoted, owner);
     }
