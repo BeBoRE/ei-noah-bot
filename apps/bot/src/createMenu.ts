@@ -12,6 +12,7 @@ import {
   MessageActionRowComponentBuilder,
 } from 'discord.js';
 import { Logger } from 'winston';
+import _ from 'lodash';
 
 export type ButtonReturn =
   | boolean
@@ -217,6 +218,7 @@ async function createMenu<T>({
           interaction
             .update({
               components: [],
+              content: null,
               ...destroyMessage,
             })
             .catch((error) => logger.error(error.description, { error }));
@@ -253,9 +255,9 @@ async function createMenu<T>({
           interaction
             .update({ content: destroyMessage, components: [] })
             .catch((error) => logger.error(error.description, { error }));
-        } else if (typeof destroyMessage === 'object') {
+        } else if (_.isObject(destroyMessage)) {
           interaction
-            .update({ components: [], ...destroyMessage })
+            .update({ components: [], content: null, ...destroyMessage })
             .catch((error) => logger.error(error.description, { error }));
         } else {
           message

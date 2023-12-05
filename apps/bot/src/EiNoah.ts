@@ -52,6 +52,7 @@ import Router, {
   MsgRouteInfo,
 } from './router/Router';
 import { getLocale } from './utils/i18nHelper';
+import logger from './logger';
 
 function mapParams(
   mention: string,
@@ -175,6 +176,7 @@ const getCategoryData = async (
 export const createEntityCache = (drizzle: DrizzleClient) => {
   const userMap = new Map<Snowflake, User>();
   const getUser = async (user: Pick<DiscordUser, 'id'>): Promise<User> => {
+    logger.info('Getting user', { user, callStack: new Error().stack });
     const cachedUser = userMap.get(user.id);
 
     if (cachedUser) {

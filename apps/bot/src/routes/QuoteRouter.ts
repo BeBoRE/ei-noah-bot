@@ -43,14 +43,14 @@ const getQuoteOptions = async (
   quote: Quote,
   i18n: I18n,
   quotedUser: User,
-  ownerDb: User,
+  ownerDb: User | null,
 ): Promise<InteractionReplyOptions> => {
   const quoted = guild.client.users.fetch(`${BigInt(quotedUser.id)}`, {
     cache: true,
   });
 
   globalLogger.debug(ownerDb);
-  const owner = await guild.client.users.fetch(`${BigInt(ownerDb.id)}`, {
+  const owner = ownerDb && await guild.client.users.fetch(`${BigInt(ownerDb.id)}`, {
     cache: true,
   }).catch(() => null);
 
@@ -169,22 +169,28 @@ const handler: GuildHandler = async ({
 
   const requestingUser = msg.user;
 
+  globalLogger.debug(requestingUser);
+
   let quotedUser: GuildUser;
   if (requestingUser.id === user.id) quotedUser = guildUser;
   else quotedUser = await getGuildUser(user, msg.guild);
 
   const quoteList = await getQuotes(drizzle, quotedUser);
 
+  globalLogger.debug(quoteList);
+
   if (!quoteToAdd || quoteToAdd.length === 0) {
     if (quoteList.length === 0) {
       return i18n.t('quote.noQuoteFound', { user: user.toString() });
     }
 
-    if (quoteList[0]) {
+    if (quoteList.length < 2 && quoteList[0]) {
       const quoted = await getUser({ id: quotedUser.userId });
 
-      const ownerGuildUser = await getGuildUser({id: quoteList[0].creatorId.toString()}, msg.guild);
-      const owner = await getUser({ id: ownerGuildUser.userId });
+      const [ownerGuildUser] = await drizzle.select().from(guildUsers).where(eq(guildUsers.id, quoteList[0].creatorId));
+      
+      globalLogger.debug(ownerGuildUser);
+      const owner = ownerGuildUser && await getUser({ id: ownerGuildUser.userId }) || null;
 
       return getQuoteOptions(msg.guild, quoteList[0], i18n, quoted, owner);
     }
@@ -198,7 +204,8 @@ const handler: GuildHandler = async ({
       mapper: (q) => q.text,
       selectCallback: async (q) => {
         const quoted = await getUser({ id: quotedUser.userId });
-        const owner = await getUser({ id: q.creatorId.toString() });
+        const [ownerGuildUser] = await drizzle.select().from(guildUsers).where(eq(guildUsers.id, q.creatorId));
+        const owner = ownerGuildUser && await getUser({ id: ownerGuildUser.userId }) || null;
 
         return {
           ...(<InteractionUpdateOptions>(
