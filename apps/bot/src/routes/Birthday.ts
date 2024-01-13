@@ -817,7 +817,7 @@ router.onInit = async (client, drizzle, i18n, logger) => {
 
   await checkBday(client, drizzle, i18n, logger);
 
-  const reportCron = new CronJob('5 0 0 * * *', async () => {
+  const reportCron = new CronJob('0 * * * *', async () => {
     await checkBday(client, drizzle, i18n, logger);
   });
 
