@@ -77,6 +77,7 @@ import {
   ClientChangeLobby,
   generateLobbyName,
   getIcon,
+  LobbyChange,
   RemoveUser,
   userIdToPusherChannel,
 } from '@ei/lobby';
@@ -1233,7 +1234,7 @@ const pushLobbyToUser = (
           type: getChannelType(data.voiceChannel),
           limit: data.voiceChannel.userLimit,
           lobbyNameChangeDate: data.timeTillLobbyChange
-            ? moment.now() + data.timeTillLobbyChange.asMilliseconds()
+            ? moment().add(data.timeTillLobbyChange).toDate()
             : null,
         },
         users: data.voiceChannel.members
@@ -1252,7 +1253,7 @@ const pushLobbyToUser = (
               member.id !== user.id && member.id !== member.client.user.id,
           }))
           .filter((u) => u.id !== user.id),
-      };
+      } satisfies LobbyChange;
 
   globalLogger.debug('data to send', { dataToSend });
 
