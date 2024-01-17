@@ -1069,15 +1069,18 @@ const generateComponents = async (
 
       const icon = emojiRegex().exec(generatedName.full)?.[0];
 
-      return new StringSelectMenuOptionBuilder()
+      const builder = new StringSelectMenuOptionBuilder()
         .setLabel(
           icon
             ? generatedName.full.substring(icon?.length).trim()
             : generatedName.full,
         )
-        .setEmoji({ name: icon })
         .setDefault(generatedName.full === voiceChannel.name)
         .setValue(ltc.name);
+
+      if (icon) builder.setEmoji({ name: icon });
+
+      return builder;
     }),
   );
 
