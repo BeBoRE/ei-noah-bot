@@ -10,7 +10,7 @@ TimeAgo.addDefaultLocale(en);
 type Props = {
   currentName: string | null;
   onNameChange: (name: string) => void;
-  nameChangeDate: number | null | undefined;
+  nameChangeDate: Date | null | undefined;
 };
 
 function NameInput({ currentName, onNameChange, nameChangeDate }: Props) {

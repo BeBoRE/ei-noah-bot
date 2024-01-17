@@ -39,7 +39,7 @@ export const lobbyChangeSchema = z
       name: z.string().nullable(),
       type: z.nativeEnum(ChannelType),
       limit: z.number().nullable(),
-      lobbyNameChangeDate: z.number().nullable().optional(),
+      lobbyNameChangeDate: z.date().nullable().optional(),
     }),
     users: z.array(userSchema),
   })
