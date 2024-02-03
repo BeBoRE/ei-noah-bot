@@ -9,7 +9,9 @@ export const notificationRouter = createTRPCRouter({
   setToken: protectedProcedure
     .input(
       z.object({
-        token: z.string().refine(v => Expo.isExpoPushToken(v)),
+        token: z.string().refine(v => Expo.isExpoPushToken(v), {
+          message: 'Invalid expo push token',
+        }),
       }),
     )
     .mutation(async ({ ctx: { session }, input }) => {
