@@ -211,13 +211,14 @@ export const publicProcedure = t.procedure;
  * procedure
  */
 const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
-  if (!ctx.dbUser) {
+  if (!ctx.dbUser || !ctx.session) {
     throw new TRPCError({ code: 'UNAUTHORIZED' });
   }
   return next({
     ctx: {
       // infers the `session` as non-nullable
       dbUser: { ...ctx.dbUser },
+      session: ctx.session,
     },
   });
 });
