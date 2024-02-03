@@ -1,5 +1,5 @@
 import Expo, { ExpoPushMessage } from 'expo-server-sdk';
-import { ComponentType, OverwriteType } from 'discord-api-types/v9';
+import { ComponentType, OverwriteType } from 'discord-api-types/v10';
 import {
   ActionRowBuilder,
   ApplicationCommandOptionType,
@@ -66,6 +66,7 @@ import {
   GuildUser,
   guildUsers,
   lobbyNameChanges,
+  session,
   TempChannel,
   tempChannels,
   users,
@@ -2984,14 +2985,17 @@ const checkVoiceCreateChannels = async (
 
 const expo = new Expo();
 
-const sendUserAddPushNotifications = (owner: DbUser, toBeAdded: User, sessions : Session[]) => {
+const sendUserAddPushNotifications = (owner: DbUser, toBeAdded: User, sessions : typeof session.$inferSelect[]) => {
   const locale = getLocale({ user: owner });
 
   const i18n = i18next.cloneInstance({ lng: locale });
 
+  globalLogger.debug('sending push notifications', { owner, toBeAdded, sessions });
+  globalLogger.debug(`now ${Date.now()}`)
+
   const messages : ExpoPushMessage[] = sessions
-    .filter(s => s.fresh)
-    .filter(s => Expo.isExpoPushToken(s.expoPushToken))
+    .filter(s => s.idleExpires > Date.now())
+    .filter((s) : s is typeof session.$inferSelect & { expoPushToken : string } => Expo.isExpoPushToken(s.expoPushToken))
     .map((s) => ({
       to: s.expoPushToken,
       sound: 'default',
@@ -3007,6 +3011,8 @@ const sendUserAddPushNotifications = (owner: DbUser, toBeAdded: User, sessions :
       },
       categoryId: 'userAdd',
     }));
+
+  globalLogger.debug('sending push notifications', { messages });
 
   return expo.sendPushNotificationsAsync(messages);
 };
@@ -3289,7 +3295,7 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
             tempChannel.temp_channel,
           );
 
-          const userSessions = await auth.getAllUserSessions(tempChannel.user.id);
+          const userSessions = await drizzle.select().from(session).where(eq(session.userId, tempChannel.user.id));
 
           if (
             !activeChannel

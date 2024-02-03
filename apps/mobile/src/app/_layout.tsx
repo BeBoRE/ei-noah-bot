@@ -11,6 +11,7 @@ import { AuthProvider } from 'src/context/auth';
 
 import baseConfig from '@ei/tailwind-config';
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { TRPCProvider } from '../utils/api';
 
 // This is the main layout of the app
@@ -58,13 +59,15 @@ function RootLayout() {
                 },
               }}
             >
-              <Stack
-                screenOptions={{
-                  headerStyle: {
-                    backgroundColor: baseConfig.theme.colors.primary.DEFAULT,
-                  },
-                }}
-              />
+              <GestureHandlerRootView className='flex-1'>
+                <Stack
+                  screenOptions={{
+                    headerStyle: {
+                      backgroundColor: baseConfig.theme.colors.primary.DEFAULT,
+                    },
+                  }}
+                />
+              </GestureHandlerRootView>
             </ThemeProvider>
           </SafeAreaProvider>
         </TRPCProvider>

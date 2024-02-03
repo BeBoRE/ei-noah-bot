@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 import { Expo } from 'expo-server-sdk'
 
-import { auth } from '@ei/lucia';
+import { session } from '@ei/drizzle/tables/schema';
+import { eq } from 'drizzle-orm';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 
 export const notificationRouter = createTRPCRouter({
@@ -12,8 +13,14 @@ export const notificationRouter = createTRPCRouter({
         token: z.string().refine(v => Expo.isExpoPushToken(v)),
       }),
     )
-    .mutation(async ({ ctx: { session }, input }) => {
-      await auth.updateSessionAttributes(session.sessionId, { expoPushToken: input.token });
+    .mutation(async ({ ctx: { session: userSession, drizzle }, input }) => {
+      // await auth.updateSessionAttributes(session.sessionId, { expoPushToken: input.token });
+
+      await drizzle.update(session)
+        .set({
+          expoPushToken: input.token
+        })
+        .where(eq(session.id, userSession.sessionId))
     }),
 });
 

@@ -11,7 +11,6 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useAppState } from '@react-native-community/hooks';
 import { alert } from 'burnt';
-import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/rest/v10';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 import JoinLobby from 'src/components/JoinLobby';
 import { AnimatedLobbyName } from 'src/components/LobbyName';
@@ -91,11 +90,16 @@ function Screen() {
   );
 }
 
+const discordCDN = 'https://cdn.discordapp.com/';
+const userAvatar = (id: string, avatar: string, format: string) =>
+  `avatars/${id}/${avatar}.${format}`;
+
+
 const getUserImageUrl = (user: { avatar: string; id: string }) =>
-  `${RouteBases.cdn}${CDNRoutes.userAvatar(
+  `${discordCDN}${userAvatar(
     user.id,
     user.avatar,
-    ImageFormat.PNG,
+    'png',
   )}?size=${128}`;
 
 function Index() {
