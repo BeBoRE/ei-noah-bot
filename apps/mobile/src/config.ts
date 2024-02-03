@@ -22,9 +22,7 @@ let developmentConfig: DevelopmentConfig | null = null;
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions
   developmentConfig = require('./config.development.ts').default;
-} catch (e) {
-  developmentConfig = null;
-}
+} catch (e) { /* empty */ }
 
 if (developmentConfig) console.log('Using development config');
 

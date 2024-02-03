@@ -48,7 +48,6 @@ import {
   inArray,
   isNotNull,
   isNull,
-  ne,
   or,
   sql,
 } from 'drizzle-orm';
@@ -425,11 +424,6 @@ const createCreateChannels = async (
     .where(
       and(
         eq(categories.id, category.id),
-        or(
-          ne(categories.publicVoice, publicVoice.id),
-          ne(categories.muteVoice, muteVoice.id),
-          ne(categories.privateVoice, privateVoice.id),
-        ),
       ),
     );
 };
@@ -1069,15 +1063,18 @@ const generateComponents = async (
 
       const icon = emojiRegex().exec(generatedName.full)?.[0];
 
-      return new StringSelectMenuOptionBuilder()
+      const builder = new StringSelectMenuOptionBuilder()
         .setLabel(
           icon
             ? generatedName.full.substring(icon?.length).trim()
             : generatedName.full,
         )
-        .setEmoji({ name: icon })
         .setDefault(generatedName.full === voiceChannel.name)
         .setValue(ltc.name);
+
+      if (icon) builder.setEmoji({ name: icon });
+
+      return builder;
     }),
   );
 
@@ -2293,7 +2290,7 @@ const createDashBoardCollector = async ({
     // TODO: Fix dat dit weer werkt
     // if (!msg?.pinned && msg?.pinnable && client.user && textChannel.permissionsFor(client.user, true)?.has(PermissionsBitField.Flags.ManageMessages)) await msg.pin();
 
-    if (msg && !msgCollectors.has(msg.id)) {
+    if (msg && !msgCollectors.has(msg.id) && client.isReady()) {
       const collector = new InteractionCollector(client, { message: msg });
       collector.on('collect', async (interaction) => {
         const [currentTempChannel] = await drizzle
