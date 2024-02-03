@@ -47,7 +47,6 @@ export const users = pgTable('user', {
   count: integer('count').default(0).notNull(),
   language: varchar('language', { length: 255 }),
   timezone: varchar('timezone', { length: 255 }),
-  expoPushToken: varchar('expo_push_token', { length: 255 }),
 });
 
 export const birthdays = pgTable(
@@ -101,6 +100,7 @@ export const session = pgTable('session', {
   idleExpires: bigint('idle_expires', {
     mode: 'number',
   }).notNull(),
+  expoPushToken: varchar('expo_push_token', { length: 255 }),
 });
 
 export const keys = pgTable('key', {

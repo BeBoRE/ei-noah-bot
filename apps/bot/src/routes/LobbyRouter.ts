@@ -1,4 +1,4 @@
-import Expo from 'expo-server-sdk';
+import Expo, { ExpoPushMessage } from 'expo-server-sdk';
 import { ComponentType, OverwriteType } from 'discord-api-types/v9';
 import {
   ActionRowBuilder,
@@ -88,6 +88,7 @@ import {
   subscribeToRemoveUser,
 } from '@ei/redis';
 
+import { auth, Session } from '@ei/lucia';
 import { createEntityCache } from '../EiNoah';
 import globalLogger from '../logger';
 import Router, {
@@ -2983,18 +2984,16 @@ const checkVoiceCreateChannels = async (
 
 const expo = new Expo();
 
-const sendUserAddPushNotification = (owner: DbUser, toBeAdded: User) => {
-  const token = owner.expoPushToken;
-
-  if (!token || !Expo.isExpoPushToken(token)) return Promise.resolve();
-
+const sendUserAddPushNotifications = (owner: DbUser, toBeAdded: User, sessions : Session[]) => {
   const locale = getLocale({ user: owner });
 
   const i18n = i18next.cloneInstance({ lng: locale });
 
-  return expo.sendPushNotificationsAsync([
-    {
-      to: token,
+  const messages : ExpoPushMessage[] = sessions
+    .filter(s => s.fresh)
+    .filter(s => Expo.isExpoPushToken(s.expoPushToken))
+    .map((s) => ({
+      to: s.expoPushToken,
       sound: 'default',
       channelId: 'addUser',
       title: i18n.t('lobby.notification.userAdd.title', {
@@ -3007,8 +3006,9 @@ const sendUserAddPushNotification = (owner: DbUser, toBeAdded: User) => {
         userId: toBeAdded.id,
       },
       categoryId: 'userAdd',
-    },
-  ]);
+    }));
+
+  return expo.sendPushNotificationsAsync(messages);
 };
 
 router.onInit = async (client, drizzle, _i18n, logger) => {
@@ -3289,6 +3289,8 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
             tempChannel.temp_channel,
           );
 
+          const userSessions = await auth.getAllUserSessions(tempChannel.user.id);
+
           if (
             !activeChannel
               ?.permissionsFor(member)
@@ -3303,7 +3305,7 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
                 drizzle,
                 i18n,
               ),
-              sendUserAddPushNotification(tempChannel.user, member.user),
+              sendUserAddPushNotifications(tempChannel.user, member.user, userSessions),
             ]).catch((err) => logger.error(err.description, { error: err }));
           }
 
