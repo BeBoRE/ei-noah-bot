@@ -68,7 +68,7 @@ const defineConfig = (): ExpoConfig => {
         'expo-build-properties',
         {
           ios: {
-            deploymentTarget: '13.0',
+            deploymentTarget: '13.4',
           },
         },
       ],

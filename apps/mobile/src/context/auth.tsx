@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { registerDevMenuItems } from 'expo-dev-menu';
 import {
   router,
