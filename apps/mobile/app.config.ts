@@ -42,7 +42,7 @@ const defineConfig = (): ExpoConfig => {
         UIBackgroundModes: ['remote-notification'],
         UIStatusBarStyle: 'UIStatusBarStyleLightContent',
       },
-      buildNumber: '3',
+      buildNumber: '5',
       icon: './assets/icon.png',
     },
     android: {
