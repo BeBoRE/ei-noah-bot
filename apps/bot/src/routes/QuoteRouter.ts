@@ -24,8 +24,8 @@ import {
 
 import createMenu from '../createMenu';
 import { createEntityCache } from '../EiNoah';
-import Router, { GuildHandler, HandlerType } from '../router/Router';
 import globalLogger from '../logger';
+import Router, { GuildHandler, HandlerType } from '../router/Router';
 
 const router = new Router('Onthoud al');
 
@@ -50,9 +50,13 @@ const getQuoteOptions = async (
   });
 
   globalLogger.debug(ownerDb);
-  const owner = ownerDb && await guild.client.users.fetch(`${BigInt(ownerDb.id)}`, {
-    cache: true,
-  }).catch(() => null);
+  const owner =
+    ownerDb &&
+    (await guild.client.users
+      .fetch(`${BigInt(ownerDb.id)}`, {
+        cache: true,
+      })
+      .catch(() => null));
 
   const text = quote.text.replace('`', '\\`');
 
@@ -82,7 +86,7 @@ const getQuoteOptions = async (
   embed.setDescription(text);
   embed.setFooter({
     text: i18n.t('quote.byUser', { user: ownerUserName }),
-    iconURL: owner && owner.displayAvatarURL({ size: 64 }) || undefined,
+    iconURL: (owner && owner.displayAvatarURL({ size: 64 })) || undefined,
   });
   if (date) embed.setTimestamp(date);
   if (color) embed.setColor(color);
@@ -187,10 +191,15 @@ const handler: GuildHandler = async ({
     if (quoteList.length < 2 && quoteList[0]) {
       const quoted = await getUser({ id: quotedUser.userId });
 
-      const [ownerGuildUser] = await drizzle.select().from(guildUsers).where(eq(guildUsers.id, quoteList[0].creatorId));
-      
+      const [ownerGuildUser] = await drizzle
+        .select()
+        .from(guildUsers)
+        .where(eq(guildUsers.id, quoteList[0].creatorId));
+
       globalLogger.debug(ownerGuildUser);
-      const owner = ownerGuildUser && await getUser({ id: ownerGuildUser.userId }) || null;
+      const owner =
+        (ownerGuildUser && (await getUser({ id: ownerGuildUser.userId }))) ||
+        null;
 
       return getQuoteOptions(msg.guild, quoteList[0], i18n, quoted, owner);
     }
@@ -204,8 +213,13 @@ const handler: GuildHandler = async ({
       mapper: (q) => q.text,
       selectCallback: async (q) => {
         const quoted = await getUser({ id: quotedUser.userId });
-        const [ownerGuildUser] = await drizzle.select().from(guildUsers).where(eq(guildUsers.id, q.creatorId));
-        const owner = ownerGuildUser && await getUser({ id: ownerGuildUser.userId }) || null;
+        const [ownerGuildUser] = await drizzle
+          .select()
+          .from(guildUsers)
+          .where(eq(guildUsers.id, q.creatorId));
+        const owner =
+          (ownerGuildUser && (await getUser({ id: ownerGuildUser.userId }))) ||
+          null;
 
         return {
           ...(<InteractionUpdateOptions>(

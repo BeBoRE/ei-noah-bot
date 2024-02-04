@@ -7,7 +7,7 @@
     "lint:fix": "eslint . --fix",
     "lint:typecheck": "tsc --noEmit",
     "db:create": "drizzle-kit generate:pg",
-    "db:push": "ts-node migrate.ts"
+    "db:push": "tsx migrate.ts"
   },
   "main": "client.ts",
   "types": "client.ts",
@@ -23,6 +23,6 @@
     "@ei/tsconfig": "*",
     "@types/pg": "^8.10.3",
     "drizzle-kit": "^0.19.13",
-    "ts-node": "^10.9.1"
+    "tsx": "^3.13.0"
   }
 }

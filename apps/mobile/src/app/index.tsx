@@ -94,13 +94,8 @@ const discordCDN = 'https://cdn.discordapp.com/';
 const userAvatar = (id: string, avatar: string, format: string) =>
   `avatars/${id}/${avatar}.${format}`;
 
-
 const getUserImageUrl = (user: { avatar: string; id: string }) =>
-  `${discordCDN}${userAvatar(
-    user.id,
-    user.avatar,
-    'png',
-  )}?size=${128}`;
+  `${discordCDN}${userAvatar(user.id, user.avatar, 'png')}?size=${128}`;
 
 function Index() {
   const { signOut } = useAuth();

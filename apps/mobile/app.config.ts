@@ -73,6 +73,13 @@ const defineConfig = (): ExpoConfig => {
           },
         },
       ],
+      [
+        '@sentry/react-native/expo',
+        {
+          organization: 'bebore',
+          project: 'ei',
+        },
+      ],
     ],
   };
 };

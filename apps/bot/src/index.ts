@@ -31,6 +31,7 @@ import {
 import { getDrizzleClient } from '@ei/drizzle';
 import { guilds } from '@ei/drizzle/tables/schema';
 
+import { generateNewYearImage } from './canvas/newYear';
 import EiNoah from './EiNoah';
 import { loginHandler } from './handler/login';
 import logger from './logger';
@@ -40,7 +41,6 @@ import LobbyRouter from './routes/LobbyRouter';
 import LocaleRouter from './routes/Locale';
 import QuoteRouter from './routes/QuoteRouter';
 import rolesRouter from './routes/Roles/RoleRouter';
-import { generateNewYearImage } from './canvas/newYear';
 
 dotenv.config();
 
@@ -671,51 +671,46 @@ process.title = 'Ei Noah Bot';
       'Europe/Amsterdam',
     );
 
-    const newYearCron = new CronJob(
-      '0 0 1 0 *',
-      async () => {
-        const avatar = await readFile('./avatars/ei.png').catch(
-          (err) => {
-            logger.error({ err });
-            return null;
-          },
-        );
+    const newYearCron = new CronJob('0 0 1 0 *', async () => {
+      const avatar = await readFile('./avatars/ei.png').catch((err) => {
+        logger.error({ err });
+        return null;
+      });
 
-        if(avatar) {
-          client.user?.edit({ avatar, username: 'Ei Noah' })
-            .catch((err) => logger.error({ err }));
-        }
+      if (avatar) {
+        client.user
+          ?.edit({ avatar, username: 'Ei Noah' })
+          .catch((err) => logger.error({ err }));
+      }
 
+      const year = new Date().getFullYear();
 
-        const year = new Date().getFullYear();
+      const attachment = await generateNewYearImage(year);
 
-        const attachment = await generateNewYearImage(year);
+      const guildList = await drizzle
+        .select()
+        .from(guilds)
+        .where(isNotNull(guilds.birthdayChannel));
 
-        const guildList = await drizzle
-          .select()
-          .from(guilds)
-          .where(isNotNull(guilds.birthdayChannel));
+      return Promise.all(
+        guildList.map((guild) => {
+          if (!guild.birthdayChannel) return null;
 
-        return Promise.all(
-          guildList.map((guild) => {
-            if (!guild.birthdayChannel) return null;
+          return client.channels
+            .fetch(guild.birthdayChannel, { cache: true })
+            .then<unknown>((channel) => {
+              if (channel === null || !channel.isTextBased()) {
+                return Promise.resolve(null);
+              }
 
-            return client.channels
-              .fetch(guild.birthdayChannel, { cache: true })
-              .then<unknown>((channel) => {
-                if (channel === null || !channel.isTextBased()) {
-                  return Promise.resolve(null);
-                }
-
-                return channel.send({
-                  content: `Gelukkig nieuw jaar!`,
-                  files: [attachment],
-                });
+              return channel.send({
+                content: `Gelukkig nieuw jaar!`,
+                files: [attachment],
               });
-          }),
-        );
-      },
-    )
+            });
+        }),
+      );
+    });
 
     newYearCron.start();
     santaCron.start();

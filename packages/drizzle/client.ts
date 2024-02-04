@@ -34,9 +34,11 @@ export const getConnectedPgClient = async () => {
 export const getDrizzleClient = async () => {
   if (global.__drizzle) return global.__drizzle;
 
-  global.__drizzle = getConnectedPgClient().then((p) => drizzleClient(p, {
-    logger: process.env.NODE_ENV !== 'production'
-  }));
+  global.__drizzle = getConnectedPgClient().then((p) =>
+    drizzleClient(p, {
+      logger: process.env.NODE_ENV !== 'production',
+    }),
+  );
 
   return global.__drizzle;
 };
