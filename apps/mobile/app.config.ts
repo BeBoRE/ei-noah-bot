@@ -43,7 +43,7 @@ const defineConfig = (): ExpoConfig => {
         UIBackgroundModes: ['remote-notification'],
         UIStatusBarStyle: 'UIStatusBarStyleLightContent',
       },
-      buildNumber: '5',
+      buildNumber: '6',
       icon: './assets/icon.png',
     },
     android: {
@@ -71,6 +71,13 @@ const defineConfig = (): ExpoConfig => {
           ios: {
             deploymentTarget: '13.4',
           },
+        },
+      ],
+      [
+        '@sentry/react-native/expo',
+        {
+          organization: 'bebore',
+          project: 'ei',
         },
       ],
     ],

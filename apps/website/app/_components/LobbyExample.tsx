@@ -542,9 +542,9 @@ function LobbyExample() {
   };
 
   return (
-    <div className="flex md:max-h-[50vh] max-h-none w-full flex-1 overflow-hidden rounded-lg bg-primary-900">
+    <div className="flex max-h-none w-full flex-1 overflow-hidden rounded-lg bg-primary-900 md:max-h-[50vh]">
       <div className="flex-1 md:flex">
-        <div className="flex flex-col bg-primary-800 p-2 md:w-64 md:items-stretch md:h-auto min-h-[30vh]">
+        <div className="flex min-h-[30vh] flex-col bg-primary-800 p-2 md:h-auto md:w-64 md:items-stretch">
           <div className="flex flex-col">
             <p className="text-xs uppercase text-primary-300">
               ➕ Create Lobby
@@ -591,7 +591,10 @@ function LobbyExample() {
             )}
           </div>
         </div>
-        <div className="flex-1 h-[40vh] md:h-auto overflow-x-auto" ref={chatRef}>
+        <div
+          className="h-[40vh] flex-1 overflow-x-auto md:h-auto"
+          ref={chatRef}
+        >
           {Array.from(messageList).length ? (
             <TextBubble>
               {Array.from(messageList).map((message) =>

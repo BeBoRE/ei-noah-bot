@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rm -rf .turbo node_modules .expo",
     "dev": "expo start -c",
-    "update": "eas update --auto",
+    "update": "eas update --auto && sentry-expo-upload-sourcemaps dist",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "lint:typecheck": "tsc --noEmit",
@@ -26,6 +26,7 @@
     "@react-native-community/hooks": "^3.0.0",
     "@react-native-community/netinfo": "^11.1.0",
     "@react-navigation/native": "^6.1.8",
+    "@sentry/react-native": "5.17.0",
     "@tanstack/query-async-storage-persister": "^4.36.1",
     "@tanstack/react-query": "^4.36.1",
     "@tanstack/react-query-persist-client": "^4.36.1",

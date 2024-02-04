@@ -422,11 +422,7 @@ const createCreateChannels = async (
       muteVoice: muteVoice.id,
       privateVoice: privateVoice.id,
     })
-    .where(
-      and(
-        eq(categories.id, category.id),
-      ),
-    );
+    .where(and(eq(categories.id, category.id)));
 };
 
 interface AddUsersResponse {
@@ -1212,7 +1208,7 @@ const pushLobbyToUser = (
 
   const dataToSend = !data
     ? null
-    : {
+    : ({
         user: {
           id: user.id,
           displayName: data.member.displayName,
@@ -1251,7 +1247,7 @@ const pushLobbyToUser = (
               member.id !== user.id && member.id !== member.client.user.id,
           }))
           .filter((u) => u.id !== user.id),
-      } satisfies LobbyChange;
+      } satisfies LobbyChange);
 
   globalLogger.debug('data to send', { dataToSend });
 
@@ -2984,17 +2980,27 @@ const checkVoiceCreateChannels = async (
 
 const expo = new Expo();
 
-const sendUserAddPushNotifications = (owner: DbUser, toBeAdded: User, sessions : typeof session.$inferSelect[]) => {
+const sendUserAddPushNotifications = (
+  owner: DbUser,
+  toBeAdded: User,
+  sessions: (typeof session.$inferSelect)[],
+) => {
   const locale = getLocale({ user: owner });
 
   const i18n = i18next.cloneInstance({ lng: locale });
 
-  globalLogger.debug('sending push notifications', { owner, toBeAdded, sessions });
-  globalLogger.debug(`now ${Date.now()}`)
+  globalLogger.debug('sending push notifications', {
+    owner,
+    toBeAdded,
+    sessions,
+  });
+  globalLogger.debug(`now ${Date.now()}`);
 
-  const messages : ExpoPushMessage[] = sessions
-    .filter(s => s.idleExpires > Date.now())
-    .filter((s) : s is typeof session.$inferSelect & { expoPushToken : string } => Expo.isExpoPushToken(s.expoPushToken))
+  const messages: ExpoPushMessage[] = sessions
+    .filter((s) => s.idleExpires > Date.now())
+    .filter((s): s is typeof session.$inferSelect & { expoPushToken: string } =>
+      Expo.isExpoPushToken(s.expoPushToken),
+    )
     .map((s) => ({
       to: s.expoPushToken,
       sound: 'default',
@@ -3294,7 +3300,10 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
             tempChannel.temp_channel,
           );
 
-          const userSessions = await drizzle.select().from(session).where(eq(session.userId, tempChannel.user.id));
+          const userSessions = await drizzle
+            .select()
+            .from(session)
+            .where(eq(session.userId, tempChannel.user.id));
 
           if (
             !activeChannel
@@ -3310,7 +3319,11 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
                 drizzle,
                 i18n,
               ),
-              sendUserAddPushNotifications(tempChannel.user, member.user, userSessions),
+              sendUserAddPushNotifications(
+                tempChannel.user,
+                member.user,
+                userSessions,
+              ),
             ]).catch((err) => logger.error(err.description, { error: err }));
           }
 

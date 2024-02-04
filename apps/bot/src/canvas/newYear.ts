@@ -1,9 +1,9 @@
-import { createCanvas, loadImage } from "canvas";
-import { AttachmentBuilder } from "discord.js";
+import { createCanvas, loadImage } from 'canvas';
+import { AttachmentBuilder } from 'discord.js';
 
-export const generateNewYearImage = async (year : number) => {
+export const generateNewYearImage = async (year: number) => {
   const canvas = createCanvas(800, 600);
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext('2d');
 
   const fireworksImage = await loadImage('./src/images/fireworks.png');
   const fireworksWidth = 800;
@@ -21,8 +21,7 @@ export const generateNewYearImage = async (year : number) => {
 
   // Put image in middle of screen
   const x = (canvas.width - avatarWidth) / 2;
-  const y = ((canvas.height - avatarHeight) / 2) - 100;
-
+  const y = (canvas.height - avatarHeight) / 2 - 100;
 
   const suitImage = await loadImage('./src/images/suit.png');
   const suitScale = 0.3;
@@ -39,7 +38,8 @@ export const generateNewYearImage = async (year : number) => {
 
   const fireworksImage2 = await loadImage('./src/images/fireworks-2.png');
   const fireworksWidth2 = 450;
-  const fireworksHeight2 = fireworksImage2.height * (fireworksWidth2 / fireworksImage2.width);
+  const fireworksHeight2 =
+    fireworksImage2.height * (fireworksWidth2 / fireworksImage2.width);
 
   // Place on bottom of screen
   const xFw2 = 0;
@@ -52,7 +52,8 @@ export const generateNewYearImage = async (year : number) => {
 
   const fireworksImage3 = await loadImage('./src/images/fireworks-3.png');
   const fireworksWidth3 = 450;
-  const fireworksHeight3 = fireworksImage3.height * (fireworksWidth3 / fireworksImage3.width);
+  const fireworksHeight3 =
+    fireworksImage3.height * (fireworksWidth3 / fireworksImage3.width);
 
   // Place on bottom of screen
   const xFw3 = canvas.width - fireworksWidth3;
@@ -65,7 +66,7 @@ export const generateNewYearImage = async (year : number) => {
   const fontSize = 90;
   const text = `Gelukkig ${year}!`;
 
-  const yText = (canvas.height / 2) + 100;
+  const yText = canvas.height / 2 + 100;
 
   ctx.fillStyle = '#ebb614';
   ctx.font = `bold ${fontSize}px Arial`;
@@ -86,4 +87,4 @@ export const generateNewYearImage = async (year : number) => {
   ctx.strokeText(text, canvas.width / 2, yText + fontSize);
 
   return new AttachmentBuilder(canvas.createPNGStream());
-}
+};

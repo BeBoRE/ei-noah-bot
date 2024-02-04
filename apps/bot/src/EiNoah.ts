@@ -710,7 +710,9 @@ class EiNoah implements IRouter {
               error: err,
               command: interaction.commandName,
               user: interaction.user.username,
-              options: interaction.options.data.map((option) => `${option.name}: ${option.value}`).join(`, `),
+              options: interaction.options.data
+                .map((option) => `${option.name}: ${option.value}`)
+                .join(`, `),
             });
           });
       }

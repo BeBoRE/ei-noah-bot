@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useNavigationContainerRef } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { UpdateEventType, useUpdateEvents } from 'expo-updates';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
+import * as Sentry from '@sentry/react-native';
 import { toast } from 'burnt';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { AuthProvider } from 'src/context/auth';
+import { routingInstrumentation } from 'src/utils/sentry';
 
 import baseConfig from '@ei/tailwind-config';
 
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { TRPCProvider } from '../utils/api';
 
 // This is the main layout of the app
@@ -39,6 +41,16 @@ function RootLayout() {
     }
   });
 
+  const navigationContainerRef = useNavigationContainerRef();
+
+  useEffect(() => {
+    if (navigationContainerRef) {
+      routingInstrumentation.registerNavigationContainer(
+        navigationContainerRef,
+      );
+    }
+  }, [navigationContainerRef]);
+
   return (
     <>
       <AuthProvider>
@@ -59,7 +71,7 @@ function RootLayout() {
                 },
               }}
             >
-              <GestureHandlerRootView className='flex-1'>
+              <GestureHandlerRootView className="flex-1">
                 <Stack
                   screenOptions={{
                     headerStyle: {
@@ -77,4 +89,4 @@ function RootLayout() {
   );
 }
 
-export default RootLayout;
+export default Sentry.wrap(RootLayout);

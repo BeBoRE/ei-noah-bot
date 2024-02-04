@@ -11,8 +11,8 @@ import {
   Message,
   MessageActionRowComponentBuilder,
 } from 'discord.js';
-import { Logger } from 'winston';
 import _ from 'lodash';
+import { Logger } from 'winston';
 
 export type ButtonReturn =
   | boolean
