@@ -10,7 +10,7 @@ import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useAppState } from '@react-native-community/hooks';
-import { alert } from 'burnt';
+import { alert, toast } from 'burnt';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 import JoinLobby from 'src/components/JoinLobby';
 import { AnimatedLobbyName } from 'src/components/LobbyName';
@@ -21,6 +21,7 @@ import UsersSheet from 'src/components/UsersSheet';
 import { useAuth } from 'src/context/auth';
 import useNotifications from 'src/hooks/useNotifications';
 import { baseConfig } from 'tailwind.config';
+import type { SFSymbol } from 'sf-symbols-typescript';
 
 import { LobbyProvider, useLobby } from '@ei/react-shared/context/lobby';
 
@@ -100,6 +101,29 @@ const getUserImageUrl = (user: { avatar: string; id: string }) =>
 function Index() {
   const { signOut } = useAuth();
   const { data: user } = api.user.me.useQuery();
+  const context = api.useContext();
+
+  const logout = api.user.logout.useMutation({
+    onSuccess: () => {
+      signOut();
+
+      context.invalidate(undefined);
+    },
+    onError: (err) => {
+      toast({
+        title: 'Failed to log out',
+        message: err.message,
+        preset: 'custom',
+        icon: {
+          ios: {
+            name: 'exclamationmark.triangle' satisfies SFSymbol,
+            color: baseConfig.theme.colors.primary.DEFAULT,
+          },
+        },
+        haptic: 'error',
+      })
+    }
+  });
 
   const { authInfo } = useAuth();
   const appState = useAppState();
@@ -117,8 +141,11 @@ function Index() {
             <HeaderButtons>
               <Item
                 title="Logout"
+                disabled={logout.isLoading}
                 onPress={() => {
-                  signOut();
+                  if(!logout.isLoading) {
+                    logout.mutate();
+                  }
                 }}
                 color={baseConfig.theme.colors.background}
               />

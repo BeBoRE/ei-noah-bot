@@ -130,13 +130,11 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
               process.env.NODE_ENV === 'development' ||
               (opts.direction === 'down' && opts.result instanceof Error),
           }),
-          wsClient
-            ? splitLink({
-                condition: ({ type }) => type === 'subscription',
-                true: wsLink({ client: wsClient }),
-                false: httpLink,
-              })
-            : httpLink,
+          splitLink({
+            condition: ({ type }) => type === 'subscription',
+            true: wsLink({ client: wsClient }),
+            false: httpLink,
+          }),
         ],
       }),
     [httpLink],

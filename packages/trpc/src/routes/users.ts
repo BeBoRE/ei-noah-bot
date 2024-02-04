@@ -3,6 +3,8 @@ import { TRPCError } from '@trpc/server';
 import { Routes } from 'discord-api-types/v10';
 import { z } from 'zod';
 
+import { auth } from '@ei/lucia';
+
 import { discordMemberSchema } from '../schemas';
 import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
 import { camelize } from '../utils';
@@ -30,6 +32,9 @@ export const userRouter = createTRPCRouter({
 
       return discordMember;
     }),
+  logout: protectedProcedure.mutation(async ({ ctx: { session } }) => {
+    await auth.invalidateSession(session.sessionId);
+  }),
 });
 
 export default userRouter;
