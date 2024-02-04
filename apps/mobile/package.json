@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rm -rf .turbo node_modules .expo",
     "dev": "expo start -c",
-    "update": "eas update --auto",
+    "update": "eas update --auto && sentry-expo-upload-sourcemaps dist",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "lint:typecheck": "tsc --noEmit",
