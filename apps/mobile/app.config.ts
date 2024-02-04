@@ -39,10 +39,11 @@ const defineConfig = (): ExpoConfig => {
       supportsTablet: true,
       bundleIdentifier: identifier,
       infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
         UIBackgroundModes: ['remote-notification'],
         UIStatusBarStyle: 'UIStatusBarStyleLightContent',
       },
-      buildNumber: '3',
+      buildNumber: '5',
       icon: './assets/icon.png',
     },
     android: {
@@ -68,7 +69,7 @@ const defineConfig = (): ExpoConfig => {
         'expo-build-properties',
         {
           ios: {
-            deploymentTarget: '13.0',
+            deploymentTarget: '13.4',
           },
         },
       ],
