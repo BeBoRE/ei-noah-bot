@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useAppState } from '@react-native-community/hooks';
 import { alert, toast } from 'burnt';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
+import type { SFSymbol } from 'sf-symbols-typescript';
 import JoinLobby from 'src/components/JoinLobby';
 import { AnimatedLobbyName } from 'src/components/LobbyName';
 import Text, { AnimatedText } from 'src/components/Text';
@@ -21,7 +22,6 @@ import UsersSheet from 'src/components/UsersSheet';
 import { useAuth } from 'src/context/auth';
 import useNotifications from 'src/hooks/useNotifications';
 import { baseConfig } from 'tailwind.config';
-import type { SFSymbol } from 'sf-symbols-typescript';
 
 import { LobbyProvider, useLobby } from '@ei/react-shared/context/lobby';
 
@@ -121,8 +121,8 @@ function Index() {
           },
         },
         haptic: 'error',
-      })
-    }
+      });
+    },
   });
 
   const { authInfo } = useAuth();
@@ -143,7 +143,7 @@ function Index() {
                 title="Logout"
                 disabled={logout.isLoading}
                 onPress={() => {
-                  if(!logout.isLoading) {
+                  if (!logout.isLoading) {
                     logout.mutate();
                   }
                 }}
