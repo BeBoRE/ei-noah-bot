@@ -89,7 +89,6 @@ import {
   subscribeToRemoveUser,
 } from '@ei/redis';
 
-import { auth, Session } from '@ei/lucia';
 import { createEntityCache } from '../EiNoah';
 import globalLogger from '../logger';
 import Router, {
