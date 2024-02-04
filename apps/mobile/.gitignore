@@ -1,3 +1,4 @@
 ios/
 android/
 config.development.ts
+builds/

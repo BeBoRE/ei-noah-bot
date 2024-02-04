@@ -39,6 +39,7 @@ const defineConfig = (): ExpoConfig => {
       supportsTablet: true,
       bundleIdentifier: identifier,
       infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
         UIBackgroundModes: ['remote-notification'],
         UIStatusBarStyle: 'UIStatusBarStyleLightContent',
       },
