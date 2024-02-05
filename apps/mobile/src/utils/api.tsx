@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -6,7 +6,9 @@ import NetInfo from '@react-native-community/netinfo';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import {
   focusManager,
+  MutationCache,
   onlineManager,
+  QueryCache,
   QueryClient,
 } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
@@ -15,6 +17,7 @@ import {
   httpBatchLink,
   loggerLink,
   splitLink,
+  TRPCClientError,
   wsLink,
 } from '@trpc/client';
 import config from 'src/config';
@@ -22,6 +25,7 @@ import { useAuth } from 'src/context/auth';
 import superjson from 'superjson';
 
 import { api } from '@ei/react-shared';
+import { AppRouter } from '@ei/trpc';
 
 onlineManager.setEventListener((setOnline) =>
   NetInfo.addEventListener((state) => {
@@ -88,23 +92,56 @@ const wsClient = createWSClient({
  * Use only in _app.tsx
  */
 export function TRPCProvider({ children }: TRPCProviderProps) {
-  const { authInfo } = useAuth();
+  const { authInfo, signOut } = useAuth();
   const isLoggedIn = authInfo !== null;
 
   console.log('using api', getBaseUrl());
+
+  const onError = useCallback(
+    (err: TRPCClientError<AppRouter>) => {
+      if (err.data?.httpStatus === 401) {
+        signOut();
+      }
+    },
+    [signOut],
+  );
 
   const queryClient = React.useMemo(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 1000 * 1,
+            staleTime: 2000 * 1,
             enabled: isLoggedIn,
             cacheTime: 1000 * 60 * 60 * 24,
+            retry: (retryCount, err) => {
+              if (
+                err instanceof TRPCClientError &&
+                err.data?.httpStatus === 401
+              ) {
+                return false;
+              }
+
+              return retryCount < 3;
+            },
           },
         },
+        queryCache: new QueryCache({
+          onError: (err) => {
+            if (err instanceof TRPCClientError) {
+              onError(err);
+            }
+          },
+        }),
+        mutationCache: new MutationCache({
+          onError: (err) => {
+            if (err instanceof TRPCClientError) {
+              onError(err);
+            }
+          },
+        }),
       }),
-    [isLoggedIn],
+    [isLoggedIn, onError],
   );
 
   const httpLink = React.useMemo(
