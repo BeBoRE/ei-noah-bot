@@ -122,7 +122,7 @@ function OverflowButton({
       )}
     </View>
   ) : (
-    <Text>Logout</Text>
+    <Text className='text-background'>More</Text>
   );
 }
 

@@ -14,6 +14,7 @@ import { routingInstrumentation } from 'src/utils/sentry';
 
 import baseConfig from '@ei/tailwind-config';
 
+import { HeaderButtonsProvider } from 'react-navigation-header-buttons';
 import { TRPCProvider } from '../utils/api';
 
 // This is the main layout of the app
@@ -55,33 +56,35 @@ function RootLayout() {
     <>
       <AuthProvider>
         <TRPCProvider>
-          <SafeAreaProvider>
-            {/*
-            The Stack component displays the current page.
-            It also allows you to configure your screens
-          */}
-            <ThemeProvider
-              value={{
-                ...DarkTheme,
-                colors: {
-                  ...DarkTheme.colors,
-                  ...baseConfig.theme.colors,
-                  text: baseConfig.theme.colors.background,
-                  primary: baseConfig.theme.colors.primary.DEFAULT,
-                },
-              }}
-            >
-              <GestureHandlerRootView className="flex-1">
-                <Stack
-                  screenOptions={{
-                    headerStyle: {
-                      backgroundColor: baseConfig.theme.colors.primary.DEFAULT,
-                    },
-                  }}
-                />
-              </GestureHandlerRootView>
-            </ThemeProvider>
-          </SafeAreaProvider>
+          <HeaderButtonsProvider stackType='native'>
+            <SafeAreaProvider>
+              {/*
+              The Stack component displays the current page.
+              It also allows you to configure your screens
+            */}
+              <ThemeProvider
+                value={{
+                  ...DarkTheme,
+                  colors: {
+                    ...DarkTheme.colors,
+                    ...baseConfig.theme.colors,
+                    text: baseConfig.theme.colors.background,
+                    primary: baseConfig.theme.colors.primary.DEFAULT,
+                  },
+                }}
+              >
+                <GestureHandlerRootView className="flex-1">
+                  <Stack
+                    screenOptions={{
+                      headerStyle: {
+                        backgroundColor: baseConfig.theme.colors.primary.DEFAULT,
+                      },
+                    }}
+                  />
+                </GestureHandlerRootView>
+              </ThemeProvider>
+            </SafeAreaProvider>
+          </HeaderButtonsProvider>
         </TRPCProvider>
       </AuthProvider>
       <StatusBar style="dark" />
