@@ -41,7 +41,7 @@ const defineConfig = (): ExpoConfig => {
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
         UIBackgroundModes: ['remote-notification'],
-        UIStatusBarStyle: 'UIStatusBarStyleLightContent',
+        UIStatusBarStyle: 'UIStatusBarStyleDarkContent',
       },
       buildNumber: '6',
       icon: './assets/icon.png',
