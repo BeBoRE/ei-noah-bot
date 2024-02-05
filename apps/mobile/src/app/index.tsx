@@ -11,7 +11,12 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useAppState } from '@react-native-community/hooks';
 import { alert, toast } from 'burnt';
-import { HeaderButtons, Item } from 'react-navigation-header-buttons';
+import {
+  defaultOnOverflowMenuPress,
+  HeaderButtons,
+  HiddenItem,
+  OverflowMenu,
+} from 'react-navigation-header-buttons';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import JoinLobby from 'src/components/JoinLobby';
 import { AnimatedLobbyName } from 'src/components/LobbyName';
@@ -25,7 +30,7 @@ import { baseConfig } from 'tailwind.config';
 
 import { LobbyProvider, useLobby } from '@ei/react-shared/context/lobby';
 
-import { api } from '../utils/api';
+import { api, RouterOutputs } from '../utils/api';
 
 function Screen() {
   useNotifications();
@@ -98,6 +103,29 @@ const userAvatar = (id: string, avatar: string, format: string) =>
 const getUserImageUrl = (user: { avatar: string; id: string }) =>
   `${discordCDN}${userAvatar(user.id, user.avatar, 'png')}?size=${128}`;
 
+function OverflowButton({
+  user,
+}: {
+  user?: RouterOutputs['user']['me'] | null;
+}) {
+  return user ? (
+    <View className="flex flex-row items-center">
+      {user.avatar && (
+        <Image
+          source={getUserImageUrl({
+            id: user.id,
+            avatar: user.avatar,
+          })}
+          className="ml-2 h-10 w-10 rounded-full"
+          alt=""
+        />
+      )}
+    </View>
+  ) : (
+    <Text>Logout</Text>
+  );
+}
+
 function Index() {
   const { signOut } = useAuth();
   const { data: user } = api.user.me.useQuery();
@@ -139,39 +167,24 @@ function Index() {
           // eslint-disable-next-line react/no-unstable-nested-components
           headerRight: () => (
             <HeaderButtons>
-              <Item
-                title="Logout"
+              <OverflowMenu
                 disabled={logout.isLoading}
-                onPress={() => {
-                  if (!logout.isLoading) {
-                    logout.mutate();
-                  }
-                }}
                 color={baseConfig.theme.colors.background}
-              />
+                onPress={defaultOnOverflowMenuPress}
+                OverflowIcon={<OverflowButton user={user} />}
+              >
+                <HiddenItem
+                  title="Logout"
+                  destructive
+                  onPress={() => {
+                    if (!logout.isLoading) {
+                      logout.mutate();
+                    }
+                  }}
+                />
+              </OverflowMenu>
             </HeaderButtons>
           ),
-          headerLeft:
-            (user &&
-              // eslint-disable-next-line react/no-unstable-nested-components
-              (() => (
-                <View className="flex flex-row items-center">
-                  {user.avatar && (
-                    <Image
-                      source={getUserImageUrl({
-                        id: user.id,
-                        avatar: user.avatar,
-                      })}
-                      className="mr-2 h-10 w-10 rounded-full"
-                      alt=""
-                    />
-                  )}
-                  <Text className="text-2xl font-bold text-primary-950">
-                    {user.globalName || ''}
-                  </Text>
-                </View>
-              ))) ||
-            undefined,
         }}
       />
       <SafeAreaView edges={['left', 'right']} className="flex-1 to-primary-950">
