@@ -118,7 +118,7 @@ function GuildLayout({ children, params: { guildId } }: Props) {
               </Link>
             </Button>
           </div>
-          <Suspense fallback>
+          <Suspense>
             <AdminButtons guildId={guildId} />
           </Suspense>
         </div>

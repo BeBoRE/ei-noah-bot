@@ -14,15 +14,14 @@ services:
     networks:
       - ei
     ports:
-      - "3000:3000"
-      - "3001:3001"
+      - "5100:5100"
     environment:
       - REDIS_URL=redis://redis
       - DBHOST=host.docker.internal
     env_file:
       - .env
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5100/health"]
       interval: 30s
       timeout: 10s
       retries: 5
