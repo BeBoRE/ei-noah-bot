@@ -6,8 +6,8 @@
   "main": "./dist/index.js",
   "scripts": {
     "clean": "rm -rf .turbo node_modules",
-    "start": "tsx  ./src/index.ts",
-    "dev": "tsx watch ./src/index.ts",
+    "start": "tsx ./src/index.ts",
+    "dev": "tsx watch --clear-screen=false ./src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

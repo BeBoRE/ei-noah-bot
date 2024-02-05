@@ -59,8 +59,8 @@ export const getBaseUrl = (ws = false) => {
     );
   }
 
-  if (ws) return `ws://${localhost}:5000/ws`;
-  return `http://${localhost}:5000`;
+  if (ws) return `ws://${localhost}:5100/ws`;
+  return `http://${localhost}:5100`;
 };
 
 /**

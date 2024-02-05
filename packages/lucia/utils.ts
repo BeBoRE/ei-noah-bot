@@ -4,4 +4,4 @@ import ip from 'ip';
 export const getHost = () =>
   process.env.NODE_ENV === 'production'
     ? 'https://ei.sweaties.net'
-    : `http://${ip.address(undefined, 'ipv4')}:5000`;
+    : `http://${ip.address(undefined, 'ipv4')}:5100`;
