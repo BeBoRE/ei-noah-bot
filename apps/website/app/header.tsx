@@ -1,18 +1,12 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
-import rscApi from 'trpc/server';
 
-import HeaderUser from './_components/HeaderUser';
+import { SuspenseHeaderUser } from './_components/HeaderUser';
 import { Icons } from './_components/Icons';
 import { NavMenu } from './_components/NavMenu';
 import GotoLobby from './GotoLobby';
 
 async function Header() {
-  const api = await rscApi();
-  const [user, guilds] = await Promise.all([
-    api.user.me().catch(() => null),
-    api.guild.all().catch(() => null),
-  ]);
-
   return (
     <header className="flex min-h-[4rem] place-content-center bg-primary-100 dark:bg-primary-900">
       <div className="container flex place-content-between py-1">
@@ -23,11 +17,13 @@ async function Header() {
               ei Noah
             </h1>
           </Link>
-          {guilds && <NavMenu guilds={guilds} />}
+          <Suspense>
+            <NavMenu />
+          </Suspense>
           <GotoLobby />
         </div>
         <div className="flex place-items-center">
-          <HeaderUser user={user} />
+          <SuspenseHeaderUser />
         </div>
       </div>
     </header>

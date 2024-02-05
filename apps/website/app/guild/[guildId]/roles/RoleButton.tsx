@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import MemberAvatar from 'app/_components/Avatar';
 import { Button } from 'app/_components/ui/button';
+import { Skeleton } from 'app/_components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -324,6 +325,10 @@ function RoleButton({ member, guild, ...props }: Props) {
       )}
     </div>
   );
+}
+
+export function RoleSkeleton() {
+  return <Skeleton className="aspect-square h-auto w-full rounded-md" />;
 }
 
 export default RoleButton;

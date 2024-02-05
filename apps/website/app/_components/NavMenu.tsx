@@ -2,6 +2,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/v10';
 import { Users } from 'lucide-react';
+import rscApi from 'trpc/server';
 import cn from 'utils/utils';
 
 import { ApiGuild } from '@ei/trpc/src/schemas';
@@ -65,10 +66,15 @@ const Guild = React.forwardRef<React.ElementRef<'a'>, GuildProps>(
 );
 Guild.displayName = 'Guild';
 
-type Props = {
-  guilds: ApiGuild[];
-};
-export function NavMenu({ guilds }: Props) {
+export async function NavMenu() {
+  const api = await rscApi();
+
+  const guilds = await api.guild.all().catch(() => null);
+
+  if (!guilds || guilds.length <= 0) {
+    return null;
+  }
+
   return (
     <NavigationMenu>
       <NavigationMenuList>

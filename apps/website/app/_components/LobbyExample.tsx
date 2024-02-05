@@ -11,11 +11,11 @@ import {
 import Image from 'next/image';
 import { useTimeouts } from 'hooks/useTimeouts';
 import { api } from 'trpc/react';
+import { getUserImageUrl } from 'utils/userImage';
 
-import { RouterOutputs } from '@ei/trpc';
+import type { RouterOutputs } from '@ei/trpc';
 
 import voiceIcon from '../../public/discord-speaker.svg';
-import { getUserImageUrl } from './HeaderUser';
 import { Icons } from './Icons';
 import { Button, ButtonProps } from './ui/button';
 

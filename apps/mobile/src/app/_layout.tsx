@@ -8,13 +8,13 @@ import { UpdateEventType, useUpdateEvents } from 'expo-updates';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import * as Sentry from '@sentry/react-native';
 import { toast } from 'burnt';
+import { HeaderButtonsProvider } from 'react-navigation-header-buttons';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { AuthProvider } from 'src/context/auth';
 import { routingInstrumentation } from 'src/utils/sentry';
 
 import baseConfig from '@ei/tailwind-config';
 
-import { HeaderButtonsProvider } from 'react-navigation-header-buttons';
 import { TRPCProvider } from '../utils/api';
 
 // This is the main layout of the app
@@ -56,7 +56,7 @@ function RootLayout() {
     <>
       <AuthProvider>
         <TRPCProvider>
-          <HeaderButtonsProvider stackType='native'>
+          <HeaderButtonsProvider stackType="native">
             <SafeAreaProvider>
               {/*
               The Stack component displays the current page.
@@ -77,7 +77,8 @@ function RootLayout() {
                   <Stack
                     screenOptions={{
                       headerStyle: {
-                        backgroundColor: baseConfig.theme.colors.primary.DEFAULT,
+                        backgroundColor:
+                          baseConfig.theme.colors.primary.DEFAULT,
                       },
                     }}
                   />
