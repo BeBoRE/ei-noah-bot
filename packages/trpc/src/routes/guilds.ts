@@ -22,7 +22,6 @@ import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
 import {
   camelize,
   generateRoleMenuContent,
-  highestRole,
   userIsAdmin,
 } from '../utils';
 
@@ -325,88 +324,7 @@ const guildRouter = createTRPCRouter({
       }
 
       return newGuild;
-    }),
-  setRoleCreatorRole: protectedProcedure
-    .input(
-      z.object({
-        guildId: z.string(),
-        roleId: z.string().nullable(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const member = await rest
-        .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
-        .then((res) => camelize(res))
-        .then((res) => discordMemberSchema.parse(res));
-
-      if (!member) {
-        throw new TRPCError({
-          code: 'FORBIDDEN',
-          message: 'You are not in this guild',
-        });
-      }
-
-      const discordGuild = await rest
-        .get(Routes.guild(input.guildId))
-        .then((res) => camelize(res))
-        .then((res) => apiGuildSchema.parse(res))
-        .catch((err) => {
-          if (err instanceof DiscordAPIError) {
-            if (err.code === 404) {
-              throw new TRPCError({
-                code: 'NOT_FOUND',
-              });
-            }
-          }
-
-          throw err;
-        });
-
-      const newRoleCreatorRole = input.roleId
-        ? discordGuild.roles.find((role) => role.id === input.roleId)
-        : null;
-
-      if (newRoleCreatorRole !== null && !newRoleCreatorRole) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Role not found',
-        });
-      }
-
-      const isAdmin = userIsAdmin(member, discordGuild);
-      const isOwner = discordGuild.ownerId === member.user.id;
-
-      const usersHighestRole = highestRole(discordGuild.roles, member);
-
-      const roleIsHigherThanMember =
-        newRoleCreatorRole !== null &&
-        newRoleCreatorRole.position >= usersHighestRole.position;
-
-      const isAllowed = isOwner || (isAdmin && !roleIsHigherThanMember);
-
-      if (!isAllowed) {
-        throw new TRPCError({
-          code: 'FORBIDDEN',
-          message: 'You are not allowed to set this role',
-        });
-      }
-
-      const [newGuild] = await ctx.drizzle
-        .update(guilds)
-        .set({
-          roleCreatorRoleId: newRoleCreatorRole ? newRoleCreatorRole.id : null,
-        })
-        .where(eq(guilds.id, input.guildId))
-        .returning();
-
-      if (!newGuild) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-        });
-      }
-
-      return newGuild;
-    }),
+    })
 });
 
 export default guildRouter;

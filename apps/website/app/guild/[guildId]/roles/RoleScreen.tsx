@@ -26,7 +26,7 @@ function RoleScreen() {
   const [guild] = api.guild.get.useSuspenseQuery({ guildId });
 
   const allowedToCreateRoles =
-    member && guild ? canCreateRoles(member, guild?.discord, guild?.db) : false;
+    member && guild ? canCreateRoles(member, guild?.discord) : false;
 
   const combinedRoles = [
     ...customRoles

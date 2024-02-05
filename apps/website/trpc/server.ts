@@ -1,21 +1,21 @@
 /* eslint-disable @typescript-eslint/no-shadow */
 import * as context from 'next/headers';
 import {
-  createTRPCProxyClient,
+  createTRPCUntypedClient,
   loggerLink,
   unstable_httpBatchStreamLink,
 } from '@trpc/client';
 
-import { AppRouter, appRouter } from '@ei/trpc';
+import { AppRouter } from '@ei/trpc';
+import { createCaller } from '@ei/trpc/src/root';
 import { createRscContext } from '@ei/trpc/src/trpc';
 
 import { getApiUrl, transformer } from './shared';
 
 const rscApi = () =>
-  createRscContext({ context }).then((ctx) => appRouter.createCaller(ctx));
+  createRscContext({ context }).then((ctx) => createCaller(ctx));
 
-export const api = createTRPCProxyClient<AppRouter>({
-  transformer,
+export const api = createTRPCUntypedClient<AppRouter>({
   links: [
     loggerLink({
       enabled: (op) =>
@@ -23,6 +23,7 @@ export const api = createTRPCProxyClient<AppRouter>({
         (op.direction === 'down' && op.result instanceof Error),
     }),
     unstable_httpBatchStreamLink({
+      transformer,
       url: getApiUrl(),
       headers() {
         const heads = new Map(context.headers());

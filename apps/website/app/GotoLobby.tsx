@@ -16,9 +16,10 @@ function GotoLobby() {
       {lobby && (
         <motion.div
           className="flex items-center"
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 0 }}
+          initial={{ opacity: 0, scale: 0.5}}
+          animate={{ opacity: 1, scale: 1}}
+          exit={{ opacity: 0, scale: 0.5}}
+          transition={{type: 'spring', stiffness: 260, damping: 20}}
         >
           <Button variant="default" asChild className="gap-1">
             <Link href="/lobby">

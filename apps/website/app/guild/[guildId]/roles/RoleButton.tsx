@@ -38,7 +38,7 @@ function RoleButton({ member, guild, ...props }: Props) {
     return null;
   }
 
-  const context = api.useContext();
+  const utils = api.useUtils();
 
   const isApproved = 'role' in props;
 
@@ -49,20 +49,20 @@ function RoleButton({ member, guild, ...props }: Props) {
 
   const role = isApproved ? props.role : props.notApprovedRole;
 
-  const { mutate: approveRole, isLoading: isApproving } =
+  const { mutate: approveRole, isPending: isApproving } =
     api.roles.approveRole.useMutation({
       onMutate: async ({ roleId }) => {
-        await context.roles.guildCustom.cancel({ guildId });
-        await context.roles.guildNotApproved.cancel({ guildId });
-        await context.guild.get.cancel({ guildId });
+        await utils.roles.guildCustom.cancel({ guildId });
+        await utils.roles.guildNotApproved.cancel({ guildId });
+        await utils.guild.get.cancel({ guildId });
 
-        const prevGuildNotApproved = context.roles.guildNotApproved.getData({
+        const prevGuildNotApproved = utils.roles.guildNotApproved.getData({
           guildId,
         });
-        const prevGuildCustom = context.roles.guildCustom.getData({ guildId });
-        const prevGuild = context.guild.get.getData({ guildId });
+        const prevGuildCustom = utils.roles.guildCustom.getData({ guildId });
+        const prevGuild = utils.guild.get.getData({ guildId });
 
-        context.roles.guildNotApproved.setData(
+        utils.roles.guildNotApproved.setData(
           { guildId },
           (prev) => prev?.filter((r) => r.id !== roleId),
         );
@@ -75,7 +75,7 @@ function RoleButton({ member, guild, ...props }: Props) {
           guildId,
         };
 
-        context.roles.guildCustom.setData({ guildId }, (prev) =>
+        utils.roles.guildCustom.setData({ guildId }, (prev) =>
           prev ? [...prev, fakeRole] : [fakeRole],
         );
 
@@ -89,7 +89,7 @@ function RoleButton({ member, guild, ...props }: Props) {
             position: 0,
           };
 
-        context.guild.get.setData({ guildId }, (prev) =>
+        utils.guild.get.setData({ guildId }, (prev) =>
           prev
             ? {
                 ...prev,
@@ -110,13 +110,13 @@ function RoleButton({ member, guild, ...props }: Props) {
         };
       },
       onSuccess: ({ dbRole, discordRole: newDiscordRole }, _, beforeMutate) => {
-        context.roles.guildCustom.setData({ guildId }, () =>
+        utils.roles.guildCustom.setData({ guildId }, () =>
           beforeMutate?.prevGuildCustom
             ? [...beforeMutate.prevGuildCustom, dbRole]
             : [dbRole],
         );
 
-        context.guild.get.setData({ guildId }, () =>
+        utils.guild.get.setData({ guildId }, () =>
           beforeMutate?.prevGuild
             ? {
                 ...beforeMutate.prevGuild,
@@ -132,29 +132,29 @@ function RoleButton({ member, guild, ...props }: Props) {
         );
       },
       onError: (_1, _2, prev) => {
-        context.roles.guildNotApproved.setData(
+        utils.roles.guildNotApproved.setData(
           { guildId },
           prev?.prevGuildNotApproved,
         );
-        context.roles.guildCustom.setData({ guildId }, prev?.prevGuildCustom);
-        context.guild.get.setData({ guildId }, prev?.prevGuild);
+        utils.roles.guildCustom.setData({ guildId }, prev?.prevGuildCustom);
+        utils.guild.get.setData({ guildId }, prev?.prevGuild);
       },
       onSettled: async () => {
-        await context.roles.guildNotApproved.invalidate({ guildId });
-        await context.roles.guildCustom.invalidate({ guildId });
-        await context.guild.get.invalidate({ guildId });
+        await utils.roles.guildNotApproved.invalidate({ guildId });
+        await utils.roles.guildCustom.invalidate({ guildId });
+        await utils.guild.get.invalidate({ guildId });
       },
     });
 
   const { mutate: rejectRole } = api.roles.rejectRole.useMutation({
     onMutate: async ({ roleId }) => {
-      await context.roles.guildNotApproved.cancel({ guildId });
+      await utils.roles.guildNotApproved.cancel({ guildId });
 
-      const prevGuildNotApproved = context.roles.guildNotApproved.getData({
+      const prevGuildNotApproved = utils.roles.guildNotApproved.getData({
         guildId,
       });
 
-      context.roles.guildNotApproved.setData(
+      utils.roles.guildNotApproved.setData(
         { guildId },
         (prev) => prev?.filter((r) => r.id !== roleId),
       );
@@ -162,76 +162,76 @@ function RoleButton({ member, guild, ...props }: Props) {
       return { prevGuildNotApproved };
     },
     onError: (_1, _2, prev) => {
-      context.roles.guildNotApproved.setData(
+      utils.roles.guildNotApproved.setData(
         { guildId },
         prev?.prevGuildNotApproved,
       );
     },
     onSettled: async () => {
-      await context.roles.guildNotApproved.invalidate({ guildId });
+      await utils.roles.guildNotApproved.invalidate({ guildId });
     },
   });
 
-  const { mutate: addRole, isLoading: isAdding } =
+  const { mutate: addRole, isPending: isAdding } =
     api.roles.addRole.useMutation({
       onMutate: async ({ roleId }) => {
-        await context.user.memberMe.cancel({ guildId });
+        await utils.user.memberMe.cancel({ guildId });
 
-        const prevMember = context.user.memberMe.getData({ guildId });
+        const prevMember = utils.user.memberMe.getData({ guildId });
         const newMember = prevMember && {
           ...prevMember,
           roles: [...prevMember.roles, roleId],
         };
 
-        context.user.memberMe.setData({ guildId }, newMember);
+        utils.user.memberMe.setData({ guildId }, newMember);
 
         return { prevMember };
       },
       onSettled: () => {
-        context.user.memberMe.invalidate({ guildId });
+        utils.user.memberMe.invalidate({ guildId });
       },
       onError: async (err, { roleId }) => {
         if (err.data?.code === 'NOT_FOUND') {
-          await context.roles.guildCustom.cancel({ guildId });
+          await utils.roles.guildCustom.cancel({ guildId });
 
-          context.roles.guildCustom.setData(
+          utils.roles.guildCustom.setData(
             { guildId },
             (prev) => prev?.filter((r) => r.id !== roleId),
           );
 
-          context.roles.guildCustom.invalidate({ guildId });
+          utils.roles.guildCustom.invalidate({ guildId });
         }
       },
     });
 
-  const { mutate: removeRole, isLoading: isRemoving } =
+  const { mutate: removeRole, isPending: isRemoving } =
     api.roles.removeRole.useMutation({
       onMutate: async ({ roleId }) => {
-        await context.user.memberMe.cancel({ guildId });
+        await utils.user.memberMe.cancel({ guildId });
 
-        const prevMember = context.user.memberMe.getData({ guildId });
+        const prevMember = utils.user.memberMe.getData({ guildId });
         const newMember = prevMember && {
           ...prevMember,
           roles: prevMember.roles.filter((id) => id !== roleId),
         };
 
-        context.user.memberMe.setData({ guildId }, newMember);
+        utils.user.memberMe.setData({ guildId }, newMember);
 
         return { prevMember };
       },
       onSettled: () => {
-        context.user.memberMe.invalidate({ guildId });
+        utils.user.memberMe.invalidate({ guildId });
       },
       onError: async (err, { roleId }) => {
         if (err.data?.code === 'NOT_FOUND') {
-          await context.roles.guildCustom.cancel({ guildId });
+          await utils.roles.guildCustom.cancel({ guildId });
 
-          context.roles.guildCustom.setData(
+          utils.roles.guildCustom.setData(
             { guildId },
             (prev) => prev?.filter((r) => r.id !== roleId),
           );
 
-          context.roles.guildCustom.invalidate({ guildId });
+          utils.roles.guildCustom.invalidate({ guildId });
         }
       },
     });
@@ -240,7 +240,7 @@ function RoleButton({ member, guild, ...props }: Props) {
     ? !member.roles.some((id) => id === props.role.id)
     : true;
 
-  const showRejectOrApprove = canCreateRoles(member, guild.discord, guild.db);
+  const showRejectOrApprove = canCreateRoles(member, guild.discord);
 
   const color = discordRole?.color
     ? `#${discordRole.color.toString(16).padStart(6, '0')}`

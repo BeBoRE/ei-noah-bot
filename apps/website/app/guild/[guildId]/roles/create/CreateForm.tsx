@@ -19,7 +19,7 @@ function CreateForm({ guildId }: Props) {
   const [name, setName] = useState<string | null>(null);
   const router = useRouter();
 
-  const context = api.useContext();
+  const utils = api.useUtils();
 
   const [me] = api.user.me.useSuspenseQuery();
 
@@ -29,32 +29,32 @@ function CreateForm({ guildId }: Props) {
 
   const { mutate: createRole, error } = api.roles.createRole.useMutation({
     onMutate: async () => {
-      await context.roles.guildCustom.cancel({ guildId });
-      await context.guild.get.cancel({ guildId });
+      await utils.roles.guildCustom.cancel({ guildId });
+      await utils.guild.get.cancel({ guildId });
     },
     onSuccess: async ({ dbRole, discordRole, notApprovedRole }) => {
       const promises = [];
 
       if (notApprovedRole) {
-        context.roles.guildNotApproved.setData({ guildId }, (prev) => [
+        utils.roles.guildNotApproved.setData({ guildId }, (prev) => [
           ...(prev || []),
           { ...notApprovedRole, createdByUserId: me?.id || '' },
         ]);
 
-        promises.push(context.roles.guildNotApproved.invalidate({ guildId }));
+        promises.push(utils.roles.guildNotApproved.invalidate({ guildId }));
       }
 
       if (dbRole) {
-        context.roles.guildCustom.setData({ guildId }, (prev) => [
+        utils.roles.guildCustom.setData({ guildId }, (prev) => [
           ...(prev || []),
           { ...dbRole, createdByUserId: me?.id || '' },
         ]);
 
-        promises.push(context.roles.guildCustom.invalidate({ guildId }));
+        promises.push(utils.roles.guildCustom.invalidate({ guildId }));
       }
 
       if (discordRole) {
-        context.guild.get.setData({ guildId }, (prev) => {
+        utils.guild.get.setData({ guildId }, (prev) => {
           if (!prev) return prev;
 
           const guild = { ...prev };
@@ -63,7 +63,7 @@ function CreateForm({ guildId }: Props) {
           return guild;
         });
 
-        promises.push(await context.guild.get.invalidate({ guildId }));
+        promises.push(await utils.guild.get.invalidate({ guildId }));
       }
 
       await Promise.all(promises);

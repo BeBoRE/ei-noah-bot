@@ -6,7 +6,12 @@ import { lobbyRouter } from './routes/lobby';
 import { notificationRouter } from './routes/notification';
 import roleRouter from './routes/roles';
 import { userRouter } from './routes/users';
-import { createTRPCRouter, protectedProcedure, publicProcedure } from './trpc';
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+  t,
+} from './trpc';
 
 export const appRouter = createTRPCRouter({
   healthcheck: publicProcedure.query(() => 'OK'),
@@ -28,6 +33,8 @@ export const appRouter = createTRPCRouter({
   roles: roleRouter,
   channel: channelRouter,
 });
+
+export const createCaller = t.createCallerFactory(appRouter);
 
 // export type definition of API
 export type AppRouter = typeof appRouter;

@@ -10,4 +10,4 @@ const getPageSession = cache(() => {
 
 export default getPageSession;
 
-export type Session = ReturnType<typeof getPageSession>;
+export type Session = Awaited<ReturnType<typeof getPageSession>>;

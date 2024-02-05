@@ -1,0 +1,1 @@
+ALTER TABLE "guild" DROP COLUMN IF EXISTS "role_creator_role_id";

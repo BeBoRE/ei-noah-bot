@@ -129,13 +129,13 @@ function OverflowButton({
 function Index() {
   const { signOut } = useAuth();
   const { data: user } = api.user.me.useQuery();
-  const context = api.useContext();
+  const utils = api.useUtils();
 
   const logout = api.user.logout.useMutation({
     onSuccess: () => {
       signOut();
 
-      context.invalidate(undefined);
+      utils.invalidate(undefined);
     },
     onError: (err) => {
       toast({
@@ -168,7 +168,7 @@ function Index() {
           headerRight: () => (
             <HeaderButtons>
               <OverflowMenu
-                disabled={logout.isLoading}
+                disabled={logout.isPending}
                 color={baseConfig.theme.colors.background}
                 onPress={defaultOnOverflowMenuPress}
                 OverflowIcon={<OverflowButton user={user} />}
@@ -177,7 +177,7 @@ function Index() {
                   title="Logout"
                   destructive
                   onPress={() => {
-                    if (!logout.isLoading) {
+                    if (!logout.isPending) {
                       logout.mutate();
                     }
                   }}

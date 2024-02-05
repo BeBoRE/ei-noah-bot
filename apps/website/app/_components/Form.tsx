@@ -16,7 +16,7 @@ function Form({
 }) {
   const router = useRouter();
 
-  const context = api.useContext();
+  const utils = api.useUtils();
 
   return (
     <form
@@ -36,7 +36,7 @@ function Form({
           // redirected
           // when using `redirect: "manual"`, response status 0 is returned
           router.refresh();
-          context.invalidate();
+          utils.invalidate();
           onSubmitted?.(e);
         }
       }}

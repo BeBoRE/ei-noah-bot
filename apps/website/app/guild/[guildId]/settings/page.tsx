@@ -11,11 +11,9 @@ type Props = {
 async function SettingsPage({ params: { guildId } }: Props) {
   const api = await rscApi();
 
-  const [guild, channels, member, customRoles] = await Promise.all([
+  const [guild, channels] = await Promise.all([
     await api.guild.get({ guildId }),
     await api.channel.all({ guildId }),
-    await api.user.memberMe({ guildId }),
-    await api.roles.guildCustom({ guildId }),
   ]);
 
   return (
@@ -25,8 +23,6 @@ async function SettingsPage({ params: { guildId } }: Props) {
         guildId={guildId}
         guildData={guild}
         channelData={channels}
-        memberData={member}
-        customRolesData={customRoles}
       />
     </div>
   );

@@ -71,6 +71,8 @@ export { type RouterInputs, type RouterOutputs } from '@ei/trpc';
 
 const asyncStoragePersistor = createAsyncStoragePersister({
   storage: AsyncStorage,
+  serialize: superjson.stringify,
+  deserialize: superjson.parse,
 });
 
 type TRPCProviderProps = {
@@ -113,7 +115,7 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
           queries: {
             staleTime: 2000 * 1,
             enabled: isLoggedIn,
-            cacheTime: 1000 * 60 * 60 * 24,
+            gcTime: 1000 * 60 * 60 * 24,
             retry: (retryCount, err) => {
               if (
                 err instanceof TRPCClientError &&
@@ -148,6 +150,7 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
     () =>
       httpBatchLink({
         url: `${getBaseUrl()}/api/trpc`,
+        transformer: superjson,
         headers: authInfo
           ? {
               Authorization: `Bearer ${authInfo}`,
@@ -160,7 +163,6 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
   const trpcClient = React.useMemo(
     () =>
       api.createClient({
-        transformer: superjson,
         links: [
           loggerLink({
             enabled: (opts) =>
@@ -169,7 +171,7 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
           }),
           splitLink({
             condition: ({ type }) => type === 'subscription',
-            true: wsLink({ client: wsClient }),
+            true: wsLink({ client: wsClient, transformer: superjson }),
             false: httpLink,
           }),
         ],

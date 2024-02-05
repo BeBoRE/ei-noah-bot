@@ -1,6 +1,6 @@
 import { camelCase, isArray, isObject, transform } from 'lodash';
 
-import { Guild, Role } from '@ei/drizzle/tables/schema';
+import { Role } from '@ei/drizzle/tables/schema';
 
 import { ApiGuild, ApiRole, DiscordMember } from './schemas';
 
@@ -48,14 +48,10 @@ export const userIsAdmin = (member: DiscordMember, guild: ApiGuild) => {
 export const canCreateRoles = (
   member: DiscordMember,
   guild: ApiGuild,
-  dbGuild: Guild,
 ) => {
   const isAdmin = userIsAdmin(member, guild);
-  const hasRoleCreatorRole = member.roles.some(
-    (id) => id === dbGuild.roleCreatorRoleId,
-  );
 
-  return isAdmin || hasRoleCreatorRole;
+  return isAdmin;
 };
 
 export const generateRoleMenuContent = (roles: Role[]) => {

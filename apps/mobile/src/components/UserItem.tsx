@@ -4,7 +4,7 @@ import Animated, {
   FadeInUp,
   FadeOut,
   FadeOutDown,
-  Layout,
+  LinearTransition,
 } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -94,7 +94,7 @@ function UserItem({
     <Animated.View
       entering={FadeInUp}
       exiting={FadeOutDown}
-      layout={Layout.duration(200).delay(100)}
+      layout={LinearTransition.duration(200).delay(100)}
       className="mb-3 flex-row justify-between rounded-full bg-primary-800 p-3"
     >
       <View className="flex-row items-center">

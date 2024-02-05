@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@ei/trpc": "*",
-    "@trpc/server": "^10.40.0",
+    "@trpc/server": "11.0.0-next-beta.264",
     "ws": "^8.14.2"
   },
   "devDependencies": {

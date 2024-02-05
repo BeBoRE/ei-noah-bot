@@ -172,7 +172,7 @@ const roleRouter = createTRPCRouter({
           }),
       ]);
 
-      const allowed = canCreateRoles(member, guild, dbGuildUser.guild);
+      const allowed = canCreateRoles(member, guild);
 
       if (!allowed) {
         const [notApprovedRole] = await ctx.drizzle
@@ -322,7 +322,7 @@ const roleRouter = createTRPCRouter({
           }),
       ]);
 
-      const allowed = canCreateRoles(member, guild, dbGuildUser.guild);
+      const allowed = canCreateRoles(member, guild);
 
       if (!allowed) {
         throw new TRPCError({
@@ -474,7 +474,7 @@ const roleRouter = createTRPCRouter({
           }),
       ]);
 
-      const allowed = canCreateRoles(member, guild, dbGuildUser.guild);
+      const allowed = canCreateRoles(member, guild);
 
       if (!allowed) {
         throw new TRPCError({

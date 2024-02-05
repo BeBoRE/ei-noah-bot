@@ -32,14 +32,14 @@ function RoleChannelSelect({ guildData, guildId, channelData }: Props) {
     { initialData: channelData },
   );
 
-  const context = api.useContext();
+  const utils = api.useUtils();
 
-  const { mutate: setRoleMenuChannel, isLoading } =
+  const { mutate: setRoleMenuChannel, isPending } =
     api.guild.setRoleMenuChannel.useMutation({
       onMutate: async ({ channelId }) => {
-        await context.guild.get.cancel({ guildId });
+        await utils.guild.get.cancel({ guildId });
 
-        const prevGuild = context.guild.get.getData({ guildId });
+        const prevGuild = utils.guild.get.getData({ guildId });
         const newGuild = prevGuild && {
           ...prevGuild,
           db: {
@@ -48,15 +48,15 @@ function RoleChannelSelect({ guildData, guildId, channelData }: Props) {
           },
         };
 
-        context.guild.get.setData({ guildId }, newGuild);
+        utils.guild.get.setData({ guildId }, newGuild);
 
         return { prevGuild };
       },
       onError(_1, _2, prev) {
-        context.guild.get.setData({ guildId }, prev && prev.prevGuild);
+        utils.guild.get.setData({ guildId }, prev && prev.prevGuild);
       },
       onSettled: () => {
-        context.guild.get.invalidate({ guildId });
+        utils.guild.get.invalidate({ guildId });
       },
     });
 
@@ -83,7 +83,7 @@ function RoleChannelSelect({ guildData, guildId, channelData }: Props) {
       <h3 className="pl-3">Channel for role menu</h3>
       <div className="flex gap-2">
         <Select
-          disabled={isLoading}
+          disabled={isPending}
           value={currentSelectedRoleMenuChannel?.id || undefined}
           onValueChange={(value) => {
             setRoleMenuChannel({ guildId, channelId: value });
@@ -134,7 +134,7 @@ function RoleChannelSelect({ guildData, guildId, channelData }: Props) {
           </SelectContent>
         </Select>
         <Button
-          disabled={isLoading}
+          disabled={isPending}
           variant="outline"
           onClick={() => setRoleMenuChannel({ guildId, channelId: null })}
         >
