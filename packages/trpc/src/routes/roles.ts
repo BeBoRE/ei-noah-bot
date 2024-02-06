@@ -12,8 +12,9 @@ import {
 } from '@ei/drizzle/tables/schema';
 
 import { apiGuildSchema, ApiRoleSchema, discordMemberSchema } from '../schemas';
-import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
+import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { camelize, canCreateRoles, generateRoleMenuContent } from '../utils';
+import { getApiMember, rest } from '../utils/discordApi';
 
 const roleRouter = createTRPCRouter({
   guildCustom: protectedProcedure
@@ -520,6 +521,7 @@ const roleRouter = createTRPCRouter({
 
       await rest
         .put(Routes.guildMemberRole(input.guildId, ctx.dbUser.id, input.roleId))
+        .then(() => getApiMember(input.guildId, ctx.dbUser.id))
         .catch(async (err) => {
           if (err instanceof DiscordAPIError) {
             if (err.status === 404) {
@@ -592,6 +594,7 @@ const roleRouter = createTRPCRouter({
         .delete(
           Routes.guildMemberRole(input.guildId, ctx.dbUser.id, input.roleId),
         )
+        .then(() => getApiMember(input.guildId, ctx.dbUser.id))
         .catch(async (err) => {
           if (err instanceof DiscordAPIError) {
             if (err.status === 404) {

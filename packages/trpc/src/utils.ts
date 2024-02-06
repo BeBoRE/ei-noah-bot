@@ -45,10 +45,7 @@ export const userIsAdmin = (member: DiscordMember, guild: ApiGuild) => {
   );
 };
 
-export const canCreateRoles = (
-  member: DiscordMember,
-  guild: ApiGuild,
-) => {
+export const canCreateRoles = (member: DiscordMember, guild: ApiGuild) => {
   const isAdmin = userIsAdmin(member, guild);
 
   return isAdmin;

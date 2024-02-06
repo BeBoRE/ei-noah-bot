@@ -12,6 +12,7 @@ const redisUrl = process.env.REDIS_URL;
 
 const publisher = redisUrl ? new Redis(redisUrl) : new Redis();
 const subscriber = publisher.duplicate();
+export const redis = publisher.duplicate();
 
 const createChannel = channelCreator({ publisher, subscriber });
 

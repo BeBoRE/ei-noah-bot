@@ -6,8 +6,9 @@ import { z } from 'zod';
 import { guilds, guildUsers } from '@ei/drizzle/tables/schema';
 
 import { channelSchema } from '../schemas';
-import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
+import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { camelize } from '../utils';
+import { rest } from '../utils/discordApi';
 
 const channelRouter = createTRPCRouter({
   all: protectedProcedure

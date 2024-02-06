@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import { QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ReactQueryStreamedHydration } from '@tanstack/react-query-next-experimental';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import {
   createWSClient,
   loggerLink,
@@ -11,13 +13,11 @@ import {
   unstable_httpBatchStreamLink,
   wsLink,
 } from '@trpc/client';
+import SuperJSON from 'superjson';
 
 import { api } from '@ei/react-shared/api';
 import { LobbyProvider } from '@ei/react-shared/context/lobby';
 
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import SuperJSON from 'superjson';
 import { getApiUrl, getWsUrl, transformer } from './shared';
 
 export { api };
@@ -40,7 +40,7 @@ const persister = createSyncStoragePersister({
   storage: typeof window !== 'undefined' ? window.localStorage : null,
   serialize: SuperJSON.stringify,
   deserialize: SuperJSON.parse,
-})
+});
 
 export default function TRPCReactProvider({ children, headers }: Props) {
   const [queryClient] = useState(
@@ -84,7 +84,10 @@ export default function TRPCReactProvider({ children, headers }: Props) {
   );
 
   return (
-    <PersistQueryClientProvider client={queryClient} persistOptions={{persister}}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister }}
+    >
       <ReactQueryStreamedHydration>
         <api.Provider client={trpcClient} queryClient={queryClient}>
           <LobbyProvider api={api}>{children}</LobbyProvider>
