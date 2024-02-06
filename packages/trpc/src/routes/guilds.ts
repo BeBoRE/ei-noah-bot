@@ -18,12 +18,9 @@ import {
   channelSchema,
   discordMemberSchema,
 } from '../schemas';
-import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
-import {
-  camelize,
-  generateRoleMenuContent,
-  userIsAdmin,
-} from '../utils';
+import { createTRPCRouter, protectedProcedure } from '../trpc';
+import { camelize, generateRoleMenuContent, userIsAdmin } from '../utils';
+import { getCachedOrApiMember, rest } from '../utils/discordApi';
 
 export const getUserImageUrl = (user: {
   avatar?: string | null;
@@ -130,10 +127,10 @@ const guildRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const meMember = await rest
-        .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
-        .then((res) => camelize(res))
-        .then((res) => discordMemberSchema.parse(res));
+      const [meMember, avatarMember] = await Promise.all([
+        getCachedOrApiMember(input.guildId, ctx.dbUser.id),
+        getCachedOrApiMember(input.guildId, input.userId),
+      ]);
 
       if (!meMember) {
         throw new TRPCError({
@@ -142,19 +139,14 @@ const guildRouter = createTRPCRouter({
         });
       }
 
-      const member = await rest
-        .get(Routes.guildMember(input.guildId, input.userId))
-        .then((res) => camelize(res))
-        .then((res) => discordMemberSchema.parse(res));
-
-      if (!member) {
+      if (!avatarMember) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'User not found',
         });
       }
 
-      const avatar = getMemberImageUrl(member, input.guildId);
+      const avatar = getMemberImageUrl(avatarMember, input.guildId);
 
       return avatar;
     }),
@@ -324,7 +316,7 @@ const guildRouter = createTRPCRouter({
       }
 
       return newGuild;
-    })
+    }),
 });
 
 export default guildRouter;

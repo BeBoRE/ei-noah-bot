@@ -1,34 +1,27 @@
-import { DiscordAPIError } from '@discordjs/rest';
 import { TRPCError } from '@trpc/server';
-import { Routes } from 'discord-api-types/v10';
 import { z } from 'zod';
 
 import { auth } from '@ei/lucia';
 
-import { discordMemberSchema } from '../schemas';
-import { createTRPCRouter, protectedProcedure, rest } from '../trpc';
-import { camelize } from '../utils';
+import { createTRPCRouter, protectedProcedure } from '../trpc';
+import { getCachedOrApiMember } from '../utils/discordApi';
 
 export const userRouter = createTRPCRouter({
   me: protectedProcedure.query(async ({ ctx }) => ctx.discordUser),
   memberMe: protectedProcedure
     .input(z.object({ guildId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const discordMember = await rest
-        .get(Routes.guildMember(input.guildId, ctx.dbUser.id))
-        .then((res) => camelize(res))
-        .then((res) => discordMemberSchema.parse(res))
-        .catch((err) => {
-          if (err instanceof DiscordAPIError) {
-            if (err.code === 404) {
-              throw new TRPCError({
-                code: 'NOT_FOUND',
-              });
-            }
-          }
+      const discordMember = await getCachedOrApiMember(
+        input.guildId,
+        ctx.dbUser.id,
+      );
 
-          throw err;
+      if (!discordMember) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You are not in this guild',
         });
+      }
 
       return discordMember;
     }),

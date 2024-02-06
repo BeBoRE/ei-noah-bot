@@ -12,11 +12,7 @@ type Props = {
   channelData: RouterOutputs['channel']['all'];
 };
 
-function Settings({
-  guildData,
-  guildId,
-  channelData
-}: Props) {
+function Settings({ guildData, guildId, channelData }: Props) {
   return (
     <RoleChannelSelect
       channelData={channelData}
