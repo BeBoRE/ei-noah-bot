@@ -43,7 +43,7 @@ const defineConfig = (): ExpoConfig => {
         UIBackgroundModes: ['remote-notification'],
         UIStatusBarStyle: 'UIStatusBarStyleDarkContent',
       },
-      buildNumber: '6',
+      buildNumber: '7',
       icon: './assets/icon.png',
     },
     android: {
@@ -70,6 +70,14 @@ const defineConfig = (): ExpoConfig => {
         {
           ios: {
             deploymentTarget: '13.4',
+          },
+          android: {
+            // these values were tested with Expo SDK 48
+            compileSdkVersion: 33,
+            targetSdkVersion: 33,
+            minSdkVersion: 23,
+            buildToolsVersion: "33.0.0",
+            kotlinVersion: "1.6.20",
           },
         },
       ],
