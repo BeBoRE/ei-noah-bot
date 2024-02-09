@@ -1,6 +1,8 @@
 import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
+  ButtonBuilder,
+  ButtonStyle,
   Channel,
   User as DiscordUser,
   EmbedBuilder,
@@ -8,9 +10,10 @@ import {
   InteractionReplyOptions,
   InteractionUpdateOptions,
   Message,
+  PermissionsBitField,
   Role,
 } from 'discord.js';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { i18n as I18n } from 'i18next';
 
 import { DrizzleClient } from '@ei/drizzle';
@@ -319,7 +322,6 @@ router.useContext(
   },
 );
 
-/*
 const removeHandler: GuildHandler = async ({
   msg,
   drizzle,
@@ -344,32 +346,30 @@ const removeHandler: GuildHandler = async ({
 
   // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
-  const constraint =
-    guToRemoveFrom.user.id === requestingUser.id ||
-    msg.member?.permissions.has(PermissionsBitField.Flags.Administrator)
-      ? undefined
-      : { where: { creator: guildUser } };
+  const manageEverything = msg.member?.permissions.has(PermissionsBitField.Flags.Administrator) || requestingUser.id === user.id;
 
-  if (!guToRemoveFrom.quotes.isInitialized()) {
-    await guToRemoveFrom.quotes.init(constraint);
-  }
+  const where = manageEverything ? 
+    eq(quotes.guildUserId, guToRemoveFrom.id) : 
+    and(
+      eq(quotes.creatorId, guildUser.id),
+      eq(quotes.guildUserId, guToRemoveFrom.id)
+    );
 
-  const quotes = guToRemoveFrom.quotes.getItems();
+  const quoteList = await drizzle.select().from(quotes)
+    .where(where);
 
-  if (quotes.length < 1) {
-    return i18n.t('quote.error.noQuoteFoundRemove');
+  if (quoteList.length < 1) {
+    return i18n.t('quote.noQuoteFoundRemove');
   }
 
   const quotesToRemove: Set<Quote> = new Set<Quote>();
 
-  const menuEm = em.fork();
-
   createMenu({
     logger,
-    list: quotes,
+    list: quoteList,
     owner: requestingUser,
     msg,
-    title: i18n.t('lobby.quoteRemoveMenuTitle'),
+    title: i18n.t('quote.quoteRemoveMenuTitle'),
     mapper: (q) => `${quotesToRemove.has(q) ? '✅' : ''}${q.text}`,
     selectCallback: (q) => {
       if (quotesToRemove.has(q)) quotesToRemove.delete(q);
@@ -382,10 +382,9 @@ const removeHandler: GuildHandler = async ({
           .setCustomId('delete')
           .setStyle(ButtonStyle.Danger)
           .setLabel('❌'),
-        () => {
-          quotesToRemove.forEach((q) => {
-            menuEm.remove(q);
-          });
+        async () => {
+          await Promise.all(Array.from(quotesToRemove).map((q) => drizzle.delete(quotes).where(eq(quotes.id, q.id))));
+
           if (quotesToRemove.size > 0) {
             msg.channel.send(
               i18n.t('quote.amountQuotesRemoved', {
@@ -393,7 +392,6 @@ const removeHandler: GuildHandler = async ({
               }),
             );
           } else msg.channel.send(i18n.t('quote.noQuotesRemoved'));
-          menuEm.flush();
           return true;
         },
       ],
@@ -419,6 +417,7 @@ router.use('verwijder', removeHandler, HandlerType.GUILD);
 router.use('verwijderen', removeHandler, HandlerType.GUILD);
 router.use('manage', removeHandler, HandlerType.GUILD);
 
+/*
 router.use(
   'random',
   async ({ msg, em, i18n }) => {
