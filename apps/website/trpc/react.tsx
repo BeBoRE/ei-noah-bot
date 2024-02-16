@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import { QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { ReactQueryStreamedHydration } from '@tanstack/react-query-next-experimental';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import {
   createWSClient,
@@ -49,6 +48,7 @@ export default function TRPCReactProvider({ children, headers }: Props) {
         defaultOptions: {
           queries: {
             staleTime: 1 * 1000,
+            gcTime: 24 * 60 * 60 * 1000,
           },
         },
       }),
@@ -88,11 +88,9 @@ export default function TRPCReactProvider({ children, headers }: Props) {
       client={queryClient}
       persistOptions={{ persister }}
     >
-      <ReactQueryStreamedHydration>
-        <api.Provider client={trpcClient} queryClient={queryClient}>
-          <LobbyProvider api={api}>{children}</LobbyProvider>
-        </api.Provider>
-      </ReactQueryStreamedHydration>
+      <api.Provider client={trpcClient} queryClient={queryClient}>
+        <LobbyProvider api={api}>{children}</LobbyProvider>
+      </api.Provider>
       <ReactQueryDevtools initialIsOpen={false} />
     </PersistQueryClientProvider>
   );

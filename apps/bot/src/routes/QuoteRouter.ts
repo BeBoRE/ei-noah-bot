@@ -346,17 +346,18 @@ const removeHandler: GuildHandler = async ({
 
   // Als iemand zijn eigen quotes ophaalt laat hij alles zien (of als degene admin is)
   // Anders laad alleen de quotes waar hij de creator van is
-  const manageEverything = msg.member?.permissions.has(PermissionsBitField.Flags.Administrator) || requestingUser.id === user.id;
+  const manageEverything =
+    msg.member?.permissions.has(PermissionsBitField.Flags.Administrator) ||
+    requestingUser.id === user.id;
 
-  const where = manageEverything ? 
-    eq(quotes.guildUserId, guToRemoveFrom.id) : 
-    and(
-      eq(quotes.creatorId, guildUser.id),
-      eq(quotes.guildUserId, guToRemoveFrom.id)
-    );
+  const where = manageEverything
+    ? eq(quotes.guildUserId, guToRemoveFrom.id)
+    : and(
+        eq(quotes.creatorId, guildUser.id),
+        eq(quotes.guildUserId, guToRemoveFrom.id),
+      );
 
-  const quoteList = await drizzle.select().from(quotes)
-    .where(where);
+  const quoteList = await drizzle.select().from(quotes).where(where);
 
   if (quoteList.length < 1) {
     return i18n.t('quote.noQuoteFoundRemove');
@@ -383,7 +384,11 @@ const removeHandler: GuildHandler = async ({
           .setStyle(ButtonStyle.Danger)
           .setLabel('❌'),
         async () => {
-          await Promise.all(Array.from(quotesToRemove).map((q) => drizzle.delete(quotes).where(eq(quotes.id, q.id))));
+          await Promise.all(
+            Array.from(quotesToRemove).map((q) =>
+              drizzle.delete(quotes).where(eq(quotes.id, q.id)),
+            ),
+          );
 
           if (quotesToRemove.size > 0) {
             msg.channel.send(
