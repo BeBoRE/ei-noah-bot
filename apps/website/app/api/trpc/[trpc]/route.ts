@@ -49,6 +49,8 @@ const handler = async (req: NextRequest) => {
     const isSameOrigin = isSameOriginOrigin || isSameOriginReferrer;
 
     if (!isSameOrigin) {
+      console.error('Invalid Origin', { origin: originRaw, referrer: referrerRaw });
+
       return new Response('Invalid Origin', {
         status: 400,
         statusText: 'Bad Request',
@@ -57,6 +59,8 @@ const handler = async (req: NextRequest) => {
   }
 
   if (!req.headers.get('Content-Type')?.startsWith('application/json')) {
+    console.error('Invalid Content-Type', req.headers.get('Content-Type'));
+
     return new Response('Invalid Content-Type', {
       status: 400,
       statusText: 'Bad Request',
@@ -64,7 +68,7 @@ const handler = async (req: NextRequest) => {
   }
 
   const response = await fetchRequestHandler({
-    endpoint: '/api/trpc',
+    endpoint: '/api',
     router: appRouter,
     req: req as unknown as Request,
     createContext: () => createApiContext({ req, context }),
