@@ -148,15 +148,23 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
 
   const httpLink = React.useMemo(
     () =>
-      httpBatchLink({
+      {
+        const defaultHeaders = {
+          'X-Mobile-App': 'true',
+          'Content-Type': 'application/json'
+        }
+
+        return httpBatchLink({
         url: `${getBaseUrl()}/api/trpc`,
         transformer: superjson,
         headers: authInfo
           ? {
+              ...defaultHeaders,
               Authorization: `Bearer ${authInfo}`,
             }
-          : undefined,
-      }),
+          : defaultHeaders,
+      })
+    },
     [authInfo],
   );
 

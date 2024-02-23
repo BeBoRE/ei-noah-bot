@@ -4,15 +4,24 @@ import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 
 import { appRouter, createApiContext } from '@ei/trpc';
 
+const expectedUrl = new URL('https://ei.sweaties.net');
+
 /**
  * Configure basic CORS headers
  * You should extend this to match your needs
  */
 function setCorsHeaders(res: Response) {
-  res.headers.set('Access-Control-Allow-Origin', '*');
-  res.headers.set('Access-Control-Request-Method', '*');
+  if (process.env.NODE_ENV !== 'production') {
+    res.headers.set('Access-Control-Allow-Origin', '*');
+    res.headers.set('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
+    res.headers.set('Access-Control-Allow-Headers', '*');
+
+    return;
+  }
+
+  res.headers.set('Access-Control-Allow-Origin', expectedUrl.origin);
   res.headers.set('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
-  res.headers.set('Access-Control-Allow-Headers', '*');
+  res.headers.set('Access-Control-Allow-Headers', 'Content-Type');
 }
 
 export function OPTIONS() {
@@ -24,6 +33,36 @@ export function OPTIONS() {
 }
 
 const handler = async (req: NextRequest) => {
+  const originRaw = req.headers.get('Origin');
+  const referrerRaw = req.headers.get('Referer');
+  const mobileAppRaw = req.headers.get('X-Mobile-App');
+
+  const isMobile = mobileAppRaw === 'true';
+
+  if (!isMobile && process.env.NODE_ENV === 'production') {
+    const origin = originRaw !== null ? new URL(originRaw) : null;
+    const referrer = referrerRaw !== null ? new URL(referrerRaw) : null;
+
+    const isSameOriginOrigin = origin?.origin === expectedUrl.origin;
+    const isSameOriginReferrer = referrer?.origin === expectedUrl.origin;
+
+    const isSameOrigin = isSameOriginOrigin || isSameOriginReferrer;
+
+    if (!isSameOrigin) {
+      return new Response('Invalid Origin', {
+        status: 400,
+        statusText: 'Bad Request',
+      });
+    }
+  }
+
+  if (!req.headers.get('Content-Type')?.startsWith('application/json')) {
+    return new Response('Invalid Content-Type', {
+      status: 400,
+      statusText: 'Bad Request',
+    });
+  }
+
   const response = await fetchRequestHandler({
     endpoint: '/api/trpc',
     router: appRouter,
