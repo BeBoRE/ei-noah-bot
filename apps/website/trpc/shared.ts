@@ -11,7 +11,7 @@ export const getBaseUrl = () => {
   return 'http://localhost:5100'; // dev SSR should use localhost
 };
 
-export const getApiUrl = () => `${getBaseUrl()}/api/trpc`;
+export const getApiUrl = () => `${getBaseUrl()}/api`;
 
 export const getWsUrl = () => {
   if (typeof window !== 'undefined') {

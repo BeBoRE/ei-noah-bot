@@ -155,7 +155,7 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
         }
 
         return httpBatchLink({
-        url: `${getBaseUrl()}/api/trpc`,
+        url: `${getBaseUrl()}/api`,
         transformer: superjson,
         headers: authInfo
           ? {
