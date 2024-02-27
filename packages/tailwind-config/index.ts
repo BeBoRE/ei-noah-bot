@@ -25,6 +25,7 @@ const baseConfig = {
       reject: '#BF3535' as const,
       accept: '#207934' as const,
       discord: '#5865F2' as const,
+      transparent: 'transparent',
     },
     extend: {},
   },

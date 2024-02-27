@@ -9,7 +9,7 @@ import { routingInstrumentation } from 'src/utils/sentry';
 
 TimeAgo.addDefaultLocale(en);
 
-setStatusBarStyle('dark');
+setStatusBarStyle('light');
 
 Sentry.init({
   dsn: 'https://a61be6134ba50fc932e77ea490f84295@o4505674660380672.ingest.sentry.io/4506689386840064',

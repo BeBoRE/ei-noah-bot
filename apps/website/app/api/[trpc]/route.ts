@@ -49,7 +49,10 @@ const handler = async (req: NextRequest) => {
     const isSameOrigin = isSameOriginOrigin || isSameOriginReferrer;
 
     if (!isSameOrigin) {
-      console.error('Invalid Origin', { origin: originRaw, referrer: referrerRaw });
+      console.error('Invalid Origin', {
+        origin: originRaw,
+        referrer: referrerRaw,
+      });
 
       return new Response('Invalid Origin', {
         status: 400,

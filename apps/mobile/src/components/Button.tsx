@@ -14,8 +14,8 @@ function Button({ children, textClassName, className, ...props }: ButtonProps) {
     typeof children === 'string' ? (
       <Text
         className={twMerge(
-          textClassName,
           'text-center font-bold text-primary-100',
+          textClassName,
         )}
       >
         {children}

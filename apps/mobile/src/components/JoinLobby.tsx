@@ -7,17 +7,27 @@ import Animated, {
   FadeInRight,
   FadeOutDown,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 
 import Text from './Text';
 
 function JoinLobby() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Animated.View
       exiting={FadeOutDown.duration(400)}
       className="flex-1 flex-col items-center justify-center"
     >
-      <ScrollView className="flex-1 px-2 py-5">
+      <ScrollView
+        className="flex-1 px-2"
+        style={{
+          paddingTop: insets.top,
+          paddingRight: insets.right,
+          paddingLeft: insets.right,
+        }}
+      >
         <Animated.Text
           entering={FadeIn.duration(1500)}
           className="my-6 text-center text-5xl font-bold text-primary-300
