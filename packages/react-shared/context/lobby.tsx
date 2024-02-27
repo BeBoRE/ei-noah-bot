@@ -5,7 +5,7 @@ import type { alert } from 'burnt';
 
 import { ChannelType, LobbyChange } from '@ei/lobby';
 
-import type { api } from '../api';
+import { api } from '../api';
 
 type LobbyContextProps = {
   lobby: LobbyChange | null;
@@ -36,7 +36,6 @@ type ProviderProps = {
   enabled?: boolean;
   token?: string | null;
   alert?: typeof alert;
-  api: typeof api;
 };
 
 export function LobbyProvider({
@@ -44,7 +43,6 @@ export function LobbyProvider({
   enabled,
   token,
   alert,
-  api,
 }: ProviderProps) {
   const [lobby, setLobby] = useState<LobbyChange | null>(null);
 

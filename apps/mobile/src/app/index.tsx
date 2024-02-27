@@ -189,7 +189,6 @@ function Index() {
       />
       <SafeAreaView edges={['left', 'right']} className="flex-1 to-primary-950">
         <LobbyProvider
-          api={api}
           enabled={enabled}
           token={authInfo}
           alert={alert}

@@ -89,7 +89,7 @@ export default function TRPCReactProvider({ children, headers }: Props) {
       persistOptions={{ persister }}
     >
       <api.Provider client={trpcClient} queryClient={queryClient}>
-        <LobbyProvider api={api}>{children}</LobbyProvider>
+        <LobbyProvider>{children}</LobbyProvider>
       </api.Provider>
       <ReactQueryDevtools initialIsOpen={false} />
     </PersistQueryClientProvider>
