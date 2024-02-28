@@ -6,9 +6,9 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end
  */
-import { IncomingMessage } from 'http';
-import type { NextRequest } from 'next/server';
 import { initTRPC, TRPCError } from '@trpc/server';
+import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
+import type { CreateWSSContextFnOptions } from '@trpc/server/adapters/ws';
 import { eq } from 'drizzle-orm';
 import superjson from 'superjson';
 import { z, ZodError } from 'zod';
@@ -19,7 +19,7 @@ import { auth, Session } from '@ei/lucia';
 
 import { getCachedOrApiUser } from './utils/discordApi';
 
-/**
+/*
  * User res {
  *   id: '248143520005619713',
  *   username: 'bebore',
@@ -40,10 +40,26 @@ import { getCachedOrApiUser } from './utils/discordApi';
 
 export const bearerSchema = z.string().min(1);
 
-type Opts = {
-  req?: NextRequest | IncomingMessage;
+type LuciaOpts = {
   authRequest: ReturnType<typeof auth.handleRequest>;
 };
+
+type RSCOpts = {
+  fetchOpts: undefined;
+  wsOpts: undefined;
+};
+
+type WSOpts = {
+  fetchOpts: undefined;
+  wsOpts: CreateWSSContextFnOptions;
+};
+
+type APIOpts = {
+  fetchOpts: FetchCreateContextFnOptions;
+  wsOpts: undefined;
+};
+
+type OuterOpts = (RSCOpts | WSOpts | APIOpts) & LuciaOpts;
 
 /**
  * 1. CONTEXT
@@ -54,7 +70,7 @@ type Opts = {
  * processing a request
  *
  */
-type CreateInnerContextOptions = Partial<Opts> & {
+type CreateInnerContextOptions = OuterOpts & {
   session: Session | null;
 };
 
@@ -88,6 +104,7 @@ const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
     : null;
 
   return {
+    opts,
     session,
     drizzle,
     dbUser,
@@ -100,7 +117,7 @@ const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
  * process every request that goes through your tRPC endpoint
  * @link https://trpc.io/docs/context
  */
-export const createTRPCContext = async (opts: Opts) => {
+export const createTRPCContext = async (opts: OuterOpts) => {
   const { authRequest } = opts;
 
   const session =
@@ -112,22 +129,29 @@ export const createTRPCContext = async (opts: Opts) => {
   });
 };
 
-export const createWSContext = async ({ req }: { req: IncomingMessage }) => {
-  const authRequest = auth.handleRequest({ req });
+export const createWSContext = async (opts: CreateWSSContextFnOptions) => {
+  const authRequest = auth.handleRequest({ req: opts.req });
 
-  return createTRPCContext({ req, authRequest });
+  return createTRPCContext({
+    wsOpts: opts,
+    fetchOpts: undefined,
+    authRequest,
+  });
 };
 
-export const createApiContext = async ({
-  req,
-  context,
-}: {
-  req: NextRequest;
-  context: NonNullable<Parameters<typeof auth.handleRequest>['1']>;
-}) => {
-  const authRequest = auth.handleRequest(req.method, context);
+type NextContext = NonNullable<Parameters<typeof auth.handleRequest>['1']>;
 
-  return createTRPCContext({ req, authRequest });
+export const createApiContext = async (
+  opts: FetchCreateContextFnOptions,
+  context: NextContext,
+) => {
+  const authRequest = auth.handleRequest(opts.req.method, context);
+
+  return createTRPCContext({
+    wsOpts: undefined,
+    fetchOpts: opts,
+    authRequest,
+  });
 };
 
 export const createRscContext = async ({
@@ -137,7 +161,11 @@ export const createRscContext = async ({
 }) => {
   const authRequest = auth.handleRequest('GET', context);
 
-  return createTRPCContext({ authRequest });
+  return createTRPCContext({
+    wsOpts: undefined,
+    fetchOpts: undefined,
+    authRequest,
+  });
 };
 
 export type Context = Awaited<ReturnType<typeof createTRPCContext>>;

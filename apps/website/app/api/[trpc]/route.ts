@@ -15,6 +15,7 @@ function setCorsHeaders(res: Response) {
     res.headers.set('Access-Control-Allow-Origin', '*');
     res.headers.set('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
     res.headers.set('Access-Control-Allow-Headers', '*');
+    res.headers.set('Access-Control-Allow-Credentials', 'true');
 
     return;
   }
@@ -61,7 +62,7 @@ const handler = async (req: NextRequest) => {
     }
   }
 
-  if (!req.headers.get('Content-Type')?.startsWith('application/json')) {
+  if (req.body && !req.headers.get('Content-Type')?.startsWith('application/json')) {
     console.error('Invalid Content-Type', req.headers.get('Content-Type'));
 
     return new Response('Invalid Content-Type', {
@@ -73,8 +74,8 @@ const handler = async (req: NextRequest) => {
   const response = await fetchRequestHandler({
     endpoint: '/api',
     router: appRouter,
-    req: req as unknown as Request,
-    createContext: () => createApiContext({ req, context }),
+    req,
+    createContext: (opts) => createApiContext(opts, context),
     onError({ error, path }) {
       console.error(
         `>>> tRPC Error on '${path ?? '<no-path>'}'`,
