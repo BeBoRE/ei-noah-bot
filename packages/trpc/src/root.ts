@@ -1,5 +1,6 @@
 import { observable } from '@trpc/server/observable';
 
+import { z } from 'zod';
 import channelRouter from './routes/channels';
 import guildRouter from './routes/guilds';
 import { lobbyRouter } from './routes/lobby';
@@ -14,6 +15,7 @@ import {
 } from './trpc';
 
 export const appRouter = createTRPCRouter({
+  protected: protectedProcedure.input(z.any()).mutation(({input}) => input),
   healthcheck: publicProcedure.query(() => 'OK'),
   time: protectedProcedure.subscription(() =>
     observable<number>((emit) => {

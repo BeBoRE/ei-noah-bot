@@ -12,10 +12,9 @@ const expectedUrl = new URL('https://ei.sweaties.net');
  */
 function setCorsHeaders(res: Response) {
   if (process.env.NODE_ENV !== 'production') {
-    res.headers.set('Access-Control-Allow-Origin', '*');
+    res.headers.set('Access-Control-Allow-Origin', 'http://www.google.com');
     res.headers.set('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
-    res.headers.set('Access-Control-Allow-Headers', '*');
-    res.headers.set('Access-Control-Allow-Credentials', 'true');
+    res.headers.set('Access-Control-Allow-Headers', 'Content-Type');
 
     return;
   }
@@ -61,7 +60,7 @@ const handler = async (req: NextRequest) => {
     }
   }
 
-  if (req.body && !req.headers.get('Content-Type')?.startsWith('application/json')) {
+  if (false && req.body && !req.headers.get('Content-Type')?.startsWith('application/json')) {
     console.error('Invalid Content-Type', req.headers.get('Content-Type'));
 
     return new Response('Invalid Content-Type', {

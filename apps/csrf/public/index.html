@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <form action="http://192.168.1.223:5100/api/protected" method="post" enctype="text/plain">
+    <input type="text" name="&#123;&quot;test: &quot;" value="&quot;, &quot;test2&quot;: &quot;test&quot;}" hidden>
+    <button type="submit">Submit</button>
+  </form>
+</body>
+<script>
+  const form = document.querySelector('form');
+  // form.submit()
+</script>
+</html>
