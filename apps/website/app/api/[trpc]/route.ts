@@ -22,7 +22,6 @@ function setCorsHeaders(res: Response) {
 
   res.headers.set('Access-Control-Allow-Origin', expectedUrl.origin);
   res.headers.set('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
-  res.headers.set('Access-Control-Allow-Headers', 'Content-Type');
 }
 
 export function OPTIONS() {

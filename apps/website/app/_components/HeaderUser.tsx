@@ -43,8 +43,7 @@ function Dropdown({ children }: Props) {
 }
 
 async function HeaderUser() {
-  const api = await rscApi();
-  const user = await api.user.me().catch(() => null);
+  const user = await rscApi.user.me().catch(() => null);
 
   if (user) {
     return (

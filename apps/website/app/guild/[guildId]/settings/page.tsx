@@ -9,11 +9,9 @@ type Props = {
 };
 
 async function SettingsPage({ params: { guildId } }: Props) {
-  const api = await rscApi();
-
   const [guild, channels] = await Promise.all([
-    await api.guild.get({ guildId }),
-    await api.channel.all({ guildId }),
+    await rscApi.guild.get({ guildId }),
+    await rscApi.channel.all({ guildId }),
   ]);
 
   return (
