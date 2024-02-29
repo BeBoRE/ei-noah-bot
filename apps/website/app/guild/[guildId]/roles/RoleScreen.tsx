@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import { Button } from 'app/_components/ui/button';
 import { Plus } from 'lucide-react';
 import { api } from 'trpc/react';
-import { useRoles } from '@ei/react-shared/roles'
+
+import { useRoles } from '@ei/react-shared/roles';
 
 import RoleButton from './RoleButton';
 
@@ -22,14 +23,9 @@ function RoleScreen() {
 
   return (
     <>
-      {roles
-        .map((role) => (
-          <RoleButton
-            key={role.id}
-            role={role}
-            guild={guild}
-          />
-          ))}
+      {roles.map((role) => (
+        <RoleButton key={role.id} role={role} guild={guild} />
+      ))}
       <Button
         asChild
         className="flex aspect-square h-auto w-full flex-col items-center justify-center gap-1 rounded-md transition"

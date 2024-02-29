@@ -12,7 +12,13 @@ import {
   TooltipProvider,
 } from 'app/_components/ui/tooltip';
 import { Check, SearchCheck, X } from 'lucide-react';
-import { Guild, NotApprovedRole, Role, useRoleUtils } from '@ei/react-shared/roles';
+
+import {
+  Guild,
+  NotApprovedRole,
+  Role,
+  useRoleUtils,
+} from '@ei/react-shared/roles';
 
 type Props = {
   role: Role | NotApprovedRole;
@@ -26,15 +32,15 @@ function RoleButton({ guild, role }: Props) {
   if (!guildId || typeof guildId !== 'string') {
     throw new Error('Invalid guildId');
   }
-  
-  const { 
-    approveRole, 
-    rejectRole, 
-    addRole, 
-    removeRole, 
-    isPending, 
-    isApproved, 
-    isAddable, 
+
+  const {
+    approveRole,
+    rejectRole,
+    addRole,
+    removeRole,
+    isPending,
+    isApproved,
+    isAddable,
     name,
     color,
     canRejectOrApprove,
@@ -99,9 +105,7 @@ function RoleButton({ guild, role }: Props) {
             className="h-auto w-full rounded-none bg-accept p-1 py-2 hover:bg-accept/75 dark:bg-accept dark:hover:bg-accept/75"
             variant="secondary"
             aria-label="Approve"
-            onClick={() =>
-              approveRole()
-            }
+            onClick={() => approveRole()}
           >
             <Check className="h-4 w-4" />
           </Button>
@@ -109,9 +113,7 @@ function RoleButton({ guild, role }: Props) {
             className="h-auto w-full rounded-none bg-reject p-1 py-2 hover:bg-reject/75 dark:bg-reject dark:hover:bg-reject/75"
             variant="secondary"
             aria-label="Reject"
-            onClick={() =>
-              rejectRole()
-            }
+            onClick={() => rejectRole()}
           >
             <X className="h-4 w-4" />
           </Button>

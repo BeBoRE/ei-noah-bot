@@ -18,10 +18,7 @@ type Props = PropsWithChildren & {
   };
 };
 
-const getGuild = async (
-  api: typeof rscApi,
-  guildId: string,
-) => {
+const getGuild = async (api: typeof rscApi, guildId: string) => {
   const guild = await api.guild.get({ guildId }).catch((err) => {
     if (err instanceof TRPCError) {
       if (
