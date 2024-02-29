@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@ei/trpc": "^0.0.1",
-    "@ei/lobby": "^1.0.0"
+    "@ei/lobby": "^1.0.0",
+    "@ei/tailwind-config": "*"
   },
   "devDependencies": {
     "@ei/tsconfig": "*",

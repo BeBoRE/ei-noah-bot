@@ -5,8 +5,7 @@ import { useParams } from 'next/navigation';
 import { Button } from 'app/_components/ui/button';
 import { Plus } from 'lucide-react';
 import { api } from 'trpc/react';
-
-import { canCreateRoles } from '@ei/trpc/src/utils';
+import { useRoles } from '@ei/react-shared/roles'
 
 import RoleButton from './RoleButton';
 
@@ -15,68 +14,22 @@ function RoleScreen() {
   const { guildId } = params;
 
   if (!guildId || typeof guildId !== 'string') {
-    return null;
+    throw new Error('Invalid guildId');
   }
 
-  const [customRoles] = api.roles.guildCustom.useSuspenseQuery({ guildId });
-  const [notApprovedRoles] = api.roles.guildNotApproved.useSuspenseQuery({
-    guildId,
-  });
-  const [member] = api.user.memberMe.useSuspenseQuery({ guildId });
   const [guild] = api.guild.get.useSuspenseQuery({ guildId });
-
-  const allowedToCreateRoles =
-    member && guild ? canCreateRoles(member, guild?.discord) : false;
-
-  const combinedRoles = [
-    ...customRoles
-      .sort((a, b) => {
-        const realA = guild.discord.roles.find((r) => r.id === a.id);
-        const realB = guild.discord.roles.find((r) => r.id === b.id);
-
-        if (!realA || !realB) return 0;
-
-        return realA.position - realB.position;
-      })
-      .reverse(),
-    ...notApprovedRoles,
-  ];
+  const { roles } = useRoles({ guildId });
 
   return (
     <>
-      {combinedRoles
-        .filter((role) => {
-          if (!('name' in role)) return true;
-
-          if (customRoles.find((r) => r.id === role.id.toString()))
-            return false;
-
-          if (allowedToCreateRoles) return true;
-          if (role.createdByUserId === member.user.id) return true;
-
-          return false;
-        })
-        .map((role) => {
-          if ('name' in role) {
-            return (
-              <RoleButton
-                key={role.id.toString()}
-                notApprovedRole={role}
-                member={member}
-                guild={guild}
-              />
-            );
-          }
-
-          return (
-            <RoleButton
-              key={role.id}
-              role={role}
-              member={member}
-              guild={guild}
-            />
-          );
-        })}
+      {roles
+        .map((role) => (
+          <RoleButton
+            key={role.id}
+            role={role}
+            guild={guild}
+          />
+          ))}
       <Button
         asChild
         className="flex aspect-square h-auto w-full flex-col items-center justify-center gap-1 rounded-md transition"
