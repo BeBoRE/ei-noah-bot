@@ -61,15 +61,6 @@ const handler = async (req: NextRequest) => {
     }
   }
 
-  if (req.body && !req.headers.get('Content-Type')?.startsWith('application/json')) {
-    console.error('Invalid Content-Type', req.headers.get('Content-Type'));
-
-    return new Response('Invalid Content-Type', {
-      status: 400,
-      statusText: 'Bad Request',
-    });
-  }
-
   const response = await fetchRequestHandler({
     endpoint: '/api',
     router: appRouter,
