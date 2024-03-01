@@ -7,7 +7,7 @@ import { Input } from 'app/_components/ui/input';
 import { Label } from 'app/_components/ui/label';
 import { Plus } from 'lucide-react';
 
-import { api } from '@ei/react-shared';
+import { useCreateRole } from '@ei/react-shared/roles';
 
 const maxLength = 99;
 
@@ -19,65 +19,17 @@ function CreateForm({ guildId }: Props) {
   const [name, setName] = useState<string | null>(null);
   const router = useRouter();
 
-  const utils = api.useUtils();
-
-  const [me] = api.user.me.useSuspenseQuery();
-
   const changeName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value.trimStart());
   };
 
-  const { mutate: createRole, error } = api.roles.createRole.useMutation({
-    onMutate: async () => {
-      await utils.roles.guildCustom.cancel({ guildId });
-      await utils.guild.get.cancel({ guildId });
-    },
-    onSuccess: async ({ dbRole, discordRole, notApprovedRole }) => {
-      const promises = [];
-
-      if (notApprovedRole) {
-        utils.roles.guildNotApproved.setData({ guildId }, (prev) => [
-          ...(prev || []),
-          { ...notApprovedRole, createdByUserId: me?.id || '' },
-        ]);
-
-        promises.push(utils.roles.guildNotApproved.invalidate({ guildId }));
-      }
-
-      if (dbRole) {
-        utils.roles.guildCustom.setData({ guildId }, (prev) => [
-          ...(prev || []),
-          { ...dbRole, createdByUserId: me?.id || '' },
-        ]);
-
-        promises.push(utils.roles.guildCustom.invalidate({ guildId }));
-      }
-
-      if (discordRole) {
-        utils.guild.get.setData({ guildId }, (prev) => {
-          if (!prev) return prev;
-
-          const guild = { ...prev };
-          guild.discord.roles = [...guild.discord.roles, discordRole];
-
-          return guild;
-        });
-
-        promises.push(await utils.guild.get.invalidate({ guildId }));
-      }
-
-      await Promise.all(promises);
-
-      router.push(`.`);
-    },
+  const { createRole, error, isPending } = useCreateRole(guildId, name, () => {
+    router.push(`/guild/${guildId}/roles`);
   });
 
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!name) return;
-
-    createRole({ guildId, name });
-    console.log(name);
+    createRole();
   };
 
   return (
@@ -95,7 +47,7 @@ function CreateForm({ guildId }: Props) {
       />
       <div className="mt-2 flex items-center justify-between">
         <p className="text-reject">{error?.message}</p>
-        <Button disabled={!name} type="submit" variant="outline">
+        <Button disabled={!name || isPending} type="submit" variant="outline">
           <Plus className="mr-2 h-4 w-4" />
           Create
         </Button>

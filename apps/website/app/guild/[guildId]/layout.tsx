@@ -18,10 +18,7 @@ type Props = PropsWithChildren & {
   };
 };
 
-const getGuild = async (
-  api: Awaited<ReturnType<typeof rscApi>>,
-  guildId: string,
-) => {
+const getGuild = async (api: typeof rscApi, guildId: string) => {
   const guild = await api.guild.get({ guildId }).catch((err) => {
     if (err instanceof TRPCError) {
       if (
@@ -40,9 +37,8 @@ const getGuild = async (
 };
 
 async function AdminButtons({ guildId }: { guildId: string }) {
-  const api = await rscApi();
-  const guild = await getGuild(api, guildId);
-  const user = await api.user.memberMe({ guildId });
+  const guild = await getGuild(rscApi, guildId);
+  const user = await rscApi.user.memberMe({ guildId });
 
   const isAdmin = userIsAdmin(user, guild);
 
@@ -66,8 +62,7 @@ async function AdminButtons({ guildId }: { guildId: string }) {
 }
 
 async function GuildInfo({ guildId }: { guildId: string }) {
-  const api = await rscApi();
-  const guild = await getGuild(api, guildId);
+  const guild = await getGuild(rscApi, guildId);
 
   const icon =
     guild?.icon &&

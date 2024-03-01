@@ -742,6 +742,9 @@ importers:
       '@ei/lobby':
         specifier: ^1.0.0
         version: link:../lobby
+      '@ei/tailwind-config':
+        specifier: '*'
+        version: link:../tailwind-config
       '@ei/trpc':
         specifier: ^0.0.1
         version: link:../trpc

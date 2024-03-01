@@ -5,9 +5,7 @@ import rscApi from 'trpc/server';
 import LobbyScreen from './LobbyScreen';
 
 async function LobbyPage() {
-  const api = await rscApi();
-
-  const user = await api.user.me();
+  const user = await rscApi.user.me();
 
   if (!user) {
     redirect('/login');

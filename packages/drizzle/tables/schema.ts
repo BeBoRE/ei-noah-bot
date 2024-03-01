@@ -251,6 +251,14 @@ export const tempChannels = pgTable(
     tempChannelGuildUserIdUnique: unique(
       'temp_channel_guild_user_id_unique',
     ).on(table.guildUserId),
+    guildUserIdIdx: index().on(table.guildUserId),
+    dateIdx: index().on(table.createdAt),
+    nameIdx: index().on(table.name),
+    guildUserDateNameIdx: index().on(
+      table.guildUserId,
+      table.createdAt,
+      table.name,
+    ),
   }),
 );
 

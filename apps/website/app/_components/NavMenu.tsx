@@ -67,9 +67,7 @@ const Guild = React.forwardRef<React.ElementRef<'a'>, GuildProps>(
 Guild.displayName = 'Guild';
 
 export async function NavMenu() {
-  const api = await rscApi();
-
-  const guilds = await api.guild.all().catch(() => null);
+  const guilds = await rscApi.guild.all().catch(() => null);
 
   if (!guilds || guilds.length <= 0) {
     return null;

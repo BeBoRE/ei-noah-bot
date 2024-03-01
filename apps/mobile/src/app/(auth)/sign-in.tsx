@@ -3,7 +3,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { parse } from 'expo-linking';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { openAuthSessionAsync } from 'expo-web-browser';
 import Button from 'src/components/Button';
 import Text from 'src/components/Text';
@@ -70,7 +69,6 @@ function SignIn() {
             </Text>
           </Button>
         </View>
-        <StatusBar style="dark" />
       </View>
     </>
   );
