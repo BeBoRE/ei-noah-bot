@@ -73,8 +73,8 @@ const defineConfig = (): ExpoConfig => {
           },
           android: {
             // these values were tested with Expo SDK 48
-            compileSdkVersion: 33,
-            targetSdkVersion: 33,
+            compileSdkVersion: 34,
+            targetSdkVersion: 34,
             minSdkVersion: 23,
             buildToolsVersion: '33.0.0',
             kotlinVersion: '1.6.20',
