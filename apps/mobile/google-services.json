@@ -7,6 +7,38 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:356941832950:android:7e17027e7399019e6982d7",
+        "android_client_info": {
+          "package_name": "net.sweaties.eiapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "356941832950-kb4nn1hrqp9c2ed7v40oij4rj781990n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9KdV-dzwgWebF3tiYjupHZzmm2YFkhdg"
+        },
+        {
+          "current_key": "AIzaSyBpDAD6pRB_piWszo6lqTvmpdZ6jTtiFcw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "356941832950-kb4nn1hrqp9c2ed7v40oij4rj781990n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:356941832950:android:00db44576a78cdbb6982d7",
         "android_client_info": {
           "package_name": "net.sweaties.eiapp.development"
