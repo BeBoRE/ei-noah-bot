@@ -64,6 +64,8 @@ const defineConfig = (): ExpoConfig => {
       tsconfigPaths: true,
     },
     plugins: [
+      'expo-font',
+      'expo-router',
       './expo-plugins/with-modify-gradle.js',
       [
         'expo-build-properties',
