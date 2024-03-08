@@ -37,7 +37,6 @@
     "babel-plugin-inline-dotenv": "^1.7.0",
     "burnt": "^0.12.2",
     "discord-api-types": "0.37.36-next.0d47c69.1677334692",
-    "eas-cli": "^3.18.3",
     "expo": "^50.0.11",
     "expo-auth-session": "~5.4.0",
     "expo-build-properties": "~0.11.1",
@@ -84,6 +83,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "eas-cli": "^7.3.0",
     "@babel/core": "^7.23.0",
     "@babel/preset-env": "^7.22.20",
     "@babel/runtime": "^7.23.1",
