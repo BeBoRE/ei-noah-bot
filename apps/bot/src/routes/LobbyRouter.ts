@@ -3074,12 +3074,8 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
 
     if (!tempChannel) return;
 
-    const permissionsChanged = oldChannel.permissionOverwrites.cache.some(
-      (overwrite) =>
-        !newChannel.permissionOverwrites.cache.has(overwrite.id) ||
-        overwrite.allow.bitfield !==
-          newChannel.permissionOverwrites.cache.get(overwrite.id)?.allow
-            .bitfield,
+    const permissionsChanged = !oldChannel.permissionOverwrites.cache.equals(
+      newChannel.permissionOverwrites.cache,
     );
 
     if (!permissionsChanged) return;
@@ -3087,7 +3083,9 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
     const owner = await newChannel.guild.members.fetch({
       user: `${BigInt(tempChannel.user.id)}`,
       cache: true,
-    });
+    }).catch(() => null);
+
+    if (!owner) return;
 
     await changeLobby({
       tempChannel: tempChannel.temp_channel,

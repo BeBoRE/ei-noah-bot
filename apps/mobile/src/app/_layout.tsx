@@ -74,7 +74,7 @@ function RootLayout() {
                 },
               }}
             >
-              <GestureHandlerRootView className="flex-1">
+              <GestureHandlerRootView className="flex flex-1">
                 <Stack
                   screenOptions={{
                     headerShown: false,

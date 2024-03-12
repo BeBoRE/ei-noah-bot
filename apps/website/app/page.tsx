@@ -17,9 +17,9 @@ export default function Page() {
           <p className="text-2xl text-primary-700 dark:text-primary-500">
             The best in class lobby manager for Discord
           </p>
-          <a 
-            href="https://discord.com/api/oauth2/authorize?client_id=730913870805336195&permissions=8&scope=bot" 
-            className='mt-5 rounded bg-discord px-4 py-2 text-xl font-semibold text-primary-50 hover:bg-discord/70 transition-colors self-baseline'
+          <a
+            href="https://discord.com/api/oauth2/authorize?client_id=730913870805336195&permissions=8&scope=bot"
+            className="mt-5 self-baseline rounded bg-discord px-4 py-2 text-xl font-semibold text-primary-50 transition-colors hover:bg-discord/70"
           >
             <Image
               alt="Discord"

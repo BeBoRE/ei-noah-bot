@@ -35,60 +35,62 @@ function Screen() {
   const style = 'w-24 h-24 bg-primary-900 rounded-full';
 
   return (
-    <ScrollView
-      style={{ paddingTop: top, paddingLeft: left, paddingRight: right }}
-      className="flex-1"
-    >
-      <Animated.View
-        key={lobby.channel.id}
-        className="flex flex-1 flex-col px-2 py-4"
-        exiting={FadeOutUp.duration(200)}
-        style={{
-          gap: 10,
-        }}
+    <View className="flex flex-1">
+      <ScrollView
+        style={{ paddingTop: top, paddingLeft: left, paddingRight: right }}
+        className="flex-1"
       >
         <Animated.View
-          className="flex flex-row items-center justify-center gap-4"
-          entering={FadeInDown.duration(200).delay(200)}
+          key={lobby.channel.id}
+          className="flex flex-1 flex-col px-2 py-4"
+          exiting={FadeOutUp.duration(200)}
+          style={{
+            gap: 10,
+          }}
         >
-          <Animated.View entering={FadeInLeft.duration(200).delay(200)}>
-            {lobby.guild.icon ? (
-              <Image
-                source={lobby.guild.icon}
-                className={[style, 'ring-4'].join(' ')}
-                alt=""
-              />
-            ) : (
-              <View className={`${style} bg-secondary`} />
-            )}
-          </Animated.View>
-          <AnimatedText
-            entering={FadeInRight.duration(200).delay(200)}
-            className="text-4xl font-bold"
+          <Animated.View
+            className="flex flex-row items-center justify-center gap-4"
+            entering={FadeInDown.duration(200).delay(200)}
           >
-            {lobby.guild.name}
-          </AnimatedText>
+            <Animated.View entering={FadeInLeft.duration(200).delay(200)}>
+              {lobby.guild.icon ? (
+                <Image
+                  source={lobby.guild.icon}
+                  className={[style, 'ring-4'].join(' ')}
+                  alt=""
+                />
+              ) : (
+                <View className={`${style} bg-secondary`} />
+              )}
+            </Animated.View>
+            <AnimatedText
+              entering={FadeInRight.duration(200).delay(200)}
+              className="text-4xl font-bold"
+            >
+              {lobby.guild.name}
+            </AnimatedText>
+          </Animated.View>
+          <AnimatedLobbyName
+            onNameChange={changeName}
+            lobby={lobby}
+            entering={FadeInDown.duration(200).delay(400)}
+          />
+          <AnimatedTypeSelector
+            delay={600}
+            currentType={lobby.channel.type}
+            onTypeChange={changeChannelType}
+            entering={FadeInDown.duration(200).delay(600)}
+          />
+          <AnimatedUserLimitSelector
+            delay={800}
+            currentLimit={lobby.channel.limit}
+            onLimitChange={changeUserLimit}
+            entering={FadeInDown.duration(200).delay(800)}
+          />
         </Animated.View>
-        <AnimatedLobbyName
-          onNameChange={changeName}
-          lobby={lobby}
-          entering={FadeInDown.duration(200).delay(400)}
-        />
-        <AnimatedTypeSelector
-          delay={600}
-          currentType={lobby.channel.type}
-          onTypeChange={changeChannelType}
-          entering={FadeInDown.duration(200).delay(600)}
-        />
-        <AnimatedUserLimitSelector
-          delay={800}
-          currentLimit={lobby.channel.limit}
-          onLimitChange={changeUserLimit}
-          entering={FadeInDown.duration(200).delay(800)}
-        />
-        <UsersSheet users={lobby.users} channelType={lobby.channel.type} />
-      </Animated.View>
-    </ScrollView>
+      </ScrollView>
+      <UsersSheet users={lobby.users} channelType={lobby.channel.type} />
+    </View>
   );
 }
 

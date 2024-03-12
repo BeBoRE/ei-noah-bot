@@ -4,6 +4,5 @@
     "rootDir": "src",
     "skipLibCheck": true
   },
-  "include": ["**/*.ts"],
   "exclude": ["node_modules"]
 }
