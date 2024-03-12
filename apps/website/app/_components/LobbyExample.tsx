@@ -444,7 +444,7 @@ function LobbyExample() {
 
   const messages = {
     start: `
-      Ei Noah allows for the creation of temporary voice channels, which
+      ei Noah allows for the creation of temporary voice channels, which
       we call lobbies. There are three types of lobbies: public, mute, and
       private. Try creating one by joining a lobby creation channel.
     `,
@@ -542,7 +542,7 @@ function LobbyExample() {
   };
 
   return (
-    <div className="flex max-h-none w-full flex-1 overflow-hidden rounded-lg bg-primary-900 md:max-h-[50vh]">
+    <div className="flex min-h-none max-h-none w-full flex-1 overflow-hidden rounded-lg bg-primary-900 md:min-h-[45vh] md:max-h-[45vh]">
       <div className="flex-1 md:flex">
         <div className="flex min-h-[30vh] flex-col bg-primary-800 p-2 md:h-auto md:w-64 md:items-stretch">
           <div className="flex flex-col">
