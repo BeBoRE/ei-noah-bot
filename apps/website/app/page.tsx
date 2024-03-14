@@ -45,7 +45,7 @@ export default function Page() {
             </h3>
             <hr className='text-primary-500' />
             <div className='px-24 md:px-8'>
-              <video loop autoPlay muted playsInline controls={false} className="rounded-lg" src='/eiNoahApp.mp4'/>
+              <video loop autoPlay muted playsInline controls={false} className="rounded-lg" src='/eiNoahAppCompressed.mp4'/>
             </div>
           </div>
           <div className="flex flex-col gap-4 bg-primary-900 p-4 rounded-lg">
