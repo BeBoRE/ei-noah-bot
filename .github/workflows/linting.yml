@@ -41,6 +41,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Running tests
+        run: pnpm test
+
       - name: Running linters
         run: pnpm lint
 
