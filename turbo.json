@@ -51,6 +51,12 @@
         "dist/**"
       ]
     },
+    "test": {
+      "dependsOn": ["^build"]
+    },
+    "test:watch": {
+      "dependsOn": ["^build"]
+    },
     "db:push": { "inputs": ["tables/**"] },
     "db:create": {
       "inputs": ["tables/**"],

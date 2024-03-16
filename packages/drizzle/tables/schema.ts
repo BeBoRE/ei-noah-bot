@@ -36,9 +36,6 @@ export const guilds = pgTable('guild', {
   requiredRole: varchar('required_role', { length: 255 }),
   category: varchar('category', { length: 255 }),
   language: varchar('language', { length: 255 }),
-  seperateTextChannel: boolean('seperate_text_channel')
-    .default(false)
-    .notNull(),
 });
 
 export const users = pgTable('user', {

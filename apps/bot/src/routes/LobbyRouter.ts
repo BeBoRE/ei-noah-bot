@@ -1,5 +1,5 @@
 import Expo, { ExpoPushMessage } from 'expo-server-sdk';
-import { ComponentType, OverwriteType } from 'discord-api-types/v10';
+import { ComponentType } from 'discord-api-types/v10';
 import {
   ActionRowBuilder,
   ApplicationCommandOptionType,
@@ -79,7 +79,6 @@ import {
   getIcon,
   LobbyChange,
   RemoveUser,
-  userIdToPusherChannel,
 } from '@ei/lobby';
 import {
   publishLobbyUpdate,
@@ -102,20 +101,16 @@ const router = new Router(
   'Beheer jouw lobby (kan alleen in het tekstkanaal van jou eigen lobby)',
 );
 
-function toDeny(type: ChannelType, textIsSeperate: boolean) {
-  const denyList: bigint[] = textIsSeperate
-    ? [PermissionsBitField.Flags.SendMessages]
-    : [];
-
-  if (type === ChannelType.Mute) denyList.push(PermissionsBitField.Flags.Speak);
-  else if (type === ChannelType.Nojoin) {
-    denyList.push(
-      PermissionsBitField.Flags.Connect,
-      PermissionsBitField.Flags.Speak,
-    );
+function toDeny(type: ChannelType) {
+  if (type === ChannelType.Mute) {
+    return [PermissionsBitField.Flags.Speak];
   }
 
-  return denyList;
+  if (type === ChannelType.Nojoin) {
+    return [PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak];
+  }
+
+  return [];
 }
 
 function toDenyText(type: ChannelType) {
@@ -195,7 +190,7 @@ async function createTempChannel(
     allow: [PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak],
   });
 
-  const deny = toDeny(type, dbGuild.seperateTextChannel);
+  const deny = toDeny(type);
 
   permissionOverwrites.push({
     id: guild.id,
@@ -317,38 +312,6 @@ function getTextPermissionOverwrites(
       id: overwrite.id,
       type: overwrite.type,
     };
-  });
-}
-
-async function createTextChannel(
-  client: Client,
-  voiceChannel: VoiceChannel,
-  owner: GuildMember,
-  name: string | null,
-): Promise<VoiceChannel | TextChannel> {
-  const permissionOverwrites: OverwriteData[] = [
-    ...getTextPermissionOverwrites(voiceChannel, client),
-    {
-      id: voiceChannel.guild.id,
-      type: OverwriteType.Role,
-      deny: PermissionsBitField.Flags.ViewChannel,
-    },
-  ];
-
-  const generatedName = generateLobbyName(
-    getChannelType(voiceChannel),
-    owner,
-    name,
-    true,
-  );
-
-  if (!generatedName) throw new Error('Invalid Name');
-
-  return voiceChannel.guild.channels.create({
-    type: DiscordChannelType.GuildText,
-    parent: voiceChannel.parent || undefined,
-    permissionOverwrites,
-    name: generatedName.full,
   });
 }
 
@@ -1287,10 +1250,7 @@ const changeLobby = (() => {
       .from(guildUsers)
       .where(eq(guildUsers.userId, owner.id));
 
-    const deny = toDeny(
-      changeTo ?? currentType,
-      voiceChannel.id !== (await textChannel)?.id,
-    );
+    const deny = toDeny(changeTo ?? currentType);
 
     if ((changeTo && changeTo !== currentType) || forcePermissionUpdate) {
       const newOverwrites =
@@ -1396,7 +1356,6 @@ const changeLobby = (() => {
               changeTo ?? currentType,
               owner,
               tempChannel.name,
-              true,
             );
 
             if (!newVoiceName || !newTextName)
@@ -2065,7 +2024,6 @@ const nameHandler: GuildHandler = async ({
       type,
       requestingUser,
       renamedTempChannel.name,
-      false,
     )?.full;
 
     if (timeTillChange) {
@@ -2092,42 +2050,6 @@ router.use('name', nameHandler, HandlerType.GUILD, {
     },
   ],
 });
-
-router.use(
-  'text-in-voice',
-  async ({ flags, msg, i18n, getGuild, drizzle }) => {
-    const guild = await getGuild(msg.guild);
-
-    if (!guild) return i18n.t('lobby.error.noGuild');
-
-    if (!msg.member.permissions.has(PermissionsBitField.Flags.Administrator))
-      return i18n.t('lobby.error.notAdmin');
-
-    const [enable] = flags.get('enable') || [true];
-
-    if (typeof enable !== 'boolean') return i18n.t('lobby.error.notABoolean');
-
-    await drizzle
-      .update(guilds)
-      .set({ seperateTextChannel: !enable })
-      .where(eq(guilds.id, guild.id));
-
-    if (enable) return i18n.t('lobby.textInVoice.enabled');
-    return i18n.t('lobby.textInVoice.disabled');
-  },
-  HandlerType.GUILD,
-  {
-    description: 'Should lobbies use text-in-voice or not',
-    options: [
-      {
-        name: 'enable',
-        type: ApplicationCommandOptionType.Boolean,
-        description: 'Enable text-in-voice',
-        required: true,
-      },
-    ],
-  },
-);
 
 const helpHandler: BothHandler = ({ i18n }) =>
   i18n.t('lobby.helpText', { joinArrays: '\n' });
@@ -2330,12 +2252,8 @@ const createDashBoardCollector = async ({
             const newName = interaction.fields.getTextInputValue('name');
 
             try {
-              const voiceName = generateLobbyName(
-                currentType,
-                member,
-                newName,
-                false,
-              )?.full;
+              const voiceName = generateLobbyName(currentType, member, newName)
+                ?.full;
 
               const [renamedTempChannel] = await changeDatabaseChannelName(
                 drizzle,
@@ -2536,8 +2454,6 @@ const createRedisSubscriptionListeners = (
     owner: GuildUser;
   },
 ) => {
-  const channelName = userIdToPusherChannel(oldOwnerMember);
-
   const refresh = async () => {
     const [tempChannel] = await drizzle
       .select()
@@ -2548,7 +2464,6 @@ const createRedisSubscriptionListeners = (
 
     if (!tempChannel) {
       destroyRedisSubscriptionListener({ id: oldOwnerGuidUser.userId });
-      globalLogger.info(`unsubscribed from channel ${channelName}`);
       return;
     }
 
@@ -3080,10 +2995,12 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
 
     if (!permissionsChanged) return;
 
-    const owner = await newChannel.guild.members.fetch({
-      user: `${BigInt(tempChannel.user.id)}`,
-      cache: true,
-    }).catch(() => null);
+    const owner = await newChannel.guild.members
+      .fetch({
+        user: `${BigInt(tempChannel.user.id)}`,
+        cache: true,
+      })
+      .catch(() => null);
 
     if (!owner) return;
 
@@ -3200,9 +3117,7 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
 
           newState.setChannel(voiceChannel);
 
-          textChannel = guildUser.guild.seperateTextChannel
-            ? await createTextChannel(client, voiceChannel, member, null)
-            : voiceChannel;
+          textChannel = voiceChannel;
 
           const [tempChannel] = await drizzle
             .insert(tempChannels)

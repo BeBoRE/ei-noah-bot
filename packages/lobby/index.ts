@@ -86,11 +86,12 @@ export function generateLobbyName(
   type: ChannelType,
   owner: { displayName: string },
   newName?: string | null,
-  textChat?: boolean,
 ): LobbyNameInfo | null {
   const lobbyTypeIcon = getIcon(type);
 
   if (newName) {
+    if (newName.length > 95) return null;
+
     const result = emojiRegex().exec(newName);
     if (result && result[0] === newName.slice(0, result[0].length)) {
       const [customIcon] = result;
@@ -99,19 +100,11 @@ export function generateLobbyName(
       if (
         !Object.values(ChannelType)
           .map<string>((t) => getIcon(<ChannelType>t))
-          .includes(customIcon) &&
-        customIcon !== '📝'
+          .includes(customIcon)
       ) {
         const name = newName.substring(result[0].length, newName.length).trim();
 
         if (name.length <= 0 || name.length > 90) return null;
-
-        if (textChat)
-          return {
-            full: `${customIcon}${name} chat`,
-            icon: customIcon,
-            name,
-          };
 
         return {
           full: `${customIcon} ${name}`,
@@ -124,13 +117,6 @@ export function generateLobbyName(
 
       if (name.length <= 0 || name.length > 90) return null;
 
-      if (textChat)
-        return {
-          full: `📝${name} chat`,
-          icon: lobbyTypeIcon,
-          name,
-        };
-
       return {
         full: `${lobbyTypeIcon} ${name}`,
         icon: lobbyTypeIcon,
@@ -138,15 +124,6 @@ export function generateLobbyName(
       };
     }
   }
-
-  // Runs if no custom icon is set, or if custom icon is a voice channel icon but not the current lobby type icon
-  if (textChat)
-    return {
-      full: `📝${newName?.trim() || `${owner.displayName}`} chat`,
-      icon: '📝',
-      name:
-        newName?.slice(lobbyTypeIcon.length).trim() || `${owner.displayName}`,
-    }; // `📝${newName || `${owner.displayName}`} chat`;
 
   return {
     full: `${lobbyTypeIcon} ${
@@ -156,7 +133,3 @@ export function generateLobbyName(
     name: newName?.trim() || `${owner.displayName}'s Lobby`,
   }; // `${icon} ${newName || `${owner.displayName}'s Lobby`}`;
 }
-
-// export const voiceIdToPusherChannel = (voiceChannel : {id : string}) => `private-channel-${voiceChannel.id}`
-export const userIdToPusherChannel = (user: { id: string }) =>
-  `private-user-${user.id}`;

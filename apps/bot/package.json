@@ -8,7 +8,6 @@
     "clean": "rm -rf .turbo node_modules",
     "start": "tsx ./src/index.ts",
     "dev": "tsx watch --clear-screen=false ./src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:typecheck": "tsc --noEmit"
@@ -43,7 +42,7 @@
     "discord.js": "^14.14.1",
     "dotenv": "^8.2.0",
     "drizzle-orm": "^0.28.6",
-    "emoji-regex": "^9.2.1",
+    "emoji-regex": "^10.3.0",
     "expo-server-sdk": "^3.7.0",
     "i18next": "^21.6.16",
     "i18next-fs-backend": "^1.1.1",
@@ -62,12 +61,10 @@
   },
   "devDependencies": {
     "@ei/tsconfig": "*",
-    "@types/emoji-regex": "^9.2.0",
     "@types/i18next-fs-backend": "^1.0.1",
     "@types/node": "^18.17.0",
     "@types/string-similarity": "^4.0.0",
     "eslint": "^8.46.0",
-    "eslint-config-custom": "*",
-    "ts-node-dev": "^2.0.0"
+    "eslint-config-custom": "*"
   }
 }

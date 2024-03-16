@@ -6,12 +6,15 @@
     "clean": "rm -rf .turbo node_modules",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "lint:typecheck": "tsc --noEmit"
+    "lint:typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest watch"
   },
   "devDependencies": {
     "@ei/tsconfig": "*",
     "eslint": "^8.51.0",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vitest": "^1.4.0"
   },
   "dependencies": {
     "emoji-regex": "^10.3.0",

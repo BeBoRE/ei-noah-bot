@@ -4,7 +4,6 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 const app = express();
 const port = 5100;
 
-
 if (process.env.NODE_ENV !== 'production') {
   // Proxy requests to http://localhost:3000/_next/webpack-hmr
   app.use(
