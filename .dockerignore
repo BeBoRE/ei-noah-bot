@@ -13,3 +13,4 @@ README.md
 run.cmd
 ormconfig.json
 nginx.exe
+out/

@@ -68,8 +68,7 @@ const LobbyName = forwardRef<View, Props>(
               const newName = generateLobbyName(
                 lobby.channel.type,
                 lobby.user,
-                `${nameInfo?.icon} ${name}`,
-                false,
+                `${nameInfo?.icon} ${name}`
               )?.full;
 
               console.log(newName);
@@ -101,8 +100,7 @@ const LobbyName = forwardRef<View, Props>(
             const newName = generateLobbyName(
               lobby.channel.type,
               lobby.user,
-              `${e.emoji} ${nameInfo?.name}`,
-              false,
+              `${e.emoji} ${nameInfo?.name}`
             )?.full;
 
             if (newName) {

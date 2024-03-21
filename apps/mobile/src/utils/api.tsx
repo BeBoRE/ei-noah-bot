@@ -25,7 +25,7 @@ import { useAuth } from 'src/context/auth';
 import superjson from 'superjson';
 
 import { api } from '@ei/react-shared';
-import { AppRouter } from '@ei/trpc';
+import type { AppRouter, RouterInputs, RouterOutputs } from '@ei/trpc';
 
 onlineManager.setEventListener((setOnline) =>
   NetInfo.addEventListener((state) => {
@@ -67,7 +67,7 @@ export const getBaseUrl = (ws = false) => {
  * A set of typesafe hooks for consuming your API.
  */
 export { api };
-export { type RouterInputs, type RouterOutputs } from '@ei/trpc';
+export { RouterInputs, RouterOutputs };
 
 const asyncStoragePersistor = createAsyncStoragePersister({
   storage: AsyncStorage,
