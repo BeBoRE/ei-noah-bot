@@ -6,10 +6,12 @@ type ChannelNamer = (...params: string[]) => string;
 
 interface SubscribeOptions<T extends ZodType<unknown>> {
   onData: (data: z.output<T>) => void;
-  onSubscription?: () => void;
+  onSubscription?: (channelName: string) => void;
+  onUnsubscription?: (channelName: string) => void;
   onParsingError?: (err: z.ZodError<T>) => void;
   onDeserializationError?: (err: Error) => void;
   onSubscribeError?: (err: Error) => void;
+  onUnsubscribeError?: (err: Error) => void;
 }
 
 type WithSubscriber = {
@@ -71,8 +73,6 @@ const channelCreator = <CCO extends ChannelCreatorOptions>(options: CCO) => {
                 ? channelNamer
                 : channelNamer(...params);
 
-            console.log('publishing to', channelName);
-
             return options.publisher.publish(
               channelName,
               superjson.stringify(input),
@@ -89,6 +89,8 @@ const channelCreator = <CCO extends ChannelCreatorOptions>(options: CCO) => {
               onSubscribeError,
               onSubscription,
               onDeserializationError,
+              onUnsubscription,
+              onUnsubscribeError,
             },
             ...params
           ) => {
@@ -109,12 +111,10 @@ const channelCreator = <CCO extends ChannelCreatorOptions>(options: CCO) => {
                   parsed = superjson.parse(msg);
                 } catch (err) {
                   if (!(err instanceof Error)) {
-                    console.error(err);
                     return;
                   }
 
                   if (!onDeserializationError) {
-                    console.warn(err);
                     return;
                   }
 
@@ -131,7 +131,6 @@ const channelCreator = <CCO extends ChannelCreatorOptions>(options: CCO) => {
 
                 if (!data.success) {
                   if (!onParsingError) {
-                    console.warn(data.error);
                     return;
                   }
 
@@ -149,12 +148,10 @@ const channelCreator = <CCO extends ChannelCreatorOptions>(options: CCO) => {
             options.subscriber
               .subscribe(channelName)
               .then(() => {
-                console.log('subscribed to', channelName);
-                onSubscription?.();
+                onSubscription?.(channelName);
               })
               .catch((err) => {
                 if (!onSubscribeError) {
-                  console.error(err);
                   return;
                 }
 
@@ -162,9 +159,14 @@ const channelCreator = <CCO extends ChannelCreatorOptions>(options: CCO) => {
               });
 
             return () => {
-              console.log('unsubscribing from', channelName);
-
-              options.subscriber.unsubscribe(channelName);
+              options.subscriber
+                .unsubscribe(channelName)
+                .catch((err) => {
+                  onUnsubscribeError?.(err);
+                })
+                .finally(() => {
+                  onUnsubscription?.(channelName);
+                });
               options.subscriber.removeListener('message', handler);
             };
           }

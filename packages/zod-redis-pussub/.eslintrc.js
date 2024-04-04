@@ -9,6 +9,7 @@ module.exports = {
   },
   rules: {
     '@typescript-eslint/indent': 'off',
+    'no-console': 'error',
   },
   ignorePatterns: ['dist', 'node_modules'],
 };

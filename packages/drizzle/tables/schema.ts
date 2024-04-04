@@ -74,7 +74,7 @@ export const loginTokens = pgTable('login_token', {
     length: 255,
   })
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
   expires: bigint('expires', {
     mode: 'number',
   }).notNull(),
@@ -89,7 +89,7 @@ export const session = pgTable('session', {
     length: 255,
   })
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id, { onUpdate: 'cascade', onDelete: 'cascade' }),
   activeExpires: bigint('active_expires', {
     mode: 'number',
   }).notNull(),
@@ -107,7 +107,7 @@ export const keys = pgTable('key', {
     length: 255,
   })
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
   hashedPassword: varchar('hashed_password', {
     length: 255,
   }),
@@ -204,7 +204,10 @@ export const lobbyNameChanges = pgTable(
     id: serial('id').primaryKey().notNull(),
     guildUserId: integer('guild_user_id')
       .notNull()
-      .references(() => guildUsers.id, { onUpdate: 'cascade' }),
+      .references(() => guildUsers.id, {
+        onUpdate: 'cascade',
+        onDelete: 'cascade',
+      }),
     name: varchar('name', { length: 99 }).notNull(),
     date: timestamp('date', { withTimezone: true, mode: 'string' }).notNull(),
   },
@@ -219,11 +222,15 @@ export const quotes = pgTable('quote', {
   id: serial('id').primaryKey().notNull(),
   guildUserId: integer('guild_user_id')
     .notNull()
-    .references(() => guildUsers.id, { onUpdate: 'cascade' }),
+    .references(() => guildUsers.id, {
+      onUpdate: 'cascade',
+      onDelete: 'cascade',
+    }),
   text: varchar('text', { length: 2000 }).notNull(),
-  creatorId: integer('creator_id')
-    .notNull()
-    .references(() => guildUsers.id, { onUpdate: 'cascade' }),
+  creatorId: integer('creator_id').references(() => guildUsers.id, {
+    onUpdate: 'cascade',
+    onDelete: 'set null',
+  }),
   date: timestamp('date', { withTimezone: true, mode: 'string' }),
 });
 
@@ -233,9 +240,10 @@ export const tempChannels = pgTable(
   'temp_channel',
   {
     channelId: varchar('channel_id', { length: 255 }).primaryKey().notNull(),
-    guildUserId: integer('guild_user_id')
-      .notNull()
-      .references(() => guildUsers.id, { onUpdate: 'cascade' }),
+    guildUserId: integer('guild_user_id').references(() => guildUsers.id, {
+      onUpdate: 'cascade',
+      onDelete: 'set null',
+    }),
     createdAt: timestamp('created_at', {
       withTimezone: true,
       mode: 'string',

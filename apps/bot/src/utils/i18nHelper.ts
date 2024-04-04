@@ -2,7 +2,13 @@ import { Guild, User } from '@ei/drizzle/tables/schema';
 
 const defaultLanguage = 'en';
 
-export const getLocale = ({ user, guild }: { user?: User; guild?: Guild }) => {
+export const getLocale = ({
+  user,
+  guild,
+}: {
+  user?: User | null;
+  guild?: Guild | null;
+}) => {
   // Prioritize user locale
   if (user && user.language) {
     return user.language;

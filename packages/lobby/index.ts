@@ -84,7 +84,7 @@ export const lobbyNameSchema = z.object({
 
 export function generateLobbyName(
   type: ChannelType,
-  owner: { displayName: string },
+  owner: { displayName: string } | null,
   newName?: string | null,
 ): LobbyNameInfo | null {
   const lobbyTypeIcon = getIcon(type);
@@ -127,9 +127,9 @@ export function generateLobbyName(
 
   return {
     full: `${lobbyTypeIcon} ${
-      newName?.trim() || `${owner.displayName}'s Lobby`
+      newName?.trim() || `${owner ? owner.displayName : 'No one'}'s Lobby`
     }`,
     icon: lobbyTypeIcon,
-    name: newName?.trim() || `${owner.displayName}'s Lobby`,
+    name: newName?.trim() || `${owner ? owner.displayName : 'No one'}'s Lobby`,
   }; // `${icon} ${newName || `${owner.displayName}'s Lobby`}`;
 }

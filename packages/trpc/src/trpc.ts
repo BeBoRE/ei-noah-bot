@@ -224,7 +224,7 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
     ctx: {
       // infers the as non-nullable
       dbUser: { ...ctx.dbUser },
-      session: { ...ctx.session},
+      session: { ...ctx.session },
       discordUser: { ...ctx.discordUser },
     },
   });

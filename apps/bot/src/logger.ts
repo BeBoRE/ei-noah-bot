@@ -21,7 +21,7 @@ const logger = winston.createLogger({
         format.padLevels(),
         consoleFormat({
           showMeta: true,
-          metaStrip: ['timestamp', 'service'],
+          metaStrip: ['service'],
           inspectOptions: {
             depth: Infinity,
             colors: true,
