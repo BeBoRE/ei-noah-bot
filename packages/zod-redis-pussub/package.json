@@ -18,7 +18,7 @@
     "url": "https://github.com/BeBoRE/ei-noah-bot.git",
     "directory": "packages/zod-redis-pussub"
   },
-  "version": "2.0.0",
+  "version": "2.1.0",
   "main": "./dist/channel.js",
   "module": "./dist/channel.mjs",
   "types": "./dist/channel.d.ts",

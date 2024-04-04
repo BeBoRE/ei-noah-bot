@@ -194,10 +194,10 @@ const handler: GuildHandler = async ({
     if (quoteList.length < 2 && quoteList[0]) {
       const quoted = await getUser({ id: quotedUser.userId });
 
-      const [ownerGuildUser] = await drizzle
+      const [ownerGuildUser] = quoteList[0].creatorId ? await drizzle
         .select()
         .from(guildUsers)
-        .where(eq(guildUsers.id, quoteList[0].creatorId));
+        .where(eq(guildUsers.id, quoteList[0].creatorId)) : [null];
 
       globalLogger.debug(ownerGuildUser);
       const owner =
@@ -216,10 +216,10 @@ const handler: GuildHandler = async ({
       mapper: (q) => q.text,
       selectCallback: async (q) => {
         const quoted = await getUser({ id: quotedUser.userId });
-        const [ownerGuildUser] = await drizzle
+        const [ownerGuildUser] = q.creatorId ? await drizzle
           .select()
           .from(guildUsers)
-          .where(eq(guildUsers.id, q.creatorId));
+          .where(eq(guildUsers.id, q.creatorId)) : [null];
         const owner =
           (ownerGuildUser && (await getUser({ id: ownerGuildUser.userId }))) ||
           null;

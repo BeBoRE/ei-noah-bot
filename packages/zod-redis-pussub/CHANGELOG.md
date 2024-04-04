@@ -1,5 +1,11 @@
 # zod-redis-pubsub
 
+## 2.1.0
+
+### Minor Changes
+
+- Removed console logs, onSubscription callback now includes the channel-name, added onUnsubscriptionError
+
 ## 2.0.0
 
 ### Major Changes
