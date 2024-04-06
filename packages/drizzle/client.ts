@@ -25,8 +25,7 @@ export const getConnectedPgClient = async () => {
 
   global.__connectedPgClient = pg
     .connect()
-    .then(() => pg)
-    .catch(() => pg);
+    .then(() => pg);
 
   return global.__connectedPgClient;
 };
