@@ -79,6 +79,10 @@
       "userAdd": {
         "title": "{{user}} wil je lobby joinen",
         "description": "Wil je {{user}} toelaten in je lobby?"
+      },
+      "transferOwnership": {
+        "title": "Jij bent de nieuwe lobby leider",
+        "description": "Leiderschap van de lobby is overgedragen aan jou"
       }
     },
     "noUsersAdded": "Geen user(s) toegevoegd",

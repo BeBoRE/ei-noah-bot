@@ -41,7 +41,7 @@ import {
   VoiceBasedChannel,
   VoiceChannel,
 } from 'discord.js';
-import { and, desc, eq, inArray, isNotNull, or, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, inArray, isNotNull, or, sql } from 'drizzle-orm';
 import emojiRegex from 'emoji-regex';
 import i18next, { i18n as I18n } from 'i18next';
 import moment, { Duration } from 'moment';
@@ -2637,6 +2637,79 @@ const createRedisSubscriptionListeners = (
   );
 };
 
+const expo = new Expo();
+
+const getSessions = async (drizzle: DrizzleClient, userId: string) =>
+  drizzle
+    .select()
+    .from(session)
+    .where(
+      and(eq(session.userId, userId), gt(session.idleExpires, Date.now())),
+    );
+
+const sendPushNotifications = (
+  sessions: (typeof session.$inferSelect)[],
+  message: Omit<ExpoPushMessage, 'to'>,
+) => {
+  const messages = sessions
+    .filter((s) => s.idleExpires > Date.now())
+    .filter((s): s is typeof session.$inferSelect & { expoPushToken: string } =>
+      Expo.isExpoPushToken(s.expoPushToken),
+    )
+    .map((s) => ({ ...message, to: s.expoPushToken }));
+
+  globalLogger.debug('sending push notifications', { messages });
+
+  return expo.sendPushNotificationsAsync(messages);
+};
+
+const sendUserAddPushNotifications = (
+  owner: DbUser,
+  toBeAdded: User,
+  sessions: (typeof session.$inferSelect)[],
+) => {
+  const locale = getLocale({ user: owner });
+
+  const i18n = i18next.cloneInstance({ lng: locale });
+
+  return sendPushNotifications(sessions, {
+    sound: 'default',
+    channelId: 'addUser',
+    title: i18n.t('lobby.notification.userAdd.title', {
+      user: toBeAdded.username,
+    }),
+    body: i18n.t('lobby.notification.userAdd.description', {
+      user: toBeAdded.username,
+    }),
+    data: {
+      userId: toBeAdded.id,
+    },
+    categoryId: 'userAdd',
+  });
+};
+
+const sendLobbyTransferPushNotifications = (
+  owner: DbUser,
+  newOwner: User,
+  sessions: (typeof session.$inferSelect)[],
+) => {
+  const locale = getLocale({ user: owner });
+
+  const i18n = i18next.cloneInstance({ lng: locale });
+
+  return sendPushNotifications(sessions, {
+    sound: 'default',
+    channelId: 'transferOwnership',
+    title: i18n.t('lobby.notification.transferOwnership.title', {
+      user: newOwner.username,
+    }),
+    body: i18n.t('lobby.notification.transferOwnership.description', {
+      user: newOwner.username,
+    }),
+    categoryId: 'transferOwnership',
+  });
+};
+
 const checkTempChannel = async (
   client: Client,
   tempChannel: TempChannel,
@@ -2806,6 +2879,11 @@ const checkTempChannel = async (
             user: newOwner.user.toString(),
           }),
         }),
+        sendLobbyTransferPushNotifications(
+          newOwnerUser,
+          newOwner.user,
+          await getSessions(drizzle, newOwnerUser.id),
+        ),
       ]).catch((err) => logger.error(err.message, { error: err }));
 
       if (oldOwner) {
@@ -2892,50 +2970,6 @@ const checkVoiceCreateChannels = async (
       }),
     ),
   );
-};
-
-const expo = new Expo();
-
-const sendUserAddPushNotifications = (
-  owner: DbUser,
-  toBeAdded: User,
-  sessions: (typeof session.$inferSelect)[],
-) => {
-  const locale = getLocale({ user: owner });
-
-  const i18n = i18next.cloneInstance({ lng: locale });
-
-  globalLogger.debug('sending push notifications', {
-    owner,
-    toBeAdded,
-    sessions,
-  });
-  globalLogger.debug(`now ${Date.now()}`);
-
-  const messages: ExpoPushMessage[] = sessions
-    .filter((s) => s.idleExpires > Date.now())
-    .filter((s): s is typeof session.$inferSelect & { expoPushToken: string } =>
-      Expo.isExpoPushToken(s.expoPushToken),
-    )
-    .map((s) => ({
-      to: s.expoPushToken,
-      sound: 'default',
-      channelId: 'addUser',
-      title: i18n.t('lobby.notification.userAdd.title', {
-        user: toBeAdded.username,
-      }),
-      body: i18n.t('lobby.notification.userAdd.description', {
-        user: toBeAdded.username,
-      }),
-      data: {
-        userId: toBeAdded.id,
-      },
-      categoryId: 'userAdd',
-    }));
-
-  globalLogger.debug('sending push notifications', { messages });
-
-  return expo.sendPushNotificationsAsync(messages);
 };
 
 router.onInit = async (client, drizzle, _i18n, logger) => {
@@ -3192,10 +3226,7 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
             tempChannel.temp_channel,
           );
 
-          const userSessions = await drizzle
-            .select()
-            .from(session)
-            .where(eq(session.userId, tempChannel.user.id));
+          const userSessions = await getSessions(drizzle, tempChannel.user.id);
 
           if (
             !activeChannel

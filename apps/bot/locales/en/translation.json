@@ -79,6 +79,10 @@
       "userAdd": {
         "title": "{{user}} wants to join your lobby",
         "description": "Do you want to allow {{user}} into your lobby"
+      },
+      "transferOwnership": {
+        "title": "Lobby ownership transferred to you",
+        "description": "You have been given the ownership of the lobby"
       }
     },
     "noUsersAdded": "No user(s) added",

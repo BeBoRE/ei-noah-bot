@@ -23,9 +23,7 @@ export const pg: Client = global.__pg || new Client(clientConfig);
 export const getConnectedPgClient = async () => {
   if (global.__connectedPgClient) return global.__connectedPgClient;
 
-  global.__connectedPgClient = pg
-    .connect()
-    .then(() => pg);
+  global.__connectedPgClient = pg.connect().then(() => pg);
 
   return global.__connectedPgClient;
 };
