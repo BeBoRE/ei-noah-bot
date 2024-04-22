@@ -30,7 +30,7 @@ RUN wget -qO- http://plasmasturm.org/code/vistafonts-installer/vistafonts-instal
 
 COPY . .
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@latest-8
 RUN pnpm install --config.platform=linux --config.architecture=x64
 
 RUN pnpm build
