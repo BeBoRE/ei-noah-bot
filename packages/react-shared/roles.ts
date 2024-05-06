@@ -44,8 +44,8 @@ export const useRoles = ({ guildId }: { guildId: string }) => {
     return false;
   });
 
-  return { 
-    roles
+  return {
+    roles,
   };
 };
 

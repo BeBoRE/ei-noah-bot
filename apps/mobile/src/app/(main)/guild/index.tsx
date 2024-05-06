@@ -72,7 +72,7 @@ function Screen() {
       <Stack.Screen options={{ title: 'Select a server' }} />
       <Page />
     </>
-  )
+  );
 }
 
 export default Screen;

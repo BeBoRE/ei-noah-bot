@@ -1,16 +1,23 @@
-import { api } from '@ei/react-shared';
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { View, Pressable } from 'react-native';
-import Text from 'src/components/Text';
-import { Guild, NotApprovedRole, Role, useRoleUtils, useRoles } from '@ei/react-shared/roles';
+import { View } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
-import Button from 'src/components/Button';
+import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { Plus } from 'lucide-react-native';
+import Button from 'src/components/Button';
+import Text from 'src/components/Text';
+
+import { api } from '@ei/react-shared';
+import {
+  Guild,
+  NotApprovedRole,
+  Role,
+  useRoles,
+  useRoleUtils,
+} from '@ei/react-shared/roles';
 
 type CheckBoxProps = {
   checked: boolean;
   color: string;
-};  
+};
 
 function CheckBox({ checked, color }: CheckBoxProps) {
   return (
@@ -26,20 +33,23 @@ function CheckBox({ checked, color }: CheckBoxProps) {
 
 type RoleProps = {
   role: Role | NotApprovedRole;
-  guild: Guild
-}
+  guild: Guild;
+};
 
 function RoleButton({ role, guild }: RoleProps) {
-  const {name, color, isAddable, isApproved, isPending, addRole, removeRole} = useRoleUtils(role, guild);
+  const { name, color, isAddable, isApproved, isPending, addRole, removeRole } =
+    useRoleUtils(role, guild);
   const disabled = isPending || !isApproved;
 
   return (
-    <View style={{
-      borderColor: color,
-    }}>
+    <View
+      style={{
+        borderColor: color,
+      }}
+    >
       <Button
         key={role.id}
-        className="flex flex-row bg-primary-900 transition items-center disabled:opacity-50 rounded-full p-2 mb-2 border-4"
+        className="mb-2 flex flex-row items-center rounded-full border-4 bg-primary-900 p-2 transition disabled:opacity-50"
         style={{
           borderColor: isAddable ? 'transparent' : color,
           opacity: disabled ? 0.5 : 1,
@@ -56,7 +66,9 @@ function RoleButton({ role, guild }: RoleProps) {
         }}
       >
         <CheckBox checked={!isAddable} color={color} />
-        <Text className='pl-2' style={{color}}>{name}</Text>
+        <Text className="pl-2" style={{ color }}>
+          {name}
+        </Text>
       </Button>
     </View>
   );
@@ -70,16 +82,14 @@ function AddButton() {
   }
 
   return (
-    <Pressable>
+    <Link href={{ pathname: '/guild/[guildId]/add', params: { guildId } }}>
       <Plus />
-    </Pressable>
+    </Link>
   );
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const addButton = () => (
-      <AddButton />
-  )
+const addButton = () => <AddButton />;
 
 function RoleScreen() {
   const { guildId } = useLocalSearchParams();
@@ -88,8 +98,8 @@ function RoleScreen() {
     throw new Error('Invalid guildId');
   }
 
-  const {data: guild} = api.guild.get.useQuery({ guildId });
-  const {roles} = useRoles({ guildId });
+  const { data: guild } = api.guild.get.useQuery({ guildId });
+  const { roles } = useRoles({ guildId });
 
   if (!guild) {
     return (
@@ -101,8 +111,14 @@ function RoleScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: guild.discord.name, headerRight: addButton}} />
-      <FlatList className='p-2' data={roles} renderItem={({item}) => <RoleButton role={item} guild={guild} />} />
+      <Stack.Screen
+        options={{ title: guild.discord.name, headerRight: addButton }}
+      />
+      <FlatList
+        className="p-2"
+        data={roles}
+        renderItem={({ item }) => <RoleButton role={item} guild={guild} />}
+      />
     </>
   );
 }
