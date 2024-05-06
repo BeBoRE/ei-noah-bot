@@ -31,7 +31,7 @@ function AddScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ headerTitle: 'Add Role' }} />
+      <Stack.Screen options={{ headerTitle: 'Create Role' }} />
       <ScrollView className="flex flex-1 p-2">
         <Label nativeID="role-name">Role Name:</Label>
         <Input

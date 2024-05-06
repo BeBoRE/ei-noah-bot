@@ -82,7 +82,7 @@ function AddButton() {
   }
 
   return (
-    <Link href={{ pathname: '/guild/[guildId]/add', params: { guildId } }} >
+    <Link href={{ pathname: '/guild/[guildId]/create', params: { guildId } }} >
       <Plus size={32}/>
     </Link>
   );
