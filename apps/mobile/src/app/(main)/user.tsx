@@ -5,7 +5,6 @@ import { Stack } from 'expo-router';
 import { toast } from 'burnt';
 import { View } from 'moti';
 import type { SFSymbol } from 'sf-symbols-typescript';
-import Button from 'src/components/Button';
 import { useAuth } from 'src/context/auth';
 import { getUserImageUrl } from 'src/utils/cdn';
 import { twMerge } from 'tailwind-merge';
@@ -13,7 +12,8 @@ import { twMerge } from 'tailwind-merge';
 import { api } from '@ei/react-shared';
 import baseConfig from '@ei/tailwind-config';
 
-import Text from '../../components/Text';
+import { Button } from 'src/components/ui/button';
+import { Text } from 'src/components/ui/text';
 
 function Divider({ className, ...props }: { className?: string }) {
   const mergedName = twMerge('h-1 bg-primary-900 rounded-full', className);
@@ -27,7 +27,7 @@ function UserScreen() {
   const { signOut } = useAuth();
   const utils = api.useUtils();
 
-  const { mutate: logout, isPending } = api.user.logout.useMutation({
+  const { mutate: logout, isPending: isLoggingOut } = api.user.logout.useMutation({
     onSuccess: () => {
       signOut();
 
@@ -72,14 +72,8 @@ function UserScreen() {
           </Text>
         </View>
         <Divider className="my-4" />
-        <Button
-          disabled={isPending}
-          onPress={() => logout()}
-          className="rounded-full border-2 border-reject bg-transparent"
-        >
-          <Text className="text-center text-3xl font-bold text-reject">
-            Logout
-          </Text>
+        <Button variant="destructive" onPress={() => logout()} disabled={isLoggingOut}>
+          <Text>Log out</Text>
         </Button>
       </ScrollView>
     </>
