@@ -44,7 +44,7 @@ function RoleButton({ role, guild }: RoleProps) {
   return (
     <Button
       key={role.id}
-      className="flex flex-row items-center rounded-full border-4 bg-primary-900 p-2 transition disabled:opacity-50"
+      className="flex flex-row items-center rounded-full border-4 bg-primary-900 p-2 mb-2 transition disabled:opacity-50"
       style={{
         borderColor: isAddable ? 'transparent' : color,
         opacity: disabled ? 0.5 : 1,
