@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useParams } from 'next/navigation';
 import { TooltipTrigger } from '@radix-ui/react-tooltip';
 import MemberAvatar from 'app/_components/Avatar';
 import { Button } from 'app/_components/ui/button';
@@ -26,12 +25,7 @@ type Props = {
 };
 
 function RoleButton({ guild, role }: Props) {
-  const params = useParams();
-  const { guildId } = params;
-
-  if (!guildId || typeof guildId !== 'string') {
-    throw new Error('Invalid guildId');
-  }
+  const guildId = guild.discord.id;
 
   const {
     approveRole,

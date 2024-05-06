@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { Tabs } from 'expo-router';
-import { Volume2 } from 'lucide-react-native';
+import { Users, Volume2 } from 'lucide-react-native';
 import { getUserImageUrl } from 'src/utils/cdn';
 
 import { api } from '@ei/react-shared';
@@ -25,6 +25,10 @@ function LobbyIcon({ color }: { color: string }) {
   return <Volume2 color={color} size={20} className="h-1 w-1" />;
 }
 
+function RolesIcon({ color }: { color: string }) {
+  return <Users color={color} size={20} className="h-1 w-1" />;
+}
+
 function TabRoot() {
   return (
     <Tabs
@@ -43,6 +47,13 @@ function TabRoot() {
         options={{
           title: 'Lobby',
           tabBarIcon: LobbyIcon,
+        }}
+      />
+      <Tabs.Screen
+        name="guild"
+        options={{
+          title: 'Roles',
+          tabBarIcon: RolesIcon,
         }}
       />
       <Tabs.Screen

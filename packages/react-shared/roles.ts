@@ -44,7 +44,9 @@ export const useRoles = ({ guildId }: { guildId: string }) => {
     return false;
   });
 
-  return { roles };
+  return { 
+    roles
+  };
 };
 
 const useApproveRole = (role: NotApprovedRole | Role) => {
@@ -402,7 +404,6 @@ export const useCreateRole = (
   return {
     createRole: () => {
       if (!name || rest.isPending) return;
-
       createRole({ guildId, name });
     },
     ...rest,

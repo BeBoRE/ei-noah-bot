@@ -13,6 +13,9 @@ const defaultAvatar = (id: string) => {
   return `embed/avatars/${index}.png`;
 };
 
+const guildIcon = (id: string, icon: string, format: string) =>
+  `icons/${id}/${icon}.${format}`;
+
 export const getUserImageUrl = (user: {
   avatar: string | null;
   id: string;
@@ -28,3 +31,9 @@ export const getUserImageUrl = (user: {
 
   return `${discordCDN}${userAvatar(user.id, user.avatar, 'png')}`;
 };
+
+export const getGuildImageUrl = (guild: {
+  icon?: string | null;
+  id: string;
+}) =>
+  guild.icon ? `${discordCDN}${guildIcon(guild.id, guild.icon, 'png')}` : null;
