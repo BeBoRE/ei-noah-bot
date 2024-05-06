@@ -43,10 +43,7 @@ function RoleButton({ role, guild }: RoleProps) {
 
   return (
     <View
-      className="mb-2"
-      style={{
-        borderColor: color,
-      }}
+      className="pb-2"
     >
       <Button
         key={role.id}
@@ -105,7 +102,7 @@ function RoleScreen() {
   if (!guild) {
     return (
       <View>
-        <Stack.Screen options={{ title: '' }} />
+        <Stack.Screen options={{ title: ' ' }} />
       </View>
     );
   }
