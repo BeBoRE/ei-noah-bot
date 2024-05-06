@@ -42,33 +42,29 @@ function RoleButton({ role, guild }: RoleProps) {
   const disabled = isPending || !isApproved;
 
   return (
-    <View
-      className="pb-2"
-    >
-      <Button
-        key={role.id}
-        className="flex flex-row items-center rounded-full border-4 bg-primary-900 p-2 transition disabled:opacity-50"
-        style={{
-          borderColor: isAddable ? 'transparent' : color,
-          opacity: disabled ? 0.5 : 1,
-        }}
-        disabled={disabled}
-        onPress={() => {
-          if (!isApproved) return;
+    <Button
+      key={role.id}
+      className="flex flex-row items-center rounded-full border-4 bg-primary-900 p-2 transition disabled:opacity-50"
+      style={{
+        borderColor: isAddable ? 'transparent' : color,
+        opacity: disabled ? 0.5 : 1,
+      }}
+      disabled={disabled}
+      onPress={() => {
+        if (!isApproved) return;
 
-          if (isAddable) {
-            addRole();
-          } else {
-            removeRole();
-          }
-        }}
-      >
-        <CheckBox checked={!isAddable} color={color} />
-        <Text className="pl-2" style={{ color }}>
-          {name}
-        </Text>
-      </Button>
-    </View>
+        if (isAddable) {
+          addRole();
+        } else {
+          removeRole();
+        }
+      }}
+    >
+      <CheckBox checked={!isAddable} color={color} />
+      <Text className="pl-2" style={{ color }}>
+        {name}
+      </Text>
+    </Button>
   );
 }
 
@@ -88,6 +84,8 @@ function AddButton() {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const addButton = () => <AddButton />;
+
+const seperator = () => <View className="h-2" />;
 
 function RoleScreen() {
   const { guildId } = useLocalSearchParams();
@@ -116,6 +114,7 @@ function RoleScreen() {
         className="p-2"
         data={roles}
         renderItem={({ item }) => <RoleButton role={item} guild={guild} />}
+        ItemSeparatorComponent={seperator}
       />
     </>
   );
