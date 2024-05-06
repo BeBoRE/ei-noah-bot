@@ -58,3 +58,5 @@ yarn-error.log*
 .turbo
 
 nginx/
+
+*.cookie

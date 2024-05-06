@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
+import { FlatList, ScrollView } from 'react-native-gesture-handler';
 import { Image } from 'expo-image';
 import { Link, Stack } from 'expo-router';
 import Button from 'src/components/Button';
@@ -33,7 +33,7 @@ function GuildButton({ guild }: GuildButtonProps) {
       push
       asChild
     >
-      <Button className="flex flex-1 flex-row items-center rounded bg-primary-900 p-2">
+      <Button className="flex flex-1 flex-row items-center rounded bg-primary-900 p-2 mb-2">
         <GuildIcon guild={guild} />
         <Text className="pl-2 text-2xl">{guild.name}</Text>
       </Button>
@@ -82,11 +82,7 @@ function Page() {
   }
 
   return (
-    <ScrollView className="p-2">
-      {guilds.map((guild) => (
-        <GuildButton key={guild.id} guild={guild} />
-      ))}
-    </ScrollView>
+    <FlatList className="p-2" data={guilds} renderItem={({item}) => <GuildButton guild={item} />} />
   );
 }
 

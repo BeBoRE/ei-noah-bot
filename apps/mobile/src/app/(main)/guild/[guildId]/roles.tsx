@@ -85,8 +85,6 @@ function AddButton() {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const addButton = () => <AddButton />;
 
-const seperator = () => <View className="h-2" />;
-
 function RoleScreen() {
   const { guildId } = useLocalSearchParams();
 
@@ -114,7 +112,6 @@ function RoleScreen() {
         className="p-2"
         data={roles}
         renderItem={({ item }) => <RoleButton role={item} guild={guild} />}
-        ItemSeparatorComponent={seperator}
       />
     </>
   );
