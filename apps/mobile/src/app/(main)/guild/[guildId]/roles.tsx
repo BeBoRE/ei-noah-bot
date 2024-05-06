@@ -74,10 +74,6 @@ function RoleButton({ role, guild }: RoleProps) {
   );
 }
 
-function RoleButtonSkeleton() {
-  
-}
-
 function AddButton() {
   const { guildId } = useLocalSearchParams();
 

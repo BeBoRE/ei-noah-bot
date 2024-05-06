@@ -5,9 +5,12 @@ import { Link, Stack } from 'expo-router';
 import Button from 'src/components/Button';
 import Text from 'src/components/Text';
 import { getGuildImageUrl } from 'src/utils/cdn';
+import { Skeleton } from 'moti/skeleton';
 
 import { api } from '@ei/react-shared';
 import type { RouterOutputs } from '@ei/trpc';
+import { MotiView } from 'moti';
+import baseConfig from '@ei/tailwind-config';
 
 type GuildButtonProps = {
   guild: RouterOutputs['guild']['all'][number];
@@ -38,22 +41,43 @@ function GuildButton({ guild }: GuildButtonProps) {
   );
 }
 
+function Spacer({ height = 0, width = 8 }) {
+  return <MotiView style={{ height, width }} />
+}
+
+const colors = [
+  baseConfig.theme.colors.primary['800'],
+  baseConfig.theme.colors.primary['900'],
+];
+
+function GuildButtonSkeleton() {
+  return (
+    <MotiView className="flex flex-1 flex-row items-center rounded bg-primary-900 p-2 mb-2">
+      <Skeleton width={48} height={48} radius="round" colors={colors}/>
+      <Spacer />
+      <Skeleton width="90%" colors={colors}/>
+    </MotiView>
+  );
+}
+
 function Page() {
   const { data: guilds, isLoading, isError } = api.guild.all.useQuery();
 
   if (isLoading) {
     return (
-      <View>
-        <Text>Loading...</Text>
-      </View>
+      <ScrollView className='p-2'>
+        <GuildButtonSkeleton />
+        <GuildButtonSkeleton />
+        <GuildButtonSkeleton />
+      </ScrollView>
     );
   }
 
   if (isError || !guilds) {
     return (
-      <View>
+      <ScrollView className='p-2'>
         <Text>Error</Text>
-      </View>
+      </ScrollView>
     );
   }
 
