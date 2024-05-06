@@ -28,8 +28,7 @@ export const useRoles = ({ guildId }: { guildId: string }) => {
         if (!realA || !realB) return 0;
 
         return realA.position - realB.position;
-      })
-      .reverse(),
+      }),
     ...notApprovedRoles,
   ];
 
