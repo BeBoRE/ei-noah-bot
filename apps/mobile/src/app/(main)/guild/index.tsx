@@ -7,7 +7,7 @@ import Text from 'src/components/Text';
 import { getGuildImageUrl } from 'src/utils/cdn';
 
 import { api } from '@ei/react-shared';
-import { RouterOutputs } from '@ei/trpc';
+import type { RouterOutputs } from '@ei/trpc';
 
 type GuildButtonProps = {
   guild: RouterOutputs['guild']['all'][number];
@@ -26,7 +26,7 @@ function GuildIcon({ guild }: GuildButtonProps) {
 function GuildButton({ guild }: GuildButtonProps) {
   return (
     <Link
-      href={{ pathname: `/guild/[guildId]`, params: { guildId: guild.id } }}
+      href={{ pathname: `/guild/[guildId]/roles`, params: { guildId: guild.id } }}
       push
       asChild
     >
