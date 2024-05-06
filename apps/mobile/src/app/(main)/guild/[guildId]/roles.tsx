@@ -43,13 +43,14 @@ function RoleButton({ role, guild }: RoleProps) {
 
   return (
     <View
+      className="mb-2"
       style={{
         borderColor: color,
       }}
     >
       <Button
         key={role.id}
-        className="mb-2 flex flex-row items-center rounded-full border-4 bg-primary-900 p-2 transition disabled:opacity-50"
+        className="flex flex-row items-center rounded-full border-4 bg-primary-900 p-2 transition disabled:opacity-50"
         style={{
           borderColor: isAddable ? 'transparent' : color,
           opacity: disabled ? 0.5 : 1,
