@@ -19,6 +19,8 @@ export const useRoles = ({ guildId }: { guildId: string }) => {
   const allowedToCreateRoles =
     member && guild ? canCreateRoles(member, guild?.discord) : false;
 
+  // Whut?
+
   const combinedRoles = [
     ...customRoles
       .sort((a, b) => {
