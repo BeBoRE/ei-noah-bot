@@ -69,12 +69,6 @@ export const getBaseUrl = (ws = false) => {
 export { api };
 export { RouterInputs, RouterOutputs };
 
-const asyncStoragePersistor = createAsyncStoragePersister({
-  storage: AsyncStorage,
-  serialize: superjson.stringify,
-  deserialize: superjson.parse,
-});
-
 type TRPCProviderProps = {
   children: React.ReactNode;
 };
@@ -144,6 +138,17 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
         }),
       }),
     [isLoggedIn, onError],
+  );
+
+  const asyncStoragePersistor = React.useMemo(
+    () =>
+      createAsyncStoragePersister({
+        storage: AsyncStorage,
+        serialize: superjson.stringify,
+        deserialize: superjson.parse,
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [queryClient],
   );
 
   const httpLink = React.useMemo(() => {

@@ -11,7 +11,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary web:hover:opacity-90 active:opacity-90',
-        destructive: 'border border-reject web:hover:opacity-90 active:opacity-90',
+        destructive:
+          'border border-reject web:hover:opacity-90 active:opacity-90',
         outline:
           'border border-primary-800 bg-background web:hover:bg-accent web:hover:text-accent-foreground active:bg-accent',
         secondary: 'bg-primary-200 web:hover:opacity-80 active:opacity-80',

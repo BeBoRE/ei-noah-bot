@@ -8,9 +8,9 @@ function RolesLayout() {
       screenOptions={{
         headerBackTitleVisible: false,
         headerTitleStyle: { color: baseConfig.theme.colors.primary['500'] },
-        title: ' '
+        title: ' ',
       }}
-     />
+    />
   );
 }
 

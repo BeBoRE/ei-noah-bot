@@ -5,15 +5,14 @@ import { Stack } from 'expo-router';
 import { toast } from 'burnt';
 import { View } from 'moti';
 import type { SFSymbol } from 'sf-symbols-typescript';
+import { Button } from 'src/components/ui/button';
+import { Text } from 'src/components/ui/text';
 import { useAuth } from 'src/context/auth';
 import { getUserImageUrl } from 'src/utils/cdn';
 import { twMerge } from 'tailwind-merge';
 
 import { api } from '@ei/react-shared';
 import baseConfig from '@ei/tailwind-config';
-
-import { Button } from 'src/components/ui/button';
-import { Text } from 'src/components/ui/text';
 
 function Divider({ className, ...props }: { className?: string }) {
   const mergedName = twMerge('h-1 bg-primary-900 rounded-full', className);
@@ -27,27 +26,28 @@ function UserScreen() {
   const { signOut } = useAuth();
   const utils = api.useUtils();
 
-  const { mutate: logout, isPending: isLoggingOut } = api.user.logout.useMutation({
-    onSuccess: () => {
-      signOut();
+  const { mutate: logout, isPending: isLoggingOut } =
+    api.user.logout.useMutation({
+      onSuccess: () => {
+        signOut();
 
-      utils.invalidate(undefined);
-    },
-    onError: (err) => {
-      toast({
-        title: 'Failed to log out',
-        message: err.message,
-        preset: 'custom',
-        icon: {
-          ios: {
-            name: 'exclamationmark.triangle' satisfies SFSymbol,
-            color: baseConfig.theme.colors.primary.DEFAULT,
+        utils.invalidate(undefined);
+      },
+      onError: (err) => {
+        toast({
+          title: 'Failed to log out',
+          message: err.message,
+          preset: 'custom',
+          icon: {
+            ios: {
+              name: 'exclamationmark.triangle' satisfies SFSymbol,
+              color: baseConfig.theme.colors.primary.DEFAULT,
+            },
           },
-        },
-        haptic: 'error',
-      });
-    },
-  });
+          haptic: 'error',
+        });
+      },
+    });
 
   const { data: user } = api.user.me.useQuery();
 
@@ -72,7 +72,11 @@ function UserScreen() {
           </Text>
         </View>
         <Divider className="my-4" />
-        <Button variant="destructive" onPress={() => logout()} disabled={isLoggingOut}>
+        <Button
+          variant="destructive"
+          onPress={() => logout()}
+          disabled={isLoggingOut}
+        >
           <Text>Log out</Text>
         </Button>
       </ScrollView>

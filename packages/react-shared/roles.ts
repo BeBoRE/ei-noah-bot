@@ -20,15 +20,14 @@ export const useRoles = ({ guildId }: { guildId: string }) => {
     member && guild ? canCreateRoles(member, guild?.discord) : false;
 
   const combinedRoles = [
-    ...customRoles
-      .sort((a, b) => {
-        const realA = guild.discord.roles.find((r) => r.id === a.id);
-        const realB = guild.discord.roles.find((r) => r.id === b.id);
+    ...customRoles.sort((a, b) => {
+      const realA = guild.discord.roles.find((r) => r.id === a.id);
+      const realB = guild.discord.roles.find((r) => r.id === b.id);
 
-        if (!realA || !realB) return 0;
+      if (!realA || !realB) return 0;
 
-        return realB.position - realA.position;
-      }),
+      return realB.position - realA.position;
+    }),
     ...notApprovedRoles,
   ];
 
