@@ -21,6 +21,7 @@ module.exports = {
     '@typescript-eslint/no-empty-function': 'off',
     'import/prefer-default-export': 'off',
     'react/prop-types': 'off',
+    '@typescript-eslint/no-shadow': 'off',
   },
   env: {
     node: true,

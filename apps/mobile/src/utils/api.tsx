@@ -10,8 +10,11 @@ import {
   onlineManager,
   QueryCache,
   QueryClient,
+  QueryClientProvider,
 } from '@tanstack/react-query';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import {
+  persistQueryClient,
+} from '@tanstack/react-query-persist-client';
 import {
   createWSClient,
   httpBatchLink,
@@ -102,53 +105,62 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
     [signOut],
   );
 
-  const queryClient = React.useMemo(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 2000 * 1,
-            enabled: isLoggedIn,
-            gcTime: 1000 * 60 * 60 * 24,
-            retry: (retryCount, err) => {
-              if (
-                err instanceof TRPCClientError &&
-                err.data?.httpStatus === 401
-              ) {
-                return false;
-              }
+  const [queryClient, unsubscribe] = React.useMemo(() => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: 2000 * 1,
+          enabled: isLoggedIn,
+          gcTime: 1000 * 60 * 60 * 24 * 7,
+          retry: (retryCount, err) => {
+            if (
+              err instanceof TRPCClientError &&
+              err.data?.httpStatus === 401
+            ) {
+              return false;
+            }
 
-              return retryCount < 3;
-            },
+            return retryCount < 3;
           },
         },
-        queryCache: new QueryCache({
-          onError: (err) => {
-            if (err instanceof TRPCClientError) {
-              onError(err);
-            }
-          },
-        }),
-        mutationCache: new MutationCache({
-          onError: (err) => {
-            if (err instanceof TRPCClientError) {
-              onError(err);
-            }
-          },
-        }),
+      },
+      queryCache: new QueryCache({
+        onError: (err) => {
+          if (err instanceof TRPCClientError) {
+            onError(err);
+          }
+        },
       }),
-    [isLoggedIn, onError],
-  );
+      mutationCache: new MutationCache({
+        onError: (err) => {
+          if (err instanceof TRPCClientError) {
+            onError(err);
+          }
+        },
+      }),
+    });
 
-  const asyncStoragePersistor = React.useMemo(
-    () =>
-      createAsyncStoragePersister({
-        storage: AsyncStorage,
-        serialize: superjson.stringify,
-        deserialize: superjson.parse,
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [queryClient],
+    const persister = createAsyncStoragePersister({
+      key: authInfo ? `queryClient-${authInfo}` : 'queryClient',
+      storage: AsyncStorage,
+      serialize: superjson.stringify,
+      deserialize: superjson.parse,
+    });
+
+    const [unsubscribe] = persistQueryClient({
+      queryClient,
+      persister,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    });
+
+    return [queryClient, unsubscribe];
+  }, [isLoggedIn, onError, authInfo]);
+
+  useEffect(
+    () => () => {
+      unsubscribe();
+    },
+    [unsubscribe],
   );
 
   const httpLink = React.useMemo(() => {
@@ -196,12 +208,7 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
 
   return (
     <api.Provider client={trpcClient} queryClient={queryClient}>
-      <PersistQueryClientProvider
-        persistOptions={{ persister: asyncStoragePersistor }}
-        client={queryClient}
-      >
-        {children}
-      </PersistQueryClientProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </api.Provider>
   );
 }
