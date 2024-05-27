@@ -7,7 +7,7 @@ import cn from 'utils/utils';
 
 import { ApiGuild } from '@ei/trpc/src/schemas';
 
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { GuildAvatar } from './GuildAvatar';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -17,17 +17,14 @@ import {
   NavigationMenuTrigger,
 } from './ui/navigation-menu';
 import navigationMenuTriggerStyle from './ui/navigationMenuStyle';
+import { Skeleton } from './ui/skeleton';
 
 type GuildProps = {
   guild: ApiGuild;
 };
+
 const Guild = React.forwardRef<React.ElementRef<'a'>, GuildProps>(
   ({ guild }, ref) => {
-    const fallbackText = guild.name
-      .split(' ')
-      .map((word) => word[0])
-      .slice(0, 2)
-      .join('');
     const icon =
       guild.icon &&
       `${RouteBases.cdn}/${CDNRoutes.guildIcon(
@@ -46,17 +43,7 @@ const Guild = React.forwardRef<React.ElementRef<'a'>, GuildProps>(
           ])}
         >
           <Link ref={ref} href={`/guild/${guild.id}/roles`}>
-            <Avatar>
-              {icon && (
-                <AvatarImage
-                  src={icon}
-                  alt={`${guild.name} icon`}
-                  width={32}
-                  height={32}
-                />
-              )}
-              <AvatarFallback>{fallbackText}</AvatarFallback>
-            </Avatar>
+            <GuildAvatar name={guild.name} icon={icon} />
             <div className="text-md font-bold leading-none">{guild.name}</div>
           </Link>
         </NavigationMenuLink>
@@ -66,10 +53,49 @@ const Guild = React.forwardRef<React.ElementRef<'a'>, GuildProps>(
 );
 Guild.displayName = 'Guild';
 
-export async function NavMenu() {
+async function Guilds() {
   const guilds = await rscApi.guild.all().catch(() => null);
 
   if (!guilds || guilds.length <= 0) {
+    return null;
+  }
+
+  return (
+    <ul className="flex min-w-[10em] flex-col gap-3 p-2">
+      {guilds.map((guild) => (
+        <Guild key={guild.id} guild={guild} />
+      ))}
+    </ul>
+  );
+}
+
+function GuildsSkeleton() {
+  return (
+    <ul className="flex min-w-[10em] flex-col gap-3 p-2">
+      {new Array(3).fill(null).map((_, i) => (
+        // eslint-disable-next-line react/no-array-index-key -- i is unique
+        <li className="flex" key={i}>
+          <button
+            disabled
+            type="button"
+            className={cn([
+              navigationMenuTriggerStyle(),
+              'flex flex-1 justify-start gap-2 py-7',
+            ])}
+          >
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <Skeleton className="h-4 w-20" />
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export async function NavMenu() {
+  const user = await rscApi.user.me().catch(() => null);
+
+  if (!user) {
     return null;
   }
 
@@ -82,11 +108,9 @@ export async function NavMenu() {
             Roles
           </NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="flex min-w-[10em] flex-col gap-3 p-2">
-              {guilds.map((guild) => (
-                <Guild key={guild.id} guild={guild} />
-              ))}
-            </ul>
+            <React.Suspense fallback={<GuildsSkeleton />}>
+              <Guilds />
+            </React.Suspense>
           </NavigationMenuContent>
         </NavigationMenuItem>
       </NavigationMenuList>

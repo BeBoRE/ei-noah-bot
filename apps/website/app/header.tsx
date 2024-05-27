@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import Link from 'next/link';
 
 import { SuspenseHeaderUser } from './_components/HeaderUser';
@@ -17,9 +16,7 @@ async function Header() {
               ei Noah
             </h1>
           </Link>
-          <Suspense>
-            <NavMenu />
-          </Suspense>
+          <NavMenu />
           <GotoLobby />
         </div>
         <div className="flex place-items-center">

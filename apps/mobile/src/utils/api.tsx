@@ -12,9 +12,7 @@ import {
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query';
-import {
-  persistQueryClient,
-} from '@tanstack/react-query-persist-client';
+import { persistQueryClient } from '@tanstack/react-query-persist-client';
 import {
   createWSClient,
   httpBatchLink,

@@ -1,8 +1,8 @@
 import { PropsWithChildren, Suspense } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { TRPCError } from '@trpc/server';
+import { GuildAvatar } from 'app/_components/GuildAvatar';
 import { Button } from 'app/_components/ui/button';
 import { Separator } from 'app/_components/ui/separator';
 import { Skeleton } from 'app/_components/ui/skeleton';
@@ -73,20 +73,23 @@ async function GuildInfo({ guildId }: { guildId: string }) {
     )}`;
 
   return (
-    <h1 className="flex items-center justify-center gap-3 rounded-md p-2 text-center text-2xl  text-primary-900 dark:text-primary-300 ">
+    <h1 className="flex items-center justify-center gap-3 rounded-md p-2">
       <span>
-        {icon && (
-          <Image
-            src={icon}
-            alt={`${guild.name} icon`}
-            width={48}
-            height={48}
-            className="rounded-full"
-          />
-        )}
+        <GuildAvatar width={48} height={48} name={guild.name} icon={icon} />
       </span>
-      {guild?.name}
+      <span className="text-center text-2xl text-primary-900 dark:text-primary-300">
+        {guild.name}
+      </span>
     </h1>
+  );
+}
+
+function GuildInfoSkeleton() {
+  return (
+    <div className="flex items-center justify-center gap-2 p-2">
+      <Skeleton className="h-10 w-10 rounded-full" />
+      <Skeleton className="h-8 w-24" />
+    </div>
   );
 }
 
@@ -94,14 +97,7 @@ function GuildLayout({ children, params: { guildId } }: Props) {
   return (
     <div className="container flex flex-1 flex-col gap-2 py-4 sm:flex-row">
       <div className="flex flex-col gap-2 sm:w-3/12">
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center gap-2 p-2">
-              <Skeleton className="h-12 w-12 rounded-full" />
-              <Skeleton className="h-8 w-24" />
-            </div>
-          }
-        >
+        <Suspense fallback={<GuildInfoSkeleton />}>
           <GuildInfo guildId={guildId} />
         </Suspense>
         <div className="flex-1 rounded-md bg-primary-100 p-2 dark:bg-primary-900 sm:dark:bg-gradient-to-b sm:dark:from-primary-900 sm:dark:to-primary-950">
