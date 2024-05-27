@@ -28,6 +28,8 @@ RUN apk --no-cache --virtual .build-deps add \
 RUN mkdir ~/.fonts
 RUN wget -qO- http://plasmasturm.org/code/vistafonts-installer/vistafonts-installer | bash
 
+RUN python3 -m pip install setuptools
+
 COPY . .
 
 RUN npm install -g pnpm@latest-8
