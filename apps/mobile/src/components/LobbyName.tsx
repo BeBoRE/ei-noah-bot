@@ -71,8 +71,6 @@ const LobbyName = forwardRef<View, Props>(
                 `${nameInfo?.icon} ${name}`,
               )?.full;
 
-              console.log(newName);
-
               if (newName) {
                 onNameChange(newName);
               } else {

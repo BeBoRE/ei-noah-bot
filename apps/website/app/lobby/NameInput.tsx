@@ -5,28 +5,51 @@ import TimeAgo from 'javascript-time-ago';
 import en from 'javascript-time-ago/locale/en.json';
 import ReactTimeAgo from 'react-time-ago';
 
+import { generateLobbyName, LobbyNameInfo } from '@ei/lobby';
+
 TimeAgo.addDefaultLocale(en);
 
 type Props = {
-  currentName: string | null;
-  onNameChange: (name: string) => void;
+  channelType: Parameters<typeof generateLobbyName>[0];
+  owner: Parameters<typeof generateLobbyName>[1];
+  currentName: LobbyNameInfo | null;
+  onNameChange: (nameInfo: LobbyNameInfo) => void;
   nameChangeDate: Date | null | undefined;
 };
 
-function NameInput({ currentName, onNameChange, nameChangeDate }: Props) {
-  const [name, setName] = useState<string | null>(currentName);
+function NameInput({
+  currentName,
+  onNameChange,
+  nameChangeDate,
+  channelType,
+  owner,
+}: Props) {
+  const [name, setName] = useState<string | null>(currentName?.name || null);
 
   useEffect(() => {
-    setName(currentName);
+    setName(currentName?.name || null);
   }, [currentName]);
+
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const newName = generateLobbyName(
+      channelType,
+      owner,
+      `${currentName?.icon} ${name}`,
+    );
+
+    if (newName) {
+      onNameChange(newName);
+    } else {
+      setName(currentName?.name || null);
+    }
+  };
 
   return (
     <form
       className="relative flex flex-1 flex-col items-center justify-center"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (name) onNameChange(name);
-      }}
+      onSubmit={onSubmit}
     >
       <input
         className="w-64 rounded-full bg-[#0000] text-center sm:w-72"

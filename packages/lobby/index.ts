@@ -72,7 +72,7 @@ export type ClientChangeLobby = z.infer<typeof clientChangeLobbySchema>;
 export const removeUserSchema = addUserSchema;
 export type RemoveUser = z.infer<typeof removeUserSchema>;
 
-type LobbyNameInfo = {
+export type LobbyNameInfo = {
   icon: string;
   name: string;
   full: string;

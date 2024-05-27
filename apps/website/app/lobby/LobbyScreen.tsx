@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import data from '@emoji-mart/data';
 import Picker from '@emoji-mart/react';
 import { Button } from 'app/_components/ui/button';
@@ -20,6 +20,22 @@ const lobbyTypeEmoji = {
 function LobbyScreen() {
   const { lobby, changeChannelType, changeUserLimit, changeName } = useLobby();
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setEmojiPickerOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClick);
+
+    return () => {
+      document.removeEventListener('click', handleClick);
+    };
+  });
 
   if (!lobby)
     return (
@@ -91,6 +107,7 @@ function LobbyScreen() {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.2 }}
+                      ref={pickerRef}
                     >
                       <Picker
                         className="top-2"
@@ -113,9 +130,11 @@ function LobbyScreen() {
                 </AnimatePresence>
               </div>
               <NameInput
-                currentName={nameInfo?.name || null}
+                channelType={lobby.channel.type}
+                owner={lobby.user}
+                currentName={nameInfo}
                 nameChangeDate={lobby.channel.lobbyNameChangeDate}
-                onNameChange={(name) => changeName(name)}
+                onNameChange={(name) => changeName(name.full)}
               />
             </div>
             <div className="flex h-16 justify-center gap-8 rounded-full bg-primary-100 p-2 text-center text-2xl font-bold dark:bg-primary-900">
