@@ -2,7 +2,7 @@ FROM node:lts-alpine
 WORKDIR /usr/src/app
 
 RUN apk --no-cache --virtual .build-deps add \
-        python3 \
+        py3-setuptools \
         make \
         g++ \
     && apk --no-cache --virtual .canvas-build-deps add \
@@ -27,8 +27,6 @@ RUN apk --no-cache --virtual .build-deps add \
 
 RUN mkdir ~/.fonts
 RUN wget -qO- http://plasmasturm.org/code/vistafonts-installer/vistafonts-installer | bash
-
-RUN python3 -m pip install setuptools
 
 COPY . .
 
