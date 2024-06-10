@@ -57,6 +57,7 @@ import {
   GuildUser,
   guildUsers,
   lobbyNameChanges,
+  recentlyAddedUsers,
   session,
   TempChannel,
   tempChannels,
@@ -144,7 +145,6 @@ async function createTempChannel(
   owner: GuildMember,
   bitrate: number,
   type: ChannelType,
-  dbGuild: Guild,
   userLimit = 0,
 ) {
   const userSnowflakes = [
@@ -379,6 +379,37 @@ const createCreateChannels = async (
     .where(and(eq(categories.id, category.id)));
 };
 
+const updateRecentlyAllowedUsers = async (
+  drizzle: DrizzleClient,
+  owner: GuildUser,
+  allowedUsers: DiscordUser[],
+) => {
+  const allowedGuildUsers = await drizzle
+    .select()
+    .from(guildUsers)
+    .where(inArray(guildUsers.userId, allowedUsers.map((user) => user.id)));
+
+  const allowedIds = allowedGuildUsers.map((user) => user.id);
+
+  const now = new Date();
+
+  await drizzle
+    .insert(recentlyAddedUsers)
+    .values(
+      allowedIds.map((userId) => ({
+        date: now.toISOString(),
+        owningGuildUserId: owner.id,
+        addedGuildUserId: userId,
+      })),
+    )
+    .onConflictDoUpdate({
+      target: [recentlyAddedUsers.addedGuildUserId, recentlyAddedUsers.owningGuildUserId],
+      set: {
+        date: now.toISOString(),
+      },
+    })
+}
+
 interface AddUsersResponse {
   allowedUsersOrRoles: Array<DiscordUser | Role>;
   alreadyAllowed: Array<DiscordUser | Role>;
@@ -386,20 +417,25 @@ interface AddUsersResponse {
   alreadyInMessage: string;
   text: string;
 }
+
 const addUsers = async ({
   toAllow,
   activeChannel,
   textChannel,
   i18n,
   tempChannel,
+  owner,
+  drizzle
 }: {
   toAllow: Array<DiscordUser | Role>;
   activeChannel: VoiceChannel;
   textChannel: TextChannel | VoiceChannel | null;
   i18n?: I18n;
   tempChannel: TempChannel;
+  owner: GuildUser;
+  drizzle: DrizzleClient;
 }): Promise<AddUsersResponse> => {
-  const allowedUsers: Array<DiscordUser | Role> = [];
+  const allowedMentions: Array<DiscordUser | Role> = [];
   const alreadyAllowedUsers: Array<DiscordUser | Role> = [];
 
   toAllow.forEach((uOrR) => {
@@ -409,7 +445,7 @@ const addUsers = async ({
       alreadyAllowedUsers.push(uOrR);
       return;
     }
-    allowedUsers.push(uOrR);
+    allowedMentions.push(uOrR);
 
     if (uOrR instanceof DiscordUser) {
       activeChannel.members.get(uOrR.id)?.voice.setMute(false);
@@ -431,7 +467,7 @@ const addUsers = async ({
 
   const newOverwrites: OverwriteResolvable[] = [
     ...activeChannel.permissionOverwrites.cache.values(),
-    ...allowedUsers.map(
+    ...allowedMentions.map(
       (userOrRole): OverwriteResolvable => ({
         id: userOrRole.id,
         allow,
@@ -451,8 +487,8 @@ const addUsers = async ({
     .catch(() => globalLogger.error('Overwrite permission error'));
 
   const allowedUsersMessage = i18n?.t('lobby.userAdded', {
-    users: allowedUsers.map((u) => u.toString()),
-    count: allowedUsers.length,
+    users: allowedMentions.map((u) => u.toString()),
+    count: allowedMentions.length,
   });
 
   let alreadyInMessage: string;
@@ -465,8 +501,14 @@ const addUsers = async ({
       }) || '';
   }
 
+  const allowedUsers = allowedMentions.filter(
+    (user) : user is DiscordUser => user instanceof DiscordUser,
+  );
+
+  updateRecentlyAllowedUsers(drizzle, owner, allowedUsers);
+
   return {
-    allowedUsersOrRoles: allowedUsers,
+    allowedUsersOrRoles: allowedMentions,
     alreadyAllowed: alreadyAllowedUsers,
     alreadyAllowedMessage: allowedUsersMessage || '',
     alreadyInMessage,
@@ -526,6 +568,8 @@ router.use(
       i18n,
       tempChannel,
       textChannel,
+      owner: guildUser,
+      drizzle
     }).then((res) => res.text);
   },
   HandlerType.GUILD,
@@ -650,7 +694,9 @@ router.useContext(
       toAllow: [userToAdd],
       activeChannel,
       textChannel,
+      owner: guildUser,
       i18n,
+      drizzle
     });
 
     if (interaction.channel?.id !== tempChannel.textChannelId) {
@@ -2102,7 +2148,9 @@ const createAddMessage = async (
                 toAllow: [user],
                 activeChannel,
                 textChannel,
+                owner: guildUser,
                 i18n,
+                drizzle,
                 tempChannel,
               })
             ).text,
@@ -2359,6 +2407,8 @@ const createDashBoardCollector = async ({
                   activeChannel: voiceChannel,
                   textChannel,
                   tempChannel: currentTempChannel.temp_channel,
+                  owner: currentTempChannel.guild_user,
+                  drizzle,
                   i18n,
                 })
               ).text,
@@ -2555,6 +2605,8 @@ const createRedisSubscriptionListeners = (
       toAllow: [user.user],
       activeChannel: voiceChannel,
       tempChannel: tempChannel.temp_channel,
+      drizzle,
+      owner: oldOwnerGuidUser,
       textChannel,
       i18n,
     });
@@ -3140,7 +3192,6 @@ router.onInit = async (client, drizzle, _i18n, logger) => {
             member,
             guild.bitrate,
             type,
-            guild,
           );
 
           newState.setChannel(voiceChannel);

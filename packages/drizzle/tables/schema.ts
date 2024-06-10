@@ -284,7 +284,10 @@ export const recentlyAddedUsers = pgTable(
         onDelete: 'cascade',
       }),
     date: timestamp('date', { withTimezone: true, mode: 'string' }).notNull(),
-  }
+  },
+  (table) => ({
+    ownerAddedIdx: unique().on(table.owningGuildUserId, table.addedGuildUserId),
+  })
 );
 
 export type TempChannel = typeof tempChannels.$inferSelect;

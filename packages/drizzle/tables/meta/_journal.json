@@ -169,6 +169,20 @@
       "when": 1718049820709,
       "tag": "0023_magenta_ogun",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1718051362139,
+      "tag": "0024_cultured_wilson_fisk",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1718051773593,
+      "tag": "0025_demonic_puff_adder",
+      "breakpoints": true
     }
   ]
 }
