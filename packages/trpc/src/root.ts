@@ -12,6 +12,7 @@ import {
   publicProcedure,
   t,
 } from './trpc';
+import { birthdayRouter } from './routes/birthday';
 
 export const appRouter = createTRPCRouter({
   healthcheck: publicProcedure.query(() => 'OK'),
@@ -32,6 +33,7 @@ export const appRouter = createTRPCRouter({
   guild: guildRouter,
   roles: roleRouter,
   channel: channelRouter,
+  birthday: birthdayRouter
 });
 
 export const createCaller = t.createCallerFactory(appRouter);

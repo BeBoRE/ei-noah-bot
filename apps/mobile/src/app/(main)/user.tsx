@@ -13,12 +13,63 @@ import { twMerge } from 'tailwind-merge';
 
 import { api } from '@ei/react-shared';
 import baseConfig from '@ei/tailwind-config';
+import { Suspense } from 'react';
+import { Skeleton } from 'moti/skeleton';
+import { Cake } from 'lucide-react-native';
 
 function Divider({ className, ...props }: { className?: string }) {
   const mergedName = twMerge('h-1 bg-primary-900 rounded-full', className);
 
   // eslint-disable-next-line react/jsx-props-no-spreading
   return <View className={mergedName} {...props} />;
+}
+
+function UserInfo() {
+  const [user] = api.user.me.useSuspenseQuery();
+  const [birthdate] = api.birthday.me.useSuspenseQuery();
+
+  const formatter = new Intl.DateTimeFormat(undefined, {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
+
+  const birthdayFormatted = birthdate ? formatter.format(birthdate) : null;
+
+  return (
+    <>
+      <View className="flex-row items-center rounded-full">
+        {user && (
+          <Image
+            source={getUserImageUrl(user)}
+            className="mr-2 h-16 w-16 rounded-full"
+          />
+        )}
+        <Text className="flex-1 text-3xl font-bold">
+          {user.globalName || user.username}
+        </Text>
+      </View>
+      {birthdayFormatted && (
+        <View className="flex-row items-center mt-2">
+          <Cake className="text-primary-600 mr-2" size={18} />
+          <Text className="text-lg text-primary-600 text-center">
+            {birthdayFormatted}
+          </Text>
+        </View>
+      )}
+    </>
+  );
+}
+
+function UserInfoSkeleton() {
+  return (
+    <View className="flex-row items-center rounded-full">
+      <Skeleton radius="round" width={64} height={64} />
+      <View className="w-8/12 pl-2">
+        <Skeleton width="100%" height={24} />
+      </View>
+    </View>
+  )
 }
 
 function UserScreen() {
@@ -49,8 +100,6 @@ function UserScreen() {
       },
     });
 
-  const { data: user } = api.user.me.useQuery();
-
   return (
     <>
       <Stack.Screen options={{ headerTitle: '' }} />
@@ -60,17 +109,9 @@ function UserScreen() {
           paddingTop: insets.top + 20,
         }}
       >
-        <View className="flex-row items-center justify-center rounded-full">
-          {user && (
-            <Image
-              source={getUserImageUrl(user)}
-              className="mr-2 h-16 w-16 rounded-full"
-            />
-          )}
-          <Text className="flex-1 text-3xl font-bold">
-            {user?.globalName || user?.username || 'Loading...'}
-          </Text>
-        </View>
+        <Suspense fallback={<UserInfoSkeleton />}>
+          <UserInfo />
+        </Suspense>
         <Divider className="my-4" />
         <Button
           variant="destructive"

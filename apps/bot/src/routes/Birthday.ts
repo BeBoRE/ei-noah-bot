@@ -22,6 +22,7 @@ import moment from 'moment';
 import { Logger } from 'winston';
 
 import { DrizzleClient } from '@ei/drizzle';
+
 import {
   Birthday,
   birthdays,
@@ -29,6 +30,8 @@ import {
   guildUsers,
   users,
 } from '@ei/drizzle/tables/schema';
+
+import {getUserBirthday} from '@ei/drizzle/birthday'
 
 import Router, {
   BothHandler,
@@ -303,11 +306,7 @@ router.useContext(
       return i18n.t('birthday.error.notUser');
     }
 
-    const [dbBirthday] = await drizzle
-      .select()
-      .from(birthdays)
-      .where(eq(birthdays.userId, discUser.id))
-      .orderBy(desc(birthdays.createdAt));
+    const dbBirthday = await getUserBirthday(drizzle, discUser);
 
     return {
       embeds: [
