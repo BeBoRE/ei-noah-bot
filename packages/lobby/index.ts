@@ -13,15 +13,16 @@ export function getIcon(type: ChannelType) {
   return '🔊';
 }
 
-export const userSchema = z.object({
+export const lobbyUserSchema = z.object({
   id: z.string(),
   username: z.string(),
   avatar: z.string().nullable(),
-  isAllowed: z.boolean(),
+  isPermitted: z.boolean(),
+  isInChannel: z.boolean(),
   isKickable: z.boolean(),
 });
 
-export type User = z.infer<typeof userSchema>;
+export type LobbyUser = z.infer<typeof lobbyUserSchema>;
 
 export const lobbyChangeSchema = z
   .object({
@@ -41,7 +42,7 @@ export const lobbyChangeSchema = z
       limit: z.number().nullable(),
       lobbyNameChangeDate: z.date().nullable().optional(),
     }),
-    users: z.array(userSchema),
+    users: z.array(lobbyUserSchema),
   })
   .optional()
   .nullable();

@@ -29,6 +29,7 @@ import {
   ModalBuilder,
   OverwriteData,
   OverwriteResolvable,
+  OverwriteType,
   PermissionsBitField,
   Role,
   Snowflake,
@@ -70,6 +71,7 @@ import {
   generateLobbyName,
   getIcon,
   LobbyChange,
+  LobbyUser,
   RemoveUser,
 } from '@ei/lobby';
 import {
@@ -1206,7 +1208,21 @@ const pushLobbyToUser = (
     timeTillLobbyChange: Duration | null;
   } | null,
 ) => {
-  globalLogger.debug('pushing lobby to user');
+  globalLogger.debug(`pushing lobby to ${user.id}`);
+
+  const permittedMembers = data?.voiceChannel.permissionOverwrites.cache.map(
+    (overwrite) => (overwrite.type === OverwriteType.Member && data.guild.members.cache.find((m) => m.id === overwrite.id)) || null,
+  )
+    .filter((m) : m is GuildMember => m !== null);
+
+  let allRelevantMembers: GuildMember[] = permittedMembers ? [...permittedMembers.values()] : [];
+  data?.voiceChannel.members.forEach((member) => {
+    if (!allRelevantMembers.includes(member)) {
+      allRelevantMembers.push(member);
+    }
+  });
+
+  allRelevantMembers = allRelevantMembers.filter((member) => member.id !== user.id && member.id !== member.client.user.id);
 
   const dataToSend = !data
     ? null
@@ -1233,7 +1249,7 @@ const pushLobbyToUser = (
             ? moment().add(data.timeTillLobbyChange).toDate()
             : null,
         },
-        users: data.voiceChannel.members
+        users: allRelevantMembers
           .map((member) => ({
             id: member.id,
             avatar: member.user.displayAvatarURL({
@@ -1242,18 +1258,19 @@ const pushLobbyToUser = (
               extension: 'png',
             }),
             username: member.displayName,
-            isAllowed: data.voiceChannel.permissionOverwrites.cache.has(
+            isPermitted: data.voiceChannel.permissionOverwrites.cache.has(
               member.id,
             ),
             isKickable:
-              member.id !== user.id && member.id !== member.client.user.id,
-          }))
+              member.id !== user.id && member.id !== member.client.user.id && getChannelType(data.voiceChannel) !== ChannelType.Public,
+            isInChannel: member.voice.channelId === data.voiceChannel.id,
+          } satisfies LobbyUser),)
           .filter((u) => u.id !== user.id),
       } satisfies LobbyChange);
 
   globalLogger.debug('data to send', { dataToSend });
 
-  publishLobbyUpdate(dataToSend, user.id);
+  return publishLobbyUpdate(dataToSend, user.id);
 };
 
 const changeLobby = (() => {

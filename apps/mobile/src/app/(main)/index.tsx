@@ -89,7 +89,7 @@ function Screen() {
           />
         </Animated.View>
       </ScrollView>
-      <UsersSheet users={lobby.users} channelType={lobby.channel.type} />
+      <UsersSheet users={lobby.users} />
     </View>
   );
 }

@@ -1,28 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { View } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
-import { ChannelType, User } from '@ei/lobby';
+import { LobbyUser } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
 import UserItem from './UserItem';
 
 function UsersSheet({
-  users,
-  channelType,
+  users
 }: {
-  users: User[];
-  channelType: ChannelType;
+  users: LobbyUser[];
 }) {
   const sheetRef = useRef<BottomSheet>(null);
-  const [prevUserLength, setPrevUserLenght] = useState(users.length);
-
-  useEffect(() => {
-    if (prevUserLength === 0 && users.length) sheetRef.current?.snapToIndex(0);
-    else if (!users.length) sheetRef.current?.close();
-
-    setPrevUserLenght(users.length);
-  }, [users.length, prevUserLength]);
 
   return (
     <BottomSheet
@@ -31,7 +21,7 @@ function UsersSheet({
         backgroundColor: baseConfig.theme.colors.primary[900],
       }}
       snapPoints={[100, 300, '90%']}
-      index={users.length ? 1 : -1}
+      index={1}
       handleIndicatorStyle={{
         backgroundColor: baseConfig.theme.colors.primary[700],
       }}
@@ -39,7 +29,7 @@ function UsersSheet({
       <BottomSheetView>
         <View className="px-5">
           {users.map((user) => (
-            <UserItem key={user.id} user={user} channelType={channelType} />
+            <UserItem key={user.id} user={user} />
           ))}
         </View>
       </BottomSheetView>
