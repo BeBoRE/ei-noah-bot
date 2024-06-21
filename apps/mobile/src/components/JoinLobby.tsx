@@ -34,8 +34,7 @@ function JoinLobby() {
       >
         <Animated.Text
           entering={FadeIn.duration(1500)}
-          className="my-6 text-center text-5xl font-bold text-primary-300
-        "
+          className="my-6 text-center text-5xl font-bold text-primary-300"
         >
           Please join a lobby create channel on{' '}
           <Text className="text-discord">Discord</Text>

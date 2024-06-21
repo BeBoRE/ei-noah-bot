@@ -1289,19 +1289,22 @@ const pushLobbyToUser = (
           )
           .filter((u) => u.id !== user.id),
         recentlyAddedUsers: data.recentlyAdded
-          ? data.recentlyAdded.map(
-              (member) =>
-                ({
-                  id: member.id,
-                  avatar: member.user.displayAvatarURL({
-                    forceStatic: true,
-                    size: 128,
-                    extension: 'png',
-                  }),
-                  username: member.displayName,
+          ? data.recentlyAdded
+              .map((member) => ({
+                id: member.id,
+                avatar: member.user.displayAvatarURL({
+                  forceStatic: true,
+                  size: 128,
+                  extension: 'png',
                 }),
-            )
-            .filter((u) => !data.voiceChannel.permissionsFor(u.id)?.has(PermissionsBitField.Flags.Speak))
+                username: member.displayName,
+              }))
+              .filter(
+                (u) =>
+                  !data.voiceChannel
+                    .permissionsFor(u.id)
+                    ?.has(PermissionsBitField.Flags.Speak),
+              )
           : null,
       } satisfies LobbyChange);
 
@@ -1345,21 +1348,34 @@ const changeLobby = (() => {
           .where(eq(guildUsers.userId, owner.id))
       : [null];
 
-    const recentlyAddedDB = guildUser
-      && await drizzle
-          .select()
-          .from(recentlyAddedUsers)
-          .where(eq(recentlyAddedUsers.owningGuildUserId, guildUser.id))
-          .innerJoin(guildUsers, eq(recentlyAddedUsers.addedGuildUserId, guildUsers.id));
+    const recentlyAddedDB =
+      guildUser &&
+      (await drizzle
+        .select()
+        .from(recentlyAddedUsers)
+        .where(eq(recentlyAddedUsers.owningGuildUserId, guildUser.id))
+        .innerJoin(
+          guildUsers,
+          eq(recentlyAddedUsers.addedGuildUserId, guildUsers.id),
+        ));
 
     globalLogger.debug('recently added db', { recentlyAddedDB });
 
-    const recentlyAddedMembers = recentlyAddedDB ? (await Promise.all(recentlyAddedDB.map(
-      (dbRecentUser) => guild.members.fetch({user: dbRecentUser.guild_user.userId, cache: true})
-        .catch(() => null),
-    ))).filter(ram => !!ram) : null;
+    const recentlyAddedMembers = recentlyAddedDB
+      ? (
+          await Promise.all(
+            recentlyAddedDB.map((dbRecentUser) =>
+              guild.members
+                .fetch({ user: dbRecentUser.guild_user.userId, cache: true })
+                .catch(() => null),
+            ),
+          )
+        ).filter((ram) => !!ram)
+      : null;
 
-    globalLogger.debug('recently added', { recentlyAdded: recentlyAddedMembers });
+    globalLogger.debug('recently added', {
+      recentlyAdded: recentlyAddedMembers,
+    });
 
     const deny = toDeny(changeTo ?? currentType);
 
@@ -1524,7 +1540,9 @@ const changeLobby = (() => {
                 tempChannel,
                 voiceChannel,
                 timeTillLobbyChange: null,
-                recentlyAdded: recentlyAddedMembers && [...recentlyAddedMembers.values()],
+                recentlyAdded: recentlyAddedMembers && [
+                  ...recentlyAddedMembers.values(),
+                ],
               });
             }
           });
@@ -1622,7 +1640,9 @@ const changeLobby = (() => {
         tempChannel,
         voiceChannel,
         timeTillLobbyChange: timeTillNameChange || null,
-        recentlyAdded: recentlyAddedMembers && [...recentlyAddedMembers.values()],
+        recentlyAdded: recentlyAddedMembers && [
+          ...recentlyAddedMembers.values(),
+        ],
       });
     }
 

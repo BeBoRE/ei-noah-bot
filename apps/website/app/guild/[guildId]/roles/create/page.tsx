@@ -15,7 +15,7 @@ function CreatePage({ params: { guildId } }: Props) {
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col rounded-md bg-primary-100 p-4 dark:bg-background">
         <div className="flex items-center gap-2 pb-4">
-          <Button asChild className=" aspect-square rounded-full p-2">
+          <Button asChild className="aspect-square rounded-full p-2">
             <Link href=".">
               <ArrowLeft className="h-6 w-6" />
             </Link>
