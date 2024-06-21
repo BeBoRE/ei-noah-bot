@@ -35,7 +35,6 @@
     "lint:typecheck": {},
     "dev": {
       "cache": false,
-      "dotEnv": [".env"],
       "dependsOn": ["^build"]
     },
     "update": {
