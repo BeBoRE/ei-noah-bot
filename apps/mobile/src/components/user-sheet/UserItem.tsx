@@ -14,7 +14,7 @@ import { cn } from 'src/utils/cn';
 import { LobbyUser } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
-import { Text } from './ui/text';
+import { Text } from '../ui/text';
 
 type ButtonProps = {
   onPress: () => void;

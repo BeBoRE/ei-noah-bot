@@ -16,7 +16,7 @@ import { AnimatedLobbyName } from 'src/components/LobbyName';
 import { AnimatedTypeSelector } from 'src/components/TypeSelector';
 import { AnimatedText } from 'src/components/ui/text';
 import { AnimatedUserLimitSelector } from 'src/components/UserLimits';
-import UsersSheet from 'src/components/UsersSheet';
+import UsersSheet from 'src/components/user-sheet/UsersSheet';
 import { useAuth } from 'src/context/auth';
 import useNotifications from 'src/hooks/useNotifications';
 

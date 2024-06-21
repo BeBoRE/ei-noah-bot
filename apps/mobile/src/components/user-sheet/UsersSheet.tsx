@@ -1,12 +1,14 @@
 import { View } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
-import { LobbyUser } from '@ei/lobby';
+import { LobbyUser, RecentlyAddedUser } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
+import { FlatList } from 'react-native-gesture-handler';
+import { Image } from 'expo-image';
 import UserItem from './UserItem';
 
-function UsersSheet({ users }: { users: LobbyUser[] }) {
+function UsersSheet({ users, recentlyAddedUsers }: { users: LobbyUser[], recentlyAddedUsers: RecentlyAddedUser[] }) {
   return (
     <BottomSheet
       backgroundStyle={{
@@ -19,6 +21,7 @@ function UsersSheet({ users }: { users: LobbyUser[] }) {
       }}
     >
       <BottomSheetView>
+        <FlatList data={recentlyAddedUsers} renderItem={({ item }) => <Image source={item.avatar} />} horizontal />
         <View className="p-5">
           {users.map((user) => (
             <UserItem key={user.id} user={user} />
