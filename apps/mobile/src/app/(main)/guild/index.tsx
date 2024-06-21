@@ -4,13 +4,13 @@ import { Image } from 'expo-image';
 import { Link, Stack } from 'expo-router';
 import { MotiView } from 'moti';
 import { Skeleton } from 'moti/skeleton';
-import Button from 'src/components/Button';
-import Text from 'src/components/Text';
+import { Button } from 'src/components/ui/button';
 import { getGuildImageUrl } from 'src/utils/cdn';
 
 import { api } from '@ei/react-shared';
 import baseConfig from '@ei/tailwind-config';
 import type { RouterOutputs } from '@ei/trpc';
+import { Text } from 'src/components/ui/text';
 
 type GuildButtonProps = {
   guild: RouterOutputs['guild']['all'][number];
@@ -36,9 +36,9 @@ function GuildButton({ guild }: GuildButtonProps) {
       push
       asChild
     >
-      <Button className="mb-2 flex flex-1 flex-row items-center rounded bg-primary-900 p-2">
+      <Button size="lg" className="mb-2 flex flex-1 flex-row justify-start rounded bg-primary-900 gap-2">
         <GuildIcon guild={guild} />
-        <Text className="pl-2 text-2xl">{guild.name}</Text>
+        <Text className="text-2xl">{guild.name}</Text>
       </Button>
     </Link>
   );
@@ -55,7 +55,7 @@ const colors = [
 
 function GuildButtonSkeleton() {
   return (
-    <MotiView className="mb-2 flex flex-1 flex-row items-center rounded bg-primary-900 p-2">
+    <MotiView className="mb-2 flex flex-1 flex-row rounded bg-primary-900 p-2">
       <Skeleton width={48} height={48} radius="round" colors={colors} />
       <Spacer />
       <Skeleton width="90%" colors={colors} />

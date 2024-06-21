@@ -10,7 +10,11 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 
-import Text from './Text';
+import { cssInterop } from 'nativewind';
+import { Text } from './ui/text';
+
+cssInterop(Animated.View, { className: 'style' });
+cssInterop(Animated.Text, { className: 'style' });
 
 function JoinLobby() {
   const insets = useSafeAreaInsets();

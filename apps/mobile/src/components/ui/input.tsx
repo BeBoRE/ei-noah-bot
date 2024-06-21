@@ -4,6 +4,7 @@ import { TextInput } from 'react-native';
 
 import baseConfig from '@ei/tailwind-config';
 
+import { cssInterop } from 'nativewind';
 import { cn } from '../../utils/cn';
 
 const Input = React.forwardRef<
@@ -24,5 +25,7 @@ const Input = React.forwardRef<
 ));
 
 Input.displayName = 'Input';
+
+cssInterop(Input, { className: 'style' });
 
 export { Input };

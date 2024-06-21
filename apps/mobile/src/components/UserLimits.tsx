@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import Options from './Options';
-import Text from './Text';
+import { Text } from './ui/text';
 
 type ButtonProps = {
   limit: number;

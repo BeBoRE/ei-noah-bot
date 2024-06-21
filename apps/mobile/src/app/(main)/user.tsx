@@ -16,6 +16,9 @@ import baseConfig from '@ei/tailwind-config';
 import { Suspense } from 'react';
 import { Skeleton } from 'moti/skeleton';
 import { Cake } from 'lucide-react-native';
+import { cssInterop } from 'nativewind';
+
+cssInterop(Cake, { className: 'style' });
 
 function Divider({ className, ...props }: { className?: string }) {
   const mergedName = twMerge('h-1 bg-primary-900 rounded-full', className);

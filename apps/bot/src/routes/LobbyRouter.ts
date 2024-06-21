@@ -2801,6 +2801,8 @@ const checkTempChannel = async (
     if (activeTextChannel?.deletable)
       await activeTextChannel.delete().catch(() => {});
   } else if (!activeChannel.members.filter((member) => !member.user.bot).size) {
+    globalLogger.debug('No members found in channel deleting');
+
     // If there is no one left in the lobby remove the lobby
     if (oldOwner) {
       destroyRedisSubscriptionListener({ id: oldOwner.userId });
@@ -2824,6 +2826,7 @@ const checkTempChannel = async (
     !oldOwner ||
     !activeChannel.members.has(`${BigInt(oldOwner.userId)}`)
   ) {
+    globalLogger.debug('Owner has left, finding new owner');
     const memberIds = activeChannel.members.map((member) => member.id);
 
     const usersWithTempChannel = await drizzle
@@ -2884,6 +2887,8 @@ const checkTempChannel = async (
     const { getGuildUser, getUser, getGuild } = createEntityCache(drizzle);
 
     if (newOwner) {
+      globalLogger.debug('New owner found', { newOwner: newOwner.user.displayName });
+
       const newOwnerGuildUser = await getGuildUser(
         newOwner,
         activeChannel.guild,
@@ -2956,6 +2961,8 @@ const checkTempChannel = async (
       ]).catch((err) => logger.error(err.message, { error: err }));
 
       if (oldOwner) {
+        globalLogger.debug('Old owner found', { oldOwner });
+
         publishLobbyUpdate(null, oldOwner.userId);
         destroyRedisSubscriptionListener({ id: oldOwner.userId });
       }

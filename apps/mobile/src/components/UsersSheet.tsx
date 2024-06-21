@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { View } from 'react-native';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
@@ -12,11 +11,8 @@ function UsersSheet({
 }: {
   users: LobbyUser[];
 }) {
-  const sheetRef = useRef<BottomSheet>(null);
-
   return (
     <BottomSheet
-      ref={sheetRef}
       backgroundStyle={{
         backgroundColor: baseConfig.theme.colors.primary[900],
       }}
@@ -27,7 +23,7 @@ function UsersSheet({
       }}
     >
       <BottomSheetView>
-        <View className="px-5">
+        <View className="p-5">
           {users.map((user) => (
             <UserItem key={user.id} user={user} />
           ))}

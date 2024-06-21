@@ -12,8 +12,14 @@ import type { SFSymbol } from 'sf-symbols-typescript';
 import { AuthProvider } from 'src/context/auth';
 import { TRPCProvider } from 'src/utils/api';
 import { routingInstrumentation } from 'src/utils/sentry';
+import { cssInterop } from 'nativewind';
+import { Image } from 'expo-image';
 
 import baseConfig from '@ei/tailwind-config';
+
+import "../../global.css"
+
+cssInterop(Image, {className: 'style'})
 
 // This is the main layout of the app
 // It wraps your pages with the providers they need
