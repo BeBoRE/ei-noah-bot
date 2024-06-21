@@ -147,6 +147,9 @@ importers:
       eslint-config-custom:
         specifier: '*'
         version: link:../../packages/eslint-config-custom
+      tsx:
+        specifier: ^4.15.7
+        version: 4.15.7
 
   apps/mobile:
     dependencies:
@@ -417,8 +420,8 @@ importers:
         specifier: '*'
         version: link:../../packages/eslint-config-custom
       tsx:
-        specifier: ^3.13.0
-        version: 3.13.0
+        specifier: ^4.15.7
+        version: 4.15.7
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -445,8 +448,8 @@ importers:
         specifier: '*'
         version: link:../../packages/eslint-config-custom
       tsx:
-        specifier: ^3.13.0
-        version: 3.13.0
+        specifier: ^4.15.7
+        version: 4.15.7
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -16601,17 +16604,6 @@ packages:
       tslib: 1.14.1
       typescript: 5.4.2
     dev: false
-
-  /tsx@3.13.0:
-    resolution: {integrity: sha512-rjmRpTu3as/5fjNq/kOkOtihgLxuIz6pbKdj9xwP4J5jOLkBxw/rjN5ANw+KyrrOXV5uB7HC8+SrrSJxT65y+A==}
-    hasBin: true
-    dependencies:
-      esbuild: 0.18.20
-      get-tsconfig: 4.7.2
-      source-map-support: 0.5.21
-    optionalDependencies:
-      fsevents: 2.3.3
-    dev: true
 
   /tsx@4.15.7:
     resolution: {integrity: sha512-u3H0iSFDZM3za+VxkZ1kywdCeHCn+8/qHQS1MNoO2sONDgD95HlWtt8aB23OzeTmFP9IU4/8bZUdg58Uu5J4cg==}

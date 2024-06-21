@@ -19,7 +19,7 @@
     "@ei/tsconfig": "*",
     "eslint": "^8.51.0",
     "eslint-config-custom": "*",
-    "tsx": "^3.13.0",
+    "tsx": "^4.15.7",
     "typescript": "5.1.6"
   }
 }
