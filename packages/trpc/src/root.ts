@@ -1,5 +1,6 @@
 import { observable } from '@trpc/server/observable';
 
+import { birthdayRouter } from './routes/birthday';
 import channelRouter from './routes/channels';
 import guildRouter from './routes/guilds';
 import { lobbyRouter } from './routes/lobby';
@@ -12,7 +13,6 @@ import {
   publicProcedure,
   t,
 } from './trpc';
-import { birthdayRouter } from './routes/birthday';
 
 export const appRouter = createTRPCRouter({
   healthcheck: publicProcedure.query(() => 'OK'),
@@ -33,7 +33,7 @@ export const appRouter = createTRPCRouter({
   guild: guildRouter,
   roles: roleRouter,
   channel: channelRouter,
-  birthday: birthdayRouter
+  birthday: birthdayRouter,
 });
 
 export const createCaller = t.createCallerFactory(appRouter);

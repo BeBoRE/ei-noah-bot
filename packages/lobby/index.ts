@@ -22,6 +22,12 @@ export const lobbyUserSchema = z.object({
   isKickable: z.boolean(),
 });
 
+export const recentlyAddedUserSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  avatar: z.string(),
+});
+
 export type LobbyUser = z.infer<typeof lobbyUserSchema>;
 
 export const lobbyChangeSchema = z

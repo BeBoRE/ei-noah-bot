@@ -287,7 +287,7 @@ export const recentlyAddedUsers = pgTable(
   },
   (table) => ({
     ownerAddedIdx: unique().on(table.owningGuildUserId, table.addedGuildUserId),
-  })
+  }),
 );
 
 export type TempChannel = typeof tempChannels.$inferSelect;

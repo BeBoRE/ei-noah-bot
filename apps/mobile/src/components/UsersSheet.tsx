@@ -6,11 +6,7 @@ import baseConfig from '@ei/tailwind-config';
 
 import UserItem from './UserItem';
 
-function UsersSheet({
-  users
-}: {
-  users: LobbyUser[];
-}) {
+function UsersSheet({ users }: { users: LobbyUser[] }) {
   return (
     <BottomSheet
       backgroundStyle={{

@@ -9,11 +9,11 @@ import Animated, {
 import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { api } from 'src/utils/api';
+import { cn } from 'src/utils/cn';
 
 import { LobbyUser } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
-import { cn } from 'src/utils/cn';
 import { Text } from './ui/text';
 
 type ButtonProps = {
@@ -67,11 +67,7 @@ function RejectButton({
   );
 }
 
-function UserItem({
-  user
-}: {
-  user: LobbyUser;
-}) {
+function UserItem({ user }: { user: LobbyUser }) {
   const { mutate: addUser } = api.lobby.addUser.useMutation();
   const { mutate: removeUser } = api.lobby.removeUser.useMutation();
 
@@ -94,9 +90,14 @@ function UserItem({
       layout={LinearTransition.duration(200).delay(100)}
       className="mb-3"
     >
-      <View className={cn('flex flex-row justify-between rounded-full bg-primary-800 p-3 transition-opacity', {
-        'opacity-40': !user.isInChannel
-      })}>
+      <View
+        className={cn(
+          'flex flex-row justify-between rounded-full bg-primary-800 p-3 transition-opacity',
+          {
+            'opacity-40': !user.isInChannel,
+          },
+        )}
+      >
         <View className="flex-row items-center">
           {user.avatar ? (
             <Image

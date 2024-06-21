@@ -2,24 +2,24 @@ import React, { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
+import { Image } from 'expo-image';
 import { Stack, useNavigationContainerRef } from 'expo-router';
 import { UpdateEventType, useUpdateEvents } from 'expo-updates';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import * as Sentry from '@sentry/react-native';
 import { toast } from 'burnt';
+import { cssInterop } from 'nativewind';
 import { HeaderButtonsProvider } from 'react-navigation-header-buttons';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { AuthProvider } from 'src/context/auth';
 import { TRPCProvider } from 'src/utils/api';
 import { routingInstrumentation } from 'src/utils/sentry';
-import { cssInterop } from 'nativewind';
-import { Image } from 'expo-image';
 
 import baseConfig from '@ei/tailwind-config';
 
-import "../../global.css"
+import '../../global.css';
 
-cssInterop(Image, {className: 'style'})
+cssInterop(Image, { className: 'style' });
 
 // This is the main layout of the app
 // It wraps your pages with the providers they need

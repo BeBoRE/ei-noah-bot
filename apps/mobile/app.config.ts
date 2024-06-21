@@ -29,7 +29,7 @@ const defineConfig = (): ExpoConfig => {
       backgroundColor: '#0C0403',
     },
     web: {
-      bundler: "metro"
+      bundler: 'metro',
     },
     updates: {
       url: 'https://u.expo.dev/f01c56f4-e11b-41fd-a1bb-e70cca535c3c',

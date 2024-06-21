@@ -1,6 +1,6 @@
 // Learn more: https://docs.expo.dev/guides/monorepos/
 const { getSentryExpoConfig } = require('@sentry/react-native/metro');
-const { withNativeWind } = require('nativewind/metro')
+const { withNativeWind } = require('nativewind/metro');
 const path = require('path');
 
 const projectRoot = __dirname;
@@ -21,5 +21,5 @@ config.resolver.nodeModulesPaths = [
 config.resolver.disableHierarchicalLookup = true;
 
 module.exports = withNativeWind(config, {
-  input: './global.css'
+  input: './global.css',
 });

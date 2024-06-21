@@ -1,10 +1,10 @@
 /* eslint-disable react/prop-types */
 import * as React from 'react';
 import { TextInput } from 'react-native';
+import { cssInterop } from 'nativewind';
 
 import baseConfig from '@ei/tailwind-config';
 
-import { cssInterop } from 'nativewind';
 import { cn } from '../../utils/cn';
 
 const Input = React.forwardRef<

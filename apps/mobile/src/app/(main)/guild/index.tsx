@@ -5,12 +5,12 @@ import { Link, Stack } from 'expo-router';
 import { MotiView } from 'moti';
 import { Skeleton } from 'moti/skeleton';
 import { Button } from 'src/components/ui/button';
+import { Text } from 'src/components/ui/text';
 import { getGuildImageUrl } from 'src/utils/cdn';
 
 import { api } from '@ei/react-shared';
 import baseConfig from '@ei/tailwind-config';
 import type { RouterOutputs } from '@ei/trpc';
-import { Text } from 'src/components/ui/text';
 
 type GuildButtonProps = {
   guild: RouterOutputs['guild']['all'][number];
@@ -36,7 +36,10 @@ function GuildButton({ guild }: GuildButtonProps) {
       push
       asChild
     >
-      <Button size="lg" className="mb-2 flex flex-1 flex-row justify-start rounded bg-primary-900 gap-2">
+      <Button
+        size="lg"
+        className="mb-2 flex flex-1 flex-row justify-start gap-2 rounded bg-primary-900"
+      >
         <GuildIcon guild={guild} />
         <Text className="text-2xl">{guild.name}</Text>
       </Button>

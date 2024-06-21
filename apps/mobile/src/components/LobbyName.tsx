@@ -6,6 +6,7 @@ import EmojiPicker, { emojisByCategory } from 'rn-emoji-keyboard';
 
 import { generateLobbyName, LobbyChange } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
+
 import { AnimatedText, Text } from './ui/text';
 
 type Props = {

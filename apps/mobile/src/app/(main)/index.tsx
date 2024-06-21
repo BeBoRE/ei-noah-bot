@@ -8,20 +8,19 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-
 import { Stack } from 'expo-router';
 import { useAppState } from '@react-native-community/hooks';
 import { alert } from 'burnt';
 import JoinLobby from 'src/components/JoinLobby';
 import { AnimatedLobbyName } from 'src/components/LobbyName';
 import { AnimatedTypeSelector } from 'src/components/TypeSelector';
+import { AnimatedText } from 'src/components/ui/text';
 import { AnimatedUserLimitSelector } from 'src/components/UserLimits';
 import UsersSheet from 'src/components/UsersSheet';
 import { useAuth } from 'src/context/auth';
 import useNotifications from 'src/hooks/useNotifications';
 
 import { LobbyProvider, useLobby } from '@ei/react-shared/context/lobby';
-import { AnimatedText } from 'src/components/ui/text';
 
 function Screen() {
   useNotifications();

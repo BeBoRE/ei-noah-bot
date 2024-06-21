@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { Pressable } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { cssInterop } from 'nativewind';
 import { cn } from 'src/utils/cn';
 
-import { cssInterop } from 'nativewind';
-import Animated from 'react-native-reanimated';
 import { TextClassContext } from './text';
 
 const buttonVariants = cva(

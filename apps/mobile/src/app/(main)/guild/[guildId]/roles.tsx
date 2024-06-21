@@ -1,9 +1,12 @@
+import { useEffect } from 'react';
 import { View } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
+import { useSharedValue, withTiming } from 'react-native-reanimated';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { Plus } from 'lucide-react-native';
+import { MotiView } from 'moti';
 import { AnimatedButton } from 'src/components/ui/button';
-import {Text} from 'src/components/ui/text';
+import { Text } from 'src/components/ui/text';
 
 import { api } from '@ei/react-shared';
 import {
@@ -13,9 +16,6 @@ import {
   useRoles,
   useRoleUtils,
 } from '@ei/react-shared/roles';
-import { MotiView } from 'moti';
-import { useSharedValue, withTiming } from 'react-native-reanimated';
-import { useEffect } from 'react';
 
 type CheckBoxProps = {
   checked: boolean;
@@ -46,19 +46,19 @@ function RoleButton({ role, guild }: RoleProps) {
 
   const svColor = useSharedValue(isAddable ? '#0000' : color);
   const svDisabled = useSharedValue(disabled ? 0.5 : 1);
-  
+
   useEffect(() => {
     svColor.value = withTiming(isAddable ? '#0000' : color, { duration: 150 });
   }, [color, isAddable, svColor]);
 
   useEffect(() => {
     svDisabled.value = withTiming(disabled ? 0.5 : 1, { duration: 150 });
-  }, [svDisabled, disabled])
+  }, [svDisabled, disabled]);
 
   return (
     <AnimatedButton
       key={role.id}
-      className="mb-2 flex-row rounded-full justify-start bg-primary-900"
+      className="mb-2 flex-row justify-start rounded-full bg-primary-900"
       style={{
         borderColor: svColor,
         borderWidth: 2,

@@ -9,8 +9,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-
 import { cssInterop } from 'nativewind';
+
 import { Text } from './ui/text';
 
 cssInterop(Animated.View, { className: 'style' });
