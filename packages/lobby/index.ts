@@ -49,6 +49,7 @@ export const lobbyChangeSchema = z
       lobbyNameChangeDate: z.date().nullable().optional(),
     }),
     users: z.array(lobbyUserSchema),
+    recentlyAddedUsers: z.array(recentlyAddedUserSchema).nullable(),
   })
   .optional()
   .nullable();
