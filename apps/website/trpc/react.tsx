@@ -10,7 +10,7 @@ import {
   loggerLink,
   splitLink,
   unstable_httpBatchStreamLink,
-  wsLink,
+  unstable_httpSubscriptionLink
 } from '@trpc/client';
 import SuperJSON from 'superjson';
 
@@ -75,7 +75,15 @@ export default function TRPCReactProvider({ children, headers }: Props) {
         wsClient
           ? splitLink({
               condition: ({ type }) => type === 'subscription',
-              true: wsLink({ client: wsClient, transformer }),
+              true: unstable_httpSubscriptionLink({
+                transformer,
+                url: getApiUrl(),
+                connectionParams() {
+                    const heads = new Map(headers);
+                    heads.set('x-trpc-source', 'react');
+                    return Object.fromEntries(heads);
+                },
+              }),
               false: httpLink,
             })
           : httpLink,
