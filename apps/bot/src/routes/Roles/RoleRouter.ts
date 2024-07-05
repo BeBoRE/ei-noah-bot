@@ -79,7 +79,7 @@ rolesRouter.use(
 );
 
 rolesRouter.onInit = (client, drizzle) => {
-  client.addListener('interactionCreate', async (interaction: Interaction) => {
+  client.on('interactionCreate', async (interaction: Interaction) => {
     const { guild } = interaction;
     const { member } = interaction;
 

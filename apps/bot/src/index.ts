@@ -290,9 +290,11 @@ process.title = 'Ei Noah Bot';
     'Stab',
     ApplicationCommandType.User,
     async ({ interaction, i18n }) => {
-      const user = <User>interaction.options.getUser('user', true);
+      const userOption = interaction.options.get('user', true);
 
-      const url = user.displayAvatarURL({ size: 256, extension: 'png' });
+      if (!userOption.user) return i18n.t('index.who');
+
+      const url = userOption.user.displayAvatarURL({ size: 256, extension: 'png' });
 
       if (url) {
         if (
@@ -312,7 +314,7 @@ process.title = 'Ei Noah Bot';
         }
       }
 
-      return i18n.t('index.withPleasure', { user });
+      return i18n.t('index.withPleasure', { user: userOption });
     },
   );
 
@@ -440,9 +442,11 @@ process.title = 'Ei Noah Bot';
     'Hug',
     ApplicationCommandType.User,
     async ({ interaction, i18n }) => {
-      const user = interaction.options.getUser('user', true);
+      const userOption = interaction.options.get('user', true);
 
-      const url = user.displayAvatarURL({ size: 256, extension: 'png' });
+      if (!userOption.user) return i18n.t('index.who');
+
+      const url = userOption.user.displayAvatarURL({ size: 256, extension: 'png' });
 
       if (url) {
         if (
@@ -462,7 +466,7 @@ process.title = 'Ei Noah Bot';
         }
       }
 
-      return i18n.t('index.withPleasure', { user });
+      return i18n.t('index.withPleasure', { user: userOption });
     },
   );
 

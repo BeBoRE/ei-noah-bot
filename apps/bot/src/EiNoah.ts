@@ -378,11 +378,11 @@ async function messageParser(
     ) {
       params.push(command.commandName);
     } else params.push(command.name);
-    const nextCommand: CommandInteractionOption | undefined = Array.isArray(
-      command.options,
-    )
-      ? command.options[0]
-      : command.options?.data[0];
+
+    const nextCommand: CommandInteractionOption | undefined = command.options && 'data' in command.options
+      ? command.options.data[0]
+      : command.options?.[0];
+
     if (
       !nextCommand ||
       !(
@@ -394,9 +394,9 @@ async function messageParser(
     command = nextCommand;
   }
 
-  const options = Array.isArray(command.options)
-    ? command.options
-    : command.options?.data;
+  const options = command.options && 'data' in command.options
+  ? command.options.data
+  : command?.options;
 
   options?.forEach((option) => {
     if (

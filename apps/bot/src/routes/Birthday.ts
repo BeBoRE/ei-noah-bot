@@ -300,11 +300,13 @@ router.useContext(
   'Get Birthday',
   ApplicationCommandType.User,
   async ({ interaction, i18n, drizzle }) => {
-    const discUser = interaction.options.getUser('user', true);
+    const userOption = interaction.options.get('user', true);
 
-    if (!(discUser instanceof DiscordUser)) {
+    if (!userOption.user) {
       return i18n.t('birthday.error.notUser');
     }
+
+    const discUser = userOption.user;
 
     const dbBirthday = await getUserBirthday(drizzle, discUser);
 

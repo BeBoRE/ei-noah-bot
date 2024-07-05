@@ -291,11 +291,13 @@ router.useContext(
   'Save As Quote',
   ApplicationCommandType.Message,
   async ({ interaction, i18n, getGuildUser, getUser, drizzle }) => {
-    const message = interaction.options.getMessage('message');
+    const messageOption = interaction.options.get('message');
 
-    if (!(message instanceof Message)) {
+    if (!messageOption?.message) {
       return 'Onmogelijk pad';
     }
+
+    const message = messageOption.message;
 
     if (!message.guild) {
       return i18n.t('error.onlyUsableInGuild');
