@@ -72,17 +72,24 @@ const guildRouter = createTRPCRouter({
       .where(eq(guildUsers.userId, ctx.dbUser.id))
       .then((gu) => gu.map((g) => g.guild));
 
-    const discordGuilds = Promise.all(
+    const discordGuilds = (await Promise.all(
       guildList.map(async (guild) => {
         const discordGuild = await rest
           .get(Routes.guild(guild.id))
-          .then((res) => camelize(res));
+          .then((res) => camelize(res))
+          .catch((err) => {
+            console.error(err)
+
+            return null
+          });
+
+        if (!discordGuild) return null;
 
         const validatedGuild = apiGuildSchema.parse(discordGuild);
 
         return validatedGuild;
       }),
-    );
+    )).filter(g => !!g);
 
     return discordGuilds;
   }),
