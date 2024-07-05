@@ -697,11 +697,15 @@ router.useContext(
       tempChannel,
     );
 
-    const userToAdd = interaction.options.getUser('user', true);
+    const userToAdd = interaction.options.get('user', true);
+
+    if (!userToAdd.user) {
+      return { ephemeral: true, content: i18n.t('lobby.error.onlyMentions') };
+    }
 
     const addResponse = await addUsers({
       tempChannel,
-      toAllow: [userToAdd],
+      toAllow: [userToAdd.user],
       activeChannel,
       textChannel,
       owner: guildUser,

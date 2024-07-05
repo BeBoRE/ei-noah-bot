@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "clean": "rm -rf .turbo node_modules .expo",
-    "dev": "expo start -c",
+    "dev": "expo start",
     "update": "eas update --auto && sentry-expo-upload-sourcemaps dist",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
