@@ -27,6 +27,19 @@ import superjson from 'superjson';
 import { api } from '@ei/react-shared';
 import type { AppRouter, RouterInputs, RouterOutputs } from '@ei/trpc';
 
+import '@azure/core-asynciterator-polyfill';
+import { RNEventSource } from 'rn-eventsource-reborn';
+import { ReadableStream, TransformStream } from 'web-streams-polyfill';
+
+// RNEventSource extends EventSource's functionality, you can add this to make the typing reflect this but it's not a requirement
+declare global {
+  interface EventSource extends RNEventSource {}
+}
+global.EventSource = global.EventSource || RNEventSource;
+
+global.ReadableStream = global.ReadableStream || ReadableStream;
+global.TransformStream = global.TransformStream || TransformStream;
+
 onlineManager.setEventListener((setOnline) =>
   NetInfo.addEventListener((state) => {
     setOnline(!!state.isConnected);

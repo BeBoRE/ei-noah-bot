@@ -150,6 +150,9 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@azure/core-asynciterator-polyfill':
+        specifier: ^1.0.2
+        version: 1.0.2
       '@ei/lobby':
         specifier: ^1.0.0
         version: link:../../packages/lobby
@@ -336,12 +339,18 @@ importers:
       rn-emoji-keyboard:
         specifier: ^1.5.1
         version: 1.5.1(react-native@0.73.4)(react@18.2.0)
+      rn-eventsource-reborn:
+        specifier: ^1.0.5
+        version: 1.0.5
       superjson:
         specifier: 1.13.1
         version: 1.13.1
       tailwind-merge:
         specifier: ^1.14.0
         version: 1.14.0
+      web-streams-polyfill:
+        specifier: ^4.0.0
+        version: 4.0.0
       zeego:
         specifier: ^1.7.2
         version: 1.7.2(@react-native-menu/menu@0.9.1)(react-dom@18.2.0)(react-native-ios-context-menu@1.15.3)(react-native@0.73.4)(react@18.2.0)
@@ -943,6 +952,11 @@ packages:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.3
       '@jridgewell/trace-mapping': 0.3.19
+
+  /@azure/core-asynciterator-polyfill@1.0.2:
+    resolution: {integrity: sha512-3rkP4LnnlWawl0LZptJOdXNrT/fHp2eQMadoasa6afspXdpGrtPZuAQc2PD0cpgyuoXtUWyC3tv7xfntjGS5Dw==}
+    engines: {node: '>=12.0.0'}
+    dev: false
 
   /@babel/code-frame@7.10.4:
     resolution: {integrity: sha512-vG6SvB6oYEhvgisZNFRmRCUkLz11c7rp+tbNTynGqc6mS1d5ATd/sGyV6W0KZZnXRKMTzZDRgQT3Ou9jhpAfUg==}
@@ -15356,6 +15370,12 @@ packages:
       react-native: 0.73.4(@babel/core@7.23.0)(@babel/preset-env@7.22.20)(react@18.2.0)
     dev: false
 
+  /rn-eventsource-reborn@1.0.5:
+    resolution: {integrity: sha512-MvSxKYHh3tPAahtpKz8bE2+x+lHau2RZVRKBfM+60ywFDbTHoY6rYwVKjZ427nfCIn5RXfYCs6K/GJiz84/cQw==}
+    dependencies:
+      event-target-shim: 5.0.1
+    dev: false
+
   /rollup@3.29.4:
     resolution: {integrity: sha512-oWzmBZwvYrU0iJHtDmhsm662rC15FRXmcjCk1xD771dFDx5jJ02ufAQQTn0etB2emNk4J9EZg/yWKpsn9BWGRw==}
     engines: {node: '>=14.18.0', npm: '>=8.0.0'}
@@ -17243,6 +17263,11 @@ packages:
 
   /web-streams-polyfill@3.2.1:
     resolution: {integrity: sha512-e0MO3wdXWKrLbL0DgGnUV7WHVuw9OUvL4hjgnPkIeEvESk74gAITi5G606JtZPp39cd8HA9VQzCIvA49LpPN5Q==}
+    engines: {node: '>= 8'}
+    dev: false
+
+  /web-streams-polyfill@4.0.0:
+    resolution: {integrity: sha512-0zJXHRAYEjM2tUfZ2DiSOHAa2aw1tisnnhU3ufD57R8iefL+DcdJyRBRyJpG+NUimDgbTI/lH+gAE1PAvV3Cgw==}
     engines: {node: '>= 8'}
     dev: false
 
