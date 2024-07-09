@@ -22,6 +22,6 @@
   },
   "peerDependencies": {
     "react": ">=18.2.0",
-    "@trpc/react-query": "11.0.0-next-beta.264"
+    "@trpc/react-query": "11.0.0-rc.452"
   }
 }
