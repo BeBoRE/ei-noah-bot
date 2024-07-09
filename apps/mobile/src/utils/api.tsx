@@ -185,7 +185,7 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
     () =>
       unstable_httpSubscriptionLink({
         transformer: superjson,
-        url: getBaseUrl(),
+        url: `${getBaseUrl()}/api`,
         connectionParams() {
           const defaultHeaders = {
             'X-Mobile-App': 'true',
@@ -211,10 +211,6 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
       api.createClient({
         links: [
           loggerLink({
-            console: {
-              log: (...args) => {console.log(JSON.stringify(args, null, 2))},
-              error: (...args) => {console.error(JSON.stringify(args, null, 2))},
-            },
             colorMode: 'ansi'
           }),
           splitLink({
