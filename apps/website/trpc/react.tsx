@@ -6,7 +6,6 @@ import { QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import {
-  createWSClient,
   loggerLink,
   splitLink,
   unstable_httpBatchStreamLink,
@@ -17,18 +16,10 @@ import SuperJSON from 'superjson';
 import { api } from '@ei/react-shared/api';
 import { LobbyProvider } from '@ei/react-shared/context/lobby';
 
-import { getApiUrl, getWsUrl, transformer } from './shared';
+import { getApiUrl, transformer } from './shared';
 
 export { api };
 
-const wsUrl = getWsUrl();
-
-const wsClient =
-  wsUrl !== null
-    ? createWSClient({
-        url: wsUrl,
-      })
-    : null;
 
 type Props = {
   children: React.ReactNode;
@@ -72,21 +63,14 @@ export default function TRPCReactProvider({ children, headers }: Props) {
             process.env.NODE_ENV === 'development' ||
             (opts.direction === 'down' && opts.result instanceof Error),
         }),
-        wsClient
-          ? splitLink({
-              condition: ({ type }) => type === 'subscription',
-              true: unstable_httpSubscriptionLink({
-                transformer,
-                url: getApiUrl(),
-                connectionParams() {
-                    const heads = new Map(headers);
-                    heads.set('x-trpc-source', 'react');
-                    return Object.fromEntries(heads);
-                },
-              }),
-              false: httpLink,
-            })
-          : httpLink,
+        splitLink({
+          condition: ({ type }) => type === 'subscription',
+          true: unstable_httpSubscriptionLink({
+            transformer,
+            url: getApiUrl()
+          }),
+          false: httpLink,
+        })
       ],
     }),
   );

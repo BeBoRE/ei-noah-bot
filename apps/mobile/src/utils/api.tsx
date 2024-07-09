@@ -14,12 +14,11 @@ import {
 } from '@tanstack/react-query';
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
 import {
-  createWSClient,
   httpBatchLink,
   loggerLink,
   splitLink,
   TRPCClientError,
-  wsLink,
+  unstable_httpSubscriptionLink
 } from '@trpc/client';
 import config from 'src/config';
 import { useAuth } from 'src/context/auth';
@@ -73,16 +72,6 @@ export { RouterInputs, RouterOutputs };
 type TRPCProviderProps = {
   children: React.ReactNode;
 };
-
-const wsClient = createWSClient({
-  url: getBaseUrl(true),
-  onOpen: () => {
-    console.log('ws open');
-  },
-  onClose: (cause) => {
-    console.log('ws close', cause);
-  },
-});
 
 /**
  * A wrapper for your app that provides the TRPC context.
@@ -179,23 +168,50 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
     });
   }, [authInfo]);
 
+  const subscriptionLink = React.useMemo(
+    () =>
+      unstable_httpSubscriptionLink({
+        transformer: superjson,
+        url: getBaseUrl(),
+        connectionParams() {
+          const defaultHeaders = {
+            'X-Mobile-App': 'true',
+          };
+
+          return authInfo
+            ? {
+                ...defaultHeaders,
+                Authorization: `Bearer ${authInfo}`,
+              }
+            : defaultHeaders;
+        },
+      }),
+    [authInfo],
+  );
+
+  useEffect(() => {
+
+  }, []);
+
   const trpcClient = React.useMemo(
     () =>
       api.createClient({
         links: [
           loggerLink({
-            enabled: (opts) =>
-              process.env.NODE_ENV === 'development' ||
-              (opts.direction === 'down' && opts.result instanceof Error),
+            console: {
+              log: (...args) => {console.log(JSON.stringify(args, null, 2))},
+              error: (...args) => {console.error(JSON.stringify(args, null, 2))},
+            },
+            colorMode: 'ansi'
           }),
           splitLink({
             condition: ({ type }) => type === 'subscription',
-            true: wsLink({ client: wsClient, transformer: superjson }),
+            true: subscriptionLink,
             false: httpLink,
           }),
         ],
       }),
-    [httpLink],
+    [httpLink, subscriptionLink],
   );
 
   useEffect(() => {
