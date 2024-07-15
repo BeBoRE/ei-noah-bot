@@ -203,6 +203,54 @@ export const t = initTRPC.context<typeof createTRPCContext>().create({
  */
 export const createTRPCRouter = t.router;
 
+const expectedUrl = new URL(
+  process.env.PUBLIC_VERCEL_URL ?? 'https://ei-noah.com',
+);
+
+/**
+ * Ensure either host or referer is expected
+ * Mobile doesn't send host or referer, so we need to check for the X-Mobile-App
+ */
+const ensureOrigin = t.middleware(({ ctx, next }) => {
+  if (
+    process.env.NODE_ENV === 'production' &&
+    ctx.opts.fetchOpts &&
+    ctx.opts.fetchOpts.req.method !== 'OPTIONS' &&
+    ctx.opts.fetchOpts.req.method !== 'GET'
+  ) {
+    const { req } = ctx.opts.fetchOpts;
+
+    const originRaw = req.headers.get('Origin');
+    const referrerRaw = req.headers.get('Referer');
+    const mobileAppRaw = req.headers.get('X-Mobile-App');
+
+    const isMobile = mobileAppRaw === 'true';
+
+    if (!isMobile && process.env.NODE_ENV === 'production') {
+      const origin = originRaw !== null ? new URL(originRaw) : null;
+      const referrer = referrerRaw !== null ? new URL(referrerRaw) : null;
+
+      const isSameOriginOrigin = origin?.origin === expectedUrl.origin;
+      const isSameOriginReferrer = referrer?.origin === expectedUrl.origin;
+
+      const isSameOrigin = isSameOriginOrigin || isSameOriginReferrer;
+
+      if (!isSameOrigin) {
+        console.error('Invalid Origin', {
+          origin: originRaw,
+          referrer: referrerRaw,
+        });
+
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Invalid Origin',
+        });
+      }
+    }
+  }
+  return next({ ctx });
+});
+
 /**
  * Public (unauthed) procedure
  *
@@ -210,7 +258,7 @@ export const createTRPCRouter = t.router;
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-export const publicProcedure = t.procedure;
+export const publicProcedure = t.procedure.use(ensureOrigin);
 
 /**
  * Reusable middleware that enforces users are logged in before running the
@@ -239,7 +287,7 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+export const protectedProcedure = publicProcedure.use(enforceUserIsAuthed);
 
 const enforceUserHasLobby = enforceUserIsAuthed.unstable_pipe(
   async ({ ctx, next }) => {

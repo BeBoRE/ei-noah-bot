@@ -70,7 +70,10 @@ export const lobbyRouter = createTRPCRouter({
     .subscription(async ({ ctx: { drizzle, session }, input: token }) => {
       const activeSession =
         session ||
-        (token && (await auth.validateSession(token).catch((err) => console.error(err)))) ||
+        (token &&
+          (await auth
+            .validateSession(token)
+            .catch((err) => console.error(err)))) ||
         null;
 
       if (!activeSession)
