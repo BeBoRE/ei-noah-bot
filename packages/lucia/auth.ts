@@ -31,7 +31,7 @@ export const auth = lucia({
     attributes: {
       domain:
         process.env.NODE_ENV === 'production'
-          ? 'sweaties.net'
+          ? url.host
           : ip.address(undefined, 'ipv4'),
     },
   },
