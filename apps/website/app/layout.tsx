@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'ei Noah',
     description: 'Never run out of voice channels again!',
-    url: 'https://ei.sweaties.net',
+    url: process.env.PUBLIC_VERCEL_URL,
     siteName: 'ei Noah',
   },
 };
