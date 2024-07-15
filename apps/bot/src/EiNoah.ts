@@ -379,9 +379,10 @@ async function messageParser(
       params.push(command.commandName);
     } else params.push(command.name);
 
-    const nextCommand: CommandInteractionOption | undefined = command.options && 'data' in command.options
-      ? command.options.data[0]
-      : command.options?.[0];
+    const nextCommand: CommandInteractionOption | undefined =
+      command.options && 'data' in command.options
+        ? command.options.data[0]
+        : command.options?.[0];
 
     if (
       !nextCommand ||
@@ -394,9 +395,10 @@ async function messageParser(
     command = nextCommand;
   }
 
-  const options = command.options && 'data' in command.options
-  ? command.options.data
-  : command?.options;
+  const options =
+    command.options && 'data' in command.options
+      ? command.options.data
+      : command?.options;
 
   options?.forEach((option) => {
     if (

@@ -18,7 +18,7 @@ import {
   loggerLink,
   splitLink,
   TRPCClientError,
-  unstable_httpSubscriptionLink
+  unstable_httpSubscriptionLink,
 } from '@trpc/client';
 import config from 'src/config';
 import { useAuth } from 'src/context/auth';
@@ -28,6 +28,7 @@ import { api } from '@ei/react-shared';
 import type { AppRouter, RouterInputs, RouterOutputs } from '@ei/trpc';
 
 import '@azure/core-asynciterator-polyfill';
+
 import { RNEventSource } from 'rn-eventsource-reborn';
 import { ReadableStream, TransformStream } from 'web-streams-polyfill';
 
@@ -202,16 +203,14 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
     [authInfo],
   );
 
-  useEffect(() => {
-
-  }, []);
+  useEffect(() => {}, []);
 
   const trpcClient = React.useMemo(
     () =>
       api.createClient({
         links: [
           loggerLink({
-            colorMode: 'ansi'
+            colorMode: 'ansi',
           }),
           splitLink({
             condition: ({ type }) => type === 'subscription',

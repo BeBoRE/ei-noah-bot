@@ -61,7 +61,7 @@ export function LobbyProvider({
       });
 
       console.error(err);
-    }
+    },
   });
 
   const props = useMemo(

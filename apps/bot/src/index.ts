@@ -294,7 +294,10 @@ process.title = 'Ei Noah Bot';
 
       if (!userOption.user) return i18n.t('index.who');
 
-      const url = userOption.user.displayAvatarURL({ size: 256, extension: 'png' });
+      const url = userOption.user.displayAvatarURL({
+        size: 256,
+        extension: 'png',
+      });
 
       if (url) {
         if (
@@ -446,7 +449,10 @@ process.title = 'Ei Noah Bot';
 
       if (!userOption.user) return i18n.t('index.who');
 
-      const url = userOption.user.displayAvatarURL({ size: 256, extension: 'png' });
+      const url = userOption.user.displayAvatarURL({
+        size: 256,
+        extension: 'png',
+      });
 
       if (url) {
         if (

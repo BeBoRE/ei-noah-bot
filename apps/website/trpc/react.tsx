@@ -9,7 +9,7 @@ import {
   loggerLink,
   splitLink,
   unstable_httpBatchStreamLink,
-  unstable_httpSubscriptionLink
+  unstable_httpSubscriptionLink,
 } from '@trpc/client';
 import SuperJSON from 'superjson';
 
@@ -19,7 +19,6 @@ import { LobbyProvider } from '@ei/react-shared/context/lobby';
 import { getApiUrl, transformer } from './shared';
 
 export { api };
-
 
 type Props = {
   children: React.ReactNode;
@@ -67,10 +66,10 @@ export default function TRPCReactProvider({ children, headers }: Props) {
           condition: ({ type }) => type === 'subscription',
           true: unstable_httpSubscriptionLink({
             transformer,
-            url: getApiUrl()
+            url: getApiUrl(),
           }),
           false: httpLink,
-        })
+        }),
       ],
     }),
   );

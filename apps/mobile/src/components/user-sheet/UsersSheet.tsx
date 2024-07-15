@@ -24,37 +24,42 @@ function UsersSheet({
       backgroundStyle={{
         backgroundColor: baseConfig.theme.colors.primary[900],
       }}
-      snapPoints={[100, 300, '90%']}
+      snapPoints={[100, 400, '90%']}
       index={1}
       handleIndicatorStyle={{
         backgroundColor: baseConfig.theme.colors.primary[700],
       }}
     >
       <BottomSheetScrollView>
-        <View className="p-5 pb-0">
-          <Text className="pb-2 text-lg font-bold text-primary-50">
-            Quick Add
-          </Text>
-          <FlatList
-            horizontal
-            data={recentlyAddedUsers.length ? recentlyAddedUsers : [null]}
-            renderItem={({ item }) => (
-              item !== null ?
-              <Pressable onPress={() => addUser({ user: item })}>
-                <Image
-                  className="h-16 w-16 rounded-full"
-                  source={item.avatar}
-                />
-              </Pressable> : <View className="h-16 w-16 bg-primary-800 rounded-full" />
-            )}
-          />
-        </View>
-        <View className="p-5">
-          {
-            users.map((user) => (
-              <UserItem key={user.id} user={user} />
-            ))
-          }
+        {recentlyAddedUsers.length ? (
+          <View>
+            <Text className="px-4 py-3 pb-2 text-lg font-bold text-primary-50">
+              Quick Add
+            </Text>
+            <FlatList
+              horizontal
+              data={recentlyAddedUsers.length ? recentlyAddedUsers : [null]}
+              ListFooterComponent={<View className="w-4" />}
+              ListHeaderComponent={<View className="w-4" />}
+              renderItem={({ item }) =>
+                item !== null ? (
+                  <Pressable onPress={() => addUser({ user: item })}>
+                    <Image
+                      className="h-16 w-16 rounded-full"
+                      source={item.avatar}
+                    />
+                  </Pressable>
+                ) : (
+                  <View className="h-16 w-16 rounded-full bg-primary-800" />
+                )
+              }
+            />
+          </View>
+        ) : null}
+        <View className="p-3">
+          {users.map((user) => (
+            <UserItem key={user.id} user={user} />
+          ))}
         </View>
       </BottomSheetScrollView>
     </BottomSheet>

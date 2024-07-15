@@ -296,7 +296,7 @@ router.useContext(
       return 'Onmogelijk pad';
     }
 
-    const {message} = messageOption;
+    const { message } = messageOption;
 
     if (!message.guild) {
       return i18n.t('error.onlyUsableInGuild');
