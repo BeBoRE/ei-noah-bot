@@ -9,11 +9,12 @@ import Animated, {
 import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { api } from 'src/utils/api';
+import { cn } from 'src/utils/cn';
 
-import { ChannelType, User } from '@ei/lobby';
+import { LobbyUser } from '@ei/lobby';
 import baseConfig from '@ei/tailwind-config';
 
-import Text from './Text';
+import { Text } from '../ui/text';
 
 type ButtonProps = {
   onPress: () => void;
@@ -66,17 +67,9 @@ function RejectButton({
   );
 }
 
-function UserItem({
-  user,
-  channelType,
-}: {
-  user: User;
-  channelType: ChannelType;
-}) {
+function UserItem({ user }: { user: LobbyUser }) {
   const { mutate: addUser } = api.lobby.addUser.useMutation();
   const { mutate: removeUser } = api.lobby.removeUser.useMutation();
-
-  const showButtons = channelType !== ChannelType.Public;
 
   const onReject = () => {
     removeUser({
@@ -95,27 +88,36 @@ function UserItem({
       entering={FadeInUp}
       exiting={FadeOutDown}
       layout={LinearTransition.duration(200).delay(100)}
-      className="mb-3 flex-row justify-between rounded-full bg-primary-800 p-3"
+      className="mb-3"
     >
-      <View className="flex-row items-center">
-        {user.avatar ? (
-          <Image
-            source={user.avatar}
-            alt=""
-            className="mr-3 h-16 w-16 rounded-full bg-primary-900"
-          />
-        ) : (
-          <View className="mr-3 h-16 w-16 rounded-full bg-primary-900" />
+      <View
+        className={cn(
+          'flex flex-row justify-between rounded-full bg-primary-800 p-3 transition-opacity',
+          {
+            'opacity-40': !user.isInChannel,
+          },
         )}
-        <Text className="text-2xl">{user.username}</Text>
-      </View>
+      >
+        <View className="flex-row items-center">
+          {user.avatar ? (
+            <Image
+              source={user.avatar}
+              alt=""
+              className="mr-3 h-16 w-16 rounded-full bg-primary-900"
+            />
+          ) : (
+            <View className="mr-3 h-16 w-16 rounded-full bg-primary-900" />
+          )}
+          <Text className="text-2xl">{user.username}</Text>
+        </View>
 
-      {showButtons &&
-        (user.isAllowed ? (
-          <RejectButton userName={user.username} onPress={onReject} />
-        ) : (
-          <AcceptButton onPress={onAccept} />
-        ))}
+        {user.isKickable &&
+          (user.isPermitted ? (
+            <RejectButton userName={user.username} onPress={onReject} />
+          ) : (
+            <AcceptButton onPress={onAccept} />
+          ))}
+      </View>
     </Animated.View>
   );
 }

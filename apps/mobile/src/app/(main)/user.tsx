@@ -1,9 +1,13 @@
+import { Suspense } from 'react';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import { toast } from 'burnt';
+import { Cake } from 'lucide-react-native';
 import { View } from 'moti';
+import { Skeleton } from 'moti/skeleton';
+import { cssInterop } from 'nativewind';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { Button } from 'src/components/ui/button';
 import { Text } from 'src/components/ui/text';
@@ -13,9 +17,8 @@ import { twMerge } from 'tailwind-merge';
 
 import { api } from '@ei/react-shared';
 import baseConfig from '@ei/tailwind-config';
-import { Suspense } from 'react';
-import { Skeleton } from 'moti/skeleton';
-import { Cake } from 'lucide-react-native';
+
+cssInterop(Cake, { className: 'style' });
 
 function Divider({ className, ...props }: { className?: string }) {
   const mergedName = twMerge('h-1 bg-primary-900 rounded-full', className);
@@ -32,7 +35,7 @@ function UserInfo() {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
-  })
+  });
 
   const birthdayFormatted = birthdate ? formatter.format(birthdate) : null;
 
@@ -50,9 +53,9 @@ function UserInfo() {
         </Text>
       </View>
       {birthdayFormatted && (
-        <View className="flex-row items-center mt-2">
-          <Cake className="text-primary-600 mr-2" size={18} />
-          <Text className="text-lg text-primary-600 text-center">
+        <View className="mt-2 flex-row items-center">
+          <Cake className="mr-2 text-primary-600" size={18} />
+          <Text className="text-center text-lg text-primary-600">
             {birthdayFormatted}
           </Text>
         </View>
@@ -69,7 +72,7 @@ function UserInfoSkeleton() {
         <Skeleton width="100%" height={24} />
       </View>
     </View>
-  )
+  );
 }
 
 function UserScreen() {

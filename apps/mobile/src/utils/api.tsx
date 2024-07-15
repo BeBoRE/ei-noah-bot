@@ -14,12 +14,11 @@ import {
 } from '@tanstack/react-query';
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
 import {
-  createWSClient,
   httpBatchLink,
   loggerLink,
   splitLink,
   TRPCClientError,
-  wsLink,
+  unstable_httpSubscriptionLink,
 } from '@trpc/client';
 import config from 'src/config';
 import { useAuth } from 'src/context/auth';
@@ -27,6 +26,20 @@ import superjson from 'superjson';
 
 import { api } from '@ei/react-shared';
 import type { AppRouter, RouterInputs, RouterOutputs } from '@ei/trpc';
+
+import '@azure/core-asynciterator-polyfill';
+
+import { RNEventSource } from 'rn-eventsource-reborn';
+import { ReadableStream, TransformStream } from 'web-streams-polyfill';
+
+// RNEventSource extends EventSource's functionality, you can add this to make the typing reflect this but it's not a requirement
+declare global {
+  interface EventSource extends RNEventSource {}
+}
+global.EventSource = global.EventSource || RNEventSource;
+
+global.ReadableStream = global.ReadableStream || ReadableStream;
+global.TransformStream = global.TransformStream || TransformStream;
 
 onlineManager.setEventListener((setOnline) =>
   NetInfo.addEventListener((state) => {
@@ -73,16 +86,6 @@ export { RouterInputs, RouterOutputs };
 type TRPCProviderProps = {
   children: React.ReactNode;
 };
-
-const wsClient = createWSClient({
-  url: getBaseUrl(true),
-  onOpen: () => {
-    console.log('ws open');
-  },
-  onClose: (cause) => {
-    console.log('ws close', cause);
-  },
-});
 
 /**
  * A wrapper for your app that provides the TRPC context.
@@ -179,23 +182,44 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
     });
   }, [authInfo]);
 
+  const subscriptionLink = React.useMemo(
+    () =>
+      unstable_httpSubscriptionLink({
+        transformer: superjson,
+        url: `${getBaseUrl()}/api`,
+        connectionParams() {
+          const defaultHeaders = {
+            'X-Mobile-App': 'true',
+          };
+
+          return authInfo
+            ? {
+                ...defaultHeaders,
+                Authorization: `Bearer ${authInfo}`,
+              }
+            : defaultHeaders;
+        },
+      }),
+    [authInfo],
+  );
+
+  useEffect(() => {}, []);
+
   const trpcClient = React.useMemo(
     () =>
       api.createClient({
         links: [
           loggerLink({
-            enabled: (opts) =>
-              process.env.NODE_ENV === 'development' ||
-              (opts.direction === 'down' && opts.result instanceof Error),
+            colorMode: 'ansi',
           }),
           splitLink({
             condition: ({ type }) => type === 'subscription',
-            true: wsLink({ client: wsClient, transformer: superjson }),
+            true: subscriptionLink,
             false: httpLink,
           }),
         ],
       }),
-    [httpLink],
+    [httpLink, subscriptionLink],
   );
 
   useEffect(() => {

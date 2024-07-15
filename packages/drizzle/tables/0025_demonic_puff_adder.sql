@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS "recently_added_user_owning_guild_user_id_added_guild_user_id_index";--> statement-breakpoint
+ALTER TABLE "recently_added_user" ADD CONSTRAINT "recently_added_user_owning_guild_user_id_added_guild_user_id_unique" UNIQUE("owning_guild_user_id","added_guild_user_id");

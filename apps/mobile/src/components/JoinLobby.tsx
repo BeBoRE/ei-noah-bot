@@ -9,8 +9,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
+import { cssInterop } from 'nativewind';
 
-import Text from './Text';
+import { Text } from './ui/text';
+
+cssInterop(Animated.View, { className: 'style' });
+cssInterop(Animated.Text, { className: 'style' });
 
 function JoinLobby() {
   const insets = useSafeAreaInsets();
@@ -30,8 +34,7 @@ function JoinLobby() {
       >
         <Animated.Text
           entering={FadeIn.duration(1500)}
-          className="my-6 text-center text-5xl font-bold text-primary-300
-        "
+          className="my-6 text-center text-5xl font-bold text-primary-300"
         >
           Please join a lobby create channel on{' '}
           <Text className="text-discord">Discord</Text>

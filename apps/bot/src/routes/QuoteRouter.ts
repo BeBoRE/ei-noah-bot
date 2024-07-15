@@ -9,7 +9,6 @@ import {
   Guild,
   InteractionReplyOptions,
   InteractionUpdateOptions,
-  Message,
   PermissionsBitField,
   Role,
 } from 'discord.js';
@@ -297,7 +296,7 @@ router.useContext(
       return 'Onmogelijk pad';
     }
 
-    const message = messageOption.message;
+    const { message } = messageOption;
 
     if (!message.guild) {
       return i18n.t('error.onlyUsableInGuild');

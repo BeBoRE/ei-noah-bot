@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import * as React from 'react';
 import { TextInput } from 'react-native';
+import { cssInterop } from 'nativewind';
 
 import baseConfig from '@ei/tailwind-config';
 
@@ -24,5 +25,7 @@ const Input = React.forwardRef<
 ));
 
 Input.displayName = 'Input';
+
+cssInterop(Input, { className: 'style' });
 
 export { Input };

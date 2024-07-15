@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { Text as RNText } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { cssInterop } from 'nativewind';
 import { cn } from 'src/utils/cn';
 
 import * as Slot from './primitives/slot';
@@ -13,11 +15,7 @@ const Text = React.forwardRef<TextRef, SlottableTextProps>(
     const Component = asChild ? Slot.Text : RNText;
     return (
       <Component
-        className={cn(
-          'web:select-text text-base text-primary-200',
-          textClass,
-          className,
-        )}
+        className={cn('web:select-text text-primary-200', textClass, className)}
         ref={ref}
         // eslint-disable-next-line react/jsx-props-no-spreading
         {...props}
@@ -27,4 +25,9 @@ const Text = React.forwardRef<TextRef, SlottableTextProps>(
 );
 Text.displayName = 'Text';
 
-export { Text, TextClassContext };
+const AnimatedText = Animated.createAnimatedComponent(Text);
+
+cssInterop(Text, { className: 'style' });
+cssInterop(AnimatedText, { className: 'style' });
+
+export { Text, AnimatedText, TextClassContext };

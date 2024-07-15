@@ -13,10 +13,10 @@ import { useAppState } from '@react-native-community/hooks';
 import { alert } from 'burnt';
 import JoinLobby from 'src/components/JoinLobby';
 import { AnimatedLobbyName } from 'src/components/LobbyName';
-import { AnimatedText } from 'src/components/Text';
 import { AnimatedTypeSelector } from 'src/components/TypeSelector';
+import { AnimatedText } from 'src/components/ui/text';
+import UsersSheet from 'src/components/user-sheet/UsersSheet';
 import { AnimatedUserLimitSelector } from 'src/components/UserLimits';
-import UsersSheet from 'src/components/UsersSheet';
 import { useAuth } from 'src/context/auth';
 import useNotifications from 'src/hooks/useNotifications';
 
@@ -89,7 +89,10 @@ function Screen() {
           />
         </Animated.View>
       </ScrollView>
-      <UsersSheet users={lobby.users} channelType={lobby.channel.type} />
+      <UsersSheet
+        users={lobby.users}
+        recentlyAddedUsers={lobby.recentlyAddedUsers || []}
+      />
     </View>
   );
 }

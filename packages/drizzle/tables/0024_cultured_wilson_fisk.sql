@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "recently_added_user_owning_guild_user_id_added_guild_user_id_index" ON "recently_added_user" ("owning_guild_user_id","added_guild_user_id");

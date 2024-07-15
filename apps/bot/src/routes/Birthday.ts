@@ -22,7 +22,7 @@ import moment from 'moment';
 import { Logger } from 'winston';
 
 import { DrizzleClient } from '@ei/drizzle';
-
+import { getUserBirthday } from '@ei/drizzle/birthday';
 import {
   Birthday,
   birthdays,
@@ -30,8 +30,6 @@ import {
   guildUsers,
   users,
 } from '@ei/drizzle/tables/schema';
-
-import {getUserBirthday} from '@ei/drizzle/birthday'
 
 import Router, {
   BothHandler,

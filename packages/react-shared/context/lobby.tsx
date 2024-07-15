@@ -53,6 +53,15 @@ export function LobbyProvider({
     onData: (data) => {
       setLobby(data);
     },
+    onError: (err) => {
+      alert?.({
+        title: 'Error',
+        message: err.message,
+        preset: 'error',
+      });
+
+      console.error(err);
+    },
   });
 
   const props = useMemo(

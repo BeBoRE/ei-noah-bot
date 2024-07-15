@@ -13,13 +13,13 @@
   "devDependencies": {
     "@ei/tsconfig": "*",
     "eslint": "^8.51.0",
-    "typescript": "^5.2.2"
+    "typescript": "^5.5.2"
   },
   "dependencies": {
     "@ei/lobby": "^1.0.0",
     "ioredis": "^5.3.2",
     "superjson": "1.13.1",
     "zod": "^3.22.4",
-    "zod-redis-pubsub": "^2.0.0"
+    "zod-redis-pubsub": "^2.1.0"
   }
 }

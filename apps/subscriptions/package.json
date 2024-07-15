@@ -12,14 +12,14 @@
   },
   "dependencies": {
     "@ei/trpc": "*",
-    "@trpc/server": "11.0.0-next-beta.264",
+    "@trpc/server": "11.0.0-rc.452",
     "ws": "^8.14.2"
   },
   "devDependencies": {
     "@ei/tsconfig": "*",
     "eslint": "^8.51.0",
     "eslint-config-custom": "*",
-    "tsx": "^3.13.0",
-    "typescript": "5.1.6"
+    "tsx": "^4.15.7",
+    "typescript": "^5.5.2"
   }
 }

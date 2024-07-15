@@ -1,9 +1,12 @@
+import { useEffect } from 'react';
 import { View } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
+import { useSharedValue, withTiming } from 'react-native-reanimated';
 import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { Plus } from 'lucide-react-native';
-import Button from 'src/components/Button';
-import Text from 'src/components/Text';
+import { MotiView } from 'moti';
+import { AnimatedButton } from 'src/components/ui/button';
+import { Text } from 'src/components/ui/text';
 
 import { api } from '@ei/react-shared';
 import {
@@ -21,8 +24,8 @@ type CheckBoxProps = {
 
 function CheckBox({ checked, color }: CheckBoxProps) {
   return (
-    <View
-      style={{
+    <MotiView
+      animate={{
         borderColor: color,
         backgroundColor: checked ? color : 'transparent',
       }}
@@ -41,13 +44,25 @@ function RoleButton({ role, guild }: RoleProps) {
     useRoleUtils(role, guild);
   const disabled = isPending || !isApproved;
 
+  const svColor = useSharedValue(isAddable ? '#0000' : color);
+  const svDisabled = useSharedValue(disabled ? 0.5 : 1);
+
+  useEffect(() => {
+    svColor.value = withTiming(isAddable ? '#0000' : color, { duration: 150 });
+  }, [color, isAddable, svColor]);
+
+  useEffect(() => {
+    svDisabled.value = withTiming(disabled ? 0.5 : 1, { duration: 150 });
+  }, [svDisabled, disabled]);
+
   return (
-    <Button
+    <AnimatedButton
       key={role.id}
-      className="mb-2 flex flex-row items-center rounded-full border-4 bg-primary-900 p-2 transition disabled:opacity-50"
+      className="mb-2 flex-row justify-start rounded-full bg-primary-900"
       style={{
-        borderColor: isAddable ? 'transparent' : color,
-        opacity: disabled ? 0.5 : 1,
+        borderColor: svColor,
+        borderWidth: 2,
+        opacity: svDisabled,
       }}
       disabled={disabled}
       onPress={() => {
@@ -64,7 +79,7 @@ function RoleButton({ role, guild }: RoleProps) {
       <Text className="pl-2" style={{ color }}>
         {name}
       </Text>
-    </Button>
+    </AnimatedButton>
   );
 }
 

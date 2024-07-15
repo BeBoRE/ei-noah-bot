@@ -267,6 +267,29 @@ export const tempChannels = pgTable(
   }),
 );
 
+export const recentlyAddedUsers = pgTable(
+  'recently_added_user',
+  {
+    id: serial('id').primaryKey().notNull(),
+    owningGuildUserId: integer('owning_guild_user_id')
+      .notNull()
+      .references(() => guildUsers.id, {
+        onUpdate: 'cascade',
+        onDelete: 'cascade',
+      }),
+    addedGuildUserId: integer('added_guild_user_id')
+      .notNull()
+      .references(() => guildUsers.id, {
+        onUpdate: 'cascade',
+        onDelete: 'cascade',
+      }),
+    date: timestamp('date', { withTimezone: true, mode: 'string' }).notNull(),
+  },
+  (table) => ({
+    ownerAddedIdx: unique().on(table.owningGuildUserId, table.addedGuildUserId),
+  }),
+);
+
 export type TempChannel = typeof tempChannels.$inferSelect;
 
 export type Guild = typeof guilds.$inferSelect;

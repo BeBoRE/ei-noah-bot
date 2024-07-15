@@ -4,8 +4,8 @@ import { Image } from 'expo-image';
 import { parse } from 'expo-linking';
 import { Stack } from 'expo-router';
 import { openAuthSessionAsync } from 'expo-web-browser';
-import Button from 'src/components/Button';
-import Text from 'src/components/Text';
+import { Button } from 'src/components/ui/button';
+import { Text } from 'src/components/ui/text';
 import { useAuth } from 'src/context/auth';
 import { getBaseUrl } from 'src/utils/api';
 
