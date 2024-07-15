@@ -795,7 +795,7 @@ importers:
         specifier: ^3.22.4
         version: 3.22.4
       zod-redis-pubsub:
-        specifier: ^2.0.0
+        specifier: ^2.1.0
         version: link:../zod-redis-pussub
     devDependencies:
       '@ei/tsconfig':
