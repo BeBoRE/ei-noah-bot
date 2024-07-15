@@ -8,6 +8,8 @@ import { luciaPgClient } from '@ei/drizzle';
 
 import { getHost } from './utils';
 
+const url = new URL(process.env.PUBLIC_VERCEL_URL || 'https://ei-noah.com');
+
 export const auth = lucia({
   env: process.env.NODE_ENV === 'production' ? 'PROD' : 'DEV',
   middleware: middleware(),
@@ -19,7 +21,7 @@ export const auth = lucia({
   csrfProtection:
     process.env.NODE_ENV === 'production'
       ? {
-          host: 'ei.sweaties.net',
+          host: url.host,
         }
       : false,
   experimental: {
