@@ -19,7 +19,7 @@
     "typescript": "^5.5.2"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "express": "^4.19.2",
     "http-proxy-middleware": "^2.0.6"
   }
 }
