@@ -24,7 +24,8 @@
     "APP_VARIANT",
     "REDIS_URL",
     "REDIS_PASSWORD",
-    "PORT"
+    "PORT", 
+    "PUBLIC_VERCEL_URL"
   ],
   "tasks": {
     "start": {

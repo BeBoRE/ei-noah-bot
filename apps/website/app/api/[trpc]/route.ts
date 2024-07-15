@@ -4,7 +4,7 @@ import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 
 import { appRouter, createApiContext } from '@ei/trpc';
 
-const expectedUrl = new URL('https://ei.sweaties.net');
+const expectedUrl = new URL(process.env.PUBLIC_VERCEL_URL ?? 'https://ei-noah.com');
 
 /**
  * Configure basic CORS headers
