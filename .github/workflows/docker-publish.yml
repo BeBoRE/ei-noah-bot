@@ -135,7 +135,7 @@ jobs:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.PRIVATE_KEY }}
-        script: docker-compose pull && docker-compose up -d
+        script: docker compose pull && docker compose up -d
 
   discord:
     needs: deploy

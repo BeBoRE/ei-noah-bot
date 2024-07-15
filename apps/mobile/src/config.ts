@@ -31,8 +31,7 @@ if (developmentConfig) console.log('Using development config');
 const config: Config = _.merge(
   {
     api: {
-      url: process.env.EXPO_PUBLIC_VERCEL_URL || 'https://ei.sweaties.net',
-      wsUrl: process.env.EXPO_PUBLIC_VERCEL_URL || 'wss://ei.sweaties.net/ws',
+      url: process.env.EXPO_PUBLIC_VERCEL_URL || 'https://ei-noah.com',
     },
     discord: {
       clientId: process.env.EXPO_PUBLIC_CLIENT_ID || '730913870805336195',
