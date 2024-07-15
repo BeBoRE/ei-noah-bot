@@ -438,8 +438,8 @@ importers:
         specifier: '*'
         version: link:../../packages/trpc
       '@trpc/server':
-        specifier: 11.0.0-next-beta.264
-        version: 11.0.0-next-beta.264
+        specifier: 11.0.0-rc.452
+        version: 11.0.0-rc.452
       ws:
         specifier: ^8.14.2
         version: 8.14.2
@@ -6470,10 +6470,6 @@ packages:
       '@trpc/server': 11.0.0-rc.452
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
-
-  /@trpc/server@11.0.0-next-beta.264:
-    resolution: {integrity: sha512-h6RJX+C+VgFQusxGVtw3n1PZPLt27ZG70U8cPR5pwmsnE2E3vREijOgEo5MRKoiUhVrjbw8e6gnGVeKzl7uZXg==}
-    dev: false
 
   /@trpc/server@11.0.0-rc.452:
     resolution: {integrity: sha512-sqZ2Nmh9hD/xuW5x/9tLoa7N1k/99B0eCDoVdbVtnMQZ0gH79vlLQXrbIPg6BZxu/h1i/jyHWXBmFMqN2JZ6xw==}
