@@ -25,8 +25,22 @@ import { LobbyProvider, useLobby } from '@ei/react-shared/context/lobby';
 function Screen() {
   useNotifications();
 
-  const { lobby, changeChannelType, changeUserLimit, changeName } = useLobby();
+  const {
+    subscription,
+    lobby,
+    changeChannelType,
+    changeUserLimit,
+    changeName,
+  } = useLobby();
   const { top, left, right } = useSafeAreaInsets();
+
+  if (subscription.connectionError) {
+    return (
+      <Animated.View>
+        <AnimatedText>Connection error</AnimatedText>
+      </Animated.View>
+    );
+  }
 
   if (!lobby) {
     return <JoinLobby />;

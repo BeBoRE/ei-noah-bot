@@ -202,11 +202,11 @@ importers:
         specifier: ^5.49.2
         version: 5.50.1(@tanstack/react-query@5.50.1)(react@18.2.0)
       '@trpc/client':
-        specifier: 11.0.0-rc.452
-        version: 11.0.0-rc.452(@trpc/server@11.0.0-rc.452)
+        specifier: 11.0.0-alpha-tmp-subscription-connection-state.486
+        version: 11.0.0-alpha-tmp-subscription-connection-state.486(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)
       '@trpc/react-query':
-        specifier: 11.0.0-rc.452
-        version: 11.0.0-rc.452(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-rc.452)(@trpc/server@11.0.0-rc.452)(react-dom@18.2.0)(react@18.2.0)
+        specifier: 11.0.0-alpha-tmp-subscription-connection-state.486
+        version: 11.0.0-alpha-tmp-subscription-connection-state.486(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-alpha-tmp-subscription-connection-state.486)(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)(react-dom@18.2.0)(react@18.2.0)
       babel-plugin-inline-dotenv:
         specifier: ^1.7.0
         version: 1.7.0
@@ -529,17 +529,17 @@ importers:
         specifier: ^5.49.2
         version: 5.50.1(@tanstack/react-query@5.50.1)(react@18.2.0)
       '@trpc/client':
-        specifier: 11.0.0-rc.452
-        version: 11.0.0-rc.452(@trpc/server@11.0.0-rc.452)
+        specifier: 11.0.0-alpha-tmp-subscription-connection-state.486
+        version: 11.0.0-alpha-tmp-subscription-connection-state.486(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)
       '@trpc/next':
-        specifier: 11.0.0-rc.452
-        version: 11.0.0-rc.452(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-rc.452)(@trpc/react-query@11.0.0-rc.452)(@trpc/server@11.0.0-rc.452)(next@14.2.4)(react-dom@18.2.0)(react@18.2.0)
+        specifier: 11.0.0-alpha-tmp-subscription-connection-state.486
+        version: 11.0.0-alpha-tmp-subscription-connection-state.486(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-alpha-tmp-subscription-connection-state.486)(@trpc/react-query@11.0.0-alpha-tmp-subscription-connection-state.486)(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)(next@14.2.4)(react-dom@18.2.0)(react@18.2.0)
       '@trpc/react-query':
-        specifier: 11.0.0-rc.452
-        version: 11.0.0-rc.452(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-rc.452)(@trpc/server@11.0.0-rc.452)(react-dom@18.2.0)(react@18.2.0)
+        specifier: 11.0.0-alpha-tmp-subscription-connection-state.486
+        version: 11.0.0-alpha-tmp-subscription-connection-state.486(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-alpha-tmp-subscription-connection-state.486)(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)(react-dom@18.2.0)(react@18.2.0)
       '@trpc/server':
-        specifier: 11.0.0-rc.452
-        version: 11.0.0-rc.452
+        specifier: 11.0.0-alpha-tmp-subscription-connection-state.486
+        version: 11.0.0-alpha-tmp-subscription-connection-state.486
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.0
@@ -768,8 +768,8 @@ importers:
         specifier: '*'
         version: link:../tsconfig
       '@trpc/react-query':
-        specifier: 11.0.0-rc.452
-        version: 11.0.0-rc.452(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-rc.452)(@trpc/server@11.0.0-rc.452)(react-dom@18.2.0)(react@18.2.0)
+        specifier: 11.0.0-alpha-tmp-subscription-connection-state.486
+        version: 11.0.0-alpha-tmp-subscription-connection-state.486(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-alpha-tmp-subscription-connection-state.486)(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)(react-dom@18.2.0)(react@18.2.0)
       '@types/react':
         specifier: ^18.2.27
         version: 18.2.27
@@ -6424,20 +6424,20 @@ packages:
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
     dev: false
 
-  /@trpc/client@11.0.0-rc.452(@trpc/server@11.0.0-rc.452):
-    resolution: {integrity: sha512-QAabLHbaqVAc4FOkC5QbDMRy2mEZk+mYdVjAOdeqjIwQ4jUJ/m0Dx6gEM99I7ASnT1TAuPGy6WwIWJixma6QWg==}
+  /@trpc/client@11.0.0-alpha-tmp-subscription-connection-state.486(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486):
+    resolution: {integrity: sha512-PvgaE+S956hFaqkT0pDw1AKjl3XIaIiMLp0rENSh1FZY1HVxLPd3b21q4epz/uym1vxEzZWtibsEYXAKc5Xtvg==}
     peerDependencies:
-      '@trpc/server': 11.0.0-rc.452+8f18c400c
+      '@trpc/server': 11.0.0-alpha-tmp-subscription-connection-state.486+fb825f371
     dependencies:
-      '@trpc/server': 11.0.0-rc.452
+      '@trpc/server': 11.0.0-alpha-tmp-subscription-connection-state.486
 
-  /@trpc/next@11.0.0-rc.452(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-rc.452)(@trpc/react-query@11.0.0-rc.452)(@trpc/server@11.0.0-rc.452)(next@14.2.4)(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-J50EJSCCw/6T/vFYKoLvuq9eZxa005gs/N61UuIcWiBam/EfCJu0H94Bnq7rkhR/o4NZgklFM4fbbUMTPJwysA==}
+  /@trpc/next@11.0.0-alpha-tmp-subscription-connection-state.486(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-alpha-tmp-subscription-connection-state.486)(@trpc/react-query@11.0.0-alpha-tmp-subscription-connection-state.486)(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)(next@14.2.4)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-bLoBV36JA3AoB0nvI/RANsq6oJM3qk/WWaskbVK5GNxlIbOeQQ2kHL1H3azr6+K3nxyfYdfBlcW9aleg2sRXIA==}
     peerDependencies:
       '@tanstack/react-query': ^5.49.2
-      '@trpc/client': 11.0.0-rc.452+8f18c400c
-      '@trpc/react-query': 11.0.0-rc.452+8f18c400c
-      '@trpc/server': 11.0.0-rc.452+8f18c400c
+      '@trpc/client': 11.0.0-alpha-tmp-subscription-connection-state.486+fb825f371
+      '@trpc/react-query': 11.0.0-alpha-tmp-subscription-connection-state.486+fb825f371
+      '@trpc/server': 11.0.0-alpha-tmp-subscription-connection-state.486+fb825f371
       next: '*'
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
@@ -6448,31 +6448,35 @@ packages:
         optional: true
     dependencies:
       '@tanstack/react-query': 5.50.1(react@18.2.0)
-      '@trpc/client': 11.0.0-rc.452(@trpc/server@11.0.0-rc.452)
-      '@trpc/react-query': 11.0.0-rc.452(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-rc.452)(@trpc/server@11.0.0-rc.452)(react-dom@18.2.0)(react@18.2.0)
-      '@trpc/server': 11.0.0-rc.452
+      '@trpc/client': 11.0.0-alpha-tmp-subscription-connection-state.486(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)
+      '@trpc/react-query': 11.0.0-alpha-tmp-subscription-connection-state.486(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-alpha-tmp-subscription-connection-state.486)(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)(react-dom@18.2.0)(react@18.2.0)
+      '@trpc/server': 11.0.0-alpha-tmp-subscription-connection-state.486
       next: 14.2.4(@babel/core@7.23.0)(react-dom@18.2.0)(react@18.2.0)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
     dev: false
 
-  /@trpc/react-query@11.0.0-rc.452(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-rc.452)(@trpc/server@11.0.0-rc.452)(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-R8OhL9YNtMTbE8m7F+0Y+LsWsvXwIz0nuzyxrAiGSzrs8WdiUf4CEnAHoD1SAi+pS1TAc8p1hGWCcyyD0fXB/g==}
+  /@trpc/react-query@11.0.0-alpha-tmp-subscription-connection-state.486(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-alpha-tmp-subscription-connection-state.486)(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-IWNA2pvdgjjMElkQEiJowHM5v/EXkYJ7fR+Eb6hK3UMINfJGu/e7UFtrmpazDzkPsXmLL4dNyow7A/WBvUSWIA==}
     peerDependencies:
       '@tanstack/react-query': ^5.49.2
-      '@trpc/client': 11.0.0-rc.452+8f18c400c
-      '@trpc/server': 11.0.0-rc.452+8f18c400c
+      '@trpc/client': 11.0.0-alpha-tmp-subscription-connection-state.486+fb825f371
+      '@trpc/server': 11.0.0-alpha-tmp-subscription-connection-state.486+fb825f371
       react: '>=18.2.0'
       react-dom: '>=18.2.0'
     dependencies:
       '@tanstack/react-query': 5.50.1(react@18.2.0)
-      '@trpc/client': 11.0.0-rc.452(@trpc/server@11.0.0-rc.452)
-      '@trpc/server': 11.0.0-rc.452
+      '@trpc/client': 11.0.0-alpha-tmp-subscription-connection-state.486(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)
+      '@trpc/server': 11.0.0-alpha-tmp-subscription-connection-state.486
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
 
+  /@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486:
+    resolution: {integrity: sha512-CUhMrYxbMRlBm2sEVTIJ/Ne58kV86joAxTf1tEM6TZx0ndGPD4ePN5X3zU34GdssYKuwkJ0ie9CPq2jhQ+CN1A==}
+
   /@trpc/server@11.0.0-rc.452:
     resolution: {integrity: sha512-sqZ2Nmh9hD/xuW5x/9tLoa7N1k/99B0eCDoVdbVtnMQZ0gH79vlLQXrbIPg6BZxu/h1i/jyHWXBmFMqN2JZ6xw==}
+    dev: false
 
   /@tsconfig/node10@1.0.9:
     resolution: {integrity: sha512-jNsYVVxU8v5g43Erja32laIDHXeoNvFEpX33OK4d6hljo3jDhCBDhx5dhCCTMWUojscpAagGiRkBKxpdl9fxqA==}

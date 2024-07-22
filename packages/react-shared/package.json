@@ -19,10 +19,10 @@
     "@types/react": "^18.2.27",
     "eslint": "^8.51.0",
     "typescript": "^5.5.2",
-    "@trpc/react-query": "11.0.0-rc.452"
+    "@trpc/react-query": "11.0.0-alpha-tmp-subscription-connection-state.486"
   },
   "peerDependencies": {
     "react": ">=18.2.0",
-    "@trpc/react-query": "11.0.0-rc.452"
+    "@trpc/react-query": "11.0.0-alpha-tmp-subscription-connection-state.486"
   }
 }
