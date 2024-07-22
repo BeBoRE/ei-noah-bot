@@ -18,7 +18,7 @@ const lobbyTypeEmoji = {
 };
 
 function LobbyScreen() {
-  const { lobby, changeChannelType, changeUserLimit, changeName } = useLobby();
+  const { subscription, lobby, changeChannelType, changeUserLimit, changeName } = useLobby();
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
 
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -36,6 +36,18 @@ function LobbyScreen() {
       document.removeEventListener('click', handleClick);
     };
   });
+
+  if (subscription.connectionError) {
+    return (
+      <div className="flex flex-1 justify-center">
+        <div className="container flex justify-center">
+          <div className="flex w-full flex-col gap-4 p-4">
+            <div className="text-center text-4xl font-bold">Problems connecting to ei Noah</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!lobby)
     return (
