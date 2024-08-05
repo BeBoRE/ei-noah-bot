@@ -93,7 +93,7 @@
     "@expo/config-plugins": "^7.8.4",
     "@types/babel__core": "^7.20.2",
     "babel-preset-expo": "^11.0.10",
-    "eas-cli": "^7.3.0",
+    "eas-cli": "^10.2.2",
     "eslint": "^8.51.0",
     "expo-doctor": "^1.1.3",
     "postcss": "^8.4.31",
