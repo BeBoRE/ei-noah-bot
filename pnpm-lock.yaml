@@ -202,11 +202,11 @@ importers:
         specifier: ^5.49.2
         version: 5.50.1(@tanstack/react-query@5.50.1)(react@18.2.0)
       '@trpc/client':
-        specifier: 11.0.0-alpha-tmp-subscription-connection-state.486
-        version: 11.0.0-alpha-tmp-subscription-connection-state.486(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)
+        specifier: 11.0.0-alpha-tmp-subscription-connection-state.487
+        version: 11.0.0-alpha-tmp-subscription-connection-state.487(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.487)
       '@trpc/react-query':
-        specifier: 11.0.0-alpha-tmp-subscription-connection-state.486
-        version: 11.0.0-alpha-tmp-subscription-connection-state.486(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-alpha-tmp-subscription-connection-state.486)(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)(react-dom@18.2.0)(react@18.2.0)
+        specifier: 11.0.0-alpha-tmp-subscription-connection-state.487
+        version: 11.0.0-alpha-tmp-subscription-connection-state.487(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-alpha-tmp-subscription-connection-state.487)(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.487)(react-dom@18.2.0)(react@18.2.0)
       babel-plugin-inline-dotenv:
         specifier: ^1.7.0
         version: 1.7.0
@@ -6431,6 +6431,14 @@ packages:
     dependencies:
       '@trpc/server': 11.0.0-alpha-tmp-subscription-connection-state.486
 
+  /@trpc/client@11.0.0-alpha-tmp-subscription-connection-state.487(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.487):
+    resolution: {integrity: sha512-Esjpr5KZi8F5NYEKkHWo4SXx5cLv9t3h2O8KA09+VSnnHpxtVTwCTdgzvH1Qin5UMKnKl9Ylg4bCRlMZBgzwng==}
+    peerDependencies:
+      '@trpc/server': 11.0.0-alpha-tmp-subscription-connection-state.487+b2f85a07a
+    dependencies:
+      '@trpc/server': 11.0.0-alpha-tmp-subscription-connection-state.487
+    dev: false
+
   /@trpc/next@11.0.0-alpha-tmp-subscription-connection-state.486(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-alpha-tmp-subscription-connection-state.486)(@trpc/react-query@11.0.0-alpha-tmp-subscription-connection-state.486)(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486)(next@14.2.4)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-bLoBV36JA3AoB0nvI/RANsq6oJM3qk/WWaskbVK5GNxlIbOeQQ2kHL1H3azr6+K3nxyfYdfBlcW9aleg2sRXIA==}
     peerDependencies:
@@ -6471,8 +6479,28 @@ packages:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
 
+  /@trpc/react-query@11.0.0-alpha-tmp-subscription-connection-state.487(@tanstack/react-query@5.50.1)(@trpc/client@11.0.0-alpha-tmp-subscription-connection-state.487)(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.487)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-WUU020J1ZFQetP4QsuYWJX9DqyIPB6RpeJtGnaQ1DcTXcsZ6jdGNZkDDg2EDsgZ4Ywurk1nFZgif/RMts6ijjw==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.49.2
+      '@trpc/client': 11.0.0-alpha-tmp-subscription-connection-state.487+b2f85a07a
+      '@trpc/server': 11.0.0-alpha-tmp-subscription-connection-state.487+b2f85a07a
+      react: '>=18.2.0'
+      react-dom: '>=18.2.0'
+    dependencies:
+      '@tanstack/react-query': 5.50.1(react@18.2.0)
+      '@trpc/client': 11.0.0-alpha-tmp-subscription-connection-state.487(@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.487)
+      '@trpc/server': 11.0.0-alpha-tmp-subscription-connection-state.487
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+    dev: false
+
   /@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.486:
     resolution: {integrity: sha512-CUhMrYxbMRlBm2sEVTIJ/Ne58kV86joAxTf1tEM6TZx0ndGPD4ePN5X3zU34GdssYKuwkJ0ie9CPq2jhQ+CN1A==}
+
+  /@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.487:
+    resolution: {integrity: sha512-y8HVySSq3RmETG/3AzvPdpwCQpxAZIjhPUIxtHFRIm4g/kUu9UK6eEa9Qv0fdarXks1qbt7ttRVZQKQpq2OBeA==}
+    dev: false
 
   /@trpc/server@11.0.0-rc.452:
     resolution: {integrity: sha512-sqZ2Nmh9hD/xuW5x/9tLoa7N1k/99B0eCDoVdbVtnMQZ0gH79vlLQXrbIPg6BZxu/h1i/jyHWXBmFMqN2JZ6xw==}

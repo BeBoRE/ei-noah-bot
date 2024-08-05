@@ -34,9 +34,18 @@ function Screen() {
   } = useLobby();
   const { top, left, right } = useSafeAreaInsets();
 
+
+  if (subscription.error) {
+    return (
+      <Animated.View style={{paddingTop: top, paddingLeft: left, paddingRight: right}}>
+        <AnimatedText>Unrecoverable error occurred</AnimatedText>
+      </Animated.View>
+    );
+  }
+
   if (subscription.connectionError) {
     return (
-      <Animated.View>
+      <Animated.View style={{paddingTop: top, paddingLeft: left, paddingRight: right}}>
         <AnimatedText>Connection error</AnimatedText>
       </Animated.View>
     );
