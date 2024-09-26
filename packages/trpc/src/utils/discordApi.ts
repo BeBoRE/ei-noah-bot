@@ -11,7 +11,7 @@ import {
 } from './kv';
 
 export const rest = new REST({ version: '10' }).setToken(
-  process.env.CLIENT_TOKEN || 'dsfsdf',
+  process.env.CLIENT_TOKEN || '',
 );
 
 export const getApiMember = async (guildId: string, userId: string) => {
