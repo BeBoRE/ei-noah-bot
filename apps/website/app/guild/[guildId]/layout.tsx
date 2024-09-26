@@ -7,7 +7,7 @@ import { Button } from 'app/_components/ui/button';
 import { Separator } from 'app/_components/ui/separator';
 import { Skeleton } from 'app/_components/ui/skeleton';
 import { CDNRoutes, ImageFormat, RouteBases } from 'discord-api-types/v10';
-import { Settings, Users } from 'lucide-react';
+import { CalendarHeart, Settings, Users } from 'lucide-react';
 import rscApi from 'trpc/server';
 
 import { userIsAdmin } from '@ei/trpc/src/utils';
@@ -101,11 +101,17 @@ function GuildLayout({ children, params: { guildId } }: Props) {
           <GuildInfo guildId={guildId} />
         </Suspense>
         <div className="flex-1 rounded-md bg-primary-100 p-2 dark:bg-primary-900 sm:dark:bg-gradient-to-b sm:dark:from-primary-900 sm:dark:to-primary-950">
-          <div className="py-2">
+          <div className="flex flex-col gap-2 py-2">
             <Button asChild className="w-full justify-start" variant="outline">
               <Link href={`/guild/${guildId}/roles`}>
                 <Users className="mr-2 h-4 w-4" />
                 Roles
+              </Link>
+            </Button>
+            <Button asChild className="w-full justify-start" variant="outline">
+              <Link href={`/guild/${guildId}/birthdays`}>
+                <CalendarHeart className="mr-2 h-4 w-4" />
+                Birthdays
               </Link>
             </Button>
           </div>

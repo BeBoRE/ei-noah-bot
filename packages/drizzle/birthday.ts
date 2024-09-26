@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull } from 'drizzle-orm';
 
 import { DrizzleClient } from './client';
 import { birthdays } from './tables/schema';
@@ -16,3 +16,24 @@ export const getUserBirthday = async (
 
   return dbBirthday;
 };
+
+export const getUsersBirthday = async (
+  drizzle: DrizzleClient,
+  users: { id: string }[],
+) => {
+  const dbBirthdays = await drizzle
+    .selectDistinctOn([birthdays.userId])
+    .from(birthdays)
+    .where(
+      and(
+        isNotNull(birthdays.date),
+        inArray(
+          birthdays.userId,
+          users.map((u) => u.id),
+        ),
+      ),
+    )
+    .orderBy(birthdays.userId, desc(birthdays.createdAt));
+    
+  return dbBirthdays;
+}
