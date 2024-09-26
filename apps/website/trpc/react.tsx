@@ -28,6 +28,7 @@ const getQueryClient = () => {
     return createQueryClient();
   }
   // Browser: use singleton pattern to keep the same query client
+  // eslint-disable-next-line no-return-assign
   return (clientQueryClientSingleton ??= createQueryClient());
 };
 
