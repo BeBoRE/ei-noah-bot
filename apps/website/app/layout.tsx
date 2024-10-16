@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import '../styles/globals.css';
 
 import Link from 'next/link';
+import { ExternalLink } from 'lucide-react';
 
 import { Button } from './_components/ui/button';
 import GithubIcon from './GithubIcon';
@@ -64,8 +65,14 @@ export default async function Layout({ children }: Props) {
                 variant="link"
                 className="flex gap-2 p-2 focus:no-underline"
               >
-                <Link href="https://github.com/BeBoRE/ei-noah-bot">
-                  <span className="hidden sm:inline">Proudly open-source</span>
+                <Link
+                  href="https://github.com/BeBoRE/ei-noah-bot"
+                  target="_blank"
+                >
+                  <span className="hidden place-items-center gap-1 sm:flex">
+                    <ExternalLink className="h-5 w-5" />
+                    Proudly open-source
+                  </span>
                   <GithubIcon className="h-8 w-8" />
                 </Link>
               </Button>
