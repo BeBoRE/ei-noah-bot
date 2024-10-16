@@ -22,11 +22,14 @@ RUN apk --no-cache --virtual .build-deps add \
         cairo \
         pango \
         giflib \
-        libjpeg \ 
+        libjpeg \
         librsvg-dev
 
+
 RUN mkdir ~/.fonts
-RUN wget -qO- http://plasmasturm.org/code/vistafonts-installer/vistafonts-installer | bash
+COPY vistafonts-installer.sh .
+RUN chmod +x vistafonts-installer.sh
+RUN bash ./vistafonts-installer.sh
 
 COPY . .
 
