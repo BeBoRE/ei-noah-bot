@@ -857,8 +857,8 @@ importers:
         specifier: '*'
         version: link:../tsconfig
       '@trpc/server':
-        specifier: 11.0.0-rc.452
-        version: 11.0.0-rc.452
+        specifier: 11.0.0-alpha-tmp-subscription-connection-state.486
+        version: 11.0.0-alpha-tmp-subscription-connection-state.486
       discord-api-types:
         specifier: ^0.37.62
         version: 0.37.62
