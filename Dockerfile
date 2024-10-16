@@ -25,12 +25,6 @@ RUN apk --no-cache --virtual .build-deps add \
         libjpeg \
         librsvg-dev
 
-
-RUN mkdir ~/.fonts
-COPY vistafonts-installer.sh .
-RUN chmod +x vistafonts-installer.sh
-RUN bash ./vistafonts-installer.sh
-
 COPY . .
 
 RUN npm install -g pnpm@latest-8
