@@ -16,9 +16,21 @@ import SuperJSON from 'superjson';
 import { api } from '@ei/react-shared/api';
 import { LobbyProvider } from '@ei/react-shared/context/lobby';
 
+import { createQueryClient } from './query-client';
 import { getApiUrl, transformer } from './shared';
 
 export { api };
+
+let clientQueryClientSingleton: QueryClient | undefined;
+const getQueryClient = () => {
+  if (typeof window === 'undefined') {
+    // Server: always make a new query client
+    return createQueryClient();
+  }
+  // Browser: use singleton pattern to keep the same query client
+  // eslint-disable-next-line no-return-assign
+  return (clientQueryClientSingleton ??= createQueryClient());
+};
 
 type Props = {
   children: React.ReactNode;
@@ -32,17 +44,7 @@ const persister = createSyncStoragePersister({
 });
 
 export default function TRPCReactProvider({ children, headers }: Props) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 1 * 1000,
-            gcTime: 24 * 60 * 60 * 1000,
-          },
-        },
-      }),
-  );
+  const queryClient = getQueryClient();
 
   const httpLink = unstable_httpBatchStreamLink({
     transformer,
