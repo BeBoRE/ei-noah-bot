@@ -11,6 +11,7 @@ jobs:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      EXPO_TOKEN: ${{secrets.EXPO_TOKEN}}
     permissions:
       contents: read
       pull-requests: write

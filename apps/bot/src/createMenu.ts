@@ -100,7 +100,15 @@ async function createMenu<T>({
 
     for (let i = 0; i < navigationButtons.length; i += 1) {
       const item = strings[i + page * navigationButtons.length];
-      if (item) text += `\n${navigationButtons[i]?.data.label} \`${item}\``;
+      if (item) {
+        const buttonData = navigationButtons[i]?.data;
+
+        if (buttonData) {
+          const label = 'label' in buttonData ? buttonData.label || '' : 'UNKNOWN';
+
+          text += `\n${label} \`${item}\``
+        }
+      };
     }
 
     if (pages - 1) text += `\n\n> \`${page + 1}/${pages}\``;
