@@ -627,7 +627,7 @@ class EiNoah implements IRouter {
 
   public useContext(
     name: string,
-    type: Exclude<ApplicationCommandType, 'CHAT_INPUT'>,
+    type: Exclude<ApplicationCommandType, ApplicationCommandType.ChatInput>,
     handler: ContextMenuHandler,
   ): void {
     if (this.contextHandlers.has(name))
@@ -828,9 +828,6 @@ class EiNoah implements IRouter {
         await this.onInit(client, drizzle, this.i18n, this.logger);
 
       this.contextHandlers.forEach((info, name) => {
-        // TODO: Dit weer weghalen na release V14
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         this.applicationCommandData.push({
           name,
           type: info.type,

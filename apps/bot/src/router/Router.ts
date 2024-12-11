@@ -222,7 +222,7 @@ export type ContextMenuHandler = (
   | string
   | Promise<InteractionReplyOptions | string>;
 export interface ContextMenuHandlerInfo {
-  type: Exclude<ApplicationCommandType, 'CHAT_INPUT'>;
+  type: Exclude<ApplicationCommandType, ApplicationCommandType.ChatInput>;
   handler: ContextMenuHandler;
 }
 
@@ -310,7 +310,7 @@ export default class Router implements IRouter {
 
   public useContext(
     name: string,
-    type: Exclude<ApplicationCommandType, 'CHAT_INPUT'>,
+    type: Exclude<ApplicationCommandType, ApplicationCommandType.ChatInput>,
     handler: ContextMenuHandler,
   ): void {
     if (this.contextHandlers.has(name))
