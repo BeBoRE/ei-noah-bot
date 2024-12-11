@@ -438,8 +438,8 @@ importers:
         specifier: '*'
         version: link:../../packages/trpc
       '@trpc/server':
-        specifier: 11.0.0-rc.452
-        version: 11.0.0-rc.452
+        specifier: 11.0.0-alpha-tmp-subscription-connection-state.486
+        version: 11.0.0-alpha-tmp-subscription-connection-state.486
       ws:
         specifier: ^8.14.2
         version: 8.14.2
@@ -6510,10 +6510,6 @@ packages:
 
   /@trpc/server@11.0.0-alpha-tmp-subscription-connection-state.487:
     resolution: {integrity: sha512-y8HVySSq3RmETG/3AzvPdpwCQpxAZIjhPUIxtHFRIm4g/kUu9UK6eEa9Qv0fdarXks1qbt7ttRVZQKQpq2OBeA==}
-    dev: false
-
-  /@trpc/server@11.0.0-rc.452:
-    resolution: {integrity: sha512-sqZ2Nmh9hD/xuW5x/9tLoa7N1k/99B0eCDoVdbVtnMQZ0gH79vlLQXrbIPg6BZxu/h1i/jyHWXBmFMqN2JZ6xw==}
     dev: false
 
   /@tsconfig/node10@1.0.9:
