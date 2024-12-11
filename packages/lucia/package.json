@@ -17,7 +17,7 @@
     "drizzle-orm": "^0.28.6",
     "ip": "^1.1.8",
     "lucia": "^2.7.1",
-    "nanoid": "^5.0.1"
+    "nanoid": "^5.0.9"
   },
   "devDependencies": {
     "@ei/tsconfig": "*",
