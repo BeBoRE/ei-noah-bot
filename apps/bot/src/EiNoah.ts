@@ -627,7 +627,7 @@ class EiNoah implements IRouter {
 
   public useContext(
     name: string,
-    type: Exclude<ApplicationCommandType, ApplicationCommandType.ChatInput>,
+    type: Exclude<ApplicationCommandType, ApplicationCommandType.ChatInput | ApplicationCommandType.PrimaryEntryPoint>,
     handler: ContextMenuHandler,
   ): void {
     if (this.contextHandlers.has(name))

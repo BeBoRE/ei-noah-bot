@@ -50,18 +50,6 @@ importers:
       '@ei/trpc':
         specifier: '*'
         version: link:../../packages/trpc
-      '@types/chart.js':
-        specifier: ^2.9.34
-        version: 2.9.34
-      '@types/cron':
-        specifier: ^1.7.2
-        version: 1.7.2
-      '@types/node-fetch':
-        specifier: ^2.5.7
-        version: 2.5.7
-      '@types/source-map-support':
-        specifier: ^0.5.3
-        version: 0.5.3
       canvas:
         specifier: ^2.11.2
         version: 2.11.2
@@ -129,12 +117,27 @@ importers:
       '@ei/tsconfig':
         specifier: '*'
         version: link:../../packages/tsconfig
+      '@types/chart.js':
+        specifier: ^2.9.34
+        version: 2.9.34
+      '@types/cron':
+        specifier: ^1.7.2
+        version: 1.7.2
       '@types/i18next-fs-backend':
         specifier: ^1.0.1
         version: 1.0.1
+      '@types/lodash':
+        specifier: ^4.14.199
+        version: 4.14.199
       '@types/node':
         specifier: ^18.17.0
         version: 18.17.18
+      '@types/node-fetch':
+        specifier: ^2.5.7
+        version: 2.5.7
+      '@types/source-map-support':
+        specifier: ^0.5.3
+        version: 0.5.3
       '@types/string-similarity':
         specifier: ^4.0.0
         version: 4.0.0
@@ -6579,7 +6582,7 @@ packages:
     resolution: {integrity: sha512-CtZVk+kh1IN67dv+fB0CWmCLCRrDJgqOj15qPic2B1VCMovNO6B7Vhf/TgPpNscjhAL1j+qUntDMWb9A4ZmPTg==}
     dependencies:
       moment: 2.29.4
-    dev: false
+    dev: true
 
   /@types/cli-progress@3.11.5:
     resolution: {integrity: sha512-D4PbNRbviKyppS5ivBGyFO29POlySLmA2HyUFE4p5QGazAMM3CwkKWcvTl8gvElSuxRh6FPKL8XmidX873ou4g==}
@@ -6611,7 +6614,7 @@ packages:
     dependencies:
       '@types/node': 18.17.18
       moment: 2.29.4
-    dev: false
+    dev: true
 
   /@types/emoji-mart@3.0.11:
     resolution: {integrity: sha512-E0/sO/ueRL33DDov4qGIn8uNv9PZaTULaLMp6zSXB5bIWRb2zpV37Z1OxXRCiV5g+YL1F8tdn5zDNXk2Wdd+ig==}
@@ -6717,7 +6720,7 @@ packages:
     dependencies:
       '@types/node': 18.17.18
       form-data: 3.0.1
-    dev: false
+    dev: true
 
   /@types/node@12.20.55:
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
@@ -6801,7 +6804,7 @@ packages:
     resolution: {integrity: sha512-fvjMjVH8Rmokw2dWh1dkj90iX5R8FPjeZzjNH+6eFXReh0QnHFf1YBl3B0CF0RohIAA3SDRJsGeeUWKl6d7HqA==}
     dependencies:
       source-map: 0.6.1
-    dev: false
+    dev: true
 
   /@types/stack-utils@2.0.1:
     resolution: {integrity: sha512-Hl219/BT5fLAaz6NDkSuhzasy49dwQS/DSdu4MdggFB8zcXv7vflBI3xp7FEmkmdDkBUI2bPUNeMttp2knYdxw==}
@@ -10950,7 +10953,6 @@ packages:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       mime-types: 2.1.35
-    dev: false
 
   /form-data@4.0.0:
     resolution: {integrity: sha512-ETEklSGi5t0QMZuiXoA/Q6vcnxcLQP5vdugSpuAyi6SVGi2clPPp+xgEhuMaHC+zGgn31Kd235W35f7Hykkaww==}

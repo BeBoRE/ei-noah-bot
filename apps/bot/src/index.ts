@@ -616,7 +616,7 @@ process.title = 'Ei Noah Bot';
                   return client.channels
                     .fetch(guild.birthdayChannel, { cache: true })
                     .then<unknown>((channel) => {
-                      if (channel === null || !channel.isTextBased()) {
+                      if (channel === null || !channel.isSendable()) {
                         return Promise.resolve(null);
                       }
 
@@ -661,7 +661,7 @@ process.title = 'Ei Noah Bot';
                   return client.channels
                     .fetch(guild.birthdayChannel, { cache: true })
                     .then<unknown>((channel) => {
-                      if (channel === null || !channel.isTextBased()) {
+                      if (channel === null || !channel.isSendable()) {
                         return Promise.resolve(null);
                       }
 
@@ -709,7 +709,7 @@ process.title = 'Ei Noah Bot';
           return client.channels
             .fetch(guild.birthdayChannel, { cache: true })
             .then<unknown>((channel) => {
-              if (channel === null || !channel.isTextBased()) {
+              if (channel === null || !channel.isSendable()) {
                 return Promise.resolve(null);
               }
 
