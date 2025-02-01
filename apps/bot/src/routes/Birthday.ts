@@ -460,7 +460,7 @@ const generateImage = async (
 
   const fontSize = 180;
 
-  ctx.font = `${fontSize}px 'Arial Black'`;
+  ctx.font = `${fontSize}px 'sans-serif Arial Black'`;
   ctx.fillStyle = '#FFFFFF';
   colorFullText(
     ctx,

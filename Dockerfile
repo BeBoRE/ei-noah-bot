@@ -23,7 +23,9 @@ RUN apk --no-cache --virtual .build-deps add \
         pango \
         giflib \
         libjpeg \
-        librsvg-dev
+        librsvg-dev \
+    && apk --no-cache add \
+        font-noto
 
 COPY . .
 
