@@ -87,7 +87,7 @@
   "devDependencies": {
     "@babel/core": "^7.23.0",
     "@babel/preset-env": "^7.22.20",
-    "@babel/runtime": "^7.23.1",
+    "@babel/runtime": "^7.26.10",
     "@ei/trpc": "workspace:0.0.1",
     "@ei/tsconfig": "*",
     "@expo/config-plugins": "^7.8.4",
