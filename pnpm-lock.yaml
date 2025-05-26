@@ -413,8 +413,8 @@ importers:
         specifier: ^4.20.0
         version: 4.20.0
       http-proxy-middleware:
-        specifier: ^2.0.7
-        version: 2.0.7(@types/express@4.17.21)
+        specifier: ^2.0.9
+        version: 2.0.9(@types/express@4.17.21)
     devDependencies:
       '@ei/tsconfig':
         specifier: '*'
@@ -3146,7 +3146,7 @@ packages:
       '@changesets/types': 5.2.1
       '@manypkg/get-packages': 1.1.3
       fs-extra: 7.0.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
     dev: true
 
   /@changesets/errors@0.1.4:
@@ -3189,7 +3189,7 @@ packages:
       '@changesets/types': 5.2.1
       '@manypkg/get-packages': 1.1.3
       is-subdir: 1.2.0
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       spawndamnit: 2.0.0
     dev: true
 
@@ -4510,7 +4510,7 @@ packages:
       find-up: 5.0.0
       find-yarn-workspace-root: 2.0.0
       js-yaml: 3.14.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       npm-package-arg: 7.0.0
       split: 1.0.1
       sudo-prompt: 9.1.1
@@ -7633,8 +7633,8 @@ packages:
   /@types/http-errors@2.0.4:
     resolution: {integrity: sha512-D0CFMMtydbJAegzOyHjtiKPLlvnm3iTZyZRSZoLq2mRhDdmLfIWOCYPfQJ4cu2erKghU++QvjcUjp/5h7hESpA==}
 
-  /@types/http-proxy@1.17.14:
-    resolution: {integrity: sha512-SSrD0c1OQzlFX7pGu1eXxSEjemej64aaNPRhhVYUGqXh0BtldAAx37MG8btcumvpgKyZp1F5Gn3JkktdxiFv6w==}
+  /@types/http-proxy@1.17.16:
+    resolution: {integrity: sha512-sdWoUajOB1cd0A8cRRQ1cfyWNbmFKLAqBB89Y8x5iYyG/mkJHc0YUH8pdWBy2omi9qtCpiIgGjuwO0dQST2l5w==}
     dependencies:
       '@types/node': 18.18.4
     dev: false
@@ -8874,11 +8874,11 @@ packages:
     dependencies:
       balanced-match: 1.0.2
 
-  /braces@3.0.2:
-    resolution: {integrity: sha512-b8um+L1RzM3WDSzvhm6gIz1yfTbBt6YTlcEKAvsmqCZZFw46z626lVj9j1yEPW33H5H+lBQpZMP1k8l+78Ha0A==}
+  /braces@3.0.3:
+    resolution: {integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==}
     engines: {node: '>=8'}
     dependencies:
-      fill-range: 7.0.1
+      fill-range: 7.1.1
 
   /breakword@1.0.6:
     resolution: {integrity: sha512-yjxDAYyK/pBvws9H4xKYpLDpYKEH6CzrBPAuXq3x18I+c/2MkVtT3qAr7Oloi6Dss9qNhPVueAAVU1CSeNDIXw==}
@@ -9204,7 +9204,7 @@ packages:
     engines: {node: '>= 8.10.0'}
     dependencies:
       anymatch: 3.1.3
-      braces: 3.0.2
+      braces: 3.0.3
       glob-parent: 5.1.2
       is-binary-path: 2.1.0
       is-glob: 4.0.3
@@ -11891,7 +11891,7 @@ packages:
       '@nodelib/fs.walk': 1.2.8
       glob-parent: 5.1.2
       merge2: 1.4.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
 
   /fast-glob@3.3.2:
     resolution: {integrity: sha512-oX2ruAFQwf/Orj8m737Y5adxDQO0LAB7/S5MnxCdTNDd4p6BsyIVsv9JQsATbTSq8KHRpLwIHbVlUNatxd+1Ow==}
@@ -11901,7 +11901,7 @@ packages:
       '@nodelib/fs.walk': 1.2.8
       glob-parent: 5.1.2
       merge2: 1.4.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
     dev: true
 
   /fast-json-stable-stringify@2.1.0:
@@ -12005,8 +12005,8 @@ packages:
       minimatch: 5.1.6
     dev: true
 
-  /fill-range@7.0.1:
-    resolution: {integrity: sha512-qOo9F+dMUmC2Lcb4BbVvnKJxTPjCm+RRpe4gDuGrzkL7mEVl/djYSu2OdQ2Pa302N4oqkSg9ir6jaLWJ2USVpQ==}
+  /fill-range@7.1.1:
+    resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
     engines: {node: '>=8'}
     dependencies:
       to-regex-range: 5.0.1
@@ -12077,14 +12077,14 @@ packages:
   /find-yarn-workspace-root2@1.2.16:
     resolution: {integrity: sha512-hr6hb1w8ePMpPVUK39S4RlwJzi+xPLuVuG8XlwXU3KD5Yn3qgBWVfy3AzNlDhWvE1EORCE65/Qm26rFQt3VLVA==}
     dependencies:
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       pkg-dir: 4.2.0
     dev: true
 
   /find-yarn-workspace-root@2.0.0:
     resolution: {integrity: sha512-1IMnbjt4KzsQfnhnzNd8wUEgXZ44IzZaZmnLYx7D5FZlaHt2gW20Cri8Q+E/t5tIj4+epTBub+2Zxu/vNILzqQ==}
     dependencies:
-      micromatch: 4.0.5
+      micromatch: 4.0.8
 
   /flat-cache@3.1.1:
     resolution: {integrity: sha512-/qM2b3LUIaIgviBQovTLvijfyOQXPtSRnRK26ksj2J7rzPIecePUIpJsZ4T02Qg+xiAEKIs5K8dsHEd+VaKa/Q==}
@@ -12109,8 +12109,8 @@ packages:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
     dev: false
 
-  /follow-redirects@1.15.5:
-    resolution: {integrity: sha512-vSFWUON1B+yAw1VN4xMfxgn5fTUiaOzAJCKBwIIgT/+7CuGy9+r+5gITvP62j3RmaD5Ph65UaERdOSRGUzZtgw==}
+  /follow-redirects@1.15.9:
+    resolution: {integrity: sha512-gew4GsXizNgdoRyqmyfMHyAmXsZDk6mHkSxZFCzW9gwlbtOW44CDtYavM+y+72qD/Vq2l550kMF52DT8fOLJqQ==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -12775,8 +12775,8 @@ packages:
       toidentifier: 1.0.1
     dev: false
 
-  /http-proxy-middleware@2.0.7(@types/express@4.17.21):
-    resolution: {integrity: sha512-fgVY8AV7qU7z/MmXJ/rxwbrtQH4jBQ9m7kp3llF0liB7glmFeVZFBepQb32T3y8n8k2+AEYuMPCpinYW+/CuRA==}
+  /http-proxy-middleware@2.0.9(@types/express@4.17.21):
+    resolution: {integrity: sha512-c1IyJYLYppU574+YI7R4QyX2ystMtVXZwIdzazUIPIJsHuWNd+mho2j+bKoHftndicGj9yh+xjd+l0yj7VeT1Q==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
       '@types/express': ^4.17.13
@@ -12785,11 +12785,11 @@ packages:
         optional: true
     dependencies:
       '@types/express': 4.17.21
-      '@types/http-proxy': 1.17.14
+      '@types/http-proxy': 1.17.16
       http-proxy: 1.18.1
       is-glob: 4.0.3
       is-plain-obj: 3.0.0
-      micromatch: 4.0.5
+      micromatch: 4.0.8
     transitivePeerDependencies:
       - debug
     dev: false
@@ -12799,7 +12799,7 @@ packages:
     engines: {node: '>=8.0.0'}
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.5
+      follow-redirects: 1.15.9
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -13358,7 +13358,7 @@ packages:
       '@types/stack-utils': 2.0.1
       chalk: 4.1.2
       graceful-fs: 4.2.11
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       pretty-format: 29.7.0
       slash: 3.0.0
       stack-utils: 2.0.6
@@ -13497,7 +13497,7 @@ packages:
       chalk: 4.1.2
       flow-parser: 0.206.0
       graceful-fs: 4.2.11
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       neo-async: 2.6.2
       node-dir: 0.1.17
       recast: 0.21.5
@@ -14314,7 +14314,7 @@ packages:
       graceful-fs: 4.2.11
       invariant: 2.2.4
       jest-worker: 29.7.0
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       node-abort-controller: 3.1.1
       nullthrows: 1.1.1
       walker: 1.0.8
@@ -14469,7 +14469,14 @@ packages:
     resolution: {integrity: sha512-DMy+ERcEW2q8Z2Po+WNXuw3c5YaUSFjAO5GsJqfEl7UjvtIuFKO6ZrKvcItdy98dwFI2N1tg3zNIdKaQT+aNdA==}
     engines: {node: '>=8.6'}
     dependencies:
-      braces: 3.0.2
+      braces: 3.0.3
+      picomatch: 2.3.1
+
+  /micromatch@4.0.8:
+    resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
+    engines: {node: '>=8.6'}
+    dependencies:
+      braces: 3.0.3
       picomatch: 2.3.1
 
   /mime-db@1.52.0:
