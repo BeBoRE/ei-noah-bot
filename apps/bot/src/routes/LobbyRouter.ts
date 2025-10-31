@@ -400,24 +400,26 @@ const updateRecentlyAllowedUsers = async (
 
   const now = new Date();
 
-  await drizzle
-    .insert(recentlyAddedUsers)
-    .values(
-      allowedIds.map((userId) => ({
-        date: now.toISOString(),
-        owningGuildUserId: owner.id,
-        addedGuildUserId: userId,
-      })),
-    )
-    .onConflictDoUpdate({
-      target: [
-        recentlyAddedUsers.addedGuildUserId,
-        recentlyAddedUsers.owningGuildUserId,
-      ],
-      set: {
-        date: now.toISOString(),
-      },
-    });
+  if (allowedGuildUsers.length) {
+    await drizzle
+      .insert(recentlyAddedUsers)
+      .values(
+        allowedIds.map((userId) => ({
+          date: now.toISOString(),
+          owningGuildUserId: owner.id,
+          addedGuildUserId: userId,
+        })),
+      )
+      .onConflictDoUpdate({
+        target: [
+          recentlyAddedUsers.addedGuildUserId,
+          recentlyAddedUsers.owningGuildUserId,
+        ],
+        set: {
+          date: now.toISOString(),
+        },
+      });
+  }
 };
 
 interface AddUsersResponse {
@@ -512,7 +514,7 @@ const addUsers = async ({
   }
 
   const allowedUsers = allowedMentions.filter(
-    (user): user is DiscordUser => user instanceof DiscordUser,
+    (user) => user instanceof DiscordUser,
   );
 
   updateRecentlyAllowedUsers(drizzle, owner, allowedUsers);
