@@ -24,3 +24,4 @@ catalog:
   "@trpc/next": ^11.7.1
   "@trpc/react-query": ^11.7.1
   "typescript": "^5.9.3"
+  

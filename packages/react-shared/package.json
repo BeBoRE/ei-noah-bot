@@ -16,13 +16,13 @@
   },
   "devDependencies": {
     "@ei/tsconfig": "workspace:*",
-    "@types/react": "^18.2.27",
+    "@types/react": "catalog:react19",
     "eslint": "^8.51.0",
     "typescript": "catalog:",
     "@trpc/react-query": "catalog:"
   },
   "peerDependencies": {
-    "react": ">=18.2.0",
+    "react": "catalog:react19",
     "@trpc/react-query": "catalog:"
   }
 }
