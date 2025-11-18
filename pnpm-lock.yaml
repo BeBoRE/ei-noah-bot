@@ -774,14 +774,14 @@ importers:
         version: link:../trpc
       react:
         specifier: '>=18.2.0'
-        version: 18.2.0
+        version: 19.1.0
     devDependencies:
       '@ei/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       '@trpc/react-query':
         specifier: 'catalog:'
-        version: 11.7.1(@tanstack/react-query@5.90.8(react@18.2.0))(@trpc/client@11.7.1(@trpc/server@11.7.1(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.7.1(typescript@5.9.3))(react-dom@19.1.0(react@18.2.0))(react@18.2.0)(typescript@5.9.3)
+        version: 11.7.1(@tanstack/react-query@5.90.8(react@19.1.0))(@trpc/client@11.7.1(@trpc/server@11.7.1(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.7.1(typescript@5.9.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
       '@types/react':
         specifier: ^18.2.27
         version: 18.3.26
@@ -3972,6 +3972,9 @@ packages:
   '@types/node@18.19.130':
     resolution: {integrity: sha512-GRaXQx6jGfL8sKfaIDD6OupbIHBr9jv7Jnaml9tB7l4v068PAOXqfcujMMo5PhbIs6ggR1XODELqahT2R8v0fg==}
 
+  '@types/node@24.10.1':
+    resolution: {integrity: sha512-GNWcUTRBgIRJD5zj+Tq0fKOJ5XZajIiBroOF0yvj2bSU1WvNdYS/dn9UxwsujGW4JX06dnHyjV2y9rRaybH0iQ==}
+
   '@types/pg@8.15.6':
     resolution: {integrity: sha512-NoaMtzhxOrubeL/7UZuNTrejB4MPAJ0RpxZqXQf2qXuVlTPuG6Y8p4u9dKRaue4yjmC7ZhzVO2/Yyyn25znrPQ==}
 
@@ -4022,8 +4025,8 @@ packages:
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
 
-  '@types/yargs@15.0.19':
-    resolution: {integrity: sha512-2XUaGVmyQjgyAZldf0D0c14vvo/yv0MhQBSTJcejMMaitsn3nxCB6TmH4G0ZQf+uxROOa9mpanoSm8h6SG/1ZA==}
+  '@types/yargs@15.0.20':
+    resolution: {integrity: sha512-KIkX+/GgfFitlASYCGoSF+T4XRXhOubJLhkLVtSfsRTe9jWMmuM2g28zQ41BtPTG7TRBb2xHW+LCNVE9QR/vsg==}
 
   '@types/yargs@17.0.34':
     resolution: {integrity: sha512-KExbHVa92aJpw9WDQvzBaGVE2/Pz+pLZQloT2hjL8IqsZnV62rlPOYvNnLmf/L2dyllfVUOVBj64M0z/46eR2A==}
@@ -6943,6 +6946,10 @@ packages:
     resolution: {integrity: sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==}
     hasBin: true
 
+  js-yaml@3.14.2:
+    resolution: {integrity: sha512-PMSmkqxr106Xa156c2M265Z+FTrPl+oxd/rgOQy2tijQeK5TxQ43psO1ZCwhVOSdnn+RzkzlRz/eY4BgJBYVpg==}
+    hasBin: true
+
   js-yaml@4.1.1:
     resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
     hasBin: true
@@ -9453,6 +9460,9 @@ packages:
 
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
+
+  undici-types@7.16.0:
+    resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
   undici@5.29.0:
     resolution: {integrity: sha512-raqeBD6NQK4SkWhQzeYKd1KmIG6dllBOTt55Rmkt4HtI9mwdWtJljnrXjAFUBLTSN67HWrOIZ3EPF4kjUw80Bg==}
@@ -12105,8 +12115,8 @@ snapshots:
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 18.19.130
-      '@types/yargs': 15.0.19
+      '@types/node': 24.10.1
+      '@types/yargs': 15.0.20
       chalk: 4.1.2
     optional: true
 
@@ -13616,15 +13626,6 @@ snapshots:
       react-dom: 18.2.0(react@18.2.0)
       typescript: 5.9.3
 
-  '@trpc/react-query@11.7.1(@tanstack/react-query@5.90.8(react@18.2.0))(@trpc/client@11.7.1(@trpc/server@11.7.1(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.7.1(typescript@5.9.3))(react-dom@19.1.0(react@18.2.0))(react@18.2.0)(typescript@5.9.3)':
-    dependencies:
-      '@tanstack/react-query': 5.90.8(react@18.2.0)
-      '@trpc/client': 11.7.1(@trpc/server@11.7.1(typescript@5.9.3))(typescript@5.9.3)
-      '@trpc/server': 11.7.1(typescript@5.9.3)
-      react: 18.2.0
-      react-dom: 19.1.0(react@18.2.0)
-      typescript: 5.9.3
-
   '@trpc/react-query@11.7.1(@tanstack/react-query@5.90.8(react@19.1.0))(@trpc/client@11.7.1(@trpc/server@11.7.1(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.7.1(typescript@5.9.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.9.3)':
     dependencies:
       '@tanstack/react-query': 5.90.8(react@19.1.0)
@@ -13775,6 +13776,11 @@ snapshots:
     dependencies:
       undici-types: 5.26.5
 
+  '@types/node@24.10.1':
+    dependencies:
+      undici-types: 7.16.0
+    optional: true
+
   '@types/pg@8.15.6':
     dependencies:
       '@types/node': 18.19.130
@@ -13829,7 +13835,7 @@ snapshots:
 
   '@types/yargs-parser@21.0.3': {}
 
-  '@types/yargs@15.0.19':
+  '@types/yargs@15.0.20':
     dependencies:
       '@types/yargs-parser': 21.0.3
     optional: true
@@ -14959,7 +14965,7 @@ snapshots:
     dependencies:
       import-fresh: 2.0.0
       is-directory: 0.3.1
-      js-yaml: 3.14.1
+      js-yaml: 3.14.2
       parse-json: 4.0.0
     optional: true
 
@@ -17385,6 +17391,12 @@ snapshots:
       argparse: 1.0.10
       esprima: 4.0.1
 
+  js-yaml@3.14.2:
+    dependencies:
+      argparse: 1.0.10
+      esprima: 4.0.1
+    optional: true
+
   js-yaml@4.1.1:
     dependencies:
       argparse: 2.0.1
@@ -18741,11 +18753,6 @@ snapshots:
       loose-envify: 1.4.0
       react: 18.2.0
       scheduler: 0.23.2
-
-  react-dom@19.1.0(react@18.2.0):
-    dependencies:
-      react: 18.2.0
-      scheduler: 0.26.0
 
   react-dom@19.1.0(react@19.1.0):
     dependencies:
@@ -20109,6 +20116,9 @@ snapshots:
       which-boxed-primitive: 1.1.1
 
   undici-types@5.26.5: {}
+
+  undici-types@7.16.0:
+    optional: true
 
   undici@5.29.0:
     dependencies:
