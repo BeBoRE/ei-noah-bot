@@ -11,7 +11,7 @@
     "lint:typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ei/drizzle": "*",
+    "@ei/drizzle": "workspace:*",
     "@lucia-auth/adapter-postgresql": "^2.0.1",
     "@lucia-auth/oauth": "^3.3.0",
     "drizzle-orm": "^0.28.6",
@@ -20,9 +20,9 @@
     "nanoid": "^5.0.9"
   },
   "devDependencies": {
-    "@ei/tsconfig": "*",
+    "@ei/tsconfig": "workspace:*",
     "@types/ip": "^1.1.1",
     "eslint": "^8.46.0",
-    "typescript": "^5.5.2"
+    "typescript": "catalog:"
   }
 }

@@ -1,3 +1,26 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - apps/*
+  - packages/*
+
+onlyBuiltDependencies:
+  - '@sentry/cli'
+  - canvas
+  - dtrace-provider
+  - es5-ext
+  - esbuild
+  - sharp
+  - unrs-resolver
+
+catalogs:
+  react19:
+    "@types/react": ^19.1.12
+    "@types/react-dom": ^19.1.9
+    react: 19.1.1
+    react-dom: 19.1.1
+
+catalog:
+  "@trpc/client": ^11.7.1
+  "@trpc/server": ^11.7.1
+  "@trpc/next": ^11.7.1
+  "@trpc/react-query": ^11.7.1
+  "typescript": "^5.9.3"

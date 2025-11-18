@@ -12,12 +12,12 @@
   },
   "dependencies": {
     "@discordjs/rest": "^1.7.1",
-    "@ei/drizzle": "^0.0.1",
-    "@ei/lobby": "^1.0.0",
-    "@ei/lucia": "^0.0.1",
-    "@ei/redis": "^0.0.2",
-    "@ei/tsconfig": "*",
-    "@trpc/server": "11.0.0-alpha-tmp-subscription-connection-state.486",
+    "@ei/drizzle": "workspace:*",
+    "@ei/lobby": "workspace:*",
+    "@ei/lucia": "workspace:*",
+    "@ei/redis": "workspace:*",
+    "@ei/tsconfig": "workspace:*",
+    "@trpc/server": "catalog:",
     "discord-api-types": "^0.37.62",
     "drizzle-orm": "^0.28.6",
     "expo-server-sdk": "^3.7.0",
@@ -29,6 +29,6 @@
     "@types/lodash": "^4.14.199",
     "eslint": "^8.51.0",
     "eslint-config-custom": "*",
-    "typescript": "^5.5.2"
+    "typescript": "catalog:"
   }
 }

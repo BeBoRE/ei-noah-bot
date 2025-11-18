@@ -131,7 +131,7 @@ process.title = 'Ei Noah Bot';
 
     for (let i = 1; i < words.length; i += 1) {
       const word = words[i];
-      const { width } = measureText(ctx, `${currentLine} ${word}`);
+      const { width } = measureText(ctx as CanvasRenderingContext2D, `${currentLine} ${word}`);
       if (width < maxWidth) {
         currentLine += ` ${word}`;
       } else {

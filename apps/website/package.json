@@ -13,12 +13,12 @@
     "lint:typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ei/drizzle": "^0.0.1",
-    "@ei/lobby": "*",
-    "@ei/lucia": "^0.0.1",
-    "@ei/react-shared": "*",
-    "@ei/tailwind-config": "*",
-    "@ei/trpc": "^0.0.1",
+    "@ei/drizzle": "workspace:*",
+    "@ei/lobby": "workspace:*",
+    "@ei/lucia": "workspace:*",
+    "@ei/react-shared": "workspace:*",
+    "@ei/tailwind-config": "workspace:*",
+    "@ei/trpc": "workspace:*",
     "@emoji-mart/data": "^1.1.2",
     "@emoji-mart/react": "^1.1.1",
     "@lucia-auth/oauth": "^3.3.1",
@@ -35,10 +35,10 @@
     "@tanstack/react-query-devtools": "^5.49.2",
     "@tanstack/react-query-next-experimental": "^5.49.2",
     "@tanstack/react-query-persist-client": "^5.49.2",
-    "@trpc/client": "11.0.0-alpha-tmp-subscription-connection-state.486",
-    "@trpc/next": "11.0.0-alpha-tmp-subscription-connection-state.486",
-    "@trpc/react-query": "11.0.0-alpha-tmp-subscription-connection-state.486",
-    "@trpc/server": "11.0.0-alpha-tmp-subscription-connection-state.486",
+    "@trpc/client": "catalog:",
+    "@trpc/next": "catalog:",
+    "@trpc/react-query": "catalog:",
+    "@trpc/server": "catalog:",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "discord-api-types": "^0.37.60",
@@ -67,6 +67,6 @@
     "eslint": "^8.51.0",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.3",
-    "typescript": "^5.7.2"
+    "typescript": "catalog:"
   }
 }

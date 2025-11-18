@@ -4,12 +4,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
-import { UpdateEventType, useUpdateEvents } from 'expo-updates';
 import { DarkTheme, ThemeProvider } from '@react-navigation/native';
-import { toast } from 'burnt';
 import { cssInterop } from 'nativewind';
 import { HeaderButtonsProvider } from 'react-navigation-header-buttons';
-import type { SFSymbol } from 'sf-symbols-typescript';
 import { AuthProvider } from 'src/context/auth';
 import { TRPCProvider } from 'src/utils/api';
 
@@ -25,23 +22,6 @@ export default function RootLayout() {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   useFonts({
     'gg-sans': require('../../assets/fonts/ggsans-Medium.ttf'),
-  });
-
-  useUpdateEvents(({ type }) => {
-    if (type === UpdateEventType.UPDATE_AVAILABLE) {
-      toast({
-        title: 'Update available',
-        message: 'Restart the app to update',
-        preset: 'custom',
-        icon: {
-          ios: {
-            name: 'arrow.down.app' satisfies SFSymbol,
-            color: baseConfig.theme.colors.primary.DEFAULT,
-          },
-        },
-        haptic: 'success',
-      });
-    }
   });
 
   return (

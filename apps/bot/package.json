@@ -27,15 +27,15 @@
   },
   "homepage": "https://github.com/dotBeFoRE/ei-noah-bot#readme",
   "dependencies": {
-    "@ei/drizzle": "*",
-    "@ei/lobby": "*",
-    "@ei/lucia": "*",
-    "@ei/redis": "*",
-    "@ei/trpc": "*",
+    "@ei/drizzle": "workspace:*",
+    "@ei/lobby": "workspace:*",
+    "@ei/lucia": "workspace:*",
+    "@ei/redis": "workspace:*",
+    "@ei/trpc": "workspace:*",
     "canvas": "^2.11.2",
     "cron": "^1.8.2",
     "discord-api-types": "^0.27.3",
-    "discord.js": "^14.16.3",
+    "discord.js": "^14.25.0",
     "dotenv": "^8.2.0",
     "drizzle-orm": "^0.28.6",
     "emoji-regex": "^10.3.0",
@@ -45,7 +45,7 @@
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "nanoid": "^5.0.9",
-    "node-canvas-with-twemoji-and-discord-emoji": "^1.2.1",
+    "node-canvas-with-twemoji-and-discord-emoji": "^1.2.2",
     "node-fetch": "^3.1.1",
     "source-map-support": "^0.5.19",
     "ts-node": "^10.9.1",
@@ -55,17 +55,17 @@
     "winston-transport": "^4.5.0"
   },
   "devDependencies": {
-    "@ei/tsconfig": "*",
-    "@types/i18next-fs-backend": "^1.0.1",
-    "@types/node": "^18.17.0",
+    "@ei/tsconfig": "workspace:*",
     "@types/chart.js": "^2.9.34",
     "@types/cron": "^1.7.2",
+    "@types/i18next-fs-backend": "^1.0.1",
     "@types/lodash": "^4.14.199",
+    "@types/node": "^18.17.0",
     "@types/node-fetch": "^2.5.7",
     "@types/source-map-support": "^0.5.3",
     "@types/string-similarity": "^4.0.0",
     "eslint": "^8.46.0",
     "eslint-config-custom": "*",
-    "typescript": "^5.7.2"
+    "typescript": "catalog:"
   }
 }

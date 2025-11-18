@@ -74,7 +74,7 @@ const defineConfig = (): ExpoConfig => {
         'expo-build-properties',
         {
           ios: {
-            deploymentTarget: '13.4',
+            deploymentTarget: '15.1',
           },
           android: {
             // these values were tested with Expo SDK 48
