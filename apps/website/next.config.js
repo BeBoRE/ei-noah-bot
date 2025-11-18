@@ -1,65 +1,70 @@
-const { IgnorePlugin } = require('webpack');
+// next.config.js
 
-// Mark our dev dependencies as externals so they don't get included in the webpack bundle.
 const { devDependencies } = require('./package.json');
-const externals = {};
 
 const externalList = ['pg'];
 
-for (const devDependency of Object.keys(devDependencies)) {
-  externals[devDependency] = `commonjs ${devDependency}`;
-}
+// Mark all devDependencies + externalList as external to the server runtime
+const externals = [
+  ...Object.keys(devDependencies),
+  ...externalList,
+];
 
-externalList.forEach((external) => {
-  externals[external] = `commonjs ${external}`;
-});
-
-// And anything MikroORM's packaging can be ignored if it's not on disk.
-// Later we check these dynamically and tell webpack to ignore the ones we don't have.
+// Optional modules (must be listed manually)
 const optionalModules = new Set([]);
 
-/**
- * @type {import('next').NextConfig}
- */
-module.exports = {
+const nextConfig = {
   reactStrictMode: true,
+
   transpilePackages: ['@ei/trpc', '@ei/drizzle', '@ei/lucia'],
+
   typescript: {
     ignoreBuildErrors: true,
   },
+
   eslint: {
     ignoreDuringBuilds: true,
   },
+
   experimental: {
+    /**
+     * Required to allow external packages when using the App Router,
+     * same as in your Webpack version.
+     */
     serverComponentsExternalPackages: externalList,
+
+    /**
+     * Turbopack only: define module behavior
+     */
+    turbopack: {
+      /**
+       * Mark selected packages as external.
+       * This replaces Webpack `externals`.
+       */
+      moduleMap: Object.fromEntries(
+        externals.map((pkg) => [
+          pkg,
+          { external: true },
+        ])
+      ),
+
+      /**
+       * Optional-package-style ignoring.
+       * Turbopack does not support IgnorePlugin, but we can mark these
+       * modules external so Turbopack does not attempt to bundle them.
+       */
+      resolveModuleFallbacks: Object.fromEntries(
+        [...optionalModules].map((pkg) => [
+          pkg,
+          { external: true },
+        ])
+      ),
+    },
   },
+
   images: {
     domains: ['cdn.discordapp.com'],
   },
-  webpack: (config) => {
-    config.plugins.push(
-      new IgnorePlugin({
-        checkResource: (resource) => {
-          const baseResource = resource
-            .split('/', resource[0] === '@' ? 2 : 1)
-            .join('/');
-
-          if (optionalModules.has(baseResource)) {
-            try {
-              require.resolve(resource);
-              return false;
-            } catch {
-              return true;
-            }
-          }
-
-          return false;
-        },
-      }),
-    );
-
-    config.externals = [...config.externals, externals];
-
-    return config;
-  },
 };
+
+module.exports = nextConfig;
