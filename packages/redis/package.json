@@ -4,6 +4,7 @@
   "main": "redis.ts",
   "types": "redis.ts",
   "private": true,
+  "type": "module",
   "scripts": {
     "clean": "rm -rf .turbo node_modules",
     "lint": "eslint .",
