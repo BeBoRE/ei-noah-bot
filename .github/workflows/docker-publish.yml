@@ -38,9 +38,6 @@ jobs:
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
   push:
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     name: ☁ Push to Repository
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
