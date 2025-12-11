@@ -49,7 +49,7 @@
     "framer-motion": "^10.16.4",
     "javascript-time-ago": "^2.5.9",
     "lucide-react": "^0.279.0",
-    "next": "16.0.3",
+    "next": "16.0.9",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-time-ago": "^7.2.1",
