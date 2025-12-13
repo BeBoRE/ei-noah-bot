@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import channelCreator from 'zod-redis-pubsub/channel';
+import channelCreator from 'zod-redis-pubsub';
 
 import {
   addUserSchema,
