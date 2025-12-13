@@ -3,7 +3,9 @@
   "include": ["**/*.ts"],
   "exclude": ["node_modules"],
   "compilerOptions": {
-    "module": "CommonJS",
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "isolatedModules": true,
+    "esModuleInterop": true
   }
 }

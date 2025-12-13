@@ -1,14 +1,16 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable no-var */
-/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable vars-on-top */
 import {
   drizzle as drizzleClient,
   type NodePgDatabase,
 } from 'drizzle-orm/node-postgres';
+export * from 'drizzle-orm';
+
 import { Client, Pool } from 'pg';
 
 import { clientConfig } from './drizzle.config';
+
 
 declare global {
   var __pg: Client;

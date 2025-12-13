@@ -12,10 +12,16 @@ import type { CreateWSSContextFnOptions } from '@trpc/server/adapters/ws';
 import { eq } from 'drizzle-orm';
 import superjson from 'superjson';
 import { z, ZodError } from 'zod';
+import cookie from 'cookie'
 
+import { validateSessionToken } from '@ei/auth';
 import { getDrizzleClient } from '@ei/drizzle';
-import { guildUsers, tempChannels, users } from '@ei/drizzle/tables/schema';
-import { auth, Session } from '@ei/lucia';
+import {
+  guildUsers,
+  Session,
+  tempChannels,
+  users,
+} from '@ei/drizzle/tables/schema';
 
 import { getCachedOrApiUser } from './utils/discordApi';
 
@@ -40,8 +46,8 @@ import { getCachedOrApiUser } from './utils/discordApi';
 
 export const bearerSchema = z.string().min(1);
 
-type LuciaOpts = {
-  authRequest: ReturnType<typeof auth.handleRequest>;
+type AuthOpts = {
+  sessionToken?: string;
 };
 
 type RSCOpts = {
@@ -59,7 +65,7 @@ type APIOpts = {
   wsOpts: undefined;
 };
 
-type OuterOpts = (RSCOpts | WSOpts | APIOpts) & LuciaOpts;
+type OuterOpts = (RSCOpts | WSOpts | APIOpts) & AuthOpts;
 
 /**
  * 1. CONTEXT
@@ -92,16 +98,11 @@ const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
   const { session } = opts;
 
   const [dbUser] =
-    session?.user.userId !== undefined
-      ? await drizzle
-          .select()
-          .from(users)
-          .where(eq(users.id, session?.user.userId))
+    session?.userId !== undefined
+      ? await drizzle.select().from(users).where(eq(users.id, session?.userId))
       : [null];
 
-  const discordUser = session?.user
-    ? await getCachedOrApiUser(session.user.userId)
-    : null;
+  const discordUser = session ? await getCachedOrApiUser(session.userId) : null;
 
   return {
     opts,
@@ -118,10 +119,10 @@ const createInnerTRPCContext = async (opts: CreateInnerContextOptions) => {
  * @link https://trpc.io/docs/context
  */
 export const createTRPCContext = async (opts: OuterOpts) => {
-  const { authRequest } = opts;
-
   const session =
-    (await authRequest.validate()) || (await authRequest.validateBearerToken());
+    opts.sessionToken ?
+    (await validateSessionToken(opts.sessionToken))
+    : null;
 
   return createInnerTRPCContext({
     ...opts,
@@ -130,41 +131,37 @@ export const createTRPCContext = async (opts: OuterOpts) => {
 };
 
 export const createWSContext = async (opts: CreateWSSContextFnOptions) => {
-  const authRequest = auth.handleRequest({ req: opts.req });
+  const cookies = opts.req.headers.cookie ? cookie.parse(opts.req.headers.cookie) : null
+
+  const sessionToken = cookies?.['session-token'];
 
   return createTRPCContext({
     wsOpts: opts,
     fetchOpts: undefined,
-    authRequest,
+    sessionToken,
   });
 };
 
-type NextContext = NonNullable<Parameters<typeof auth.handleRequest>['1']>;
-
 export const createApiContext = async (
   opts: FetchCreateContextFnOptions,
-  context: NextContext,
+  sessionToken ?: string,
 ) => {
-  const authRequest = auth.handleRequest(opts.req.method, context);
-
   return createTRPCContext({
     wsOpts: undefined,
     fetchOpts: opts,
-    authRequest,
+    sessionToken,
   });
 };
 
 export const createRscContext = async ({
-  context,
+  sessionToken,
 }: {
-  context: NonNullable<Parameters<typeof auth.handleRequest>['1']>;
+  sessionToken ?: string,
 }) => {
-  const authRequest = auth.handleRequest('GET', context);
-
   return createTRPCContext({
     wsOpts: undefined,
     fetchOpts: undefined,
-    authRequest,
+    sessionToken,
   });
 };
 

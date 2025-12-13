@@ -68,23 +68,9 @@ export const lobbyRouter = createTRPCRouter({
   lobbyUpdate: publicProcedure
     .input(z.string().optional())
     .subscription(async ({ ctx: { drizzle, session }, input: token }) => {
-      const activeSession =
-        session ||
-        (token &&
-          (await auth
-            .validateSession(token)
-            .catch((err) => console.error(err)))) ||
-        null;
+      if (!session) throw new TRPCError({message: 'No session', code: 'BAD_REQUEST'});
 
-      if (!activeSession)
-        throw new TRPCError({
-          code: 'UNAUTHORIZED',
-          message: 'Invalid session token',
-        });
-
-      const {
-        user: { userId },
-      } = activeSession;
+      const {userId} = session;
 
       const lobby = await hasLobby(userId, drizzle);
 

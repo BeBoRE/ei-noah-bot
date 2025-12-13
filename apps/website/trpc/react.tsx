@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import { QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -8,8 +8,8 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import {
   loggerLink,
   splitLink,
-  unstable_httpBatchStreamLink,
-  unstable_httpSubscriptionLink,
+  httpBatchStreamLink,
+  httpSubscriptionLink,
 } from '@trpc/client';
 import SuperJSON from 'superjson';
 
@@ -22,7 +22,7 @@ export { api };
 
 type Props = {
   children: React.ReactNode;
-  headers: Headers;
+  headers: Promise<Headers>;
 };
 
 const persister = createSyncStoragePersister({
@@ -31,7 +31,9 @@ const persister = createSyncStoragePersister({
   deserialize: SuperJSON.parse,
 });
 
-export default function TRPCReactProvider({ children, headers }: Props) {
+export default function TRPCReactProvider({ children, headers: headersPromise }: Props) {
+  const headers = React.use(headersPromise);
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -44,7 +46,7 @@ export default function TRPCReactProvider({ children, headers }: Props) {
       }),
   );
 
-  const httpLink = unstable_httpBatchStreamLink({
+  const httpLink = httpBatchStreamLink({
     transformer,
     url: getApiUrl(),
     headers() {
@@ -64,7 +66,7 @@ export default function TRPCReactProvider({ children, headers }: Props) {
         }),
         splitLink({
           condition: ({ type }) => type === 'subscription',
-          true: unstable_httpSubscriptionLink({
+          true: httpSubscriptionLink({
             transformer,
             url: getApiUrl(),
           }),

@@ -1,16 +1,15 @@
-/* eslint-disable import/prefer-default-export */
-import * as context from 'next/headers';
 import { NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
 
-import { discordAuth } from '@ei/lucia';
+import { generateRedirect } from '@ei/auth/discord';
 
 export const GET = async (request: NextRequest) => {
-  const [url, state] = await discordAuth.getAuthorizationUrl();
+  const {url, state} = generateRedirect(['identify']);
 
   const platform = request.nextUrl.searchParams.get('platform');
 
   // store state
-  context.cookies().set('discord_oauth_state', state, {
+  (await cookies()).set('discord_oauth_state', state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     path: '/',
@@ -18,7 +17,7 @@ export const GET = async (request: NextRequest) => {
   });
 
   if (platform)
-    context.cookies().set('discord_oauth_platform', platform, {
+    (await cookies()).set('discord_oauth_platform', platform, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       path: '/',

@@ -12,8 +12,8 @@ function RolePage() {
         </div>
         <div className="grid grid-cols-2 place-content-start items-start justify-items-start gap-4 py-2 md:grid-cols-4 xl:grid-cols-5">
           <Suspense
-            fallback={[...Array(4).keys()].map(() => (
-              <RoleSkeleton />
+            fallback={[...Array(4).keys()].map((_, index) => (
+              <RoleSkeleton key={index}/>
             ))}
           >
             <RoleScreen />

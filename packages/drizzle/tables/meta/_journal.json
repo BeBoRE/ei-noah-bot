@@ -183,6 +183,13 @@
       "when": 1718051773593,
       "tag": "0025_demonic_puff_adder",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1765652335069,
+      "tag": "0026_fuzzy_human_fly",
+      "breakpoints": true
     }
   ]
 }

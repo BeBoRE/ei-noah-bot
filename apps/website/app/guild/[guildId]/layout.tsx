@@ -1,4 +1,4 @@
-import { PropsWithChildren, Suspense } from 'react';
+import React, { PropsWithChildren, Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { TRPCError } from '@trpc/server';
@@ -13,9 +13,9 @@ import rscApi from 'trpc/server';
 import { userIsAdmin } from '@ei/trpc/src/utils';
 
 type Props = PropsWithChildren & {
-  params: {
+  params: Promise<{
     guildId: string;
-  };
+  }>;
 };
 
 const getGuild = async (api: typeof rscApi, guildId: string) => {
@@ -93,7 +93,9 @@ function GuildInfoSkeleton() {
   );
 }
 
-function GuildLayout({ children, params: { guildId } }: Props) {
+function GuildLayout({ children, params }: Props) {
+  const {guildId} = React.use(params);
+  
   return (
     <div className="container flex flex-1 flex-col gap-2 py-4 sm:flex-row">
       <div className="flex flex-col gap-2 sm:w-3/12">

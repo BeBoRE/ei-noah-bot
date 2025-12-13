@@ -2,7 +2,7 @@ import { Expo } from 'expo-server-sdk';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { session } from '@ei/drizzle/tables/schema';
+import { sessions } from '@ei/drizzle/tables/schema';
 
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 
@@ -19,11 +19,11 @@ export const notificationRouter = createTRPCRouter({
       // await auth.updateSessionAttributes(session.sessionId, { expoPushToken: input.token });
 
       await drizzle
-        .update(session)
+        .update(sessions)
         .set({
           expoPushToken: input.token,
         })
-        .where(eq(session.id, userSession.sessionId));
+        .where(eq(sessions.id, userSession.id));
     }),
 });
 

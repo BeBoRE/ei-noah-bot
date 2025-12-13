@@ -1,0 +1,32 @@
+{
+  "name": "@ei/auth",
+  "private": true,
+  "version": "0.0.1",
+  "main": "auth.ts",
+  "types": "auth.ts",
+  "type": "module",
+  "exports": {
+    ".": "./auth.ts",
+    "./discord": "./discord.ts",
+    "./utils": "./utils.ts"
+  },
+  "scripts": {
+    "clean": "rm -rf .turbo node_modules",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ei/drizzle": "workspace:*",
+    "arctic": "^3.7.0",
+    "ip": "^1.1.9"
+  },
+  "devDependencies": {
+    "@ei/tsconfig": "workspace:*",
+    "eslint-config-custom": "workspace:*",
+    "@types/ip": "^1.1.1",
+    "@types/node": "^20.19.25",
+    "eslint": "^8.46.0",
+    "typescript": "catalog:"
+  }
+}

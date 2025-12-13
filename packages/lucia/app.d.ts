@@ -5,5 +5,5 @@ declare namespace Lucia {
   type DatabaseUserAttributes =
     typeof import('@ei/drizzle/tables/schema').users.$inferInsert;
   type DatabaseSessionAttributes =
-    typeof import('@ei/drizzle/tables/schema').session.$inferInsert;
+    typeof import('@ei/drizzle/tables/schema').sessions.$inferInsert;
 }

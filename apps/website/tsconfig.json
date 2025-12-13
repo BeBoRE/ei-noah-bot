@@ -5,6 +5,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "module": "CommonJS",
+    "strict": true,
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,

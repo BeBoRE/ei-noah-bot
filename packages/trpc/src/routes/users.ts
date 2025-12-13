@@ -5,6 +5,7 @@ import { auth } from '@ei/lucia';
 
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { getCachedOrApiMember } from '../utils/discordApi';
+import { deleteSession } from '@ei/auth';
 
 export const userRouter = createTRPCRouter({
   me: protectedProcedure.query(async ({ ctx }) => ctx.discordUser),
@@ -26,7 +27,7 @@ export const userRouter = createTRPCRouter({
       return discordMember;
     }),
   logout: protectedProcedure.mutation(async ({ ctx: { session } }) => {
-    await auth.invalidateSession(session.sessionId);
+    await deleteSession(session.id);
   }),
 });
 

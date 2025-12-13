@@ -1,15 +1,19 @@
-/* eslint-disable import/prefer-default-export */
-import * as context from 'next/headers';
+import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { OAuthRequestError } from '@lucia-auth/oauth';
 import { eq } from 'drizzle-orm';
 
+import {
+  OAuth2RequestError,
+  validateAuthorizationCode,
+} from '@ei/auth/discord';
 import { getDrizzleClient } from '@ei/drizzle';
 import { users } from '@ei/drizzle/tables/schema';
-import { auth, discordAuth } from '@ei/lucia';
+import z from 'zod';
+import { createSession } from '@ei/auth';
 
 export const GET = async (request: NextRequest) => {
-  const storedState = context.cookies().get('discord_oauth_state')?.value;
+  const storedState = (await cookies()).get('discord_oauth_state')?.value;
   const url = new URL(request.url);
   const state = url.searchParams.get('state');
   const code = url.searchParams.get('code');
@@ -25,53 +29,30 @@ export const GET = async (request: NextRequest) => {
       status: 400,
     });
   }
+
   try {
-    const { getExistingUser, discordUser, createUser, createKey } =
-      await discordAuth.validateCallback(code);
+    const tokens = await validateAuthorizationCode(code);
 
-    const getUser = async () => {
-      const existingUser = await getExistingUser().catch(() => null);
-      if (existingUser) return existingUser;
+    const {data: discordUser, success} = z.object({id: z.string()}).safeParse(await fetch('https://discord.com/api/users/@me', {
+      headers: {
+        Authorization: `Bearer ${tokens.accessToken()}`,
+      },
+    }).then((res) => res.json() as unknown));
 
-      const drizzle = await getDrizzleClient();
+    if (!success) {
+      return new Response('Unexpected response from Discord', {status: 500});
+    }
 
-      const [existingDatabaseUser] = await drizzle
-        .select()
-        .from(users)
-        .where(eq(users.id, discordUser.id));
+    const session = await createSession(discordUser.id);
 
-      if (existingDatabaseUser) {
-        const user = auth.transformDatabaseUser(existingDatabaseUser);
-
-        await createKey(user.userId);
-        return user;
-      }
-
-      const user = await createUser({
-        userId: discordUser.id,
-        attributes: {},
-      });
-
-      return user;
-    };
-
-    const user = await getUser();
-    const session = await auth.createSession({
-      userId: user.userId,
-      attributes: {},
-    });
-
-    const authRequest = auth.handleRequest(request.method, context);
-
-    const platform = context.cookies().get('discord_oauth_platform')?.value;
+    const platform = (await cookies()).get('discord_oauth_platform')?.value;
 
     const redirect =
       platform === 'mobile'
-        ? `ei://auth?session_token=${session.sessionId}`
+        ? `ei://auth?session_token=${session.token}`
         : '/';
-    console.log('Redirecting to', redirect);
-
-    authRequest.setSession(session);
+        
+    (await cookies()).set('session-token', session.token);
 
     return new Response(null, {
       status: 302,
@@ -80,13 +61,14 @@ export const GET = async (request: NextRequest) => {
       },
     });
   } catch (e) {
-    if (e instanceof OAuthRequestError) {
+    if (e instanceof OAuth2RequestError) {
       console.warn(e);
 
       return new Response(null, {
         status: 400,
       });
     }
+
     console.error(e);
 
     return new Response(null, {

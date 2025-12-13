@@ -1,4 +1,4 @@
-import * as context from 'next/headers';
+import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 
@@ -35,11 +35,13 @@ export function OPTIONS() {
 }
 
 const handler = async (req: NextRequest) => {
+  const sessionToken = (await cookies()).get('session-token')?.value;
+
   const response = await fetchRequestHandler({
     endpoint: '/api',
     router: appRouter,
     req,
-    createContext: (opts) => createApiContext(opts, context),
+    createContext: (opts) => createApiContext(opts, sessionToken),
     onError({ error, path }) {
       console.error(
         `>>> tRPC Error on '${path ?? '<no-path>'}'`,

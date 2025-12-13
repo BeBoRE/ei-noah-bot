@@ -81,10 +81,13 @@ export const loginTokens = pgTable('login_token', {
   used: boolean('used').default(false).notNull(),
 });
 
-export const session = pgTable('session', {
+export const sessions = pgTable('session', {
   id: varchar('id', {
     length: 128,
   }).primaryKey(),
+  secretHash: varchar('secret_hash', {
+    length: 50
+  }).notNull(),
   userId: varchar('user_id', {
     length: 255,
   })
@@ -98,6 +101,8 @@ export const session = pgTable('session', {
   }).notNull(),
   expoPushToken: varchar('expo_push_token', { length: 255 }),
 });
+
+export type Session = typeof sessions.$inferSelect
 
 export const keys = pgTable('key', {
   id: varchar('id', {
