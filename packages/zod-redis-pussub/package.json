@@ -7,6 +7,7 @@
     "email": "ayrton@bebore.com",
     "url": "https://bebore.com"
   },
+  "type": "module",
   "keywords": [
     "redis",
     "pubsub",
