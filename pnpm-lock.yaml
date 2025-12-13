@@ -511,9 +511,6 @@ importers:
       '@emoji-mart/react':
         specifier: ^1.1.1
         version: 1.1.1(emoji-mart@5.6.0)(react@19.2.0)
-      '@lucia-auth/oauth':
-        specifier: ^3.3.1
-        version: 3.5.3(lucia@2.7.7)
       '@radix-ui/react-avatar':
         specifier: ^1.0.4
         version: 1.1.11(@types/react-dom@19.2.3(@types/react@19.2.6))(@types/react@19.2.6)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -628,6 +625,9 @@ importers:
       zod:
         specifier: ^3.25.76
         version: 3.25.76
+      zod-redis-pubsub:
+        specifier: workspace:*
+        version: link:../../packages/zod-redis-pussub
     devDependencies:
       '@ei/tsconfig':
         specifier: workspace:*
@@ -2898,12 +2898,6 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
-
-  '@lucia-auth/oauth@3.5.3':
-    resolution: {integrity: sha512-3blBldenf2zXsSJTZUwzB+NxI+0KJljfMHT0WR7hyLNwi4Ijss7F2cQqk2xW1lGH3lzdmsV93ZsY9Yv8ekBRUw==}
-    deprecated: This package has been deprecated. Please see https://lucia-auth.com/lucia-v3/migrate.
-    peerDependencies:
-      lucia: ^2.0.0
 
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
@@ -7562,10 +7556,6 @@ packages:
 
   lru-queue@0.1.0:
     resolution: {integrity: sha512-BpdYkt9EvGl8OfWHDQPISVpcl5xZthb+XPsbELj5AQXxIC8IriDZIQYjBJPEm5rS420sjZ0TLEzRcq5KdBhYrQ==}
-
-  lucia@2.7.7:
-    resolution: {integrity: sha512-Hy1nMcLquLl3yDvV9zYA9fSBGUDy/Fw2zEUw2Ia4iGdk/O+hI/TvQ1tAfED/U1WE/c5DT1hEger3m7qIx1qbUg==}
-    deprecated: This package has been deprecated. Please see https://lucia-auth.com/lucia-v3/migrate.
 
   lucide-react-native@0.533.0:
     resolution: {integrity: sha512-jgppY8iAR0ssANUZn4quU3zFJfek5kyfwv5XhUy/vU18XEby0sPxkWadGMFZbhh+SZILTrpxYJZJ5dMgisPAgA==}
@@ -12608,10 +12598,6 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
-
-  '@lucia-auth/oauth@3.5.3(lucia@2.7.7)':
-    dependencies:
-      lucia: 2.7.7
 
   '@manypkg/find-root@1.1.0':
     dependencies:
@@ -18398,8 +18384,6 @@ snapshots:
   lru-queue@0.1.0:
     dependencies:
       es5-ext: 0.10.64
-
-  lucia@2.7.7: {}
 
   lucide-react-native@0.533.0(react-native-svg@15.12.1(react-native@0.81.5(@babel/core@7.28.5)(@react-native-community/cli@12.3.2)(@types/react@19.2.6)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.28.5)(@react-native-community/cli@12.3.2)(@types/react@19.2.6)(react@19.1.0))(react@19.1.0):
     dependencies:

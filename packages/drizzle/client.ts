@@ -5,21 +5,18 @@ import {
   drizzle as drizzleClient,
   type NodePgDatabase,
 } from 'drizzle-orm/node-postgres';
-export * from 'drizzle-orm';
-
-import { Client, Pool } from 'pg';
+import { Client } from 'pg';
 
 import { clientConfig } from './drizzle.config';
 
+export * from 'drizzle-orm';
 
 declare global {
   var __pg: Client;
-  var __luciaPg: Pool;
   var __connectedPgClient: Promise<Client> | undefined;
   var __drizzle: Promise<NodePgDatabase<Record<string, never>>> | undefined;
 }
 
-export const luciaPgClient = global.__luciaPg || new Pool(clientConfig);
 export const pg: Client = global.__pg || new Client(clientConfig);
 
 export const getConnectedPgClient = async () => {
@@ -38,11 +35,11 @@ export const getDrizzleClient = async () => {
       console.error('pg error', err);
 
       process.exit(-2);
-    })
+    });
 
     return drizzleClient(p, {
       logger: process.env.NODE_ENV !== 'production',
-    })
+    });
   });
 
   return global.__drizzle;
