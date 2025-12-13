@@ -1,16 +1,13 @@
 import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
-import { OAuthRequestError } from '@lucia-auth/oauth';
-import { eq } from 'drizzle-orm';
 
 import {
   OAuth2RequestError,
   validateAuthorizationCode,
 } from '@ei/auth/discord';
-import { getDrizzleClient } from '@ei/drizzle';
-import { users } from '@ei/drizzle/tables/schema';
 import z from 'zod';
 import { createSession } from '@ei/auth';
+import { setSessionToken } from 'utils/auth';
 
 export const GET = async (request: NextRequest) => {
   const storedState = (await cookies()).get('discord_oauth_state')?.value;
@@ -52,7 +49,7 @@ export const GET = async (request: NextRequest) => {
         ? `ei://auth?session_token=${session.token}`
         : '/';
         
-    (await cookies()).set('session-token', session.token);
+    setSessionToken(session.token);
 
     return new Response(null, {
       status: 302,

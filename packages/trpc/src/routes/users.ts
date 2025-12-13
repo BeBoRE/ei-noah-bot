@@ -1,8 +1,6 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
-import { auth } from '@ei/lucia';
-
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { getCachedOrApiMember } from '../utils/discordApi';
 import { deleteSession } from '@ei/auth';

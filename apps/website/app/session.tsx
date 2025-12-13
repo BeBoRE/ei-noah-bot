@@ -1,11 +1,8 @@
 import { cache } from 'react';
-import * as context from 'next/headers';
-
-import { auth } from '@ei/lucia';
+import { getSession } from 'utils/auth';
 
 const getPageSession = cache(() => {
-  const authRequest = auth.handleRequest('GET', context);
-  return authRequest.validate();
+  return getSession()
 });
 
 export default getPageSession;

@@ -7,8 +7,9 @@ import {
 } from 'discord.js';
 import { eq } from 'drizzle-orm';
 
+import {generateLoginURL} from '@ei/auth/token'
+
 import { guilds, Role, roles } from '@ei/drizzle/tables/schema';
-import { generateLoginURL } from '@ei/lucia';
 import { generateRoleMenuContent } from '@ei/trpc/src/utils';
 
 import Router, { HandlerType } from '../../router/Router';

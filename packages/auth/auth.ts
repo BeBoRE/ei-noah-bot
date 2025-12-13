@@ -1,4 +1,4 @@
-import { getClient } from "./db";
+import { getDrizzleClient as getClient } from "@ei/drizzle";
 import {sessions as sessions} from '@ei/drizzle/tables/schema'
 import {eq} from "@ei/drizzle"
 import crypto from 'node:crypto'

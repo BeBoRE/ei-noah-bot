@@ -13,7 +13,6 @@ import {
   LobbyChange,
   removeUserSchema,
 } from '@ei/lobby';
-import { auth } from '@ei/lucia';
 import {
   publishAddUser,
   publishClientLobbyChanges,

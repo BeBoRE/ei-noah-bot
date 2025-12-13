@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 
-import { generateLoginURL } from '@ei/lucia';
+import { generateLoginURL } from '@ei/auth/token';
 
 import { BothHandler } from '../router/Router';
 

@@ -27,9 +27,9 @@
   },
   "homepage": "https://github.com/dotBeFoRE/ei-noah-bot#readme",
   "dependencies": {
+    "@ei/auth": "workspace:*",
     "@ei/drizzle": "workspace:*",
     "@ei/lobby": "workspace:*",
-    "@ei/lucia": "workspace:*",
     "@ei/redis": "workspace:*",
     "@ei/trpc": "workspace:*",
     "canvas": "^2.11.2",

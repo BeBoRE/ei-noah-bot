@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
 
 import { appRouter, createApiContext } from '@ei/trpc';
+import { getSessionToken } from 'utils/auth';
 
 const expectedUrl = new URL(
   process.env.PUBLIC_VERCEL_URL ?? 'https://ei-noah.com',
@@ -35,7 +36,7 @@ export function OPTIONS() {
 }
 
 const handler = async (req: NextRequest) => {
-  const sessionToken = (await cookies()).get('session-token')?.value;
+  const sessionToken = await getSessionToken();
 
   const response = await fetchRequestHandler({
     endpoint: '/api',

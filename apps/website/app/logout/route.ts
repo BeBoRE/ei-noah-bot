@@ -1,22 +1,22 @@
-import * as context from 'next/headers';
-import type { NextRequest } from 'next/server';
-
-import { auth } from '@ei/lucia';
+import { deleteSession } from '@ei/auth';
+import { getSession, setSessionToken } from 'utils/auth';
 
 // eslint-disable-next-line import/prefer-default-export
-export const POST = async (request: NextRequest) => {
-  const authRequest = auth.handleRequest(request.method, context);
+export const POST = async () => {
   // check if user is authenticated
-  const session = await authRequest.validate();
+  const session = await getSession();
   if (!session) {
     return new Response('Login to logout', {
       status: 401,
     });
   }
+
   // make sure to invalidate the current session!
-  await auth.invalidateSession(session.sessionId);
+  await deleteSession(session.id)
+
   // delete session cookie
-  authRequest.setSession(null);
+  await setSessionToken(null);
+
   return new Response(null, {
     status: 302,
     headers: {

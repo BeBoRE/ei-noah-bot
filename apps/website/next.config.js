@@ -16,7 +16,7 @@ const optionalModules = new Set([]);
 const nextConfig = {
   reactStrictMode: true,
 
-  transpilePackages: ['@ei/trpc', '@ei/drizzle', '@ei/lucia'],
+  transpilePackages: ['@ei/trpc', '@ei/drizzle', '@ei/auth'],
 
   typescript: {
     ignoreBuildErrors: true,

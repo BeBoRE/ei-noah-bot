@@ -8,7 +8,8 @@
   "exports": {
     ".": "./auth.ts",
     "./discord": "./discord.ts",
-    "./utils": "./utils.ts"
+    "./utils": "./utils.ts",
+    "./token": "./token.ts"
   },
   "scripts": {
     "clean": "rm -rf .turbo node_modules",

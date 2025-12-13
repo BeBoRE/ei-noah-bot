@@ -1,17 +1,17 @@
-import * as context from 'next/headers';
 import { NextRequest } from 'next/server';
 import { and, eq, gt } from 'drizzle-orm';
 
 import { getDrizzleClient } from '@ei/drizzle';
 import { loginTokens } from '@ei/drizzle/tables/schema';
-import { auth } from '@ei/lucia';
+import { getSession, setSessionToken } from 'utils/auth';
+import { createSession, deleteSession } from '@ei/auth';
 
 export const GET = async (
   request: NextRequest,
-  { params: { token } }: { params: { token: string } },
+  { params }: { params: Promise<{ token: string }> },
 ) => {
   const drizzle = await getDrizzleClient();
-  const authRequest = auth.handleRequest(request.method, context);
+  const token = (await params).token;
 
   const userAgent = request.headers.get('User-Agent');
   const isDiscord = userAgent?.includes('Discordbot');
@@ -33,14 +33,14 @@ export const GET = async (
     .select()
     .from(loginTokens)
     .where(and(eq(loginTokens.token, token), gt(loginTokens.expires, now)));
-
-  const existingSession = await authRequest.validate();
+  
+    const existingSession = await getSession();
 
   const alreadyLoggedIn = !!existingSession;
   const isSameUser =
     existingSession &&
     databaseToken &&
-    existingSession.user.userId === databaseToken.userId;
+    existingSession.userId === databaseToken.userId;
 
   if (alreadyLoggedIn && isSameUser) {
     if (!databaseToken.used) {
@@ -61,7 +61,7 @@ export const GET = async (
   }
 
   if (existingSession) {
-    await auth.invalidateSession(existingSession.sessionId);
+    await deleteSession(existingSession.id);
   }
 
   if (!databaseToken || databaseToken.used) {
@@ -73,12 +73,9 @@ export const GET = async (
     });
   }
 
-  const session = await auth.createSession({
-    userId: databaseToken.userId,
-    attributes: {},
-  });
+  const session = await createSession(databaseToken.userId);
 
-  authRequest.setSession(session);
+  setSessionToken(session.token);
 
   await drizzle
     .update(loginTokens)
