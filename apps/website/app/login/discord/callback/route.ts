@@ -1,19 +1,33 @@
 import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
+import { setSessionToken } from 'utils/auth';
+import z from 'zod';
 
+import { createSession } from '@ei/auth';
 import {
   OAuth2RequestError,
   validateAuthorizationCode,
 } from '@ei/auth/discord';
-import z from 'zod';
-import { createSession } from '@ei/auth';
-import { setSessionToken } from 'utils/auth';
+import { getHost } from '@ei/auth/utils';
 
 export const GET = async (request: NextRequest) => {
   const storedState = (await cookies()).get('discord_oauth_state')?.value;
   const url = new URL(request.url);
   const state = url.searchParams.get('state');
   const code = url.searchParams.get('code');
+
+  const error = url.searchParams.get('error');
+
+  if (error) {
+    if (error === 'access_denied') {
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: getHost(),
+        },
+      });
+    }
+  }
 
   // validate state
   if (!storedState || !state || storedState !== state || !code) {
@@ -30,14 +44,18 @@ export const GET = async (request: NextRequest) => {
   try {
     const tokens = await validateAuthorizationCode(code);
 
-    const {data: discordUser, success} = z.object({id: z.string()}).safeParse(await fetch('https://discord.com/api/users/@me', {
-      headers: {
-        Authorization: `Bearer ${tokens.accessToken()}`,
-      },
-    }).then((res) => res.json() as unknown));
+    const { data: discordUser, success } = z
+      .object({ id: z.string() })
+      .safeParse(
+        await fetch('https://discord.com/api/users/@me', {
+          headers: {
+            Authorization: `Bearer ${tokens.accessToken()}`,
+          },
+        }).then((res) => res.json() as unknown),
+      );
 
     if (!success) {
-      return new Response('Unexpected response from Discord', {status: 500});
+      return new Response('Unexpected response from Discord', { status: 500 });
     }
 
     const session = await createSession(discordUser.id);
@@ -45,10 +63,8 @@ export const GET = async (request: NextRequest) => {
     const platform = (await cookies()).get('discord_oauth_platform')?.value;
 
     const redirect =
-      platform === 'mobile'
-        ? `ei://auth?session_token=${session.token}`
-        : '/';
-        
+      platform === 'mobile' ? `ei://auth?session_token=${session.token}` : '/';
+
     setSessionToken(session.token);
 
     return new Response(null, {

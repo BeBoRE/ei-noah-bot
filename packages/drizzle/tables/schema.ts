@@ -86,7 +86,7 @@ export const sessions = pgTable('session', {
     length: 128,
   }).primaryKey(),
   secretHash: varchar('secret_hash', {
-    length: 50
+    length: 50,
   }).notNull(),
   userId: varchar('user_id', {
     length: 255,
@@ -102,7 +102,10 @@ export const sessions = pgTable('session', {
   expoPushToken: varchar('expo_push_token', { length: 255 }),
 });
 
-export type Session = typeof sessions.$inferSelect
+/** @deprecated Use sessions instead */
+export const session = sessions;
+
+export type Session = typeof sessions.$inferSelect;
 
 export const keys = pgTable('key', {
   id: varchar('id', {
