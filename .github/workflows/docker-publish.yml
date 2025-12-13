@@ -93,7 +93,7 @@ jobs:
       - uses: pnpm/action-setup@v2
         name: Setup pnpm
         with:
-          version: 8
+          version: 10
 
       - name: Get pnpm store directory
         shell: bash
@@ -126,13 +126,13 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
     steps:
-    - name: 🔁 Redeploy on Server
-      uses: appleboy/ssh-action@v1.0.3
-      with: 
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.PRIVATE_KEY }}
-        script: docker compose pull && docker compose up -d
+      - name: 🔁 Redeploy on Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          script: docker compose pull && docker compose up -d
 
   discord:
     needs: deploy
