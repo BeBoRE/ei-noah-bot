@@ -30,10 +30,10 @@ RUN apk --no-cache --virtual .build-deps add \
 COPY . .
 
 RUN npm install -g pnpm@latest-10
-RUN pnpm install --config.platform=linux --config.architecture=x64
+RUN CXXFLAGS="-include cstdint" pnpm install --config.platform=linux --config.architecture=x64
 
-ENV NODE_ENV=production
 RUN pnpm build
+ENV NODE_ENV=production
 
 RUN chmod 500 entrypoint.sh
 
