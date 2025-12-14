@@ -10,6 +10,7 @@ import {
   CategoryChannel,
   Channel,
   ChatInputApplicationCommandData,
+  ChatInputCommandInteraction,
   Client,
   CommandInteraction,
   CommandInteractionOption,
@@ -380,9 +381,11 @@ async function messageParser(
     } else params.push(command.name);
 
     const nextCommand: CommandInteractionOption | undefined =
-      command.options && 'data' in command.options
-        ? command.options.data[0]
-        : command.options?.[0];
+      'options' in command
+        ? command.options && 'data' in command.options
+          ? command.options.data[0]
+          : command.options?.[0]
+        : undefined;
 
     if (
       !nextCommand ||
@@ -396,9 +399,11 @@ async function messageParser(
   }
 
   const options =
-    command.options && 'data' in command.options
-      ? command.options.data
-      : command?.options;
+    'options' in command
+      ? command.options && 'data' in command?.options
+        ? command.options.data
+        : command.options
+      : undefined;
 
   options?.forEach((option) => {
     if (
@@ -627,7 +632,11 @@ class EiNoah implements IRouter {
 
   public useContext(
     name: string,
-    type: Exclude<ApplicationCommandType, ApplicationCommandType.ChatInput | ApplicationCommandType.PrimaryEntryPoint>,
+    type: Exclude<
+      ApplicationCommandType,
+      | ApplicationCommandType.ChatInput
+      | ApplicationCommandType.PrimaryEntryPoint
+    >,
     handler: ContextMenuHandler,
   ): void {
     if (this.contextHandlers.has(name))

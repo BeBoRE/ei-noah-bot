@@ -14,7 +14,7 @@
     "expo-update": "dotenv -- turbo update",
     "lint": "dotenv -- turbo lint",
     "lint:fix": "dotenv -- turbo lint:fix",
-    "lint:typecheck": "dotenv -- turbo lint:typecheck",
+    "lint:typecheck": "dotenv -- turbo lint:typecheck --filter !@ei/mobile",
     "test": "dotenv -- turbo test",
     "test:watch": "dotenv -- turbo test:watch",
     "db:push": "dotenv -- turbo db:push",

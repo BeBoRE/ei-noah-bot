@@ -1,4 +1,5 @@
 import SuperJSON from 'superjson';
+import type * as Zod from 'zod';
 
 import { redis } from '@ei/redis';
 
