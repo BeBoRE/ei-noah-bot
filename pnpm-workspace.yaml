@@ -20,7 +20,7 @@ catalogs:
 
 catalog:
   "@trpc/client": ^11.7.1
-  "@trpc/server": ^11.7.1
+  "@trpc/server": ^11.8.0
   "@trpc/next": ^11.7.1
   "@trpc/react-query": ^11.7.1
   "typescript": "^5.9.3"
