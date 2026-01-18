@@ -16,7 +16,7 @@
     "tables/schema.ts"
   ],
   "dependencies": {
-    "drizzle-orm": "^0.28.6",
+    "drizzle-orm": "^0.45.1",
     "pg": "^8.16.3"
   },
   "devDependencies": {
