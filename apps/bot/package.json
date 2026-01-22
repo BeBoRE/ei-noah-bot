@@ -41,7 +41,7 @@
     "expo-server-sdk": "^3.7.0",
     "i18next": "^21.6.16",
     "i18next-fs-backend": "^1.1.1",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "moment": "^2.29.4",
     "nanoid": "^5.0.9",
     "node-canvas-with-twemoji-and-discord-emoji": "^1.2.2",
