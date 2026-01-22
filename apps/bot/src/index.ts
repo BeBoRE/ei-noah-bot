@@ -19,7 +19,6 @@ import {
   User,
 } from 'discord.js';
 import dotenv from 'dotenv';
-import { isNotNull } from 'drizzle-orm';
 import i18next from 'i18next';
 import Backend from 'i18next-fs-backend';
 import {
@@ -28,7 +27,7 @@ import {
   strokeTextWithTwemoji,
 } from 'node-canvas-with-twemoji-and-discord-emoji';
 
-import { getDrizzleClient } from '@ei/drizzle';
+import { getDrizzleClient, isNotNull } from '@ei/drizzle';
 import { guilds } from '@ei/drizzle/tables/schema';
 
 import { generateNewYearImage } from './canvas/newYear';
@@ -131,7 +130,10 @@ process.title = 'Ei Noah Bot';
 
     for (let i = 1; i < words.length; i += 1) {
       const word = words[i];
-      const { width } = measureText(ctx as CanvasRenderingContext2D, `${currentLine} ${word}`);
+      const { width } = measureText(
+        ctx as CanvasRenderingContext2D,
+        `${currentLine} ${word}`,
+      );
       if (width < maxWidth) {
         currentLine += ` ${word}`;
       } else {

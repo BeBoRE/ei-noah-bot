@@ -16,12 +16,11 @@ import {
   Role,
   TextChannel,
 } from 'discord.js';
-import { and, desc, eq, inArray, isNotNull } from 'drizzle-orm';
 import i18next, { i18n as I18n } from 'i18next';
 import moment from 'moment';
 import { Logger } from 'winston';
 
-import { DrizzleClient } from '@ei/drizzle';
+import { and, desc, DrizzleClient, eq, inArray, isNotNull } from '@ei/drizzle';
 import { getUserBirthday } from '@ei/drizzle/birthday';
 import {
   Birthday,

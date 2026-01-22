@@ -1,10 +1,9 @@
 import { NextRequest } from 'next/server';
-import { and, eq, gt } from 'drizzle-orm';
-
-import { getDrizzleClient } from '@ei/drizzle';
-import { loginTokens } from '@ei/drizzle/tables/schema';
 import { getSession, setSessionToken } from 'utils/auth';
+
 import { createSession, deleteSession } from '@ei/auth';
+import { and, eq, getDrizzleClient, gt } from '@ei/drizzle';
+import { loginTokens } from '@ei/drizzle/tables/schema';
 
 export const GET = async (
   request: NextRequest,
@@ -33,8 +32,8 @@ export const GET = async (
     .select()
     .from(loginTokens)
     .where(and(eq(loginTokens.token, token), gt(loginTokens.expires, now)));
-  
-    const existingSession = await getSession();
+
+  const existingSession = await getSession();
 
   const alreadyLoggedIn = !!existingSession;
   const isSameUser =

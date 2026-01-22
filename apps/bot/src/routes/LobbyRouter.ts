@@ -42,13 +42,22 @@ import {
   VoiceBasedChannel,
   VoiceChannel,
 } from 'discord.js';
-import { and, desc, eq, gt, inArray, isNotNull, or, sql } from 'drizzle-orm';
 import emojiRegex from 'emoji-regex';
 import i18next, { i18n as I18n } from 'i18next';
 import moment, { Duration } from 'moment';
 import { Logger } from 'winston';
 
-import { DrizzleClient } from '@ei/drizzle';
+import {
+  and,
+  desc,
+  DrizzleClient,
+  eq,
+  gt,
+  inArray,
+  isNotNull,
+  or,
+  sql,
+} from '@ei/drizzle';
 import {
   categories,
   Category,
@@ -1516,20 +1525,19 @@ const changeLobby = (() => {
 
                     return null;
                   })
-                  .then(
-                    async (msg) =>
-                      msg?.edit({
-                        ...(<MessageEditOptions>(
-                          getDashboardOptions(i18n, guild, owner)
-                        )),
-                        components: await generateComponents(
-                          voiceChannel,
-                          drizzle,
-                          guildUser,
-                          owner,
-                          i18n,
-                        ),
-                      }),
+                  .then(async (msg) =>
+                    msg?.edit({
+                      ...(<MessageEditOptions>(
+                        getDashboardOptions(i18n, guild, owner)
+                      )),
+                      components: await generateComponents(
+                        voiceChannel,
+                        drizzle,
+                        guildUser,
+                        owner,
+                        i18n,
+                      ),
+                    }),
                   )
                   .catch(() => {});
               }
@@ -2397,8 +2405,11 @@ const createDashBoardCollector = async ({
             const newName = interaction.fields.getTextInputValue('name');
 
             try {
-              const voiceName = generateLobbyName(currentType, member, newName)
-                ?.full;
+              const voiceName = generateLobbyName(
+                currentType,
+                member,
+                newName,
+              )?.full;
 
               const [renamedTempChannel] = await changeDatabaseChannelName(
                 drizzle,

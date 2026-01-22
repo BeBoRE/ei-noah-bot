@@ -7,9 +7,9 @@ import {
   RouteBases,
   Routes,
 } from 'discord-api-types/v10';
-import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { and, eq } from '@ei/drizzle';
 import { guilds, guildUsers, roles } from '@ei/drizzle/tables/schema';
 
 import {

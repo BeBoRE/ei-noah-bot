@@ -1,9 +1,9 @@
 import { DiscordAPIError } from '@discordjs/rest';
 import { TRPCError } from '@trpc/server';
 import { Routes } from 'discord-api-types/v10';
-import { and, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { and, eq, isNull } from '@ei/drizzle';
 import {
   guilds,
   guildUsers,

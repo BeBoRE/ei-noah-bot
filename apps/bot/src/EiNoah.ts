@@ -24,11 +24,10 @@ import {
   Role,
   Snowflake,
 } from 'discord.js';
-import { and, eq } from 'drizzle-orm';
 import { i18n as I18n } from 'i18next';
 import { Logger } from 'winston';
 
-import { DrizzleClient } from '@ei/drizzle';
+import { and, DrizzleClient, eq } from '@ei/drizzle';
 import {
   categories,
   Category,

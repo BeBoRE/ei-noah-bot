@@ -1,7 +1,6 @@
 import { ApplicationCommandOptionType, PermissionsBitField } from 'discord.js';
-import { eq } from 'drizzle-orm';
 
-import { DrizzleClient } from '@ei/drizzle';
+import { DrizzleClient, eq } from '@ei/drizzle';
 import { guilds, users } from '@ei/drizzle/tables/schema';
 
 import Router, { HandlerType } from '../router/Router';

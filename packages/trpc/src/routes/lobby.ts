@@ -2,10 +2,9 @@ import { REST } from '@discordjs/rest';
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
 import { Routes } from 'discord-api-types/v10';
-import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { DrizzleClient } from '@ei/drizzle';
+import { DrizzleClient, eq } from '@ei/drizzle';
 import { guildUsers, tempChannels } from '@ei/drizzle/tables/schema';
 import {
   addUserSchema,
@@ -67,9 +66,10 @@ export const lobbyRouter = createTRPCRouter({
   lobbyUpdate: publicProcedure
     .input(z.string().optional())
     .subscription(async ({ ctx: { drizzle, session }, input: token }) => {
-      if (!session) throw new TRPCError({message: 'No session', code: 'BAD_REQUEST'});
+      if (!session)
+        throw new TRPCError({ message: 'No session', code: 'BAD_REQUEST' });
 
-      const {userId} = session;
+      const { userId } = session;
 
       const lobby = await hasLobby(userId, drizzle);
 

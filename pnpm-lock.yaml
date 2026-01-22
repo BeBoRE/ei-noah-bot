@@ -96,9 +96,6 @@ importers:
       dotenv:
         specifier: ^8.2.0
         version: 8.6.0
-      drizzle-orm:
-        specifier: ^0.28.6
-        version: 0.28.6(@types/pg@8.16.0)(knex@0.8.6)(pg@8.16.3)
       emoji-regex:
         specifier: ^10.3.0
         version: 10.6.0
@@ -574,9 +571,6 @@ importers:
       discord-api-types:
         specifier: ^0.37.60
         version: 0.37.120
-      drizzle-orm:
-        specifier: ^0.28.6
-        version: 0.28.6(@types/pg@8.16.0)(knex@0.8.6)(pg@8.16.3)
       emoji-mart:
         specifier: ^5.5.2
         version: 5.6.0
@@ -893,9 +887,6 @@ importers:
       discord-api-types:
         specifier: ^0.37.62
         version: 0.37.120
-      drizzle-orm:
-        specifier: ^0.28.6
-        version: 0.28.6(@types/pg@8.16.0)(knex@0.8.6)(pg@8.16.3)
       expo-server-sdk:
         specifier: ^3.7.0
         version: 3.15.0
@@ -5529,68 +5520,6 @@ packages:
   drizzle-kit@0.19.13:
     resolution: {integrity: sha512-Rba5VW1O2JfJlwVBeZ8Zwt2E2us5oZ08PQBDiVSGlug53TOc8hzXjblZFuF+dnll9/RQEHrkzBmJFgqTvn5Rxg==}
     hasBin: true
-
-  drizzle-orm@0.28.6:
-    resolution: {integrity: sha512-yBe+F9htrlYER7uXgDJUQsTHFoIrI5yMm5A0bg0GiZ/kY5jNXTWoEy4KQtg35cE27sw1VbgzoMWHAgCckUUUww==}
-    peerDependencies:
-      '@aws-sdk/client-rds-data': '>=3'
-      '@cloudflare/workers-types': '>=3'
-      '@libsql/client': '*'
-      '@neondatabase/serverless': '>=0.1'
-      '@opentelemetry/api': ^1.4.1
-      '@planetscale/database': '>=1'
-      '@types/better-sqlite3': '*'
-      '@types/pg': '*'
-      '@types/sql.js': '*'
-      '@vercel/postgres': '*'
-      better-sqlite3: '>=7'
-      bun-types: '*'
-      knex: '*'
-      kysely: '*'
-      mysql2: '>=2'
-      pg: '>=8'
-      postgres: '>=3'
-      sql.js: '>=1'
-      sqlite3: '>=5'
-    peerDependenciesMeta:
-      '@aws-sdk/client-rds-data':
-        optional: true
-      '@cloudflare/workers-types':
-        optional: true
-      '@libsql/client':
-        optional: true
-      '@neondatabase/serverless':
-        optional: true
-      '@opentelemetry/api':
-        optional: true
-      '@planetscale/database':
-        optional: true
-      '@types/better-sqlite3':
-        optional: true
-      '@types/pg':
-        optional: true
-      '@types/sql.js':
-        optional: true
-      '@vercel/postgres':
-        optional: true
-      better-sqlite3:
-        optional: true
-      bun-types:
-        optional: true
-      knex:
-        optional: true
-      kysely:
-        optional: true
-      mysql2:
-        optional: true
-      pg:
-        optional: true
-      postgres:
-        optional: true
-      sql.js:
-        optional: true
-      sqlite3:
-        optional: true
 
   drizzle-orm@0.45.1:
     resolution: {integrity: sha512-Te0FOdKIistGNPMq2jscdqngBRfBpC8uMFVwqjf6gtTVJHIQ/dosgV/CLBU2N4ZJBsXL5savCba9b0YJskKdcA==}
@@ -15863,12 +15792,6 @@ snapshots:
       zod: 3.25.76
     transitivePeerDependencies:
       - supports-color
-
-  drizzle-orm@0.28.6(@types/pg@8.16.0)(knex@0.8.6)(pg@8.16.3):
-    optionalDependencies:
-      '@types/pg': 8.16.0
-      knex: 0.8.6
-      pg: 8.16.3
 
   drizzle-orm@0.45.1(@types/pg@8.16.0)(knex@0.8.6)(pg@8.16.3):
     optionalDependencies:

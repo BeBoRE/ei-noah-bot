@@ -1,7 +1,7 @@
 import { Expo } from 'expo-server-sdk';
-import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { eq } from '@ei/drizzle';
 import { sessions } from '@ei/drizzle/tables/schema';
 
 import { createTRPCRouter, protectedProcedure } from '../trpc';
