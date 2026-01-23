@@ -2,6 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "dockerfile",
+      "request": "launch",
+      "name": "Docker: Build",
+      "dockerfile": "Dockerfile",
+      "contextPath": "${workspaceFolder}"
+    },
+    {
       "name": "Debug and Watch",
       "type": "node",
       "request": "launch",
