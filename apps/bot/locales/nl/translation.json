@@ -47,7 +47,7 @@
     "selectedAsAnnouncement": "Huidig kanaal is nu geselecteerd als verjaardag-aankondigings-kanaal",
     "birthdayRoleSet": "Rol voor de jarig-jop is ingesteld",
     "birthdayMsg": "Gefeliciteerd met jouw verjaardag, {{user}}!!!",
-    "meBirthdayMsg": "VIER MIJN VERJAARDAG MIJN ONDERDANEN",
+    "meBirthdayMsg": "Een ei hoort niet zo oud te worden",
     "birthdayMsgAge": "Is vandaag {{age}} geworden. GEFELICITEERD!!",
     "birthdayMsgAgeUser": "{{user}} is vandaag {{age}} geworden, Gefeliciteerd!!\n> $t(birthday.error.permissionMissing)",
     "congratulations": "Felicitaties",
