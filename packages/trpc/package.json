@@ -23,7 +23,7 @@
     "expo-server-sdk": "^3.7.0",
     "lodash": "^4.17.21",
     "superjson": "1.13.1",
-    "zod": "^3.22.4"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.199",
